@@ -1040,13 +1040,13 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       <div class="benefits-sub">Toca una o más opciones y descubre cómo te ayuda</div>
     </div>
     <div class="benefits-selector">
-      <button class="benefit-btn active" onclick="toggleBenefit('rendimiento', this)">Rendimiento</button>
+      <button class="benefit-btn" onclick="toggleBenefit('rendimiento', this)">Rendimiento</button>
       <button class="benefit-btn" onclick="toggleBenefit('energia', this)">Energía</button>
       <button class="benefit-btn" onclick="toggleBenefit('sueño', this)">Sueño</button>
       <button class="benefit-btn" onclick="toggleBenefit('recuperacion', this)">Recuperación</button>
     </div>
     <div class="benefits-grid">
-      <div class="benefit benefit-card" id="card-rendimiento" style="display:block;">
+      <div class="benefit benefit-card" id="card-rendimiento" style="display:none;">
         <h4>Entrena con datos, no con sensaciones</h4>
         <p>Cuando sabes cómo responde tu cuerpo, sabes cuándo dar más y cuándo frenar. Evitas el sobreentrenamiento y cada sesión te acerca de verdad a tu objetivo.</p>
       </div>
