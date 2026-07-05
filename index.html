@@ -337,6 +337,12 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .benefit .b-tag{display:inline-block;font-size:.58rem;letter-spacing:3px;text-transform:uppercase;color:#69c46d;margin-bottom:12px;font-weight:700;}
 .benefit h4{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1.5px;margin-bottom:10px;color:var(--white);line-height:1.1;}
 .benefit p{font-size:.8rem;color:var(--silver);line-height:1.7;}
+.benefits-selector{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:28px;}
+.benefit-btn{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;font-size:.78rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.benefit-btn:hover{border-color:#e8e8e8;color:#e8e8e8;}
+.benefit-btn.active{background:#e8e8e8;color:#080808;border-color:#e8e8e8;}
+.benefits-grid{display:flex;flex-wrap:wrap;gap:14px;}
+.benefit-card{width:100%;flex-grow:1;}
 /* Lema bajo el título */
 .brand-head-tag{font-size:.82rem;letter-spacing:1px;color:var(--silver);margin-top:10px;font-weight:300;text-transform:none;}
 /* Barra de compra fija */
@@ -1022,29 +1028,47 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       <div class="benefits-kicker">Por qué DEUS Band</div>
       <div class="benefits-title">Mejora tu rendimiento, tu energía, tu sueño y tu recuperación</div>
     </div>
+    <div class="benefits-selector">
+      <button class="benefit-btn active" onclick="toggleBenefit('rendimiento', this)">Rendimiento</button>
+      <button class="benefit-btn" onclick="toggleBenefit('energia', this)">Energía</button>
+      <button class="benefit-btn" onclick="toggleBenefit('sueño', this)">Sueño</button>
+      <button class="benefit-btn" onclick="toggleBenefit('recuperacion', this)">Recuperación</button>
+    </div>
     <div class="benefits-grid">
-      <div class="benefit">
+      <div class="benefit benefit-card" id="card-rendimiento" style="display:flex;">
         <span class="b-tag">Rendimiento</span>
         <h4>Entrena con datos, no con sensaciones</h4>
         <p>Cuando conoces cómo responde tu cuerpo, entrenas de forma más inteligente: sabes en qué momento dar más y en qué momento descansar. Así evitas el sobreentrenamiento y cada sesión te acerca de verdad a tu objetivo.</p>
       </div>
-      <div class="benefit">
+      <div class="benefit benefit-card" id="card-energia" style="display:none;">
         <span class="b-tag">Energía</span>
         <h4>Más energía todos los días</h4>
         <p>Tu energía diaria se construye mientras duermes. DEUS Band analiza tu descanso cada noche y te muestra cómo mejorarlo — y cuando duermes mejor, todo cambia: despiertas con más ánimo, rindes más durante el día y llegas con energía real hasta la noche.</p>
       </div>
-      <div class="benefit">
+      <div class="benefit benefit-card" id="card-sueño" style="display:none;">
         <span class="b-tag">Sueño</span>
         <h4>Descubre cómo son tus ciclos de sueño</h4>
         <p>Cada noche, DEUS Band registra tus fases de sueño —profundo, ligero y REM— y te muestra cómo descansas realmente. Con esa información puedes ajustar tus hábitos y despertar cada día mejor.</p>
       </div>
-      <div class="benefit">
+      <div class="benefit benefit-card" id="card-recuperacion" style="display:none;">
         <span class="b-tag">Recuperación</span>
         <h4>El progreso ocurre cuando descansas</h4>
         <p>Entrenar rompe, recuperar construye. DEUS Band te muestra si tu cuerpo ya asimiló el último esfuerzo, para que sepas cuándo es momento de volver a exigirte — y recuperes, día a día, tu mejor versión.</p>
       </div>
     </div>
   </section>
+  <script>
+  function toggleBenefit(id, btn){
+    var card=document.getElementById('card-'+id);
+    if(card.style.display==='none'){
+      card.style.display='flex';
+      btn.classList.add('active');
+    }else{
+      card.style.display='none';
+      btn.classList.remove('active');
+    }
+  }
+  </script>
 
   <!-- COMO FUNCIONA -->
   <section class="how" id="tecnologia">
