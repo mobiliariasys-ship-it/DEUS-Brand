@@ -316,6 +316,17 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .how-txt h3{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;margin-bottom:12px;}
 .how-txt p{color:var(--silver);font-size:.9rem;line-height:1.75;letter-spacing:.3px;}
 .monitor{max-width:1100px;margin:0 auto;padding:18px 24px 36px;}
+/* Beneficios */
+.benefits{max-width:1100px;margin:0 auto;padding:36px 24px 20px;}
+.benefits-head{text-align:center;margin-bottom:28px;}
+.benefits-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
+.benefits-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1.15;max-width:640px;margin:0 auto;}
+.benefits-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;}
+.benefit{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:24px 20px;transition:border-color .2s;}
+.benefit:hover{border-color:#3a3a3a;}
+.benefit .b-tag{display:inline-block;font-size:.58rem;letter-spacing:3px;text-transform:uppercase;color:#69c46d;margin-bottom:12px;font-weight:700;}
+.benefit h4{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1.5px;margin-bottom:10px;color:var(--white);line-height:1.1;}
+.benefit p{font-size:.8rem;color:var(--silver);line-height:1.7;}
 .monitor-head{text-align:center;margin-bottom:24px;}
 .monitor-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .monitor-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1;}
@@ -985,6 +996,36 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       <div class="metric"><span class="num">07</span><span class="lbl">Pasos y calorías</span></div>
       <div class="metric"><span class="num">08</span><span class="lbl">+100 modos deportivos</span></div>
       <div class="metric"><span class="num">09</span><span class="lbl">Notificaciones por vibración · llamadas, mensajes y alarma</span></div>
+    </div>
+  </section>
+
+  <!-- BENEFICIOS -->
+  <section class="benefits">
+    <div class="benefits-head">
+      <div class="benefits-kicker">Por qué DEUS Band</div>
+      <div class="benefits-title">Mejora tu rendimiento, tu energía, tu sueño y tu recuperación</div>
+    </div>
+    <div class="benefits-grid">
+      <div class="benefit">
+        <span class="b-tag">Rendimiento</span>
+        <h4>Entrena con datos, no con sensaciones</h4>
+        <p>Tu frecuencia cardíaca y tus más de 100 modos deportivos te muestran cuándo puedes exigirte más y cuándo conviene frenar. Cada sesión suma, ninguna se desperdicia.</p>
+      </div>
+      <div class="benefit">
+        <span class="b-tag">Energía</span>
+        <h4>Conoce tu energía real cada mañana</h4>
+        <p>La variabilidad cardíaca (HRV) y tu nivel de estrés revelan cuánta batería tiene tu cuerpo hoy. Planifica tu día según cómo estás de verdad, no según cómo crees estar.</p>
+      </div>
+      <div class="benefit">
+        <span class="b-tag">Sueño</span>
+        <h4>Descubre qué te roba el descanso</h4>
+        <p>Al medir tus fases de sueño —profundo, ligero y REM— noche tras noche, identificas los hábitos que dañan tu descanso y los cambias con datos reales. Dormir mejor se aprende.</p>
+      </div>
+      <div class="benefit">
+        <span class="b-tag">Recuperación</span>
+        <h4>El progreso ocurre cuando descansas</h4>
+        <p>Entrenar rompe, recuperar construye. DEUS Band te muestra si tu cuerpo ya asimiló el último esfuerzo o necesita más pausa — para volver siempre en tu mejor versión.</p>
+      </div>
     </div>
   </section>
 
