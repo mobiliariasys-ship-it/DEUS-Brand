@@ -343,13 +343,16 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .benefit-btn.active{background:#e8e8e8;color:#080808;border-color:#e8e8e8;}
 .benefits-grid{display:flex;flex-wrap:wrap;gap:14px;}
 .benefit-card{width:100%;flex-grow:1;}
+.benefit-card h4{display:block;width:100%;}
+.benefits-sub{font-size:.78rem;color:var(--silver);margin-top:8px;letter-spacing:.3px;}
 @media(max-width:600px){
-  .benefits-title{font-size:1.5rem;}
+  .benefits-title{font-size:1.7rem;}
+  .benefits-sub{font-size:.72rem;}
   .benefits-selector{gap:8px;margin-bottom:20px;}
-  .benefit-btn{padding:8px 16px;font-size:.7rem;}
-  .benefit{padding:18px 16px;}
-  .benefit h4{font-size:1.1rem;margin-bottom:8px;}
-  .benefit p{font-size:.75rem;line-height:1.6;}
+  .benefit-btn{padding:9px 16px;font-size:.7rem;}
+  .benefit{padding:20px 18px;}
+  .benefit h4{font-size:1.25rem;margin-bottom:8px;line-height:1.2;}
+  .benefit p{font-size:.8rem;line-height:1.65;}
 }
 /* Lema bajo el título */
 .brand-head-tag{font-size:.82rem;letter-spacing:1px;color:var(--silver);margin-top:10px;font-weight:300;text-transform:none;}
@@ -1033,7 +1036,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   <section class="benefits">
     <div class="benefits-head">
       <div class="benefits-kicker">Por qué DEUS Band</div>
-      <div class="benefits-title">Mejora tu rendimiento, tu energía, tu sueño y tu recuperación</div>
+      <div class="benefits-title">¿Qué quieres mejorar?</div>
+      <div class="benefits-sub">Toca una o más opciones y descubre cómo te ayuda</div>
     </div>
     <div class="benefits-selector">
       <button class="benefit-btn active" onclick="toggleBenefit('rendimiento', this)">Rendimiento</button>
@@ -1042,21 +1046,21 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       <button class="benefit-btn" onclick="toggleBenefit('recuperacion', this)">Recuperación</button>
     </div>
     <div class="benefits-grid">
-      <div class="benefit benefit-card" id="card-rendimiento" style="display:flex;">
+      <div class="benefit benefit-card" id="card-rendimiento" style="display:block;">
         <h4>Entrena con datos, no con sensaciones</h4>
-        <p>Cuando conoces cómo responde tu cuerpo, entrenas de forma más inteligente: sabes en qué momento dar más y en qué momento descansar. Así evitas el sobreentrenamiento y cada sesión te acerca de verdad a tu objetivo.</p>
+        <p>Cuando sabes cómo responde tu cuerpo, sabes cuándo dar más y cuándo frenar. Evitas el sobreentrenamiento y cada sesión te acerca de verdad a tu objetivo.</p>
       </div>
       <div class="benefit benefit-card" id="card-energia" style="display:none;">
         <h4>Más energía todos los días</h4>
-        <p>Tu energía diaria se construye mientras duermes. DEUS Band analiza tu descanso cada noche y te muestra cómo mejorarlo — y cuando duermes mejor, todo cambia: despiertas con más ánimo, rindes más durante el día y llegas con energía real hasta la noche.</p>
+        <p>Tu energía no es casualidad: es el resultado del balance entre lo que te exiges y lo que descansas. DEUS Band te muestra ese balance cada mañana, para que sepas qué ajustar y llegues con energía real hasta la noche.</p>
       </div>
       <div class="benefit benefit-card" id="card-sueño" style="display:none;">
-        <h4>Descubre cómo son tus ciclos de sueño</h4>
-        <p>Cada noche, DEUS Band registra tus fases de sueño —profundo, ligero y REM— y te muestra cómo descansas realmente. Con esa información puedes ajustar tus hábitos y despertar cada día mejor.</p>
+        <h4>Descubre cómo duermes realmente</h4>
+        <p>Cada noche registra tus fases de sueño —profundo, ligero y REM— y te muestra qué tan reparador fue tu descanso. Con esa información ajustas tus hábitos y despiertas cada día mejor.</p>
       </div>
       <div class="benefit benefit-card" id="card-recuperacion" style="display:none;">
         <h4>El progreso ocurre cuando descansas</h4>
-        <p>Entrenar rompe, recuperar construye. DEUS Band te muestra si tu cuerpo ya asimiló el último esfuerzo, para que sepas cuándo es momento de volver a exigirte — y recuperes, día a día, tu mejor versión.</p>
+        <p>Entrenar rompe, recuperar construye. DEUS Band te dice si tu cuerpo ya asimiló el último esfuerzo y está listo para volver a exigirse — y así recuperas, día a día, tu mejor versión.</p>
       </div>
     </div>
   </section>
@@ -1064,7 +1068,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   function toggleBenefit(id, btn){
     var card=document.getElementById('card-'+id);
     if(card.style.display==='none'){
-      card.style.display='flex';
+      card.style.display='block';
       btn.classList.add('active');
     }else{
       card.style.display='none';
