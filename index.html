@@ -92,6 +92,13 @@ body{background:var(--black);font-family:'DM Sans',sans-serif;color:var(--white)
 @media(max-width:600px){.announce-bar{font-size:.6rem;letter-spacing:1.5px;padding:8px 12px;}}
 
 /* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 22px;background:#0d0d0d;}
+.hdr-right{display:flex;align-items:center;gap:16px;}
+.hdr-ig{color:#b5b5b5;display:flex;transition:color .2s,transform .15s;}
+.hdr-ig:hover{color:#fff;transform:scale(1.08);}
+.hdr-buy{background:#fff;color:#000;border:none;border-radius:5px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:transform .15s;}
+.hdr-buy:hover{transform:translateY(-1px);}
+@media(max-width:600px){.hdr-right{gap:12px;}.hdr-buy{padding:8px 13px;font-size:.62rem;letter-spacing:1.5px;}}
 
 .logo{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:5px;line-height:1;}
 .logo small{display:block;font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:4px;color:var(--silver);font-weight:300;}
@@ -221,7 +228,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 
 @media(max-width:860px){
   .hero-grid,.detail{grid-template-columns:1fr;}
-  header{background:#0d0d0d !important;border-bottom:1px solid #1a1a1a !important;padding:8px 16px !important;height:60px !important;display:flex !important;align-items:center !important;justify-content:flex-start !important;position:relative !important;}
+  header{background:#0d0d0d !important;border-bottom:1px solid #1a1a1a !important;padding:8px 16px !important;height:60px !important;display:flex !important;align-items:center !important;justify-content:space-between !important;position:relative !important;}
   .logo-img{height:48px !important;}
   .tabs{margin-left:0;margin-top:8px;}
   .info{padding:28px 22px;}
@@ -500,6 +507,12 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 </script>
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
+  <div class="hdr-right">
+    <a class="hdr-ig" href="https://www.instagram.com/deusbrand.cl/" target="_blank" rel="noopener noreferrer" aria-label="Síguenos en Instagram">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg>
+    </a>
+    <button class="hdr-buy" onclick="abrirCheckout()">Comprar</button>
+  </div>
 </header>
 </div><!-- /topbar -->
 <!-- Header en flujo normal: desaparece al hacer scroll -->
