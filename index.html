@@ -188,7 +188,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .spec-icon{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:40px;height:40px;border-radius:10px;background:#1c1c1c;border:1px solid #2d2d2d;}
 .spec-label{display:block;font-weight:700;color:var(--white);font-size:.86rem;margin-bottom:2px;letter-spacing:.2px;}
 
-.price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:#ddd;text-decoration:line-through;text-decoration-color:#e05555;text-decoration-thickness:2px;margin-left:8px;vertical-align:middle;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:2px;color:#69c46d;border:1px solid #69c46d;padding:3px 8px;vertical-align:middle;margin-left:8px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:3.8rem;line-height:1;margin-bottom:22px;}
+.price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:#ddd;text-decoration:line-through;text-decoration-color:#e05555;text-decoration-thickness:2px;margin-left:8px;vertical-align:middle;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:2px;color:#e8e8e8;border:1px solid #e8e8e8;padding:3px 8px;vertical-align:middle;margin-left:8px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:3.8rem;line-height:1;margin-bottom:22px;}
 .price-block sup{font-family:'DM Sans',sans-serif;font-size:1.2rem;color:var(--silver);vertical-align:top;margin-top:10px;margin-right:2px;font-weight:300;}
 
 .cta-row{display:grid;grid-template-columns:1fr auto;gap:8px;}
@@ -396,7 +396,7 @@ body.sb-on .wa-float{bottom:82px;}
 .compat-pill{display:flex;flex-direction:column;align-items:center;gap:8px;}
 .compat-icon{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(0,0,0,.45);}
 .compat-pill small{font-size:.62rem;letter-spacing:1px;color:#aaa;}
-.app-free{display:inline-block;margin:2px auto 22px;font-size:.7rem;letter-spacing:1.5px;color:#69c46d;border:1px solid rgba(105,196,109,.45);border-radius:20px;padding:7px 18px;font-weight:600;text-transform:uppercase;}
+.app-free{display:inline-block;margin:2px auto 22px;font-size:.7rem;letter-spacing:1.5px;color:#aaa;border:1px solid rgba(170,170,170,.45);border-radius:20px;padding:7px 18px;font-weight:600;text-transform:uppercase;}
 .respaldo{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:24px;padding-top:18px;border-top:1px solid #1e1e1e;}
 .respaldo-label{font-size:.55rem;letter-spacing:2px;text-transform:uppercase;color:#555;width:100%;margin-bottom:2px;}
 .paylogo{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:600;color:#cfcfcf;}
@@ -491,9 +491,9 @@ body.sb-on .wa-float{bottom:82px;}
 .free-opt:hover,.free-opt.selected{border-color:#43a047 !important;}
 .free-ship{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border:1px solid #2e7d32;background:rgba(46,125,50,.08);cursor:pointer;margin-bottom:8px;transition:border-color .2s;}
 .free-ship.selected,.free-ship:hover{border-color:#43a047;}
-.free-ship-tag{font-size:.55rem;letter-spacing:2px;text-transform:uppercase;color:#69c46d;margin-bottom:3px;}
+.free-ship-tag{font-size:.55rem;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:3px;}
 .free-ship-name{font-weight:600;font-size:.82rem;}
-.free-ship-price{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#69c46d;}
+.free-ship-price{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#aaa;}
 .free-ship-old{font-size:.62rem;color:#777;text-decoration:line-through;margin-right:6px;}
 .secure-badges{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;margin-top:16px;font-size:.62rem;color:#aaa;letter-spacing:.5px;}
 .secure-badges svg{flex-shrink:0;}
@@ -601,9 +601,9 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       </div>
 
       <div class="reassure">
-        <div class="reassure-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Pago 100% seguro</b> — Flow, Webpay y Mercado Pago</span></div>
-        <div class="reassure-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg><span><b>Envío a todo Chile</b> con seguimiento Starken</span></div>
-        <div class="reassure-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span><b>Garantía de satisfacción 30 días</b></span></div>
+        <div class="reassure-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Pago 100% seguro</b> — Flow, Webpay y Mercado Pago</span></div>
+        <div class="reassure-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.6"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg><span><b>Envío a todo Chile</b> con seguimiento Starken</span></div>
+        <div class="reassure-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span><b>Garantía de satisfacción 30 días</b></span></div>
       </div>
 
       <!-- ── CHECKOUT (paso 2): se abre al hacer clic en Comprar ── -->
@@ -658,7 +658,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
               <p id="mp-msg" style="font-size:.6rem;color:#666;letter-spacing:2px;margin-top:10px;display:none;text-align:center;">Preparando pago seguro...</p>
 
               <div class="secure-badges">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#69c46d" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 <span><b style="color:#cfcfcf;">Compra segura</b> · datos encriptados</span>
               </div>
               <div class="pay-methods">
@@ -828,8 +828,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
               const freeEnc = encodeURIComponent(JSON.stringify(free));
               html += `<label class="carrier-option free-opt" onclick="selectCarrier('${freeEnc}','${encodeURIComponent(commune)}','${encodeURIComponent(region)}','${encodeURIComponent(address)}')">
                 <input type="radio" name="carrier" value="free">
-                <div style="flex:1"><div class="carrier-name" style="color:#69c46d;">🎉 Envío GRATIS <span style="font-weight:400;color:#888;font-size:.62rem;">por lanzamiento</span></div><div class="carrier-time">Despacho estándar · 3 a 6 días hábiles</div></div>
-                <div class="carrier-price" style="color:#69c46d;">GRATIS</div>
+                <div style="flex:1"><div class="carrier-name" style="color:#aaa;">🎉 Envío GRATIS <span style="font-weight:400;color:#888;font-size:.62rem;">por lanzamiento</span></div><div class="carrier-time">Despacho estándar · 3 a 6 días hábiles</div></div>
+                <div class="carrier-price" style="color:#aaa;">GRATIS</div>
               </label>`;
             }
             // Opciones de courier con su precio real (alternativas más rápidas)
@@ -1036,22 +1036,18 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     </div>
     <div class="benefits-grid">
       <div class="benefit benefit-card" id="card-rendimiento" style="display:flex;">
-        <span class="b-tag">Rendimiento</span>
         <h4>Entrena con datos, no con sensaciones</h4>
         <p>Cuando conoces cómo responde tu cuerpo, entrenas de forma más inteligente: sabes en qué momento dar más y en qué momento descansar. Así evitas el sobreentrenamiento y cada sesión te acerca de verdad a tu objetivo.</p>
       </div>
       <div class="benefit benefit-card" id="card-energia" style="display:none;">
-        <span class="b-tag">Energía</span>
         <h4>Más energía todos los días</h4>
         <p>Tu energía diaria se construye mientras duermes. DEUS Band analiza tu descanso cada noche y te muestra cómo mejorarlo — y cuando duermes mejor, todo cambia: despiertas con más ánimo, rindes más durante el día y llegas con energía real hasta la noche.</p>
       </div>
       <div class="benefit benefit-card" id="card-sueño" style="display:none;">
-        <span class="b-tag">Sueño</span>
         <h4>Descubre cómo son tus ciclos de sueño</h4>
         <p>Cada noche, DEUS Band registra tus fases de sueño —profundo, ligero y REM— y te muestra cómo descansas realmente. Con esa información puedes ajustar tus hábitos y despertar cada día mejor.</p>
       </div>
       <div class="benefit benefit-card" id="card-recuperacion" style="display:none;">
-        <span class="b-tag">Recuperación</span>
         <h4>El progreso ocurre cuando descansas</h4>
         <p>Entrenar rompe, recuperar construye. DEUS Band te muestra si tu cuerpo ya asimiló el último esfuerzo, para que sepas cuándo es momento de volver a exigirte — y recuperes, día a día, tu mejor versión.</p>
       </div>
@@ -1269,7 +1265,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       <div class="faq-title">Preguntas frecuentes</div>
     </div>
     <div class="guarantee">
-      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
       <div>
         <b>Garantía de satisfacción · 30 días</b>
         <p>Si la DEUS Band no es para ti, te devolvemos tu dinero. Además cuentas con la garantía legal por fallas de fábrica. Te acompañamos por WhatsApp en todo el proceso.</p>
