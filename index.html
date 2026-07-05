@@ -492,9 +492,42 @@ body.sb-on .wa-float{bottom:82px;}
 .secure-badges{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;margin-top:16px;font-size:.62rem;color:#aaa;letter-spacing:.5px;}
 .secure-badges svg{flex-shrink:0;}
 .pay-methods{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:7px;font-size:.62rem;font-weight:600;letter-spacing:.5px;}
+/* Banner de app estilo Smart App Banner */
+.app-smartbar{display:flex;align-items:center;gap:12px;background:#131313;border-bottom:1px solid var(--border);padding:10px 14px;}
+.asb-close{background:none;border:none;color:#888;font-size:1.3rem;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;}
+.asb-close:hover{color:#fff;}
+.asb-icon{width:44px;height:44px;border-radius:11px;flex-shrink:0;object-fit:cover;}
+.asb-info{flex:1;min-width:0;}
+.asb-name{font-size:.86rem;font-weight:700;color:var(--white);line-height:1.25;}
+.asb-sub{font-size:.68rem;color:var(--silver);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.asb-btn{background:#0a84ff;color:#fff;border:none;border-radius:16px;padding:7px 18px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:700;text-decoration:none;flex-shrink:0;}
+@media(max-width:400px){.asb-sub{max-width:150px;}}
 </style>
 </head>
 <body>
+
+<div class="app-smartbar" id="appSmartbar">
+  <button class="asb-close" onclick="closeAppSmartbar()" aria-label="Cerrar">&times;</button>
+  <img class="asb-icon" src="img/img-c9eeead6.webp" alt="Da Halo">
+  <div class="asb-info">
+    <div class="asb-name">Da Halo</div>
+    <div class="asb-sub">Mide tu sueño y energía</div>
+  </div>
+  <a class="asb-btn" id="asbBtn" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer">Obtener</a>
+</div>
+<script>
+(function(){
+  var bar=document.getElementById('appSmartbar');
+  if(localStorage.getItem('asbClosed')==='1'){ bar.style.display='none'; return; }
+  var ua=navigator.userAgent||'';
+  var btn=document.getElementById('asbBtn');
+  if(/Android/i.test(ua)) btn.href='https://play.google.com/store/apps/details?id=com.moyoung.dahalo&hl=es_CL';
+})();
+function closeAppSmartbar(){
+  document.getElementById('appSmartbar').style.display='none';
+  localStorage.setItem('asbClosed','1');
+}
+</script>
 
 <div class="topbar" id="topbar">
 <div class="announce-bar">🚀 Envío gratis por lanzamiento web 🚀<span class="promo-timer"><span class="cd-row" id="promo-cd"></span></span></div>
