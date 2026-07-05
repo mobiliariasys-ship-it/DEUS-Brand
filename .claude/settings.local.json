@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($lines = Get-Content 'C:\\\\Users\\\\Jona\\\\Desktop\\\\deus\\\\index.html'; for \\($i=230; $i -le 260; $i++\\) { \"$\\($i+1\\): $\\($lines[$i]\\)\" })",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)"
+    ]
+  }
+}

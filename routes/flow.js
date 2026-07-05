@@ -1,0 +1,134 @@
+const express = require('express');
+const router = express.Router();
+const https = require('https');
+const crypto = require('crypto');
+const { enviarPedidoNuevo, enviarPagoConfirmado } = require('../services/email');
+
+const PRODUCT_PRICE = 38990;
+const pedidosFlow = new Map();
+
+// Producción por defecto; sandbox si FLOW_ENV=sandbox
+function flowHost() {
+  return (process.env.FLOW_ENV === 'sandbox') ? 'sandbox.flow.cl' : 'www.flow.cl';
+}
+
+function getBaseUrl(req) {
+  if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL.replace(/\/$/, '');
+  const proto = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  return `${proto}://${host}`;
+}
+
+// Firma Flow: concatenar nombre+valor ordenados alfabéticamente, HMAC-SHA256 con la secret
+function firmar(params) {
+  const keys = Object.keys(params).sort();
+  let str = '';
+  keys.forEach(k => { str += k + params[k]; });
+  return crypto.createHmac('sha256', (process.env.FLOW_SECRET_KEY || '').trim()).update(str).digest('hex');
+}
+
+function flowReq(method, path, params) {
+  return new Promise((resolve, reject) => {
+    const s = firmar(params);
+    const qs = new URLSearchParams(Object.assign({}, params, { s })).toString();
+    const isPost = method === 'POST';
+    const options = {
+      hostname: flowHost(),
+      path: '/api' + path + (isPost ? '' : '?' + qs),
+      method,
+      headers: isPost ? { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(qs) } : {}
+    };
+    const req = https.request(options, res => {
+      let raw = '';
+      res.on('data', c => raw += c);
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(raw) }); }
+        catch (e) { reject(new Error('Respuesta Flow inválida (' + res.statusCode + '): ' + raw.substring(0, 160))); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error('Timeout Flow')); });
+    if (isPost) req.write(qs);
+    req.end();
+  });
+}
+
+// Iniciar pago con Flow
+router.post('/flow/crear', async (req, res) => {
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress } = req.body;
+  try {
+    const amount = PRODUCT_PRICE + (Number(shippingCost) || 0);
+    const commerceOrder = 'deus-' + Date.now();
+    const base = getBaseUrl(req);
+
+    const params = {
+      apiKey: (process.env.FLOW_API_KEY || "").trim(),
+      commerceOrder: commerceOrder,
+      subject: 'DEUS Band',
+      currency: 'CLP',
+      amount: String(amount),
+      email: customerEmail || 'cliente@deusbrand.cl',
+      urlConfirmation: base + '/flow/confirmacion',
+      urlReturn: base + '/flow/retorno'
+    };
+
+    const r = await flowReq('POST', '/payment/create', params);
+    if (!r.body || !r.body.url || !r.body.token) {
+      throw new Error('Flow no devolvió url/token: ' + JSON.stringify(r.body).substring(0, 180));
+    }
+
+    const pedido = {
+      preference_id: commerceOrder,
+      created_at: new Date().toISOString(),
+      product: 'DEUS Band', product_price: PRODUCT_PRICE,
+      color: selectedColor,
+      customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
+      shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },
+      total: amount, status: 'pending', method: 'Flow'
+    };
+    pedidosFlow.set(commerceOrder, pedido);
+    enviarPedidoNuevo(pedido).catch(e => console.error('[email]', e.message));
+
+    console.log('[flow/crear] orden=' + commerceOrder + ' monto=' + amount);
+    res.json({ url: r.body.url + '?token=' + r.body.token });
+  } catch (e) {
+    console.error('[flow/crear] Error:', e.message);
+    res.status(500).json({ error: 'No se pudo iniciar el pago con Flow' });
+  }
+});
+
+// Webhook servidor-a-servidor (Flow confirma el pago aquí)
+router.post('/flow/confirmacion', async (req, res) => {
+  res.sendStatus(200);
+  const token = req.body && req.body.token;
+  if (!token) return;
+  try {
+    const r = await flowReq('GET', '/payment/getStatus', { apiKey: (process.env.FLOW_API_KEY || "").trim(), token });
+    const st = r.body;
+    const pedido = pedidosFlow.get(st.commerceOrder);
+    console.log('[flow/confirmacion] ' + st.commerceOrder + ' status=' + st.status);
+    if (st.status === 2) {
+      if (pedido) pedido.status = 'paid';
+      enviarPagoConfirmado({
+        payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },
+        transaction_amount: st.amount,
+        id: st.commerceOrder
+      }).catch(e => console.error('[email]', e.message));
+    } else if (pedido) pedido.status = 'rejected';
+  } catch (e) { console.error('[flow/confirmacion] Error:', e.message); }
+});
+
+// Retorno del navegador del cliente
+async function retorno(req, res) {
+  const token = (req.body && req.body.token) || (req.query && req.query.token);
+  if (!token) return res.redirect('/failure.html');
+  try {
+    const r = await flowReq('GET', '/payment/getStatus', { apiKey: (process.env.FLOW_API_KEY || "").trim(), token });
+    if (r.body && r.body.status === 2) return res.redirect('/success.html');
+    return res.redirect('/failure.html');
+  } catch (e) { console.error('[flow/retorno] Error:', e.message); return res.redirect('/failure.html'); }
+}
+router.post('/flow/retorno', retorno);
+router.get('/flow/retorno', retorno);
+
+module.exports = router;

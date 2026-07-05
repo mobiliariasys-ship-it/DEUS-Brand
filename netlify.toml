@@ -1,0 +1,13 @@
+# Configuración de Netlify
+# El frontend es estático (index.html y demás .html en la raíz).
+# El backend (server.js) NO corre aquí — vive en Render.
+
+[build]
+  publish = "."
+  command = ""
+
+# Redirige la raíz al catálogo
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200

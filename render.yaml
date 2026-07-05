@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: deus-band-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUBLIC_KEY
+        sync: false
+      - key: ACCESS_TOKEN
+        sync: false
+      - key: PUBLIC_URL
+        sync: false
+      - key: ALLOWED_ORIGIN
+        sync: false
+      - key: CHILEXPRESS_API_KEY
+        sync: false
+      - key: STARKEN_API_KEY
+        sync: false
+      - key: STARKEN_USER
+        sync: false
+      - key: BLUEXPRESS_API_KEY
+        sync: false

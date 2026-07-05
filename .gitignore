@@ -1,0 +1,11 @@
+.env
+node_modules/
+
+# Archivos temporales de procesamiento de imágenes
+*.jpg
+*.jpeg
+!og-image.jpg
+img_*.png
+deus_band_logo_orig*.png
+deus_band_logo_sin_fondo.png
+banda_negra_sola.jpg
