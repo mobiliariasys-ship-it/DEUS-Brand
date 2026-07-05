@@ -298,7 +298,15 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .app-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .app-title{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:3px;line-height:1;margin-bottom:12px;}
 .app-sub{font-size:.82rem;color:var(--silver);letter-spacing:.5px;line-height:1.7;margin:0 auto 26px;max-width:460px;}
-.app-shot{width:100%;max-width:1000px;height:auto;display:block;margin:6px auto 30px;border-radius:10px;}
+.app-shot{width:100%;max-width:1000px;height:auto;display:block;margin:0 auto;border-radius:10px;}
+.app-shot-wrap{margin:6px auto 30px;max-width:1000px;}
+.app-shot-hint{display:none;}
+@media(max-width:640px){
+.app-shot-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-left:-24px;margin-right:-24px;padding:0 24px;scrollbar-width:none;}
+.app-shot-wrap::-webkit-scrollbar{display:none;}
+.app-shot{width:220%;max-width:none;}
+.app-shot-hint{display:block;font-size:.65rem;letter-spacing:2px;color:var(--silver);text-transform:uppercase;margin:10px 0 24px;}
+}
 .app-icon{width:60px;height:60px;border-radius:14px;display:block;margin:14px auto 20px;box-shadow:0 6px 22px rgba(0,0,0,.45);}
 .how{max-width:1100px;margin:0 auto;padding:64px 24px 8px;}
 .how-head{text-align:center;margin-bottom:44px;}
@@ -1091,7 +1099,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
     <div class="app-sub">Conecta tu DEUS Band con la app <b>Da Halo</b> y mira tu actividad, sueño y ritmo cardíaco en tiempo real.</div>
     <div class="app-free">✓ 100% gratis · Sin suscripciones</div>
-    <img class="app-shot" src="img/img-025d064e.webp" alt="App Da Halo - pantallas de actividad, sueno y bienestar" loading="lazy" decoding="async">
+    <div class="app-shot-wrap"><img class="app-shot" src="img/img-025d064e.webp" alt="App Da Halo - pantallas de actividad, sueno y bienestar" loading="lazy" decoding="async"></div>
+    <div class="app-shot-hint">← Desliza para ver las pantallas →</div>
     <div class="app-stores">
       <a class="store-btn" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M17.05 12.04c-.03-2.85 2.33-4.22 2.43-4.29-1.32-1.94-3.38-2.2-4.11-2.23-1.75-.18-3.41 1.03-4.3 1.03-.88 0-2.25-1.01-3.7-.98-1.9.03-3.66 1.11-4.64 2.81-1.98 3.44-.51 8.53 1.42 11.32.94 1.37 2.06 2.9 3.53 2.85 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.4 3.43-2.78 1.08-1.59 1.53-3.13 1.55-3.21-.03-.01-2.98-1.14-3.01-4.52zM14.6 4.2c.78-.95 1.31-2.27 1.16-3.58-1.13.05-2.49.75-3.3 1.7-.72.84-1.36 2.18-1.19 3.46 1.26.1 2.55-.64 3.33-1.58z"/></svg>
