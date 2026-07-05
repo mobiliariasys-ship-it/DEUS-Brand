@@ -327,6 +327,38 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .benefit .b-tag{display:inline-block;font-size:.58rem;letter-spacing:3px;text-transform:uppercase;color:#69c46d;margin-bottom:12px;font-weight:700;}
 .benefit h4{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1.5px;margin-bottom:10px;color:var(--white);line-height:1.1;}
 .benefit p{font-size:.8rem;color:var(--silver);line-height:1.7;}
+/* Lema bajo el título */
+.brand-head-tag{font-size:.82rem;letter-spacing:1px;color:var(--silver);margin-top:10px;font-weight:300;text-transform:none;}
+/* Barra de compra fija */
+.sticky-buy{position:fixed;left:0;right:0;bottom:0;z-index:900;display:flex;align-items:center;justify-content:center;gap:18px;background:rgba(13,13,13,.97);border-top:1px solid var(--border);padding:10px 16px;transform:translateY(110%);transition:transform .25s ease;}
+.sticky-buy.show{transform:translateY(0);}
+.sticky-buy .sb-old{font-size:.72rem;color:var(--silver);text-decoration:line-through;margin-right:7px;}
+.sticky-buy b{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;font-weight:400;letter-spacing:1px;}
+.sb-btn{background:#fff;color:#000;border:none;border-radius:5px;padding:12px 26px;font-family:'DM Sans',sans-serif;font-size:.74rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
+body.sb-on .wa-float{bottom:82px;}
+@media(max-width:600px){body.sb-on .wa-float{bottom:76px;}.sticky-buy{gap:12px;padding:9px 12px;}.sb-btn{padding:11px 18px;font-size:.68rem;}}
+/* Garantía + Preguntas frecuentes */
+.faq{max-width:760px;margin:0 auto;padding:44px 24px 26px;}
+.faq-head{text-align:center;margin-bottom:24px;}
+.faq-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
+.faq-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1;}
+.guarantee{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid rgba(127,201,160,.4);border-radius:10px;padding:18px 20px;margin-bottom:24px;}
+.guarantee svg{flex-shrink:0;}
+.guarantee b{display:block;font-size:.9rem;margin-bottom:3px;letter-spacing:.3px;}
+.guarantee p{font-size:.77rem;color:var(--silver);line-height:1.6;}
+.faq details{border:1px solid var(--border);border-radius:8px;background:var(--card);margin-bottom:8px;}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-size:.84rem;font-weight:600;}
+.faq summary::-webkit-details-marker{display:none;}
+.faq summary::after{content:'+';color:var(--silver);font-size:1.15rem;margin-left:12px;flex-shrink:0;}
+.faq details[open] summary::after{content:'−';}
+.faq details p{padding:0 16px 14px;font-size:.79rem;color:var(--silver);line-height:1.7;}
+/* Cierre final */
+.final-cta{text-align:center;padding:60px 24px 64px;}
+.fc-line{font-family:'Bebas Neue',sans-serif;font-size:2.3rem;letter-spacing:2px;line-height:1.15;color:var(--silver);}
+.fc-line.strong{color:var(--white);font-size:2.6rem;margin-top:2px;}
+.fc-price{margin:22px 0 24px;font-family:'Bebas Neue',sans-serif;font-size:2rem;}
+.fc-price .fold{font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--silver);text-decoration:line-through;text-decoration-color:#e05555;margin-right:10px;vertical-align:middle;}
+@media(max-width:600px){.fc-line{font-size:1.9rem;}.fc-line.strong{font-size:2.2rem;}}
 .monitor-head{text-align:center;margin-bottom:24px;}
 .monitor-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .monitor-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1;}
@@ -483,6 +515,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   <div class="sec-label" id="band-detail">
     <div class="brand-head">
       <div class="brand-head-title">DEUS BAND</div>
+      <div class="brand-head-tag">Conoce tu cuerpo. Recupera tu mejor versión.</div>
     </div>
   </div>
   <div class="detail">
@@ -934,6 +967,36 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
   
 
+  <!-- BENEFICIOS -->
+  <section class="benefits">
+    <div class="benefits-head">
+      <div class="benefits-kicker">Por qué DEUS Band</div>
+      <div class="benefits-title">Mejora tu rendimiento, tu energía, tu sueño y tu recuperación</div>
+    </div>
+    <div class="benefits-grid">
+      <div class="benefit">
+        <span class="b-tag">Rendimiento</span>
+        <h4>Entrena con datos, no con sensaciones</h4>
+        <p>Cuando conoces cómo responde tu cuerpo, entrenas de forma más inteligente: sabes en qué momento dar más y en qué momento descansar. Así evitas el sobreentrenamiento y cada sesión te acerca de verdad a tu objetivo.</p>
+      </div>
+      <div class="benefit">
+        <span class="b-tag">Energía</span>
+        <h4>Más energía todos los días</h4>
+        <p>Tu energía diaria se construye mientras duermes. DEUS Band analiza tu descanso cada noche y te muestra cómo mejorarlo — y cuando duermes mejor, todo cambia: despiertas con más ánimo, rindes más durante el día y llegas con energía real hasta la noche.</p>
+      </div>
+      <div class="benefit">
+        <span class="b-tag">Sueño</span>
+        <h4>Descubre cómo son tus ciclos de sueño</h4>
+        <p>Cada noche, DEUS Band registra tus fases de sueño —profundo, ligero y REM— y te muestra cómo descansas realmente. Con esa información puedes ajustar tus hábitos y despertar cada día mejor.</p>
+      </div>
+      <div class="benefit">
+        <span class="b-tag">Recuperación</span>
+        <h4>El progreso ocurre cuando descansas</h4>
+        <p>Entrenar rompe, recuperar construye. DEUS Band te muestra si tu cuerpo ya asimiló el último esfuerzo, para que sepas cuándo es momento de volver a exigirte — y recuperes, día a día, tu mejor versión.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- COMO FUNCIONA -->
   <section class="how" id="tecnologia">
     <div class="how-head">
@@ -997,36 +1060,6 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       <div class="metric"><span class="num">08</span><span class="lbl">+100 modos deportivos</span></div>
       <div class="metric"><span class="num">09</span><span class="lbl">Ritmo, velocidad y cadencia</span></div>
       <div class="metric"><span class="num">10</span><span class="lbl">Notificaciones por vibración · llamadas, mensajes y alarma</span></div>
-    </div>
-  </section>
-
-  <!-- BENEFICIOS -->
-  <section class="benefits">
-    <div class="benefits-head">
-      <div class="benefits-kicker">Por qué DEUS Band</div>
-      <div class="benefits-title">Mejora tu rendimiento, tu energía, tu sueño y tu recuperación</div>
-    </div>
-    <div class="benefits-grid">
-      <div class="benefit">
-        <span class="b-tag">Rendimiento</span>
-        <h4>Entrena con datos, no con sensaciones</h4>
-        <p>Cuando conoces cómo responde tu cuerpo, entrenas de forma más inteligente: sabes en qué momento dar más y en qué momento descansar. Así evitas el sobreentrenamiento y cada sesión te acerca de verdad a tu objetivo.</p>
-      </div>
-      <div class="benefit">
-        <span class="b-tag">Energía</span>
-        <h4>Más energía todos los días</h4>
-        <p>Tu energía diaria se construye mientras duermes. DEUS Band analiza tu descanso cada noche y te muestra cómo mejorarlo — y cuando duermes mejor, todo cambia: despiertas con más ánimo, rindes más durante el día y llegas con energía real hasta la noche.</p>
-      </div>
-      <div class="benefit">
-        <span class="b-tag">Sueño</span>
-        <h4>Descubre cómo son tus ciclos de sueño</h4>
-        <p>Cada noche, DEUS Band registra tus fases de sueño —profundo, ligero y REM— y te muestra cómo descansas realmente. Con esa información puedes ajustar tus hábitos y despertar cada día mejor.</p>
-      </div>
-      <div class="benefit">
-        <span class="b-tag">Recuperación</span>
-        <h4>El progreso ocurre cuando descansas</h4>
-        <p>Entrenar rompe, recuperar construye. DEUS Band te muestra si tu cuerpo ya asimiló el último esfuerzo, para que sepas cuándo es momento de volver a exigirte — y recuperes, día a día, tu mejor versión.</p>
-      </div>
     </div>
   </section>
 
@@ -1155,6 +1188,57 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     }catch(e){ msg.style.color='#c0392b'; msg.textContent='No se pudo enviar. Intenta de nuevo.'; btn.disabled=false; btn.textContent='Enviar reseña'; }
   }
   </script>
+
+  <!-- GARANTÍA + PREGUNTAS FRECUENTES -->
+  <section class="faq">
+    <div class="faq-head">
+      <div class="faq-kicker">Compra sin miedo</div>
+      <div class="faq-title">Preguntas frecuentes</div>
+    </div>
+    <div class="guarantee">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div>
+        <b>Garantía de satisfacción · 30 días</b>
+        <p>Si la DEUS Band no es para ti, te devolvemos tu dinero. Además cuentas con la garantía legal por fallas de fábrica. Te acompañamos por WhatsApp en todo el proceso.</p>
+      </div>
+    </div>
+    <details>
+      <summary>¿Funciona con iPhone y con Android?</summary>
+      <p>Sí. La app Da Halo es gratis y está disponible en App Store y Google Play. Además se conecta con Strava y Apple Health.</p>
+    </details>
+    <details>
+      <summary>¿Cuánto dura la batería?</summary>
+      <p>Hasta 20 días por carga, usándola día y noche. Te olvidas del cargador por semanas.</p>
+    </details>
+    <details>
+      <summary>¿Puedo entrenar y mojarla?</summary>
+      <p>Sí. Es resistente al agua 1 ATM: apta para entrenamiento, sudor, lluvia y uso diario sin restricciones.</p>
+    </details>
+    <details>
+      <summary>Si no tiene pantalla, ¿cómo veo mis datos?</summary>
+      <p>Todo se ve en la app Da Halo: sueño, ritmo cardíaco, actividad y más. Y la banda te avisa con vibración cuando llega una llamada, un mensaje o suena tu alarma.</p>
+    </details>
+    <details>
+      <summary>¿Cuánto tarda el envío?</summary>
+      <p>Despachamos a todo Chile. El envío estándar tarda 3 a 6 días hábiles y por lanzamiento es gratis.</p>
+    </details>
+    <details>
+      <summary>¿Cómo puedo pagar?</summary>
+      <p>Con tarjeta de débito o crédito a través de Webpay, Flow o Mercado Pago. Pago 100% seguro.</p>
+    </details>
+    <details>
+      <summary>¿Qué pasa si me arrepiento o llega con una falla?</summary>
+      <p>Tienes 30 días de garantía de satisfacción y garantía legal por fallas de fábrica. Nos escribes por WhatsApp y lo resolvemos rápido.</p>
+    </details>
+  </section>
+
+  <!-- CIERRE -->
+  <section class="final-cta">
+    <div class="fc-line">Tu cuerpo lleva años hablándote.</div>
+    <div class="fc-line strong">Es hora de escucharlo.</div>
+    <div class="fc-price"><span class="fold">$44.990</span>$38.990</div>
+    <button class="btn-p" onclick="abrirCheckout()">Comprar ahora</button>
+  </section>
 
   <!-- BANNER -->
   <div class="banner">
@@ -1312,6 +1396,24 @@ document.addEventListener('DOMContentLoaded', function() {
   updateCountdown();
   setInterval(updateCountdown, 1000);
 });
+</script>
+
+<!-- Barra de compra fija -->
+<div class="sticky-buy" id="stickyBuy">
+  <div class="sb-price"><span class="sb-old">$44.990</span><b>$38.990</b></div>
+  <button class="sb-btn" onclick="abrirCheckout()">Comprar ahora</button>
+</div>
+<script>
+(function(){
+  var bar=document.getElementById('stickyBuy');
+  function onScroll(){
+    var show=window.scrollY>600;
+    bar.classList.toggle('show',show);
+    document.body.classList.toggle('sb-on',show);
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  onScroll();
+})();
 </script>
 
 <!-- Visor con zoom de la foto del producto -->
