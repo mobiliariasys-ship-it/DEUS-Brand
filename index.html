@@ -178,7 +178,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .spec-icon{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:40px;height:40px;border-radius:10px;background:#1c1c1c;border:1px solid #2d2d2d;}
 .spec-label{display:block;font-weight:700;color:var(--white);font-size:.86rem;margin-bottom:2px;letter-spacing:.2px;}
 
-.price-old{font-size:1.1rem;color:var(--silver);text-decoration:line-through;margin-bottom:4px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:3.8rem;line-height:1;margin-bottom:22px;}
+.price-old{font-size:1.1rem;color:var(--silver);text-decoration:line-through;margin-bottom:4px;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:2px;color:#69c46d;border:1px solid #69c46d;padding:3px 8px;vertical-align:middle;margin-left:8px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:3.8rem;line-height:1;margin-bottom:22px;}
 .price-block sup{font-family:'DM Sans',sans-serif;font-size:1.2rem;color:var(--silver);vertical-align:top;margin-top:10px;margin-right:2px;font-weight:300;}
 
 .cta-row{display:grid;grid-template-columns:1fr auto;gap:8px;}
@@ -492,7 +492,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       
       <a class="prod-rating" onclick="var r=document.querySelector('.reviews');if(r)r.scrollIntoView({behavior:'smooth'});return false;"><span class="stars">★★★★★</span><span class="rating-txt"><b id="rating-count">3</b> reseñas</span></a>
 
-      <div class="price-block"><sup>$</sup>38.990</div>
+      <div class="price-old">Precio normal: $44.990</div>
+      <div class="price-block"><sup>$</sup>38.990 <span class="price-offer-tag">OFERTA</span></div>
 
       <div class="cta-row">
         <button class="btn-p" onclick="abrirCheckout()">Comprar ahora</button>
