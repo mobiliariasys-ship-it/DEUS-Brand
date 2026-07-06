@@ -263,6 +263,10 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .prod-rating .stars{color:#e9c46a;font-size:.95rem;letter-spacing:2px;}
 .prod-rating .rating-txt{color:var(--silver);font-size:.72rem;letter-spacing:.5px;border-bottom:1px solid #444;padding-bottom:1px;}
 .prod-rating:hover .rating-txt{color:#e8e8e8;border-color:#888;}
+.resist-badge{display:flex;align-items:center;gap:13px;margin-top:16px;padding:14px 16px;border:1px solid #333;border-radius:10px;background:linear-gradient(135deg,#191919,#121212);}
+.resist-badge svg{flex-shrink:0;}
+.resist-badge b{display:block;font-size:.86rem;letter-spacing:.3px;margin-bottom:3px;color:var(--white);}
+.resist-badge span{font-size:.76rem;color:var(--silver);line-height:1.5;}
 .reassure{display:flex;flex-direction:column;gap:11px;margin-top:18px;}
 .reassure-item{display:flex;align-items:center;gap:10px;font-size:.75rem;color:#cfcfcf;letter-spacing:.3px;line-height:1.3;}
 .reassure-item svg{flex-shrink:0;}
@@ -339,21 +343,30 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .benefit h4{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1.5px;margin-bottom:10px;color:var(--white);line-height:1.1;}
 .benefit p{font-size:.8rem;color:var(--silver);line-height:1.7;}
 .benefits-selector{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:28px;}
-.benefit-btn{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;font-size:.78rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:all .2s;font-family:'DM Sans',sans-serif;}
-.benefit-btn:hover{border-color:#e8e8e8;color:#e8e8e8;}
-.benefit-btn.active{background:#e8e8e8;color:#080808;border-color:#e8e8e8;}
+.benefit-btn{display:inline-flex;align-items:center;gap:8px;background:#141414;border:1px solid var(--border);color:var(--silver);padding:11px 22px;font-size:.78rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:30px;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.benefit-btn .bb-ico{font-size:1rem;line-height:1;filter:grayscale(.15);transition:transform .2s;}
+.benefit-btn:hover{border-color:#e8e8e8;color:#e8e8e8;transform:translateY(-2px);}
+.benefit-btn:hover .bb-ico{transform:scale(1.15);}
+.benefit-btn.active{background:#e8e8e8;color:#080808;border-color:#e8e8e8;box-shadow:0 6px 20px rgba(255,255,255,.12);}
 .benefits-grid{display:flex;flex-wrap:wrap;gap:14px;}
-.benefit-card{width:100%;flex-grow:1;}
+.benefit-card{width:100%;flex-grow:1;position:relative;padding-left:24px;overflow:hidden;}
+.benefit-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(#e8e8e8,#666);}
 .benefit-card h4{display:block;width:100%;}
+.bc-ico{font-size:1.9rem;line-height:1;margin-bottom:12px;}
+.bc-anim{animation:bcIn .35s ease;}
+@keyframes bcIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.benefits-empty{text-align:center;color:var(--silver);font-size:.82rem;letter-spacing:.3px;padding:28px 20px;border:1px dashed var(--border);border-radius:12px;}
 .benefits-sub{font-size:.78rem;color:var(--silver);margin-top:8px;letter-spacing:.3px;}
 @media(max-width:600px){
   .benefits-title{font-size:1.7rem;}
   .benefits-sub{font-size:.72rem;}
   .benefits-selector{gap:8px;margin-bottom:20px;}
-  .benefit-btn{padding:9px 16px;font-size:.7rem;}
-  .benefit{padding:20px 18px;}
+  .benefit-btn{padding:10px 16px;font-size:.68rem;gap:6px;}
+  .benefit{padding:22px 18px 22px 24px;}
   .benefit h4{font-size:1.25rem;margin-bottom:8px;line-height:1.2;}
   .benefit p{font-size:.8rem;line-height:1.65;}
+  .bc-ico{font-size:1.6rem;margin-bottom:10px;}
+  .benefits-empty{font-size:.76rem;padding:22px 16px;}
 }
 /* Lema bajo el título */
 .brand-head-tag{font-size:.82rem;letter-spacing:1px;color:var(--silver);margin-top:10px;font-weight:300;text-transform:none;}
@@ -440,7 +453,7 @@ body.sb-on .wa-float{bottom:82px;}
 .cd-sep{font-size:1.3rem;color:#d4af6e;font-weight:bold;}
 @media(max-width:600px){.offer-banner{padding:14px 20px;}.offer-inner{justify-content:center;gap:16px;}.offer-text{align-items:center;text-align:center;}.cd-unit{min-width:46px;padding:6px 10px;}.cd-unit span{font-size:1.4rem;}}
 
-.gal-slider{position:relative;width:100%;height:auto;aspect-ratio:1/1;align-self:start;background:#1e1e1e;border-radius:8px;overflow:hidden;will-change:transform;}
+.gal-slider{position:relative;width:100%;height:auto;aspect-ratio:1200/1306;align-self:start;background:#1e1e1e;border-radius:8px;overflow:hidden;will-change:transform;}
 .slide{cursor:zoom-in;}
 .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:3000;align-items:center;justify-content:center;}
 .lightbox.show{display:flex;}
@@ -468,7 +481,7 @@ body.sb-on .wa-float{bottom:82px;}
 
 @media(max-width:600px){
   .slide{height:100%;}
-  .gal-slider{height:auto;min-height:0;aspect-ratio:1/1;max-height:none;}
+  .gal-slider{height:auto;min-height:0;aspect-ratio:1200/1306;max-height:none;}
   .detail{grid-template-columns:1fr;}
 }
 .shipping-section{margin:24px 0;border:1px solid var(--border);padding:20px;}.shipping-title{font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:#aaa;margin-bottom:16px;}.shipping-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}.shipping-input{background:#111;border:1px solid var(--border);color:var(--white);padding:10px 14px;font-family:"DM Sans",sans-serif;font-size:.78rem;width:100%;}.shipping-input:focus{outline:none;border-color:#555;}.btn-calcular{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;font-size:.6rem;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s;width:100%;grid-column:1/-1;}.btn-calcular:hover{border-color:#e8e8e8;color:#e8e8e8;}.carrier-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}.carrier-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);cursor:pointer;transition:border-color .2s;}.carrier-option:hover,.carrier-option.selected{border-color:#e8e8e8;}.carrier-name{font-weight:600;font-size:.78rem;flex:1;}.carrier-time{font-size:.65rem;color:#666;margin-top:2px;}.carrier-price{font-family:"Bebas Neue",sans-serif;font-size:1.2rem;color:#e8e8e8;}.total-row{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}.total-label{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:#aaa;}.total-price{font-family:"Bebas Neue",sans-serif;font-size:2rem;}.shipping-msg{font-size:.65rem;color:#666;letter-spacing:1px;margin-top:10px;text-align:center;}.shipping-error{color:#c0392b;font-size:.65rem;letter-spacing:1px;margin-top:10px;}.ac-wrap{position:relative;}.ac-list{position:absolute;top:100%;left:0;right:0;background:#111;border:1px solid #555;border-top:none;max-height:200px;overflow-y:auto;z-index:60;display:none;}.ac-list.show{display:block;}.ac-item{padding:9px 14px;font-size:.78rem;color:var(--white);cursor:pointer;border-bottom:1px solid #1a1a1a;}.ac-item:last-child{border-bottom:none;}.ac-item:hover{background:#1e1e1e;}
@@ -612,6 +625,14 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
       <div class="cta-row">
         <button class="btn-p" onclick="abrirCheckout()">Comprar ahora</button>
+      </div>
+
+      <div class="resist-badge">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e8e8e8" stroke-width="1.6"><path d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div>
+          <b>Súper resistente · Aleación de zinc</b>
+          <span>Estructura en aleación de zinc de grado premium: resiste golpes, sudor y uso diario sin desgastarse.</span>
+        </div>
       </div>
 
       <div class="reassure">
@@ -1044,40 +1065,49 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       <div class="benefits-sub">Toca una o más opciones y descubre cómo te ayuda</div>
     </div>
     <div class="benefits-selector">
-      <button class="benefit-btn" onclick="toggleBenefit('rendimiento', this)">Rendimiento</button>
-      <button class="benefit-btn" onclick="toggleBenefit('energia', this)">Energía</button>
-      <button class="benefit-btn" onclick="toggleBenefit('sueño', this)">Sueño</button>
-      <button class="benefit-btn" onclick="toggleBenefit('recuperacion', this)">Recuperación</button>
+      <button class="benefit-btn" onclick="toggleBenefit('rendimiento', this)"><span class="bb-ico">⚡</span>Rendimiento</button>
+      <button class="benefit-btn" onclick="toggleBenefit('energia', this)"><span class="bb-ico">🔋</span>Energía</button>
+      <button class="benefit-btn" onclick="toggleBenefit('sueño', this)"><span class="bb-ico">🌙</span>Sueño</button>
+      <button class="benefit-btn" onclick="toggleBenefit('recuperacion', this)"><span class="bb-ico">🔄</span>Recuperación</button>
     </div>
     <div class="benefits-grid">
       <div class="benefit benefit-card" id="card-rendimiento" style="display:none;">
+        <div class="bc-ico">⚡</div>
         <h4>Entrena con datos, no con sensaciones</h4>
         <p>Cuando sabes cómo responde tu cuerpo, sabes cuándo dar más y cuándo frenar. Evitas el sobreentrenamiento y cada sesión te acerca de verdad a tu objetivo.</p>
       </div>
       <div class="benefit benefit-card" id="card-energia" style="display:none;">
+        <div class="bc-ico">🔋</div>
         <h4>Más energía todos los días</h4>
         <p>Tu energía no es casualidad: es el resultado del balance entre lo que te exiges y lo que descansas. DEUS Band te muestra ese balance cada mañana, para que sepas qué ajustar y llegues con energía real hasta la noche.</p>
       </div>
       <div class="benefit benefit-card" id="card-sueño" style="display:none;">
+        <div class="bc-ico">🌙</div>
         <h4>Descubre cómo duermes realmente</h4>
         <p>Cada noche registra tus fases de sueño —profundo, ligero y REM— y te muestra qué tan reparador fue tu descanso. Con esa información ajustas tus hábitos y despiertas cada día mejor.</p>
       </div>
       <div class="benefit benefit-card" id="card-recuperacion" style="display:none;">
+        <div class="bc-ico">🔄</div>
         <h4>El progreso ocurre cuando descansas</h4>
         <p>Entrenar rompe, recuperar construye. DEUS Band te dice si tu cuerpo ya asimiló el último esfuerzo y está listo para volver a exigirse — y así recuperas, día a día, tu mejor versión.</p>
       </div>
     </div>
+    <div class="benefits-empty" id="benefitsEmpty">👆 Toca una opción arriba para ver cómo DEUS Band te ayuda</div>
   </section>
   <script>
   function toggleBenefit(id, btn){
     var card=document.getElementById('card-'+id);
     if(card.style.display==='none'){
       card.style.display='block';
+      card.classList.remove('bc-anim'); void card.offsetWidth; card.classList.add('bc-anim');
       btn.classList.add('active');
     }else{
       card.style.display='none';
       btn.classList.remove('active');
     }
+    var any=document.querySelector('.benefit-card[style*="block"]');
+    var empty=document.getElementById('benefitsEmpty');
+    if(empty) empty.style.display=any?'none':'block';
   }
   </script>
 
@@ -1168,8 +1198,16 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
     <div class="app-sub">Conecta tu DEUS Band con la app <b>Da Halo</b> y mira tu actividad, sueño y ritmo cardíaco en tiempo real.</div>
     <div class="app-free">✓ 100% gratis · Sin suscripciones</div>
-    <div class="app-shot-wrap"><img class="app-shot" src="img/img-025d064e.webp" alt="App Da Halo - pantallas de actividad, sueno y bienestar" loading="lazy" decoding="async"></div>
+    <div class="app-shot-wrap" id="appShotWrap"><img class="app-shot" src="img/img-025d064e.webp" alt="App Da Halo - pantallas de actividad, sueno y bienestar" loading="lazy" decoding="async" onload="centerAppShot()"></div>
     <div class="app-shot-hint">← Desliza para ver las pantallas →</div>
+    <script>
+    function centerAppShot(){
+      var w=document.getElementById('appShotWrap');
+      if(w){ w.scrollLeft=(w.scrollWidth-w.clientWidth)/2; }
+    }
+    window.addEventListener('load',centerAppShot);
+    window.addEventListener('resize',centerAppShot);
+    </script>
     <div class="app-stores">
       <a class="store-btn" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M17.05 12.04c-.03-2.85 2.33-4.22 2.43-4.29-1.32-1.94-3.38-2.2-4.11-2.23-1.75-.18-3.41 1.03-4.3 1.03-.88 0-2.25-1.01-3.7-.98-1.9.03-3.66 1.11-4.64 2.81-1.98 3.44-.51 8.53 1.42 11.32.94 1.37 2.06 2.9 3.53 2.85 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.4 3.43-2.78 1.08-1.59 1.53-3.13 1.55-3.21-.03-.01-2.98-1.14-3.01-4.52zM14.6 4.2c.78-.95 1.31-2.27 1.16-3.58-1.13.05-2.49.75-3.3 1.7-.72.84-1.36 2.18-1.19 3.46 1.26.1 2.55-.64 3.33-1.58z"/></svg>
