@@ -3,6 +3,7 @@ const router = express.Router();
 const https = require('https');
 const crypto = require('crypto');
 const { enviarPedidoNuevo, enviarPagoConfirmado } = require('../services/email');
+const { decrementStock } = require('../services/stock');
 
 const PRODUCT_PRICE = 38990;
 const pedidosFlow = new Map();
@@ -109,6 +110,7 @@ router.post('/flow/confirmacion', async (req, res) => {
     console.log('[flow/confirmacion] ' + st.commerceOrder + ' status=' + st.status);
     if (st.status === 2) {
       if (pedido) pedido.status = 'paid';
+      decrementStock(st.commerceOrder);
       enviarPagoConfirmado({
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },
         transaction_amount: st.amount,

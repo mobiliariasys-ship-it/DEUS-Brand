@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { WebpayPlus, Options, IntegrationApiKeys, IntegrationCommerceCodes, Environment } = require('transbank-sdk');
 const { enviarPedidoNuevo, enviarPagoConfirmado } = require('../services/email');
+const { decrementStock } = require('../services/stock');
 
 const PRODUCT_PRICE = 38990;
 const pedidosWebpay = new Map(); // buyOrder -> pedido
@@ -80,6 +81,7 @@ async function handleRetorno(req, res) {
     console.log(`[webpay/retorno] ${result.buy_order} — ${result.status} (${result.response_code})`);
 
     if (aprobado) {
+      decrementStock(result.buy_order);
       enviarPagoConfirmado({
         payer: { email: '(Pago con Webpay)' },
         transaction_amount: result.amount,

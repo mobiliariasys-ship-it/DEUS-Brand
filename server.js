@@ -5,6 +5,7 @@ const shippingRoutes = require('./routes/shipping');
 const transbankRoutes = require('./routes/transbank');
 const flowRoutes = require('./routes/flow');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarResena } = require('./services/email');
+const { getStock, decrementStock } = require('./services/stock');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -161,6 +162,7 @@ app.post('/notificaciones', async (req, res) => {
 
       if (info.status === 'approved') {
         await enviarPagoConfirmado(info);
+        decrementStock(info.id);
       }
     } catch (err) {
       console.error('[webhook] Error consultando pago:', err.message);
@@ -170,6 +172,11 @@ app.post('/notificaciones', async (req, res) => {
 
 app.get('/pedidos', (req, res) => {
   res.json(pedidos);
+});
+
+// Stock restante (para el contador de unidades en la web)
+app.get('/stock', (req, res) => {
+  res.json({ remaining: getStock() });
 });
 
 // Endpoint liviano para keep-alive (cron-job.org / UptimeRobot).

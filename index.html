@@ -247,6 +247,8 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .topbar{position:static;background:#0d0d0d;}
 /* Reseñas */
 .reviews{max-width:1100px;margin:0 auto;padding:36px 24px 46px;}
+.stock-badge{max-width:420px;margin:0 auto 24px;text-align:center;background:rgba(224,85,85,.08);border:1px solid rgba(224,85,85,.4);color:#f0d5d5;border-radius:30px;padding:11px 20px;font-size:.82rem;letter-spacing:.3px;}
+.stock-badge b{color:#fff;font-weight:700;}
 .reviews-head{text-align:center;margin-bottom:28px;}
 .reviews-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .reviews-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1;}
@@ -617,7 +619,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       </div>
     </div>
     <div class="info">
-      <div class="straps-tag">✓ Incluye 2 correas — deportiva y de nylon</div>
+      <div class="straps-tag">✓ Incluye 2 correas — de silicona y de nylon high tech</div>
       <div class="colors-row">
         <span class="clabel">Color</span>
         <div class="cdot active" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
@@ -1229,6 +1231,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
   <!-- RESEÑAS -->
   <section class="reviews">
+    <div class="stock-badge" id="stockBadge" style="display:none;">🔥 Quedan <b id="stockNum">4</b> unidades disponibles</div>
     <div class="reviews-head">
       <div class="reviews-kicker">Lo que dicen</div>
       <div class="reviews-title">Reseñas de la comunidad</div>
@@ -1290,6 +1293,19 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     var rc = document.getElementById('rating-count');
     var n = document.querySelectorAll('.reviews .review-card').length;
     if (rc && n) rc.textContent = n;
+  })();
+  // Contador de stock: baja con cada pago confirmado (endpoint /stock del backend)
+  (function(){
+    var badge = document.getElementById('stockBadge');
+    var num = document.getElementById('stockNum');
+    if (!badge || !num) return;
+    fetch(api('/stock')).then(function(r){ return r.json(); }).then(function(d){
+      var q = d && typeof d.remaining === 'number' ? d.remaining : null;
+      if (q === null) return;
+      if (q <= 0) { badge.innerHTML = '⏳ Agotado por ahora — escríbenos para reservar la próxima tanda'; badge.style.display='block'; return; }
+      num.textContent = q;
+      badge.style.display = 'block';
+    }).catch(function(){ /* si el backend no responde, no mostramos nada */ });
   })();
   function abrirResena(){ document.getElementById('resenaOverlay').style.display='flex'; }
   function cerrarResena(){ document.getElementById('resenaOverlay').style.display='none'; }
