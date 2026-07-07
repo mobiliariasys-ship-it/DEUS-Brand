@@ -1104,15 +1104,27 @@ function promoActive(){return Date.now()<window.PROMO_END;}
                   <div class="cart-item-color">${item.colorLabel}</div>
                   <div class="cart-item-price">$${item.precio.toLocaleString('es-CL')}</div>
                   <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-                    <button class="cart-qty-btn" onclick="cambiarCantidad('${item.id}',-1)">−</button>
+                    <button class="cart-qty-btn cart-qty-minus" data-id="${item.id}">−</button>
                     <span style="width:24px;text-align:center;font-size:.75rem;">${item.cantidad}</span>
-                    <button class="cart-qty-btn" onclick="cambiarCantidad('${item.id}',1)">+</button>
+                    <button class="cart-qty-btn cart-qty-plus" data-id="${item.id}">+</button>
                     <span style="flex:1;"></span>
-                    <div class="cart-item-remove" onclick="removerDelCarrito('${item.id}')">🗑</div>
+                    <div class="cart-item-remove" data-id="${item.id}">🗑</div>
                   </div>
                 </div>
               </div>
             `).join('');
+
+            // Agregar event listeners después de renderizar
+            body.querySelectorAll('.cart-qty-minus').forEach(btn => {
+              btn.addEventListener('click', () => cambiarCantidad(btn.dataset.id, -1));
+            });
+            body.querySelectorAll('.cart-qty-plus').forEach(btn => {
+              btn.addEventListener('click', () => cambiarCantidad(btn.dataset.id, 1));
+            });
+            body.querySelectorAll('.cart-item-remove').forEach(btn => {
+              btn.addEventListener('click', () => removerDelCarrito(btn.dataset.id));
+            });
+
             const total = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
             document.getElementById('cart-total-price').textContent = '$' + total.toLocaleString('es-CL');
             footer.style.display = 'block';
