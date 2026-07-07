@@ -94,8 +94,10 @@ body{background:var(--black);font-family:'DM Sans',sans-serif;color:var(--white)
 /* HEADER */
 header{display:flex;align-items:center;justify-content:space-between;padding:10px 22px;background:#0d0d0d;}
 .hdr-right{display:flex;align-items:center;gap:16px;}
-.hdr-ig{color:#b5b5b5;display:flex;transition:color .2s,transform .15s;}
-.hdr-ig:hover{color:#fff;transform:scale(1.08);}
+.hdr-cart-btn{background:none;border:none;color:#b5b5b5;display:flex;align-items:center;gap:6px;cursor:pointer;transition:color .2s,transform .15s;position:relative;}
+.hdr-cart-btn:hover{color:#fff;transform:scale(1.08);}
+.hdr-cart-count{background:#e05555;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;position:absolute;top:-8px;right:-8px;}
+.hdr-cart-count.hidden{display:none;}
 .hdr-price{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:1px;color:var(--white);}
 .hdr-buy{background:#fff;color:#000;border:none;border-radius:5px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:transform .15s;}
 .hdr-buy:hover{transform:translateY(-1px);}
@@ -555,7 +557,9 @@ body.sb-on .wa-float{bottom:82px;}
 .pay-methods{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:7px;font-size:.62rem;font-weight:600;letter-spacing:.5px;}
 /* Carrito */
 .cart-badge{position:fixed;bottom:20px;right:20px;z-index:950;background:#fff;color:#000;border-radius:50%;width:50px;height:50px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:transform .2s;}.cart-badge:hover{transform:scale(1.1);}.cart-badge.hidden{display:none;}
-.cart-drawer{position:fixed;right:0;top:0;bottom:0;width:100%;max-width:400px;background:#0f0f0f;border-left:1px solid var(--border);z-index:1100;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;}.cart-drawer.open{transform:translateX(0);}.cart-drawer-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}.cart-drawer-title{font-size:1rem;font-weight:700;}.cart-drawer-close{background:none;border:none;color:#888;font-size:1.5rem;cursor:pointer;}.cart-drawer-body{padding:16px;}.cart-item{display:flex;gap:12px;padding:12px;background:#161616;border-radius:8px;margin-bottom:12px;border:1px solid var(--border);}.cart-item-img{width:60px;height:60px;border-radius:6px;object-fit:cover;background:#1e1e1e;flex-shrink:0;}.cart-item-info{flex:1;}.cart-item-name{font-size:.75rem;font-weight:700;color:var(--white);}.cart-item-color{font-size:.65rem;color:var(--silver);margin-top:2px;}.cart-item-price{font-size:.8rem;color:#e8b464;margin-top:4px;font-weight:700;}.cart-item-remove{color:#e05555;font-size:.65rem;cursor:pointer;margin-top:6px;text-decoration:underline;}.cart-drawer-empty{text-align:center;padding:40px 16px;color:var(--silver);font-size:.8rem;}.cart-drawer-footer{padding:16px;border-top:1px solid var(--border);background:#0d0d0d;position:sticky;bottom:0;}.cart-total{display:flex;justify-content:space-between;margin-bottom:12px;font-size:.9rem;}.cart-total-label{color:var(--silver);}.cart-total-price{color:var(--white);font-weight:700;}.cart-cta{width:100%;padding:14px;background:#fff;color:#000;border:none;border-radius:6px;font-weight:700;font-size:.75rem;letter-spacing:2px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.cart-drawer{position:fixed;right:0;top:0;bottom:0;width:100%;max-width:400px;background:#0f0f0f;border-left:1px solid var(--border);z-index:1100;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;}.cart-drawer.open{transform:translateX(0);}.cart-drawer-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}.cart-drawer-title{font-size:1rem;font-weight:700;}.cart-drawer-close{background:none;border:none;color:#888;font-size:1.5rem;cursor:pointer;}.cart-drawer-body{padding:16px;}.cart-item{display:flex;gap:12px;padding:12px;background:#161616;border-radius:8px;margin-bottom:12px;border:1px solid var(--border);}.cart-item-img{width:60px;height:60px;border-radius:6px;object-fit:cover;background:#1e1e1e;flex-shrink:0;}.cart-item-info{flex:1;}.cart-item-name{font-size:.75rem;font-weight:700;color:var(--white);}.cart-item-color{font-size:.65rem;color:var(--silver);margin-top:2px;}.cart-item-price{font-size:.8rem;color:#e8b464;margin-top:4px;font-weight:700;}.cart-item-remove{color:#e05555;font-size:.75rem;cursor:pointer;text-decoration:none;}
+.cart-qty-btn{background:transparent;border:1px solid var(--border);color:#e8b464;width:24px;height:24px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;transition:all .2s;}
+.cart-qty-btn:hover{border-color:#e8b464;background:rgba(232,180,100,.1);}.cart-drawer-empty{text-align:center;padding:40px 16px;color:var(--silver);font-size:.8rem;}.cart-drawer-footer{padding:16px;border-top:1px solid var(--border);background:#0d0d0d;position:sticky;bottom:0;}.cart-total{display:flex;justify-content:space-between;margin-bottom:12px;font-size:.9rem;}.cart-total-label{color:var(--silver);}.cart-total-price{color:var(--white);font-weight:700;}.cart-cta{width:100%;padding:14px;background:#fff;color:#000;border:none;border-radius:6px;font-weight:700;font-size:.75rem;letter-spacing:2px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 /* Banner de app estilo Smart App Banner */
 .app-smartbar{display:flex;align-items:center;gap:12px;background:#131313;border-bottom:1px solid var(--border);padding:10px 14px;}
 .asb-close{background:none;border:none;color:#888;font-size:1.3rem;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;}
@@ -613,9 +617,10 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
   <div class="hdr-right">
-    <a class="hdr-ig" href="https://www.instagram.com/deusbrand.cl/" target="_blank" rel="noopener noreferrer" aria-label="Síguenos en Instagram">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg>
-    </a>
+    <button class="hdr-cart-btn" onclick="abrirCarrito()" aria-label="Abrir carrito">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="hdr-cart-count hidden" id="hdr-cart-count">0</span>
+    </button>
   </div>
 </header>
 </div><!-- /topbar -->
@@ -991,34 +996,43 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         let cart = JSON.parse(localStorage.getItem('deus-cart')) || [];
         function actualizarCarrito() {
           localStorage.setItem('deus-cart', JSON.stringify(cart));
+          const cantidadTotal = cart.reduce((sum, item) => sum + item.cantidad, 0);
           const badge = document.getElementById('cart-badge');
-          if (cart.length > 0) {
-            badge.textContent = cart.length;
+          const hdrCount = document.getElementById('hdr-cart-count');
+          if (cantidadTotal > 0) {
+            badge.textContent = cantidadTotal;
             badge.classList.remove('hidden');
+            hdrCount.textContent = cantidadTotal;
+            hdrCount.classList.remove('hidden');
           } else {
             badge.classList.add('hidden');
+            hdrCount.classList.add('hidden');
           }
           renderizarCarrito();
         }
         function agregarAlCarrito() {
           const color = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'negra';
           const colorLabel = COLOR_LABEL[color] || 'Negro';
-          const producto = {
-            id: Date.now(),
-            nombre: 'DEUS Band',
-            color: color,
-            colorLabel: colorLabel,
-            precio: 38990,
-            imagen: bandImages[color]
-          };
-          cart.push(producto);
+          const existente = cart.find(item => item.color === color);
+          if (existente) {
+            existente.cantidad++;
+          } else {
+            cart.push({
+              id: color,
+              nombre: 'DEUS Band',
+              color: color,
+              colorLabel: colorLabel,
+              precio: 38990,
+              imagen: bandImages[color],
+              cantidad: 1
+            });
+          }
           actualizarCarrito();
           abrirCarrito();
-          // Notificación visual
           const btn = event.target;
           const txt = btn.textContent;
           btn.textContent = '✓ Agregado';
-          setTimeout(() => { btn.textContent = '🛒 Carrito'; }, 1500);
+          setTimeout(() => { btn.textContent = '🛒'; }, 1500);
         }
         function abrirCarrito() {
           document.getElementById('cart-drawer').classList.add('open');
@@ -1031,6 +1045,14 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         function removerDelCarrito(id) {
           cart = cart.filter(item => item.id !== id);
           actualizarCarrito();
+        }
+        function cambiarCantidad(id, delta) {
+          const item = cart.find(item => item.id === id);
+          if (item) {
+            item.cantidad += delta;
+            if (item.cantidad <= 0) removerDelCarrito(id);
+            else actualizarCarrito();
+          }
         }
         function renderizarCarrito() {
           const body = document.getElementById('cart-body');
@@ -1046,11 +1068,17 @@ function promoActive(){return Date.now()<window.PROMO_END;}
                   <div class="cart-item-name">${item.nombre}</div>
                   <div class="cart-item-color">${item.colorLabel}</div>
                   <div class="cart-item-price">$${item.precio.toLocaleString('es-CL')}</div>
-                  <div class="cart-item-remove" onclick="removerDelCarrito(${item.id})">Remover</div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                    <button class="cart-qty-btn" onclick="cambiarCantidad('${item.id}',-1)">−</button>
+                    <span style="width:24px;text-align:center;font-size:.75rem;">${item.cantidad}</span>
+                    <button class="cart-qty-btn" onclick="cambiarCantidad('${item.id}',1)">+</button>
+                    <span style="flex:1;"></span>
+                    <div class="cart-item-remove" onclick="removerDelCarrito('${item.id}')">🗑</div>
+                  </div>
                 </div>
               </div>
             `).join('');
-            const total = cart.reduce((sum, item) => sum + item.precio, 0);
+            const total = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
             document.getElementById('cart-total-price').textContent = '$' + total.toLocaleString('es-CL');
             footer.style.display = 'block';
           }
@@ -1700,9 +1728,6 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(updateCountdown, 1000);
 });
 </script>
-
-<!-- Badge del carrito -->
-<div class="cart-badge hidden" id="cart-badge" onclick="abrirCarrito()">0</div>
 
 <!-- Drawer del carrito -->
 <div class="cart-drawer" id="cart-drawer">
