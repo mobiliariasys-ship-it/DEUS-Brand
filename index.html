@@ -1631,7 +1631,7 @@ function updateStockUI() {
 
 function cargarStock() {
   fetch(api('/stock')).then(r => r.json()).then(d => {
-    if (d && typeof d.remaining === 'number') { stockRestante = d.remaining; updateStockUI(); }
+    if (d && typeof d.remaining === 'number') { stockRestante = Math.max(0, d.remaining - 1); updateStockUI(); }
   }).catch(() => { /* sin backend no se muestra el aviso */ });
 }
 
