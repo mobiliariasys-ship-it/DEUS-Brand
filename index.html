@@ -901,6 +901,9 @@ function promoActive(){return Date.now()<window.PROMO_END;}
           return REGION_CODES[key] || '13';
         }
 
+        function calcularTotalCarrito() {
+          return cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+        }
         async function calcularEnvio() {
           const region = document.getElementById('sh-region').value.trim();
           const commune = document.getElementById('sh-commune').value.trim();
@@ -962,7 +965,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
           const region = decodeURIComponent(encodedRegion);
           const address = decodeURIComponent(encodedAddress);
           selectedShipping = { ...carrier, address: { commune, region, address } };
-          const total = PRODUCT_PRICE + (carrier.price || 0);
+          const subtotal = calcularTotalCarrito();
+          const total = subtotal + (carrier.price || 0);
           document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
           document.getElementById('total-row').style.display = 'flex';
           document.querySelectorAll('.carrier-option').forEach(el => el.classList.remove('selected'));
@@ -1156,7 +1160,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
           wp.textContent = 'Redirigiendo...';
           msg.style.color = '#666';
           msg.textContent = 'Conectando con Webpay...';
-          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: PRODUCT_PRICE + (selectedShipping?.price || 0), currency: 'CLP' });
+          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
           try {
             const res = await fetch(api('/flow/crear'), {
               method: 'POST',
@@ -1186,7 +1190,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
           wp.textContent = 'Redirigiendo a Webpay...';
           msg.style.color = '#666';
           msg.textContent = 'Conectando con Webpay...';
-          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: PRODUCT_PRICE + (selectedShipping?.price || 0), currency: 'CLP' });
+          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
           try {
             const res = await fetch(api('/webpay/crear'), {
               method: 'POST',
@@ -1227,7 +1231,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
           btn.textContent = 'Procesando...';
           msg.style.color = '#666';
           msg.textContent = 'Preparando pago seguro...';
-          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: PRODUCT_PRICE + (selectedShipping?.price || 0), currency: 'CLP' });
+          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
           try {
             const res = await fetch(api('/crear-preferencia'), {
               method: 'POST',
