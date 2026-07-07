@@ -3,14 +3,14 @@
 // llega el correo de "pago confirmado"). Los 3 medios de pago —MercadoPago,
 // Flow y Webpay— llaman a decrementStock() al aprobar.
 //
-// STOCK_START define el stock inicial (por defecto 4). En Render el archivo
+// STOCK_START define el stock inicial (por defecto 3). En Render el archivo
 // vive durante el tiempo que el servidor esté activo; tras un redeploy vuelve
 // a STOCK_START.
 const fs = require('fs');
 const path = require('path');
 
 const STOCK_FILE = path.join(__dirname, '..', 'stock.json');
-const START = Math.max(0, parseInt(process.env.STOCK_START || '4', 10));
+const START = Math.max(0, parseInt(process.env.STOCK_START || '3', 10));
 
 function read() {
   try {
