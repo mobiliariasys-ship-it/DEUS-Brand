@@ -1015,15 +1015,11 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         function actualizarCarrito() {
           localStorage.setItem('deus-cart', JSON.stringify(cart));
           const cantidadTotal = cart.reduce((sum, item) => sum + item.cantidad, 0);
-          const badge = document.getElementById('cart-badge');
           const hdrCount = document.getElementById('hdr-cart-count');
           if (cantidadTotal > 0) {
-            badge.textContent = cantidadTotal;
-            badge.classList.remove('hidden');
             hdrCount.textContent = cantidadTotal;
             hdrCount.classList.remove('hidden');
           } else {
-            badge.classList.add('hidden');
             hdrCount.classList.add('hidden');
           }
           renderizarCarrito();
