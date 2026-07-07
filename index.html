@@ -546,6 +546,7 @@ body.sb-on .wa-float{bottom:82px;}
 .secure-badges{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;margin-top:16px;font-size:.62rem;color:#aaa;letter-spacing:.5px;}
 .secure-badges svg{flex-shrink:0;}
 .pay-methods{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:7px;font-size:.62rem;font-weight:600;letter-spacing:.5px;}
+.checkout-preview{display:none;padding:20px;text-align:center;border-bottom:1px solid var(--border);}.checkout-preview.active{display:block;}.co-preview-img{width:100%;max-width:200px;height:200px;object-fit:cover;border-radius:8px;margin:0 auto 16px;background:#1e1e1e;border:1px solid var(--border);}.co-preview-details{margin:16px 0;}.co-preview-detail-item{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:.78rem;color:var(--accent);}.co-preview-detail-item svg{flex-shrink:0;width:16px;height:16px;stroke:#69c46d;}.co-preview-cta{margin-top:20px;display:flex;gap:8px;}.co-preview-cta button{flex:1;padding:14px 16px;background:#fff;color:#000;border:none;border-radius:6px;font-weight:700;font-size:.78rem;letter-spacing:2px;cursor:pointer;font-family:'DM Sans',sans-serif;}.co-preview-cta button:hover{opacity:.9;}.checkout-body.hidden{display:none;}
 /* Banner de app estilo Smart App Banner */
 .app-smartbar{display:flex;align-items:center;gap:12px;background:#131313;border-bottom:1px solid var(--border);padding:10px 14px;}
 .asb-close{background:none;border:none;color:#888;font-size:1.3rem;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;}
@@ -693,7 +694,33 @@ function promoActive(){return Date.now()<window.PROMO_END;}
             <div class="co-stock" id="co-stock" style="display:none;"></div>
           </div>
 
-          <div class="checkout-body">
+          <div class="checkout-preview active" id="checkout-preview">
+            <img id="co-preview-img" class="co-preview-img" src="img/img-afadcb86.webp" alt="DEUS Band">
+            <div style="font-size:.95rem;font-weight:700;color:var(--white);margin-bottom:12px;" id="co-preview-color">Color negro</div>
+            <div style="font-size:1.8rem;font-weight:700;color:var(--white);margin-bottom:16px;">
+              <span style="color:var(--silver);font-size:1rem;text-decoration:line-through;text-decoration-color:#e05555;margin-right:8px;">$44.990</span>
+              <span>$38.990</span>
+            </div>
+            <div class="co-preview-details">
+              <div class="co-preview-detail-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#69c46d" stroke-width="2"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+                <span>Garantía de satisfacción 30 días</span>
+              </div>
+              <div class="co-preview-detail-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#69c46d" stroke-width="2"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg>
+                <span>Envío a todo Chile con Starken</span>
+              </div>
+              <div class="co-preview-detail-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#69c46d" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>Compra 100% segura y encriptada</span>
+              </div>
+            </div>
+            <div class="co-preview-cta">
+              <button onclick="mostrarFormulario()">Continuar con la compra →</button>
+            </div>
+          </div>
+
+          <div class="checkout-body" id="checkout-body">
             <div class="field-label">Datos de quien recibe</div>
             <div class="shipping-form">
               <input class="shipping-input" id="co-nombre" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" />
@@ -974,6 +1001,11 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         }
         function ocultarRescate() {
           document.getElementById('rescue-bar').classList.remove('show');
+        }
+        function mostrarFormulario() {
+          document.getElementById('checkout-preview').classList.remove('active');
+          document.getElementById('checkout-body').classList.remove('hidden');
+          document.querySelector('.checkout-modal').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarCheckout(); });
 
