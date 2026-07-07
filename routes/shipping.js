@@ -152,11 +152,13 @@ const TARIFAS = {
   'los lagos':          { price: 4990, dias: '2-3 días hábiles' },
   'coquimbo':           { price: 4490, dias: '2-3 días hábiles' },
   'atacama':            { price: 4790, dias: '2-3 días hábiles' },
-  'antofagasta':        { price: 5100, dias: '2-3 días hábiles' },
-  'tarapaca':           { price: 5300, dias: '2-3 días hábiles' },
-  'arica y parinacota': { price: 5400, dias: '2-3 días hábiles' },
-  'aysen':              { price: 5400, dias: '3-5 días hábiles' },
-  'magallanes':         { price: 5400, dias: '3-5 días hábiles' }
+  // Referencia real Starken: Antofagasta $5.400 (jul 2026). Regiones más
+  // lejanas escalan desde ahí según distancia a Santiago.
+  'antofagasta':        { price: 5400, dias: '2-3 días hábiles' },
+  'tarapaca':           { price: 5700, dias: '3-4 días hábiles' },
+  'arica y parinacota': { price: 5900, dias: '3-4 días hábiles' },
+  'aysen':              { price: 5900, dias: '3-5 días hábiles' },
+  'magallanes':         { price: 5900, dias: '3-5 días hábiles' }
 };
 
 function normRegion(r) {
