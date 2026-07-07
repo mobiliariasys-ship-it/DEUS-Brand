@@ -1013,8 +1013,12 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         // ── CARRITO ──
         let cart = JSON.parse(localStorage.getItem('deus-cart')) || [];
         function actualizarCarrito() {
+          cart = cart.map(item => {
+            if (!item.cantidad || item.cantidad < 1) item.cantidad = 1;
+            return item;
+          });
           localStorage.setItem('deus-cart', JSON.stringify(cart));
-          const cantidadTotal = cart.reduce((sum, item) => sum + item.cantidad, 0);
+          const cantidadTotal = cart.reduce((sum, item) => sum + (item.cantidad || 1), 0);
           const hdrCount = document.getElementById('hdr-cart-count');
           if (cantidadTotal > 0) {
             hdrCount.textContent = cantidadTotal;
@@ -1084,7 +1088,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         function cambiarCantidad(id, delta) {
           const item = cart.find(item => item.id === id);
           if (item) {
-            item.cantidad += delta;
+            item.cantidad = (item.cantidad || 1) + delta;
             if (item.cantidad <= 0) removerDelCarrito(id);
             else actualizarCarrito();
           }
