@@ -996,7 +996,9 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         // ── CANTIDAD EN CHECKOUT ──
         let checkoutQty = 1;
         function cambiarCantidadCheckout(delta) {
-          checkoutQty = Math.max(1, checkoutQty + delta);
+          const color = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'negra';
+          const maxQty = getMaxQty(color);
+          checkoutQty = Math.max(1, Math.min(maxQty, checkoutQty + delta));
           document.getElementById('co-qty-display').textContent = checkoutQty;
           actualizarTotalCheckout();
         }
@@ -1042,9 +1044,15 @@ function promoActive(){return Date.now()<window.PROMO_END;}
           document.getElementById('qty-dialog').classList.remove('show');
           qtyDialogColor = null;
         }
+        function getMaxQty(color) {
+          if (color === 'negra' && typeof stockRestante === 'number') return Math.max(1, stockRestante);
+          return 999;
+        }
         function aumentarQty() {
           const input = document.getElementById('qty-input');
-          input.value = parseInt(input.value || 0) + 1;
+          const maxQty = getMaxQty(qtyDialogColor);
+          const newVal = Math.min(maxQty, parseInt(input.value || 0) + 1);
+          input.value = newVal;
         }
         function disminuirQty() {
           const input = document.getElementById('qty-input');
@@ -1053,7 +1061,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         }
         function confirmarCantidad() {
           const cantidad = parseInt(document.getElementById('qty-input').value || 1);
-          if (cantidad < 1) return;
+          const maxQty = getMaxQty(qtyDialogColor);
+          if (cantidad < 1 || cantidad > maxQty) return;
           const color = qtyDialogColor;
           const colorLabel = COLOR_LABEL[color] || 'Negro';
           const existente = cart.find(item => item.color === color);
