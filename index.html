@@ -1472,7 +1472,8 @@ function updateStockUI() {
   const coColor = document.getElementById('co-prod-color');
   if (coColor) coColor.textContent = 'Color ' + COLOR_LABEL[color];
   let texto = '';
-  if (typeof stockRestante === 'number' && stockRestante > 0) {
+  // El aviso de stock solo se muestra para la negra; la gris tiene stock de sobra.
+  if (color === 'negra' && typeof stockRestante === 'number' && stockRestante > 0) {
     texto = stockRestante === 1
       ? '🔥 ¡Última unidad disponible!'
       : stockRestante <= 5
