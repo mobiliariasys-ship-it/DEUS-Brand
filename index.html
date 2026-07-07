@@ -667,7 +667,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         </div>
       </div>
 
-      <div class="straps-tag">✓ Incluye 2 correas — de silicona y de nylon high tech</div>
+      <div class="straps-tag">✓ Incluye 2 correas — Silicona y nylon high tech</div>
 
       <!-- ── CHECKOUT (paso 2): se abre al hacer clic en Comprar ── -->
       <div class="checkout-overlay" id="checkout-overlay" onclick="if(event.target===this)cerrarCheckout()">
@@ -695,6 +695,12 @@ function promoActive(){return Date.now()<window.PROMO_END;}
               </div>
             </div>
             <div class="co-stock" id="co-stock" style="display:none;"></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
+              <span style="font-size:.9rem;color:#aaa;">Cantidad:</span>
+              <button class="cart-qty-btn" id="co-qty-minus" onclick="cambiarCantidadCheckout(-1)">−</button>
+              <span style="width:32px;text-align:center;font-size:.95rem;font-weight:600;" id="co-qty-display">1</span>
+              <button class="cart-qty-btn" id="co-qty-plus" onclick="cambiarCantidadCheckout(1)">+</button>
+            </div>
           </div>
 
           <div class="checkout-body">
@@ -939,7 +945,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
           const region = decodeURIComponent(encodedRegion);
           const address = decodeURIComponent(encodedAddress);
           selectedShipping = { ...carrier, address: { commune, region, address } };
-          const subtotal = calcularTotalCarrito();
+          const subtotal = checkoutQty * 38990;
           const total = subtotal + (carrier.price || 0);
           document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
           document.getElementById('total-row').style.display = 'flex';
@@ -961,6 +967,9 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
         // ── Abrir / cerrar el checkout ──
         function abrirCheckout() {
+          checkoutQty = 1;
+          document.getElementById('co-qty-display').textContent = '1';
+          actualizarTotalCheckout();
           document.getElementById('checkout-overlay').classList.add('show');
           document.body.style.overflow = 'hidden';
           if (typeof updateStockUI === 'function') updateStockUI();
@@ -982,6 +991,22 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         }
         function ocultarRescate() {
           document.getElementById('rescue-bar').classList.remove('show');
+        }
+
+        // ── CANTIDAD EN CHECKOUT ──
+        let checkoutQty = 1;
+        function cambiarCantidadCheckout(delta) {
+          checkoutQty = Math.max(1, checkoutQty + delta);
+          document.getElementById('co-qty-display').textContent = checkoutQty;
+          actualizarTotalCheckout();
+        }
+        function actualizarTotalCheckout() {
+          const basePrice = 38990;
+          const total = basePrice * checkoutQty;
+          if (document.getElementById('total-display')) {
+            document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
+          }
+          document.getElementById('co-prod-price').innerHTML = `<span class="co-price-old">$${(44990 * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${total.toLocaleString('es-CL')}</span>`;
         }
 
         // ── CARRITO ──
@@ -1134,6 +1159,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
             customerEmail: document.getElementById('co-email').value.trim(),
             customerPhone: document.getElementById('co-fono').value.trim(),
             selectedColor: (typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : null),
+            cantidad: checkoutQty,
             shippingCarrier: selectedShipping?.carrier || null,
             shippingCost: selectedShipping?.price || 0,
             shippingAddress: selectedShipping?.address || null
