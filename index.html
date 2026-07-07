@@ -1012,6 +1012,11 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
         // ── CARRITO ──
         let cart = JSON.parse(localStorage.getItem('deus-cart')) || [];
+        cart = cart.filter(item => item && item.id && item.nombre).map(item => ({
+          ...item,
+          cantidad: item.cantidad || 1,
+          precio: item.precio || 38990
+        }));
         function actualizarCarrito() {
           cart = cart.map(item => {
             if (!item.cantidad || item.cantidad < 1) item.cantidad = 1;
