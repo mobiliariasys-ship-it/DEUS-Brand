@@ -587,33 +587,6 @@ body.sb-on .wa-float{bottom:82px;}
 </head>
 <body>
 
-<div class="app-smartbar" id="appSmartbar">
-  <button class="asb-close" onclick="closeAppSmartbar()" aria-label="Cerrar">&times;</button>
-  <img class="asb-icon" src="img/img-c9eeead6.webp" alt="Da Halo">
-  <div class="asb-info">
-    <div class="asb-name">Da Halo</div>
-    <div class="asb-sub">
-      <span>Compatible con</span>
-      <span class="asb-logo" style="background:#FC4C02" title="Strava"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0 3.46 13.828h4.169"/></svg></span>
-      <span class="asb-logo" style="background:#fff" title="Apple Health"><svg width="13" height="13" viewBox="0 0 24 24" fill="#FA3E5D" aria-hidden="true"><path d="M12 21s-6.55-4.27-9.2-7.4C.83 11.3 1.2 8.2 3.4 6.74c1.94-1.28 4.36-.74 5.62.98L12 11.3l2.98-3.58c1.26-1.72 3.68-2.26 5.62-.98 2.2 1.46 2.57 4.56.6 6.86C18.55 16.73 12 21 12 21z"/></svg></span>
-    </div>
-  </div>
-  <a class="asb-btn" id="asbBtn" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer">Obtener</a>
-</div>
-<script>
-(function(){
-  var bar=document.getElementById('appSmartbar');
-  if(localStorage.getItem('asbClosed')==='1'){ bar.style.display='none'; return; }
-  var ua=navigator.userAgent||'';
-  var btn=document.getElementById('asbBtn');
-  if(/Android/i.test(ua)) btn.href='https://play.google.com/store/apps/details?id=com.moyoung.dahalo&hl=es_CL';
-})();
-function closeAppSmartbar(){
-  document.getElementById('appSmartbar').style.display='none';
-  localStorage.setItem('asbClosed','1');
-}
-</script>
-
 <div class="topbar" id="topbar">
 <div class="announce-bar"><span class="promo-timer"><span class="cd-row" id="promo-cd"></span></span></div>
 <script>
