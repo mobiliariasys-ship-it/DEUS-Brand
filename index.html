@@ -1114,6 +1114,13 @@ function promoActive(){return Date.now()<window.PROMO_END;}
               </div>
             `).join('');
 
+            // Normalizar cantidad en items antiguos
+            cart = cart.map(item => {
+              if (!item.cantidad || item.cantidad < 1) item.cantidad = 1;
+              return item;
+            });
+            localStorage.setItem('deus-cart', JSON.stringify(cart));
+
             // Agregar event listeners después de renderizar
             body.querySelectorAll('.cart-qty-minus').forEach(btn => {
               btn.addEventListener('click', () => cambiarCantidad(btn.dataset.id, -1));
@@ -1125,7 +1132,11 @@ function promoActive(){return Date.now()<window.PROMO_END;}
               btn.addEventListener('click', () => removerDelCarrito(btn.dataset.id));
             });
 
-            const total = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const total = cart.reduce((sum, item) => {
+              const qty = item.cantidad || 1;
+              const price = item.precio || 0;
+              return sum + (price * qty);
+            }, 0);
             document.getElementById('cart-total-price').textContent = '$' + total.toLocaleString('es-CL');
             footer.style.display = 'block';
           }
@@ -1806,7 +1817,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span class="cart-total-label">Total:</span>
       <span class="cart-total-price" id="cart-total-price">$0</span>
     </div>
-    <button class="cart-cta" onclick="cerrarCarrito(); abrirCheckout();">Comprar Carrito</button>
+    <button class="cart-cta" onclick="cerrarCarrito(); abrirCheckout();">Comprar ahora</button>
   </div>
 </div>
 
