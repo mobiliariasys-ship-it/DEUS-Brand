@@ -1373,60 +1373,6 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   }
   </script>
 
-  <!-- BENEFICIOS -->
-  <section class="benefits">
-    <div class="benefits-head">
-      <div class="benefits-kicker">Por qué DEUS Band</div>
-      <div class="benefits-title">¿Qué quieres mejorar?</div>
-      <div class="benefits-sub">Toca una o más opciones y descubre cómo te ayuda</div>
-    </div>
-    <div class="benefits-selector">
-      <button class="benefit-btn" onclick="toggleBenefit('rendimiento', this)"><span class="bb-ico">⚡</span>Rendimiento</button>
-      <button class="benefit-btn" onclick="toggleBenefit('energia', this)"><span class="bb-ico">🔋</span>Energía</button>
-      <button class="benefit-btn" onclick="toggleBenefit('sueño', this)"><span class="bb-ico">🌙</span>Sueño</button>
-      <button class="benefit-btn" onclick="toggleBenefit('recuperacion', this)"><span class="bb-ico">🔄</span>Recuperación</button>
-    </div>
-    <div class="benefits-grid">
-      <div class="benefit benefit-card" id="card-rendimiento" style="display:none;">
-        <div class="bc-ico">⚡</div>
-        <h4>Entrena con datos, no con sensaciones</h4>
-        <p>Cuando sabes cómo responde tu cuerpo, sabes cuándo dar más y cuándo frenar. Evitas el sobreentrenamiento y cada sesión te acerca a tu objetivo.</p>
-      </div>
-      <div class="benefit benefit-card" id="card-energia" style="display:none;">
-        <div class="bc-ico">🔋</div>
-        <h4>Más energía todos los días</h4>
-        <p>Tu energía es el resultado del balance entre lo que te exiges y lo que descansas. DEUS Band te muestra ese balance cada mañana, para que sepas qué ajustar y llegues con energía real hasta la noche.</p>
-      </div>
-      <div class="benefit benefit-card" id="card-sueño" style="display:none;">
-        <div class="bc-ico">🌙</div>
-        <h4>Descubre cómo duermes realmente</h4>
-        <p>Cada noche registra tus fases de sueño —profundo, ligero y REM— y te muestra qué tan reparador fue tu descanso. Con esa información ajustas tus hábitos y despiertas cada día mejor.</p>
-      </div>
-      <div class="benefit benefit-card" id="card-recuperacion" style="display:none;">
-        <div class="bc-ico">🔄</div>
-        <h4>El progreso ocurre cuando descansas</h4>
-        <p>Entrenar rompe, recuperar construye. DEUS Band te dice si tu cuerpo ya asimiló el último esfuerzo y está listo para volver a exigirse — y así recuperas, día a día, tu mejor versión.</p>
-      </div>
-    </div>
-    <div class="benefits-empty" id="benefitsEmpty">👆 Toca una opción arriba para ver cómo DEUS Band te ayuda</div>
-  </section>
-  <script>
-  function toggleBenefit(id, btn){
-    var card=document.getElementById('card-'+id);
-    if(card.style.display==='none'){
-      card.style.display='block';
-      card.classList.remove('bc-anim'); void card.offsetWidth; card.classList.add('bc-anim');
-      btn.classList.add('active');
-    }else{
-      card.style.display='none';
-      btn.classList.remove('active');
-    }
-    var any=document.querySelector('.benefit-card[style*="block"]');
-    var empty=document.getElementById('benefitsEmpty');
-    if(empty) empty.style.display=any?'none':'block';
-  }
-  </script>
-
   <!-- APP -->
   <section class="app-sec" id="app">
     <div class="app-kicker">La App</div>
