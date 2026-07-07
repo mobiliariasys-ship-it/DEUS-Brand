@@ -1231,7 +1231,6 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
   <!-- RESEÑAS -->
   <section class="reviews">
-    <div class="stock-badge" id="stockBadge" style="display:none;">🔥 Quedan <b id="stockNum">4</b> unidades disponibles</div>
     <div class="reviews-head">
       <div class="reviews-kicker">Lo que dicen</div>
       <div class="reviews-title">Reseñas de la comunidad</div>
@@ -1293,19 +1292,6 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     var rc = document.getElementById('rating-count');
     var n = document.querySelectorAll('.reviews .review-card').length;
     if (rc && n) rc.textContent = n;
-  })();
-  // Contador de stock: baja con cada pago confirmado (endpoint /stock del backend)
-  (function(){
-    var badge = document.getElementById('stockBadge');
-    var num = document.getElementById('stockNum');
-    if (!badge || !num) return;
-    fetch(api('/stock')).then(function(r){ return r.json(); }).then(function(d){
-      var q = d && typeof d.remaining === 'number' ? d.remaining : null;
-      if (q === null) return;
-      if (q <= 0) { badge.innerHTML = '⏳ Agotado por ahora — escríbenos para reservar la próxima tanda'; badge.style.display='block'; return; }
-      num.textContent = q;
-      badge.style.display = 'block';
-    }).catch(function(){ /* si el backend no responde, no mostramos nada */ });
   })();
   function abrirResena(){ document.getElementById('resenaOverlay').style.display='flex'; }
   function cerrarResena(){ document.getElementById('resenaOverlay').style.display='none'; }
