@@ -249,6 +249,8 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .clabel{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);}
 .cdot{width:28px;height:28px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:border-color .2s,transform .15s;}
 .cdot.active{border-color:#aaa;}
+.cdot.sold-out{opacity:.4;position:relative;}
+.cdot.sold-out::after{content:'';position:absolute;left:-4px;right:-4px;top:50%;height:2px;background:#c33;transform:rotate(-45deg);}
 .cdot:hover{border-color:#fff;transform:scale(1.1);}
 
 @media(max-width:860px){
@@ -628,8 +630,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   <div class="detail">
     <div class="gal-slider" id="galSlider">
       <div class="slides" id="slides">
-        <img class="slide" loading="lazy" width="600" height="600" src="img/img-0a2d5dc7.webp" data-color="negra" alt="DEUS Band negra">
         <img class="slide" loading="lazy" width="600" height="600" src="img/img-56798e1b.webp" data-color="gris" alt="DEUS Band gris">
+        <img class="slide" loading="lazy" width="600" height="600" src="img/img-0a2d5dc7.webp" data-color="negra" alt="DEUS Band negra">
       </div>
       <div class="slider-dots">
         <span class="sdot active" onclick="goSlide(0)"></span>
@@ -639,8 +641,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     <div class="info">
       <div class="colors-row">
         <span class="clabel">Color</span>
-        <div class="cdot active" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
-        <div class="cdot" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
+        <div class="cdot active" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
+        <div class="cdot sold-out" style="background:#111;" title="Negro — Agotado" onclick="setColor('negra',this)"></div>
       </div>
 
       <div class="price-old">Precio normal: <span class="old-amount">$44.990</span></div>
@@ -967,6 +969,11 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
         // ── Abrir / cerrar el checkout ──
         function abrirCheckout() {
+          const colorActual = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris';
+          if (typeof AGOTADOS !== 'undefined' && AGOTADOS[colorActual]) {
+            alert('El color negro está agotado. Elige el color gris para comprar.');
+            return;
+          }
           checkoutQty = 1;
           document.getElementById('co-qty-display').textContent = '1';
           actualizarTotalCheckout();
@@ -1036,7 +1043,12 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         }
         let qtyDialogColor = null;
         function abrirDialogoCarrito() {
-          qtyDialogColor = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'negra';
+          qtyDialogColor = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris';
+          if (typeof AGOTADOS !== 'undefined' && AGOTADOS[qtyDialogColor]) {
+            alert('El color negro está agotado. Elige el color gris.');
+            qtyDialogColor = null;
+            return;
+          }
           document.getElementById('qty-input').value = '1';
           document.getElementById('qty-dialog').classList.add('show');
         }
@@ -1582,8 +1594,11 @@ const bandImages = {
   negra: "img/img-afadcb86.webp",
   gris: "img/img-80cd4240.webp",
 };
-const colorOrder = ['negra','gris'];
+const colorOrder = ['gris','negra'];
 let currentSlide = 0;
+
+// Colores sin stock: no se pueden comprar ni agregar al carrito
+const AGOTADOS = { negra: true };
 
 // Stock real desde el backend: el mismo contador que baja con cada pago
 // confirmado (endpoint /stock del proyecto web). Sin números fijos en el front.
@@ -1598,13 +1613,8 @@ function updateStockUI() {
   const coColor = document.getElementById('co-prod-color');
   if (coColor) coColor.textContent = 'Color ' + COLOR_LABEL[color];
   let texto = '';
-  // El aviso de stock solo se muestra para la negra; la gris tiene stock de sobra.
-  if (color === 'negra' && typeof stockRestante === 'number' && stockRestante > 0) {
-    texto = stockRestante === 1
-      ? '🔥 ¡Última unidad en negro disponible!'
-      : stockRestante <= 5
-        ? `🔥 Quedan solo ${stockRestante} unidades de este color disponibles`
-        : `✓ Stock disponible: ${stockRestante} unidades`;
+  if (AGOTADOS[color]) {
+    texto = '⚫ Color negro AGOTADO — disponible en gris';
   }
   [document.getElementById('stock-note'), document.getElementById('co-stock')].forEach(el => {
     if (el) { el.textContent = texto; el.style.display = texto ? '' : 'none'; }
