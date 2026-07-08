@@ -1601,7 +1601,7 @@ function updateStockUI() {
   // El aviso de stock solo se muestra para la negra; la gris tiene stock de sobra.
   if (color === 'negra' && typeof stockRestante === 'number' && stockRestante > 0) {
     texto = stockRestante === 1
-      ? '🔥 ¡Última unidad disponible!'
+      ? '🔥 ¡Última unidad en negro disponible!'
       : stockRestante <= 5
         ? `🔥 Quedan solo ${stockRestante} unidades de este color disponibles`
         : `✓ Stock disponible: ${stockRestante} unidades`;
