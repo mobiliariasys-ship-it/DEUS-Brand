@@ -166,7 +166,9 @@ async function enviarPedidoNuevo(pedido) {
         </p>
       </div>
     </div>`;
-  await enviarCorreo(`🛒 Nuevo pedido DEUS Band — ${dir.commune || 'sin comuna'} (${money(pedido.total)})`, html);
+  // Asunto único por pedido: si se repite el asunto, Gmail agrupa los correos en un solo hilo
+  const refPedido = String(pedido.preference_id || Date.now()).slice(-6);
+  await enviarCorreo(`🛒 Nuevo pedido DEUS Band — ${pedido.customer?.name || dir.commune || 'sin nombre'} (${money(pedido.total)}) #${refPedido}`, html);
 }
 
 // ── Correo: pago confirmado ──
@@ -183,7 +185,9 @@ async function enviarPagoConfirmado(payment) {
         <p style="margin-top:16px;color:#0a7d2c"><b>Ya puedes coordinar el envío.</b></p>
       </div>
     </div>`;
-  await enviarCorreo(`✅ Pago confirmado DEUS Band — ${money(payment.transaction_amount)}`, html);
+  // Asunto único por pago para que Gmail no junte pagos distintos en un mismo hilo
+  const refPago = String(payment.id || Date.now()).slice(-8);
+  await enviarCorreo(`✅ Pago confirmado DEUS Band — ${money(payment.transaction_amount)} #${refPago}`, html);
 }
 
 module.exports = { enviarPedidoNuevo, enviarPagoConfirmado, enviarResena, diagnostico };
