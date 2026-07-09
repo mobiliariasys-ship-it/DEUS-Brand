@@ -351,6 +351,8 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .how-img img{width:100%;height:100%;object-fit:cover;display:block;}
 .how-img.contain{background:#0f0f0f;}
 .how-img.seamless{background:transparent;border:none;}
+.how-img.natural{aspect-ratio:auto;}
+.how-img.natural video{width:100%;height:auto;display:block;}
 .how-img.contain img{object-fit:contain;max-height:360px;padding:16px;width:auto;}
 .how-txt h3{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;margin-bottom:12px;}
 .how-txt p{color:var(--silver);font-size:.9rem;line-height:1.75;letter-spacing:.3px;}
@@ -1348,7 +1350,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     </div>
 
     <div class="how-row">
-      <div class="how-img"><img src="img/img-fe47898b.webp" alt="DEUS Band sin distracciones" loading="lazy" decoding="async"></div>
+      <div class="how-img natural"><video src="img/diseno-video.mp4" autoplay muted loop playsinline preload="metadata" aria-label="DEUS Band sin distracciones"></video></div>
       <div class="how-txt">
         <h3>Diseño sin distracciones</h3>
         <p>Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
