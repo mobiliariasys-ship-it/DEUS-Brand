@@ -354,7 +354,8 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .rot-360{position:relative;cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;}
 .rot-360:active{cursor:grabbing;}
 .rot-360 img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
-.rot-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:.62rem;color:#999;letter-spacing:1.5px;background:rgba(8,8,8,.6);border:1px solid #242424;padding:5px 13px;border-radius:14px;white-space:nowrap;}
+.rot-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:.62rem;color:#999;letter-spacing:1.5px;background:rgba(8,8,8,.6);border:1px solid #242424;padding:5px 13px;border-radius:14px;white-space:nowrap;z-index:2;}
+.rot-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%, transparent 48%, #080808 96%);}
 .how-img.natural{aspect-ratio:auto;min-height:0!important;}
 .how-img.natural video{width:100%;height:auto;display:block;border-radius:12px;}
 .how-img.contain img{object-fit:contain;max-height:360px;padding:16px;width:auto;}
@@ -1332,7 +1333,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
       <div class="how-row reverse">
       <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra para girar">
-        <img id="rot360-img" src="img/rot360/f_49.webp" alt="DEUS Band vista 360" draggable="false">
+        <img id="rot360-img" src="img/rot360/f_73.webp" alt="DEUS Band vista 360" draggable="false">
+        <div class="rot-vignette"></div>
         <div class="rot-hint" id="rot360-hint">↔ Arrastra para girar la banda</div>
       </div>
       <div class="how-txt">
@@ -1367,7 +1369,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   </section>
   <script>
   (function(){
-    var N=49, BLUE=48; // f_49: cuadro del sensor azul
+    var N=73, BLUE=72; // f_73: cuadro del sensor azul
     var wrap=document.getElementById('rot360');
     var img=document.getElementById('rot360-img');
     if(!wrap||!img) return;
@@ -1383,7 +1385,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       var next=idx+dir;
       if(next<0||next>N-1){ dir=-dir; next=idx+dir; }
       show(next);
-    },90);
+    },60);
     function stopAuto(){ if(auto){ clearInterval(auto); auto=null; } }
     var dragging=false, startX=0, startIdx=0, firstTouch=true;
     wrap.addEventListener('pointerdown',function(e){
@@ -1395,7 +1397,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     });
     wrap.addEventListener('pointermove',function(e){
       if(!dragging) return;
-      show(startIdx + Math.round((e.clientX-startX)/8));
+      show(startIdx + Math.round((e.clientX-startX)/6));
     });
     ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
       wrap.addEventListener(ev,function(){ dragging=false; });
