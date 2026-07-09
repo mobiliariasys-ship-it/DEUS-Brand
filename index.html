@@ -1332,7 +1332,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
       <div class="how-row reverse">
       <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra para girar">
-        <img id="rot360-img" src="img/rot360/f_01.webp" alt="DEUS Band vista 360" draggable="false">
+        <img id="rot360-img" src="img/rot360/f_49.webp" alt="DEUS Band vista 360" draggable="false">
         <div class="rot-hint" id="rot360-hint">↔ Arrastra para girar la banda</div>
       </div>
       <div class="how-txt">
@@ -1367,21 +1367,29 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   </section>
   <script>
   (function(){
-    var N=49;
+    var N=49, BLUE=48; // f_49: cuadro del sensor azul
     var wrap=document.getElementById('rot360');
     var img=document.getElementById('rot360-img');
     if(!wrap||!img) return;
     function src(i){ return 'img/rot360/f_'+String(i+1).padStart(2,'0')+'.webp'; }
     // Precargar todos los cuadros para que el giro sea fluido
-    var idx=0;
     for(var i=0;i<N;i++){ (new Image()).src=src(i); }
-    function show(i){ idx=((i%N)+N)%N; img.src=src(idx); }
-    // Gira solo suavemente hasta que el usuario lo toca
-    var auto=setInterval(function(){ show(idx+1); },90);
+    var idx=BLUE;
+    // El video no cierra el giro completo: se recorre ida y vuelta (ping-pong)
+    // para que nunca haya un salto brusco entre el último y el primer cuadro.
+    function show(i){ idx=Math.max(0,Math.min(N-1,i)); img.src=src(idx); }
+    var dir=-1;
+    var auto=setInterval(function(){
+      var next=idx+dir;
+      if(next<0||next>N-1){ dir=-dir; next=idx+dir; }
+      show(next);
+    },90);
     function stopAuto(){ if(auto){ clearInterval(auto); auto=null; } }
-    var dragging=false, startX=0, startIdx=0;
+    var dragging=false, startX=0, startIdx=0, firstTouch=true;
     wrap.addEventListener('pointerdown',function(e){
-      dragging=true; startX=e.clientX; startIdx=idx; stopAuto();
+      dragging=true; stopAuto();
+      if(firstTouch){ firstTouch=false; show(BLUE); } // al primer toque parte desde el sensor azul
+      startX=e.clientX; startIdx=idx;
       var h=document.getElementById('rot360-hint'); if(h) h.style.display='none';
       try{ wrap.setPointerCapture(e.pointerId); }catch(_){}
     });
