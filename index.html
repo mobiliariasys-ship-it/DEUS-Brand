@@ -350,6 +350,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .how-img{background:#111;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;}
 .how-img img{width:100%;height:100%;object-fit:cover;display:block;}
 .how-img.contain{background:#0f0f0f;}
+.how-img.seamless{background:transparent;border:none;}
 .how-img.contain img{object-fit:contain;max-height:360px;padding:16px;width:auto;}
 .how-txt h3{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;margin-bottom:12px;}
 .how-txt p{color:var(--silver);font-size:.9rem;line-height:1.75;letter-spacing:.3px;}
@@ -1324,7 +1325,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     </div>
 
       <div class="how-row reverse">
-      <div class="how-img"><video src="img/sensor-video.mp4" autoplay muted loop playsinline preload="metadata" aria-label="Sensor de alta precisión DEUS Band" style="width:100%;height:100%;object-fit:cover;display:block;"></video></div>
+      <div class="how-img seamless"><video src="img/sensor-video.mp4" autoplay muted loop playsinline preload="metadata" aria-label="Sensor de alta precisión DEUS Band" style="width:100%;height:100%;object-fit:cover;display:block;"></video></div>
       <div class="how-txt">
         <h3>Sensor de alta precisión</h3>
         <p>Sensor óptico de alta sensibilidad que mide tu frecuencia cardíaca, oxígeno en sangre y variabilidad en tiempo real, día y noche. Precisión constante en cada latido. Su estructura está fabricada en <b>aleación de zinc de alta resistencia</b>.</p>
