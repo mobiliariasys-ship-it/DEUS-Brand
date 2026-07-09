@@ -1333,7 +1333,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 
       <div class="how-row reverse">
       <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra para girar">
-        <img id="rot360-img" src="img/rot360/f_73.webp" alt="DEUS Band vista 360" draggable="false">
+        <canvas id="rot360-canvas" width="640" height="640" style="width:100%;height:100%;display:block;"></canvas>
         <div class="rot-vignette"></div>
         <div class="rot-hint" id="rot360-hint">↔ Arrastra para girar la banda</div>
       </div>
@@ -1371,22 +1371,39 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   (function(){
     var N=73, BLUE=72; // f_73: cuadro del sensor azul
     var wrap=document.getElementById('rot360');
-    var img=document.getElementById('rot360-img');
-    if(!wrap||!img) return;
+    var canvas=document.getElementById('rot360-canvas');
+    if(!wrap||!canvas) return;
+    var ctx=canvas.getContext('2d');
     function src(i){ return 'img/rot360/f_'+String(i+1).padStart(2,'0')+'.webp'; }
-    // Precargar todos los cuadros para que el giro sea fluido
-    for(var i=0;i<N;i++){ (new Image()).src=src(i); }
-    var idx=BLUE;
+    var frames=new Array(N), pendientes=N, idx=BLUE, auto=null;
+    function draw(){ var f=frames[idx]; if(f&&f.complete) ctx.drawImage(f,0,0,canvas.width,canvas.height); }
+    function show(i){ idx=Math.max(0,Math.min(N-1,i)); draw(); }
     // El video no cierra el giro completo: se recorre ida y vuelta (ping-pong)
     // para que nunca haya un salto brusco entre el último y el primer cuadro.
-    function show(i){ idx=Math.max(0,Math.min(N-1,i)); img.src=src(idx); }
     var dir=-1;
-    var auto=setInterval(function(){
-      var next=idx+dir;
-      if(next<0||next>N-1){ dir=-dir; next=idx+dir; }
-      show(next);
-    },60);
+    function startAuto(){
+      if(auto) return;
+      auto=setInterval(function(){
+        var next=idx+dir;
+        if(next<0||next>N-1){ dir=-dir; next=idx+dir; }
+        show(next);
+      },60);
+    }
     function stopAuto(){ if(auto){ clearInterval(auto); auto=null; } }
+    // Descarga y decodifica TODOS los cuadros antes de girar,
+    // así no se pega en los cuadros más pesados (p. ej. el sensor encendido).
+    for(var i=0;i<N;i++){
+      (function(i){
+        var im=new Image();
+        im.onload=function(){
+          frames[i]=im;
+          var fin=function(){ if(--pendientes===0) startAuto(); if(i===BLUE) draw(); };
+          if(im.decode) im.decode().then(fin).catch(fin); else fin();
+        };
+        im.onerror=function(){ if(--pendientes===0) startAuto(); };
+        im.src=src(i);
+      })(i);
+    }
     var dragging=false, startX=0, startIdx=0, firstTouch=true;
     wrap.addEventListener('pointerdown',function(e){
       dragging=true; stopAuto();
