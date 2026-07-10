@@ -650,7 +650,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       <div class="colors-row">
         <span class="clabel">Color</span>
         <div class="cdot active" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
-        <div class="cdot sold-out" style="background:#111;" title="Negro — Agotado · Restock pronto" onclick="setColor('negra',this)"></div>
+        <div class="cdot" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
       </div>
 
       <div class="price-old">Precio normal: <span class="old-amount">$44.990</span></div>
@@ -1659,7 +1659,7 @@ const colorOrder = ['gris','negra'];
 let currentSlide = 0;
 
 // Colores sin stock: no se pueden comprar ni agregar al carrito
-const AGOTADOS = { negra: true };
+const AGOTADOS = {};
 
 // Stock real desde el backend: el mismo contador que baja con cada pago
 // confirmado (endpoint /stock del proyecto web). Sin números fijos en el front.
