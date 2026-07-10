@@ -640,10 +640,12 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       <div class="slides" id="slides">
         <img class="slide" loading="lazy" width="600" height="600" src="img/img-0a2d5dc7.webp" data-color="negra" alt="DEUS Band negra">
         <img class="slide" loading="lazy" width="600" height="600" src="img/img-56798e1b.webp" data-color="gris" alt="DEUS Band gris">
+        <img class="slide" loading="lazy" width="600" height="600" src="img/img-rosada.webp" data-color="rosada" alt="DEUS Band rosada">
       </div>
       <div class="slider-dots">
         <span class="sdot active" onclick="goSlide(0)"></span>
         <span class="sdot" onclick="goSlide(1)"></span>
+        <span class="sdot" onclick="goSlide(2)"></span>
       </div>
     </div>
     <div class="info">
@@ -651,6 +653,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
         <span class="clabel">Color</span>
         <div class="cdot active" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
         <div class="cdot" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
+        <div class="cdot" style="background:#e8b4bc;" title="Rosado" onclick="setColor('rosada',this)"></div>
       </div>
 
       <div class="price-old">Precio normal: <span class="old-amount">$44.990</span></div>
@@ -1654,8 +1657,9 @@ function promoActive(){return Date.now()<window.PROMO_END;}
 const bandImages = {
   negra: "img/img-afadcb86.webp",
   gris: "img/img-80cd4240.webp",
+  rosada: "img/img-rosada.webp",
 };
-const colorOrder = ['negra','gris'];
+const colorOrder = ['negra','gris','rosada'];
 let currentSlide = 0;
 
 // Colores sin stock: no se pueden comprar ni agregar al carrito
@@ -1664,7 +1668,7 @@ const AGOTADOS = {};
 // Stock real desde el backend: el mismo contador que baja con cada pago
 // confirmado (endpoint /stock del proyecto web). Sin números fijos en el front.
 let stockRestante = null;
-const COLOR_LABEL = { negra: 'negro', gris: 'gris' };
+const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 
 // Sincroniza aviso de stock, foto y color en página y checkout
 function updateStockUI() {
