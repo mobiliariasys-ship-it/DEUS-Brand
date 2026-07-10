@@ -1369,7 +1369,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   </section>
   <script>
   (function(){
-    var N=144, BLUE=72; // f_073: cuadro del sensor azul
+    var N=85, BLUE=72; // f_073: cuadro del sensor azul; f_074-085: fundido que cierra la vuelta
     var wrap=document.getElementById('rot360');
     var canvas=document.getElementById('rot360-canvas');
     if(!wrap||!canvas) return;
@@ -1377,8 +1377,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     function src(i){ return 'img/rot360/f_'+String(i+1).padStart(3,'0')+'.webp'; }
     var frames=new Array(N), pendientes=N, idx=BLUE, auto=null;
     function draw(){ var f=frames[idx]; if(f&&f.complete) ctx.drawImage(f,0,0,canvas.width,canvas.height); }
-    // Vuelta completa: los cuadros 74-144 son la mitad espejada del giro,
-    // así la rotación cierra en 360° y puede girar continuo sin saltos.
+    // La vuelta cierra con un fundido suave (f_074-085) entre el final y el
+    // inicio del giro real, así rota continuo sin reinicio visible.
     function show(i){ idx=((i%N)+N)%N; draw(); }
     function startAuto(){
       if(auto) return;
