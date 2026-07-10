@@ -638,8 +638,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
   <div class="detail">
     <div class="gal-slider" id="galSlider">
       <div class="slides" id="slides">
-        <img class="slide" loading="lazy" width="600" height="600" src="img/img-56798e1b.webp" data-color="gris" alt="DEUS Band gris">
         <img class="slide" loading="lazy" width="600" height="600" src="img/img-0a2d5dc7.webp" data-color="negra" alt="DEUS Band negra">
+        <img class="slide" loading="lazy" width="600" height="600" src="img/img-56798e1b.webp" data-color="gris" alt="DEUS Band gris">
       </div>
       <div class="slider-dots">
         <span class="sdot active" onclick="goSlide(0)"></span>
@@ -649,8 +649,8 @@ function promoActive(){return Date.now()<window.PROMO_END;}
     <div class="info">
       <div class="colors-row">
         <span class="clabel">Color</span>
-        <div class="cdot active" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
-        <div class="cdot" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
+        <div class="cdot active" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
+        <div class="cdot" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
       </div>
 
       <div class="price-old">Precio normal: <span class="old-amount">$44.990</span></div>
@@ -1655,7 +1655,7 @@ const bandImages = {
   negra: "img/img-afadcb86.webp",
   gris: "img/img-80cd4240.webp",
 };
-const colorOrder = ['gris','negra'];
+const colorOrder = ['negra','gris'];
 let currentSlide = 0;
 
 // Colores sin stock: no se pueden comprar ni agregar al carrito
