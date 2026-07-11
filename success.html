@@ -2,8 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-53HZPXLL');</script>
+<!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pago exitoso — DEUS Band</title>
+<meta name="robots" content="noindex, nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
 <!-- Meta Pixel Code -->
@@ -18,7 +26,17 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '2086346891978245');
 fbq('track', 'PageView');
-fbq('track', 'Purchase', { value: 38990, currency: 'CLP', content_name: 'DEUS Band' });
+// Purchase con el monto real de la transacción (producto + envío), que llega
+// por la URL desde el retorno de cada medio de pago. El eventID (nº de orden
+// o pago) evita que una recarga de esta página cuente la compra dos veces.
+(function(){
+  var q = new URLSearchParams(location.search);
+  var monto = parseInt(q.get('monto'), 10);
+  var datos = { value: (monto > 0 ? monto : 38990), currency: 'CLP', content_name: 'DEUS Band' };
+  var orden = q.get('orden') || q.get('payment_id') || q.get('collection_id');
+  if (orden) fbq('track', 'Purchase', datos, { eventID: 'purchase-' + orden });
+  else fbq('track', 'Purchase', datos);
+})();
 </script>
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
@@ -36,6 +54,10 @@ a:hover{background:#e8e8e8;color:#080808;}
 </style>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-53HZPXLL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 <div class="card">
   <div class="icon">✓</div>
   <h1>Pago Exitoso</h1>

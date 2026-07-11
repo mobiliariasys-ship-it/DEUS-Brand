@@ -4,8 +4,8 @@ const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const shippingRoutes = require('./routes/shipping');
 const transbankRoutes = require('./routes/transbank');
 const flowRoutes = require('./routes/flow');
-const { enviarPedidoNuevo, enviarPagoConfirmado, enviarResena } = require('./services/email');
-const { getStock, decrementStock } = require('./services/stock');
+const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarResena, diagnostico } = require('./services/email');
+const { getStock, decrementStock, setStock } = require('./services/stock');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -102,7 +102,8 @@ app.post('/crear-preferencia', async (req, res) => {
     // MercadoPago rechaza localhost en back_urls. Solo las agregamos con URL pública.
     if (!isLocalhost) {
       prefBody.back_urls = {
-        success: `${baseUrl}/success.html`,
+        // monto: total real (producto + envío) para que el píxel reporte el valor correcto
+        success: `${baseUrl}/success.html?monto=${38990 + (Number(shippingCost) || 0)}`,
         failure: `${baseUrl}/failure.html`,
         pending: `${baseUrl}/pending.html`
       };
@@ -162,7 +163,23 @@ app.post('/notificaciones', async (req, res) => {
 
       if (info.status === 'approved') {
         await enviarPagoConfirmado(info);
-        decrementStock(info.id);
+        decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago
+
+        // Correo de confirmación al cliente. Usamos la metadata del pago (que
+        // guardamos al crear la preferencia); si el pedido está en memoria y
+        // coincide el correo, tomamos de ahí la dirección completa.
+        const meta = info.metadata || {};
+        const emailCliente = meta.customer_email || info.payer?.email;
+        const pedido = pedidos.find(p => p.customer?.email && p.customer.email === emailCliente);
+        enviarConfirmacionCliente({
+          email: emailCliente,
+          name: meta.customer_name || pedido?.customer?.name,
+          monto: info.transaction_amount,
+          id: info.id,
+          color: meta.selected_color || pedido?.color,
+          carrier: meta.shipping_carrier || pedido?.shipping?.carrier,
+          address: pedido?.shipping?.address
+        }).catch(err => console.error('[email] Confirmación cliente:', err.message));
       }
     } catch (err) {
       console.error('[webhook] Error consultando pago:', err.message);
@@ -177,6 +194,31 @@ app.get('/pedidos', (req, res) => {
 // Stock restante (para el contador de unidades en la web)
 app.get('/stock', (req, res) => {
   res.json({ remaining: getStock() });
+});
+
+// Ajuste manual del stock, protegido con la clave STOCK_KEY de Render.
+// Uso: /stock/ajustar?unidades=12&clave=MICLAVE
+app.get('/stock/ajustar', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).send('No disponible');
+  if ((req.query.clave || '') !== clave) return res.status(403).send('Clave incorrecta');
+  const n = parseInt(req.query.unidades, 10);
+  if (isNaN(n) || n < 0) return res.status(400).send('unidades debe ser un número >= 0');
+  res.json({ remaining: setStock(n) });
+});
+
+// Diagnóstico de correo: envía un correo de prueba real al dueño y confirma
+// si Resend está configurado. Protegido con STOCK_KEY (misma clave admin).
+// Uso: /email/diagnostico?clave=MICLAVE
+app.get('/email/diagnostico', async (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).send('No disponible');
+  if ((req.query.clave || '') !== clave) return res.status(403).send('Clave incorrecta');
+  try {
+    res.json(await diagnostico());
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Endpoint liviano para keep-alive (cron-job.org / UptimeRobot).

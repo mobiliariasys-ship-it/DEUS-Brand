@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { WebpayPlus, Options, IntegrationApiKeys, IntegrationCommerceCodes, Environment } = require('transbank-sdk');
-const { enviarPedidoNuevo, enviarPagoConfirmado } = require('../services/email');
+const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
 const { decrementStock } = require('../services/stock');
 
 const PRODUCT_PRICE = 38990;
@@ -83,11 +83,21 @@ async function handleRetorno(req, res) {
     if (aprobado) {
       decrementStock(result.buy_order);
       enviarPagoConfirmado({
-        payer: { email: '(Pago con Webpay)' },
+        payer: { email: (pedido && pedido.customer && pedido.customer.email) || '(Pago con Webpay)' },
         transaction_amount: result.amount,
         id: result.buy_order
       }).catch(e => console.error('[email]', e.message));
-      return res.redirect('/success.html');
+      // Confirmación al cliente (el correo lo tomamos del pedido guardado)
+      enviarConfirmacionCliente({
+        email: pedido && pedido.customer && pedido.customer.email,
+        name: pedido && pedido.customer && pedido.customer.name,
+        monto: result.amount,
+        id: result.buy_order,
+        color: pedido && pedido.color,
+        carrier: pedido && pedido.shipping && pedido.shipping.carrier,
+        address: pedido && pedido.shipping && pedido.shipping.address
+      }).catch(e => console.error('[email] Confirmación cliente:', e.message));
+      return res.redirect(`/success.html?monto=${Number(result.amount) || ''}&orden=${encodeURIComponent(result.buy_order || '')}`);
     }
     return res.redirect('/failure.html');
   } catch (e) {

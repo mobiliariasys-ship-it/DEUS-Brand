@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const https = require('https');
 const crypto = require('crypto');
-const { enviarPedidoNuevo, enviarPagoConfirmado } = require('../services/email');
+const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
 const { decrementStock } = require('../services/stock');
 
 const PRODUCT_PRICE = 38990;
@@ -116,6 +116,16 @@ router.post('/flow/confirmacion', async (req, res) => {
         transaction_amount: st.amount,
         id: st.commerceOrder
       }).catch(e => console.error('[email]', e.message));
+      // Confirmación al cliente
+      enviarConfirmacionCliente({
+        email: (pedido && pedido.customer && pedido.customer.email) || st.payer,
+        name: pedido && pedido.customer && pedido.customer.name,
+        monto: st.amount,
+        id: st.commerceOrder,
+        color: pedido && pedido.color,
+        carrier: pedido && pedido.shipping && pedido.shipping.carrier,
+        address: pedido && pedido.shipping && pedido.shipping.address
+      }).catch(e => console.error('[email] Confirmación cliente:', e.message));
     } else if (pedido) pedido.status = 'rejected';
   } catch (e) { console.error('[flow/confirmacion] Error:', e.message); }
 });
@@ -126,7 +136,11 @@ async function retorno(req, res) {
   if (!token) return res.redirect('/failure.html');
   try {
     const r = await flowReq('GET', '/payment/getStatus', { apiKey: (process.env.FLOW_API_KEY || "").trim(), token });
-    if (r.body && r.body.status === 2) return res.redirect('/success.html');
+    if (r.body && r.body.status === 2) {
+      const monto = Number(r.body.amount) || '';
+      const orden = encodeURIComponent(r.body.commerceOrder || '');
+      return res.redirect(`/success.html?monto=${monto}&orden=${orden}`);
+    }
     return res.redirect('/failure.html');
   } catch (e) { console.error('[flow/retorno] Error:', e.message); return res.redirect('/failure.html'); }
 }

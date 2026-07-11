@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /success.html
+Disallow: /pending.html
+Disallow: /failure.html
+
+Sitemap: https://deusbrand.cl/sitemap.xml

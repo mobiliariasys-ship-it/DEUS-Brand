@@ -9,15 +9,16 @@ function destinatario() {
 }
 
 // ── Envío por Resend (HTTPS — funciona en Render) ──
-function enviarViaResend(subject, html, attachments) {
+// `to` opcional: si no se indica, va al dueño (destinatario()).
+function enviarViaResend(subject, html, attachments, to) {
   return new Promise(resolve => {
     const key = process.env.RESEND_API_KEY;
-    const to = destinatario();
-    if (!key || !to) return resolve(false);
+    const dest = to || destinatario();
+    if (!key || !dest) return resolve(false);
 
     const body = {
       from: process.env.MAIL_FROM || 'DEUS Band <onboarding@resend.dev>',
-      to: [to],
+      to: [dest],
       subject,
       html
     };
@@ -65,21 +66,22 @@ function getTransport() {
   });
 }
 
-async function enviarViaGmail(subject, html) {
+async function enviarViaGmail(subject, html, to) {
   const t = getTransport();
   if (!t) return false;
   try {
-    await t.sendMail({ from: `"DEUS Band" <${process.env.GMAIL_USER}>`, to: destinatario(), subject, html });
+    await t.sendMail({ from: `"DEUS Band" <${process.env.GMAIL_USER}>`, to: to || destinatario(), subject, html });
     console.log('[email] Enviado vía Gmail');
     return true;
   } catch (e) { console.error('[email] Gmail error', e.message); return false; }
 }
 
-// Intenta Resend primero, luego Gmail
-async function enviarCorreo(subject, html, attachments) {
-  if (await enviarViaResend(subject, html, attachments)) return;
-  if (await enviarViaGmail(subject, html)) return;
+// Intenta Resend primero, luego Gmail. `to` opcional (por defecto, el dueño).
+async function enviarCorreo(subject, html, attachments, to) {
+  if (await enviarViaResend(subject, html, attachments, to)) return true;
+  if (await enviarViaGmail(subject, html, to)) return true;
   console.log('[email] No se pudo enviar (configura RESEND_API_KEY en Render)');
+  return false;
 }
 
 // ── Correo: nueva reseña para aprobar ──
@@ -190,4 +192,46 @@ async function enviarPagoConfirmado(payment) {
   await enviarCorreo(`✅ Pago confirmado DEUS Band — ${money(payment.transaction_amount)} #${refPago}`, html);
 }
 
-module.exports = { enviarPedidoNuevo, enviarPagoConfirmado, enviarResena, diagnostico };
+// ── Correo AL CLIENTE: su compra fue recibida ──
+// datos: { email, name, monto, id, color, carrier, address }
+async function enviarConfirmacionCliente(datos) {
+  const email = (datos.email || '').trim();
+  // Sin correo válido no hay a quién escribir (ej: Webpay no entrega el email del comprador)
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    console.log('[email] Cliente sin correo válido, no se envía confirmación:', email || '(vacío)');
+    return false;
+  }
+  const nombre = (datos.name || '').trim().split(' ')[0] || 'Hola';
+  const dir = datos.address || {};
+  const lugar = [dir.address, dir.commune, dir.region].filter(Boolean).join(', ');
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee">
+      <div style="background:#080808;color:#fff;padding:28px 24px;text-align:center">
+        <h1 style="margin:0;letter-spacing:4px;font-size:22px;font-weight:normal">DEUS BAND</h1>
+      </div>
+      <div style="padding:32px 28px;color:#222;font-size:15px;line-height:1.6">
+        <div style="text-align:center;font-size:40px;margin-bottom:8px">✅</div>
+        <h2 style="text-align:center;margin:0 0 20px;font-size:20px;color:#0a7d2c">¡Tu compra fue recibida!</h2>
+        <p>Hola <b>${nombre}</b>,</p>
+        <p>Recibimos tu pago correctamente y ya estamos preparando tu pedido. <b>Pronto haremos tu envío</b>.</p>
+        <div style="background:#f7f7f7;border-radius:10px;padding:18px 20px;margin:22px 0">
+          <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <tr><td style="padding:5px 0;color:#888">Producto</td><td style="text-align:right"><b>DEUS Band${datos.color ? ' — ' + String(datos.color).toUpperCase() : ''}</b></td></tr>
+            ${datos.carrier ? `<tr><td style="padding:5px 0;color:#888">Envío</td><td style="text-align:right">${datos.carrier}</td></tr>` : ''}
+            ${lugar ? `<tr><td style="padding:5px 0;color:#888">Dirección</td><td style="text-align:right">${lugar}</td></tr>` : ''}
+            <tr><td style="padding:10px 0 0;color:#888;border-top:1px solid #e2e2e2">Total pagado</td><td style="text-align:right;padding-top:10px;border-top:1px solid #e2e2e2"><b style="font-size:16px">${money(datos.monto)}</b></td></tr>
+          </table>
+        </div>
+        <p style="margin:22px 0 6px">El envío llega en <b>1 a 3 días hábiles</b>.</p>
+        <p style="margin-top:26px;color:#555">Gracias por confiar en DEUS. ✨</p>
+      </div>
+      <div style="background:#f0f0f0;padding:16px 24px;text-align:center;color:#999;font-size:12px">
+        DEUS Band · deusbrand.cl${datos.id ? ' · Pedido ' + String(datos.id).slice(-8) : ''}
+      </div>
+    </div>`;
+  const ok = await enviarCorreo(`✅ Recibimos tu compra — DEUS Band`, html, null, email);
+  console.log(ok ? '[email] Confirmación enviada al cliente: ' + email : '[email] No se pudo enviar confirmación al cliente: ' + email);
+  return ok;
+}
+
+module.exports = { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarResena, diagnostico };
