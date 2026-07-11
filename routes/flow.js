@@ -56,16 +56,17 @@ function flowReq(method, path, params) {
 
 // Iniciar pago con Flow
 router.post('/flow/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
   try {
-    const amount = PRODUCT_PRICE + (Number(shippingCost) || 0);
+    const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
+    const amount = PRODUCT_PRICE * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
     const commerceOrder = 'deus-' + Date.now();
     const base = getBaseUrl(req);
 
     const params = {
       apiKey: (process.env.FLOW_API_KEY || "").trim(),
       commerceOrder: commerceOrder,
-      subject: 'DEUS Band',
+      subject: 'DEUS Band' + (qty > 1 ? ' x' + qty : '') + (tapones ? ' + Tapones' : ''),
       currency: 'CLP',
       amount: String(amount),
       email: customerEmail || 'cliente@deusbrand.cl',
@@ -81,7 +82,9 @@ router.post('/flow/crear', async (req, res) => {
     const pedido = {
       preference_id: commerceOrder,
       created_at: new Date().toISOString(),
-      product: 'DEUS Band', product_price: PRODUCT_PRICE,
+      product: 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
+      product_price: PRODUCT_PRICE * qty + (tapones ? 12990 : 0),
+      cantidad: qty, tapones: !!tapones,
       color: selectedColor,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },

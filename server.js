@@ -56,20 +56,33 @@ const client = new MercadoPagoConfig({
 const pedidos = [];
 
 app.post('/crear-preferencia', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
 
   try {
     const preference = new Preference(client);
+
+    // Cantidad de bandas acotada a un rango razonable
+    const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
 
     const items = [
       {
         title: 'DEUS Band',
         description: 'Smart Band — Monitor de salud y bienestar',
         unit_price: 38990,
-        quantity: 1,
+        quantity: qty,
         currency_id: 'CLP'
       }
     ];
+
+    if (tapones) {
+      items.push({
+        title: 'Tapones de oído DEUS',
+        description: 'Tapones de oído — 3 tamaños incluidos',
+        unit_price: 12990,
+        quantity: 1,
+        currency_id: 'CLP'
+      });
+    }
 
     if (shippingCost && shippingCost > 0) {
       items.push({
@@ -84,6 +97,8 @@ app.post('/crear-preferencia', async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const isLocalhost = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
 
+    const totalPedido = 38990 * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+
     const prefBody = {
       items,
       statement_descriptor: 'DEUS BAND',
@@ -93,6 +108,8 @@ app.post('/crear-preferencia', async (req, res) => {
         customer_email: customerEmail,
         customer_phone: customerPhone,
         selected_color: selectedColor,
+        cantidad: qty,
+        tapones: !!tapones,
         shipping_carrier: shippingCarrier,
         shipping_cost: shippingCost,
         shipping_address: shippingAddress
@@ -103,7 +120,7 @@ app.post('/crear-preferencia', async (req, res) => {
     if (!isLocalhost) {
       prefBody.back_urls = {
         // monto: total real (producto + envío) para que el píxel reporte el valor correcto
-        success: `${baseUrl}/success.html?monto=${38990 + (Number(shippingCost) || 0)}`,
+        success: `${baseUrl}/success.html?monto=${totalPedido}`,
         failure: `${baseUrl}/failure.html`,
         pending: `${baseUrl}/pending.html`
       };
@@ -119,8 +136,10 @@ app.post('/crear-preferencia', async (req, res) => {
     const pedido = {
       preference_id: result.id,
       created_at: new Date().toISOString(),
-      product: 'DEUS Band',
-      product_price: 38990,
+      product: 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
+      product_price: 38990 * qty + (tapones ? 12990 : 0),
+      cantidad: qty,
+      tapones: !!tapones,
       color: selectedColor,
       customer: {
         name: customerName,
@@ -133,7 +152,7 @@ app.post('/crear-preferencia', async (req, res) => {
         cost: shippingCost,
         address: shippingAddress
       },
-      total: 38990 + (shippingCost || 0),
+      total: totalPedido,
       status: 'pending'
     };
     pedidos.push(pedido);

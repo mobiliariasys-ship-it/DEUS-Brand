@@ -147,7 +147,7 @@ async function enviarPedidoNuevo(pedido) {
           <tr><td style="padding:6px 0;color:#888">Teléfono</td><td style="text-align:right"><b>${pedido.customer?.phone || '—'}</b></td></tr>
         </table>
         <h3 style="margin:20px 0 12px">Producto</h3>
-        <p>DEUS Band — ${money(pedido.product_price)}</p>
+        <p>${pedido.product || 'DEUS Band'} — ${money(pedido.product_price)}</p>
         <p style="margin-top:6px"><b>Color elegido: ${(pedido.color || '—').toUpperCase()}</b></p>
         <h3 style="margin:20px 0 12px">Envío</h3>
         <table style="width:100%;border-collapse:collapse;font-size:14px">

@@ -28,9 +28,10 @@ function getBaseUrl(req) {
 
 // Inicia el pago con Webpay
 router.post('/webpay/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
   try {
-    const amount = PRODUCT_PRICE + (Number(shippingCost) || 0);
+    const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
+    const amount = PRODUCT_PRICE * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
     const buyOrder = 'deus-' + Date.now();
     const sessionId = 'sess-' + Date.now();
     const returnUrl = `${getBaseUrl(req)}/webpay/retorno`;
@@ -41,8 +42,10 @@ router.post('/webpay/crear', async (req, res) => {
     const pedido = {
       preference_id: buyOrder,
       created_at: new Date().toISOString(),
-      product: 'DEUS Band',
-      product_price: PRODUCT_PRICE,
+      product: 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
+      product_price: PRODUCT_PRICE * qty + (tapones ? 12990 : 0),
+      cantidad: qty,
+      tapones: !!tapones,
       color: selectedColor,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },
