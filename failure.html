@@ -22,6 +22,7 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '2086346891978245');
 fbq('track', 'PageView');
+fbq('trackCustom', 'PaymentFailed');
 </script>
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
@@ -49,11 +50,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="card">
   <div class="icon">✕</div>
-  <h1>Pago Fallido</h1>
-  <p>Hubo un problema con tu pago.<br>Por favor intenta nuevamente o usa otro método de pago.</p>
+  <h1>Pago no completado</h1>
+  <p>Tu pago no se procesó y <b style="color:#ddd">no se hizo ningún cobro</b>.<br>
+  A veces Mercado Pago rechaza pagos por seguridad. La solución más rápida:<br>
+  <b style="color:#7fc9a0">vuelve a intentar y elige "Pagar con Webpay"</b> — mismo pago seguro con tu tarjeta.</p>
   <div class="btns">
-    <a href="/">Reintentar</a>
-    <a href="mailto:wellness@deusbrand.cl">Contactar soporte</a>
+    <a href="/" style="background:#e8e8e8;color:#080808;">Reintentar con Webpay</a>
+    <a href="https://wa.me/56979777870?text=Hola%2C%20intent%C3%A9%20comprar%20la%20DEUS%20Band%20pero%20el%20pago%20fall%C3%B3%2C%20%C2%BFme%20ayudan%3F" style="border-color:#25d366;color:#25d366;">Ayuda por WhatsApp</a>
   </div>
 </div>
 </body>
