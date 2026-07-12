@@ -1626,7 +1626,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="how-img sleep-live">
         <img src="img/img-8195c9b9.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async">
         <div class="sleep-scan"></div>
-        <div class="sleep-bpm"><span class="bpm-heart">♥</span> <b id="bpm-val">52</b> ppm</div>
+        <div class="sleep-bpm"><span class="bpm-heart">♥</span> <b id="bpm-val">52</b> bpm</div>
       </div>
       <div class="how-txt">
         <h3>Optimiza tu sueño</h3>
@@ -2173,13 +2173,31 @@ document.addEventListener('DOMContentLoaded', function() {
   onScroll();
 })();
 
-// Pulso "en vivo" de la imagen del sueño: varía suavemente entre 48 y 56 ppm
+// Pulso "en vivo": el bpm sigue el ritmo real del día según la hora local.
+// Madrugada = sueño profundo (bajo); 18-21h = hora peak de gym (alto).
 (function(){
   var el=document.getElementById('bpm-val');
   if(!el) return;
-  var bpm=52;
+  function rangoPorHora(h){
+    if(h<6)  return [45,55];   // sueño profundo
+    if(h<9)  return [58,68];   // despertando
+    if(h<12) return [64,74];   // mañana activa
+    if(h<15) return [68,78];   // mediodía
+    if(h<18) return [70,82];   // tarde
+    if(h<21) return [86,104];  // hora peak de gym
+    if(h<23) return [64,76];   // bajando la noche
+    return [52,60];            // preparándose para dormir
+  }
+  var r=rangoPorHora(new Date().getHours());
+  var bpm=Math.round((r[0]+r[1])/2);
+  el.textContent=bpm;
   setInterval(function(){
-    bpm=Math.max(48,Math.min(56,bpm+(Math.random()<.5?-1:1)));
+    r=rangoPorHora(new Date().getHours());
+    // Camina de a 1-2 puntos hacia dentro del rango de la hora actual
+    var paso=(Math.random()<.5?-1:1)*(Math.random()<.3?2:1);
+    if(bpm<r[0]) paso=Math.abs(paso);
+    if(bpm>r[1]) paso=-Math.abs(paso);
+    bpm=Math.max(r[0]-2,Math.min(r[1]+2,bpm+paso));
     el.textContent=bpm;
   },2400);
 })();
