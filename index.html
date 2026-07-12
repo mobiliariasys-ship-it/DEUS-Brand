@@ -2173,6 +2173,25 @@ document.addEventListener('DOMContentLoaded', function() {
   onScroll();
 })();
 
+// Refuerzo de autoplay: iPhone en ahorro de batería (y algunos Android)
+// bloquean la reproducción automática y muestran un botón de play. Aquí
+// reintentamos al quedar visible el video y al primer gesto del usuario.
+(function(){
+  var vids=document.querySelectorAll('video[autoplay]');
+  if(!vids.length) return;
+  function reproducir(v){ v.muted=true; if(v.paused) v.play().catch(function(){}); }
+  function intentarTodos(){ vids.forEach(reproducir); }
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting) reproducir(e.target); });
+    },{threshold:.15});
+    vids.forEach(function(v){ io.observe(v); });
+  }
+  ['touchstart','scroll','click'].forEach(function(ev){
+    window.addEventListener(ev, intentarTodos, { once:true, passive:true });
+  });
+})();
+
 // Pulso "en vivo": el bpm sigue el ritmo real del día según la hora local.
 // Madrugada = sueño profundo (bajo); 18-21h = hora peak de gym (alto).
 (function(){
