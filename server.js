@@ -6,6 +6,7 @@ const transbankRoutes = require('./routes/transbank');
 const flowRoutes = require('./routes/flow');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarResena, diagnostico } = require('./services/email');
 const { getStock, decrementStock, setStock } = require('./services/stock');
+const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
 
 // Oferta de lanzamiento hasta el 12-jul-2026 23:59 (Chile). Al vencer, el
 // precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
@@ -166,6 +167,9 @@ app.post('/crear-preferencia', async (req, res) => {
     // Enviar correo con los datos del pedido (no bloquea la respuesta)
     enviarPedidoNuevo(pedido).catch(err => console.error('[email] Error:', err.message));
 
+    // Si en 10 min no hay pago confirmado, correo de recuperación al cliente
+    programarRecuperacion(result.id, pedido);
+
     res.json({ id: result.id, init_point: result.init_point });
   } catch (error) {
     console.error('Error creando preferencia:', error);
@@ -195,6 +199,7 @@ app.post('/notificaciones', async (req, res) => {
         // coincide el correo, tomamos de ahí la dirección completa.
         const meta = info.metadata || {};
         const emailCliente = meta.customer_email || info.payer?.email;
+        marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
         const pedido = pedidos.find(p => p.customer?.email && p.customer.email === emailCliente);
         enviarConfirmacionCliente({
           email: emailCliente,

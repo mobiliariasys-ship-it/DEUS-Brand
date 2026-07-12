@@ -4,6 +4,7 @@ const https = require('https');
 const crypto = require('crypto');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
 const { decrementStock } = require('../services/stock');
+const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 
 // Oferta de lanzamiento hasta el 12-jul-2026 23:59 (Chile); después $44.990
 const OFERTA_END = new Date('2026-07-12T23:59:59-04:00').getTime();
@@ -95,6 +96,8 @@ router.post('/flow/crear', async (req, res) => {
     };
     pedidosFlow.set(commerceOrder, pedido);
     enviarPedidoNuevo(pedido).catch(e => console.error('[email]', e.message));
+    // Si en 10 min no hay pago confirmado, correo de recuperación al cliente
+    programarRecuperacion(commerceOrder, pedido);
 
     console.log('[flow/crear] orden=' + commerceOrder + ' monto=' + amount);
     res.json({ url: r.body.url + '?token=' + r.body.token });
@@ -116,6 +119,7 @@ router.post('/flow/confirmacion', async (req, res) => {
     console.log('[flow/confirmacion] ' + st.commerceOrder + ' status=' + st.status);
     if (st.status === 2) {
       if (pedido) pedido.status = 'paid';
+      marcarPagado(st.commerceOrder); // cancela el correo de recuperación
       decrementStock(st.commerceOrder);
       enviarPagoConfirmado({
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },

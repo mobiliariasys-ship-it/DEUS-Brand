@@ -3,6 +3,7 @@ const router = express.Router();
 const { WebpayPlus, Options, IntegrationApiKeys, IntegrationCommerceCodes, Environment } = require('transbank-sdk');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
 const { decrementStock } = require('../services/stock');
+const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 
 // Oferta de lanzamiento hasta el 12-jul-2026 23:59 (Chile); después $44.990
 const OFERTA_END = new Date('2026-07-12T23:59:59-04:00').getTime();
@@ -58,6 +59,8 @@ router.post('/webpay/crear', async (req, res) => {
     };
     pedidosWebpay.set(buyOrder, pedido);
     enviarPedidoNuevo(pedido).catch(e => console.error('[email]', e.message));
+    // Si en 10 min no hay pago confirmado, correo de recuperación al cliente
+    programarRecuperacion(buyOrder, pedido);
 
     console.log(`[webpay/crear] buyOrder=${buyOrder} | monto=${amount}`);
     res.json({ url: resp.url, token: resp.token });
@@ -87,6 +90,7 @@ async function handleRetorno(req, res) {
     console.log(`[webpay/retorno] ${result.buy_order} — ${result.status} (${result.response_code})`);
 
     if (aprobado) {
+      marcarPagado(result.buy_order); // cancela el correo de recuperación
       decrementStock(result.buy_order);
       enviarPagoConfirmado({
         payer: { email: (pedido && pedido.customer && pedido.customer.email) || '(Pago con Webpay)' },
