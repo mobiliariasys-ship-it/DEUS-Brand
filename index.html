@@ -236,6 +236,8 @@ body{background:var(--black);font-family:'DM Sans',sans-serif;color:var(--white)
 /* HEADER */
 header{display:flex;align-items:center;justify-content:space-between;padding:10px 22px;background:#0d0d0d;}
 .hdr-right{display:flex;align-items:center;gap:16px;}
+.hdr-ig-btn{color:#b5b5b5;display:flex;align-items:center;transition:color .2s,transform .15s;}
+.hdr-ig-btn:hover{color:#fff;transform:scale(1.08);}
 .hdr-cart-btn{background:none;border:none;color:#b5b5b5;display:flex;align-items:center;gap:6px;cursor:pointer;transition:color .2s,transform .15s;position:relative;}
 .hdr-cart-btn:hover{color:#fff;transform:scale(1.08);}
 .hdr-cart-count{background:#e05555;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;position:absolute;top:-8px;right:-8px;}
@@ -761,6 +763,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
   <div class="hdr-right">
+    <a href="https://www.instagram.com/deusbrand.cl/" target="_blank" rel="noopener noreferrer" class="hdr-ig-btn" aria-label="Síguenos en Instagram">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg>
+    </a>
     <button class="hdr-cart-btn" onclick="abrirCarrito()" aria-label="Abrir carrito">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
       <span class="hdr-cart-count hidden" id="hdr-cart-count">0</span>
