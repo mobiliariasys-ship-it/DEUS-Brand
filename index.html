@@ -919,13 +919,13 @@ function promoActive(){return Date.now()<window.PROMO_END;}
                 <span><b>Garantía de 30 días</b> — si no te convence, te devolvemos tu dinero.</span>
               </div>
               <div class="pay-buttons">
-              <button class="btn-pay" id="mp-btn" onclick="iniciarPago()">
-                <img src="img/img-2fe04405.webp" alt="Mercado Pago" class="l-mp" loading="lazy" decoding="async">
-                <span>Pagar con Mercado Pago</span>
-              </button>
               <button class="btn-pay" id="wp-btn" onclick="iniciarPagoFlow()">
                 <img src="img/img-40abd3c4.webp" alt="Webpay" class="l-wp" loading="lazy" decoding="async">
                 <span>Pagar con Webpay</span>
+              </button>
+              <button class="btn-pay" id="mp-btn" onclick="iniciarPago()">
+                <img src="img/img-2fe04405.webp" alt="Mercado Pago" class="l-mp" loading="lazy" decoding="async">
+                <span>Pagar con Mercado Pago</span>
               </button>
               </div>
               <p id="mp-msg" style="font-size:.6rem;color:#666;letter-spacing:2px;margin-top:10px;display:none;text-align:center;">Preparando pago seguro...</p>
