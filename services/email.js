@@ -234,4 +234,4 @@ async function enviarConfirmacionCliente(datos) {
   return ok;
 }
 
-module.exports = { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarResena, diagnostico };
+module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarResena, diagnostico };
