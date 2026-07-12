@@ -949,6 +949,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const API_BASE = (window.DEUS_API_BASE || '').replace(/\/$/, '');
         const api = (path) => API_BASE + path;
 
+        // Reintenta peticiones al backend: el servidor gratuito se duerme tras
+        // 15 min sin visitas y tarda hasta ~1 min en despertar; sin reintentos,
+        // los pagos y el cálculo de envío fallaban al primer intento.
+        async function fetchBackend(path, opts, onEstado) {
+          const intentos = 4;
+          for (let i = 0; i < intentos; i++) {
+            try {
+              const ctrl = new AbortController();
+              const t = setTimeout(() => ctrl.abort(), 25000);
+              const res = await fetch(api(path), { ...(opts || {}), signal: ctrl.signal });
+              clearTimeout(t);
+              if (res.status >= 500 && i < intentos - 1) throw new Error('HTTP ' + res.status);
+              return res;
+            } catch (e) {
+              if (i === intentos - 1) throw e;
+              if (onEstado) onEstado('Despertando el servidor… reintentando (' + (i + 2) + '/' + intentos + ')');
+              await new Promise(r => setTimeout(r, 4000));
+            }
+          }
+        }
+
         let selectedShipping = null;
         const PRODUCT_PRICE = 38990;
 
@@ -1075,11 +1096,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           selectedShipping = null;
 
           try {
-            const res = await fetch(api('/calcular-envio'), {
+            const res = await fetchBackend('/calcular-envio', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ region, commune, city: commune, address, regionCode: getRegionCode(region) })
-            });
+            }, s => { results.innerHTML = '<div class="shipping-msg">' + s + '</div>'; });
             const data = await res.json();
 
             if (!res.ok || !data.carriers?.length) {
@@ -1398,11 +1419,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           msg.textContent = 'Conectando con Webpay...';
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
           try {
-            const res = await fetch(api('/flow/crear'), {
+            const res = await fetchBackend('/flow/crear', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(datosPedido())
-            });
+            }, s => { msg.style.display = ''; msg.textContent = s; });
             const data = await res.json();
             if (data.url) {
               window.location.href = data.url;
@@ -1412,7 +1433,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           } catch (e) {
             wp.disabled = false;
             wp.textContent = 'Pagar con Webpay';
-            msg.textContent = 'Error al conectar. Intenta nuevamente.';
+            msg.textContent = 'No pudimos conectar. Espera 30 segundos y vuelve a intentar.';
             msg.style.color = '#c0392b';
           }
         }
@@ -1469,11 +1490,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           msg.textContent = 'Preparando pago seguro...';
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
           try {
-            const res = await fetch(api('/crear-preferencia'), {
+            const res = await fetchBackend('/crear-preferencia', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(datosPedido())
-            });
+            }, s => { msg.style.display = ''; msg.textContent = s; });
             const data = await res.json();
             if (data.init_point) {
               window.location.href = data.init_point;
@@ -1483,7 +1504,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           } catch(e) {
             btn.disabled = false;
             btn.textContent = 'Pagar con MercadoPago';
-            msg.textContent = 'Error al conectar. Intenta nuevamente.';
+            msg.textContent = 'No pudimos conectar. Espera 30 segundos y vuelve a intentar.';
             msg.style.color = '#c0392b';
           }
         }
