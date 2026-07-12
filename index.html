@@ -1005,11 +1005,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- ── CONFIG: URL del backend en Render ──
            Reemplaza la URL de abajo por la que te dé Render tras desplegar. -->
       <script>
-        // deusbrand.cl y Render sirven todo desde el mismo origen -> rutas relativas.
-        // Solo Netlify (origen distinto) necesita la URL absoluta del backend.
-        window.DEUS_API_BASE = location.hostname.includes('netlify')
-          ? 'https://deus-band.onrender.com'
-          : '';
+        // Rutas relativas siempre: si el sitio lo sirve Render, es el mismo
+        // origen; si lo sirve Netlify, netlify.toml hace proxy de las rutas
+        // del backend hacia Render de forma transparente.
+        window.DEUS_API_BASE = '';
       </script>
 
       <script src="https://sdk.mercadopago.com/js/v2"></script>

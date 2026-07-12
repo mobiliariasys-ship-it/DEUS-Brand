@@ -1,13 +1,83 @@
 # Configuración de Netlify
-# El frontend es estático (index.html y demás .html en la raíz).
-# El backend (server.js) NO corre aquí — vive en Render.
+# Netlify sirve el frontend estático (HTML, imágenes, videos) — el 95% del
+# tráfico — y le pasa (proxy) las rutas del backend a Render, que solo
+# procesa pagos, envíos y stock. Así la cuota de Render no vuelve a agotarse.
 
 [build]
   publish = "."
   command = ""
 
-# Redirige la raíz al catálogo
+# ── Rutas del backend: se reenvían a Render de forma transparente ──
+# (status 200 = proxy invisible: el navegador nunca sale de deusbrand.cl)
+
 [[redirects]]
-  from = "/"
-  to = "/index.html"
+  from = "/crear-preferencia"
+  to = "https://deus-band.onrender.com/crear-preferencia"
   status = 200
+  force = true
+
+[[redirects]]
+  from = "/notificaciones"
+  to = "https://deus-band.onrender.com/notificaciones"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/calcular-envio"
+  to = "https://deus-band.onrender.com/calcular-envio"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/flow/*"
+  to = "https://deus-band.onrender.com/flow/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/webpay/*"
+  to = "https://deus-band.onrender.com/webpay/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/stock"
+  to = "https://deus-band.onrender.com/stock"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/stock/*"
+  to = "https://deus-band.onrender.com/stock/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/resenas"
+  to = "https://deus-band.onrender.com/resenas"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/pedidos"
+  to = "https://deus-band.onrender.com/pedidos"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/email/*"
+  to = "https://deus-band.onrender.com/email/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ping"
+  to = "https://deus-band.onrender.com/ping"
+  status = 200
+  force = true
+
+# ── Cache para los assets pesados (imágenes, videos, cuadros del 360) ──
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
