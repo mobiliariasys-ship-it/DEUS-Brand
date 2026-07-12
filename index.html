@@ -760,6 +760,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 <div class="topbar" id="topbar">
+<div class="announce-bar" id="offer-bar">⚡ Oferta $38.990 · termina en <b id="offer-cd-top" style="font-variant-numeric:tabular-nums;">--:--:--</b></div>
+<script>
+(function(){
+  var END=new Date('2026-07-12T20:00:00-04:00').getTime();
+  var bar=document.getElementById('offer-bar');
+  function pad(n){return String(n).padStart(2,'0');}
+  function tick(){
+    var d=END-Date.now();
+    if(d<=0){ bar.style.display='none'; return; }
+    var h=Math.floor(d/3600000), m=Math.floor(d%3600000/60000), s=Math.floor(d%60000/1000);
+    document.getElementById('offer-cd-top').textContent=pad(h)+':'+pad(m)+':'+pad(s);
+  }
+  tick(); setInterval(tick,1000);
+})();
+</script>
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
   <div class="hdr-right">
