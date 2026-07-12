@@ -758,16 +758,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 <div class="topbar" id="topbar">
-<script>
-window.PROMO_END=new Date('2026-07-13T23:59:00-04:00').getTime();
-function promoActive(){return Date.now()<window.PROMO_END;}
-(function(){
-  var END=window.PROMO_END;
-  function box(n,l){return '<span class="cdb"><b>'+String(n).padStart(2,"0")+'</b><small>'+l+'</small></span>';}
-  function tick(){var el=document.getElementById('promo-cd');if(!el)return;var d=END-Date.now();if(d<=0){el.style.display='none';return;}var dd=Math.floor(d/86400000);d%=86400000;var hh=Math.floor(d/3600000);d%=3600000;var mm=Math.floor(d/60000);d%=60000;var ss=Math.floor(d/1000);el.innerHTML=box(dd,'d')+box(hh,'h')+box(mm,'m')+box(ss,'s');}
-  tick();setInterval(tick,1000);
-})();
-</script>
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
   <div class="hdr-right">
@@ -816,7 +806,7 @@ function promoActive(){return Date.now()<window.PROMO_END;}
       </div>
 
       <div class="price-old">Precio normal: <span class="old-amount">$44.990</span></div>
-      <div class="price-block"><sup>$</sup>38.990 <span class="price-offer-tag">OFERTA</span> <span class="offer-cd" id="promo-cd"></span></div>
+      <div class="price-block"><sup>$</sup>38.990 <span class="price-offer-tag">OFERTA</span></div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
 
       <div class="cta-row">
