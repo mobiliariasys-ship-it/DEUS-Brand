@@ -510,6 +510,14 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .how-row.row-360{grid-template-columns:1fr;gap:6px;}
 .row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
 .row-360 .how-txt{text-align:center;max-width:600px;margin:0 auto;}
+/* Imagen del sueño "en vivo": barrido sobre el gráfico de pulsaciones + latido */
+.sleep-live{position:relative;}
+.sleep-scan{position:absolute;left:4%;bottom:4%;height:27%;width:2px;background:linear-gradient(180deg,transparent,#6fb7dd 30%,#6fb7dd 70%,transparent);box-shadow:0 0 14px rgba(111,183,221,.9);opacity:.85;animation:scanSweep 7s linear infinite;pointer-events:none;}
+@keyframes scanSweep{0%{left:4%;opacity:0;}4%{opacity:.85;}96%{opacity:.85;}100%{left:95%;opacity:0;}}
+.sleep-bpm{position:absolute;top:12px;right:12px;background:rgba(8,8,8,.68);border:1px solid #2e2e2e;border-radius:16px;padding:6px 13px;font-size:.74rem;color:#eee;display:flex;align-items:center;gap:6px;pointer-events:none;}
+.sleep-bpm b{font-variant-numeric:tabular-nums;}
+.bpm-heart{color:#e05555;display:inline-block;font-size:.9rem;animation:bpmBeat 1.15s ease-in-out infinite;}
+@keyframes bpmBeat{0%,100%{transform:scale(1);}12%{transform:scale(1.4);}24%{transform:scale(1);}36%{transform:scale(1.2);}48%{transform:scale(1);}}
 .how-img.natural{aspect-ratio:auto;min-height:0!important;}
 .how-img.natural video{width:100%;height:auto;display:block;border-radius:12px;}
 .how-img.contain img{object-fit:contain;max-height:360px;padding:16px;width:auto;}
@@ -1606,7 +1614,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
     <div class="how-row reverse">
-      <div class="how-img"><img src="img/img-8195c9b9.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async"></div>
+      <div class="how-img sleep-live">
+        <img src="img/img-8195c9b9.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async">
+        <div class="sleep-scan"></div>
+        <div class="sleep-bpm"><span class="bpm-heart">♥</span> <b id="bpm-val">52</b> ppm</div>
+      </div>
       <div class="how-txt">
         <h3>Optimiza tu sueño</h3>
         <p>Mide tus fases de sueño —profundo, ligero y REM— y la calidad de tu descanso. Despierta recuperado y mejora tus noches con datos reales.</p>
@@ -2150,6 +2162,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   window.addEventListener('scroll',onScroll,{passive:true});
   onScroll();
+})();
+
+// Pulso "en vivo" de la imagen del sueño: varía suavemente entre 48 y 56 ppm
+(function(){
+  var el=document.getElementById('bpm-val');
+  if(!el) return;
+  var bpm=52;
+  setInterval(function(){
+    bpm=Math.max(48,Math.min(56,bpm+(Math.random()<.5?-1:1)));
+    el.textContent=bpm;
+  },2400);
 })();
 
 // Al vencer la oferta de lanzamiento, todos los precios visibles del sitio
