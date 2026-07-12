@@ -502,8 +502,14 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .rot-360{position:relative;cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;}
 .rot-360:active{cursor:grabbing;}
 .rot-360 img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
-.rot-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:.62rem;color:#999;letter-spacing:1.5px;background:rgba(8,8,8,.6);border:1px solid #242424;padding:5px 13px;border-radius:14px;white-space:nowrap;z-index:2;}
+.rot-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ddd;letter-spacing:1.5px;background:rgba(8,8,8,.75);border:1px solid #3a3a3a;padding:7px 16px;border-radius:16px;white-space:nowrap;z-index:2;animation:hintPulse 2.2s ease-in-out infinite;}
+@keyframes hintPulse{0%,100%{transform:translateX(-50%) scale(1);opacity:.95;}50%{transform:translateX(-50%) scale(1.05);opacity:1;}}
+.rot-badge{position:absolute;top:14px;right:14px;z-index:2;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:#e8e8e8;border:1.5px solid #3a3a3a;background:rgba(8,8,8,.6);border-radius:16px;padding:4px 12px;pointer-events:none;}
 .rot-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%, transparent 48%, #080808 96%);}
+/* El visor 360 ocupa su propia fila centrada, más grande que las demás imágenes */
+.how-row.row-360{grid-template-columns:1fr;gap:6px;}
+.row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
+.row-360 .how-txt{text-align:center;max-width:600px;margin:0 auto;}
 .how-img.natural{aspect-ratio:auto;min-height:0!important;}
 .how-img.natural video{width:100%;height:auto;display:block;border-radius:12px;}
 .how-img.contain img{object-fit:contain;max-height:360px;padding:16px;width:auto;}
@@ -1572,10 +1578,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="how-kicker">Cómo funciona</div>
     </div>
 
-      <div class="how-row reverse">
+      <div class="how-row row-360">
       <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra para girar">
         <canvas id="rot360-canvas" width="640" height="640" style="width:100%;height:100%;display:block;"></canvas>
         <div class="rot-vignette"></div>
+        <div class="rot-badge">360°</div>
         <div class="rot-hint" id="rot360-hint">↔ Arrastra para girar la banda</div>
       </div>
       <div class="how-txt">
