@@ -703,9 +703,20 @@ body.sb-on .wa-float{bottom:82px;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
 .stock-note{font-size:.78rem;color:#e8b464;letter-spacing:.5px;margin:0 0 16px;}
-.proof-line{font-size:.74rem;color:#aaa;letter-spacing:.5px;margin:0 0 14px;display:inline-flex;align-items:center;gap:6px;}
+.proof-line{font-size:.74rem;color:#aaa;letter-spacing:.5px;margin:0 0 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+.proof-line:hover{color:#ddd;}
 .proof-line .proof-stars{color:#e9c46a;font-size:.85rem;letter-spacing:2px;}
 .proof-line b{color:#ddd;}
+.proof-arrow{color:#777;font-size:.9rem;}
+/* Modal de reseñas: se ven sin salir de la zona de compra */
+.reviews-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1600;align-items:center;justify-content:center;padding:20px;}
+.reviews-modal.show{display:flex;}
+.reviews-modal-box{background:#0f0f0f;border:1px solid var(--border);border-radius:12px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;padding:26px 22px;position:relative;animation:slideUp .25s ease;}
+.reviews-modal-close{position:absolute;top:10px;right:14px;background:none;border:none;color:#888;font-size:1.7rem;line-height:1;cursor:pointer;}
+.reviews-modal-close:hover{color:#fff;}
+.reviews-modal-title{font-size:.88rem;font-weight:700;letter-spacing:1px;margin-bottom:16px;color:var(--white);}
+.reviews-modal-title .proof-stars{color:#e9c46a;letter-spacing:2px;}
+.reviews-modal-body .review-card{margin-bottom:12px;}
 .upsell-card{display:flex;align-items:center;gap:12px;margin-top:16px;background:#131313;border:1px solid var(--border);border-radius:10px;padding:12px;}
 .upsell-card.added{border-color:#7fc9a0;background:#101710;}
 .upsell-img{width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;}
@@ -854,8 +865,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="price-old">Precio normal: <span class="old-amount">$44.990</span></div>
       <div class="price-block"><sup>$</sup>38.990 <span class="price-offer-tag">OFERTA</span></div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
-      <div class="proof-line">
-        <span class="proof-stars">★★★★★</span> <b>5.0</b> · reseñas de la comunidad
+      <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas">
+        <span class="proof-stars">★★★★★</span> <b>5.0</b> · reseñas de la comunidad <span class="proof-arrow">›</span>
       </div>
 
       <div class="cta-row">
@@ -2151,6 +2162,29 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="cart-cta" onclick="cerrarCarrito(); abrirCheckout();">Comprar ahora</button>
   </div>
 </div>
+
+<!-- Modal de reseñas (se abre desde las estrellas junto al precio) -->
+<div class="reviews-modal" id="reviews-modal" onclick="if(event.target===this)cerrarResenasModal()">
+  <div class="reviews-modal-box">
+    <button class="reviews-modal-close" onclick="cerrarResenasModal()" aria-label="Cerrar">&times;</button>
+    <div class="reviews-modal-title"><span class="proof-stars">★★★★★</span> 5.0 · Reseñas de la comunidad</div>
+    <div class="reviews-modal-body" id="reviews-modal-body"></div>
+  </div>
+</div>
+<script>
+function abrirResenasModal(){
+  var grid=document.querySelector('.reviews-grid');
+  var body=document.getElementById('reviews-modal-body');
+  if(grid&&body&&!body.childElementCount) body.innerHTML=grid.innerHTML;
+  document.getElementById('reviews-modal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function cerrarResenasModal(){
+  document.getElementById('reviews-modal').classList.remove('show');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarResenasModal(); });
+</script>
 
 <!-- Barra de compra fija -->
 <div class="sticky-buy" id="stickyBuy">
