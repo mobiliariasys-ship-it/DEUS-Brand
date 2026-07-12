@@ -7,6 +7,12 @@ const flowRoutes = require('./routes/flow');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarResena, diagnostico } = require('./services/email');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 
+// Oferta de lanzamiento hasta el 12-jul-2026 23:59 (Chile). Al vencer, el
+// precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
+// El front usa esta misma fecha, así el cambio ocurre solo y sincronizado.
+const OFERTA_END = new Date('2026-07-12T23:59:59-04:00').getTime();
+const precioBanda = () => Date.now() < OFERTA_END ? 38990 : 44990;
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
@@ -68,7 +74,7 @@ app.post('/crear-preferencia', async (req, res) => {
       {
         title: 'DEUS Band',
         description: 'Smart Band — Monitor de salud y bienestar',
-        unit_price: 38990,
+        unit_price: precioBanda(),
         quantity: qty,
         currency_id: 'CLP'
       }
@@ -97,7 +103,7 @@ app.post('/crear-preferencia', async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const isLocalhost = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
 
-    const totalPedido = 38990 * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+    const totalPedido = precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
 
     const prefBody = {
       items,
@@ -137,7 +143,7 @@ app.post('/crear-preferencia', async (req, res) => {
       preference_id: result.id,
       created_at: new Date().toISOString(),
       product: 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
-      product_price: 38990 * qty + (tapones ? 12990 : 0),
+      product_price: precioBanda() * qty + (tapones ? 12990 : 0),
       cantidad: qty,
       tapones: !!tapones,
       color: selectedColor,

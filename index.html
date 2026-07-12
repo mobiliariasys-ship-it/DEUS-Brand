@@ -81,7 +81,7 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
     "@type": "Offer",
     "price": "38990",
     "priceCurrency": "CLP",
-    "priceValidUntil": "2026-12-31",
+    "priceValidUntil": "2026-07-12",
     "itemCondition": "https://schema.org/NewCondition",
     "availability": "https://schema.org/InStock",
     "url": "https://deusbrand.cl/",
@@ -766,13 +766,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   var END=new Date('2026-07-12T23:59:59-04:00').getTime();
   var bar=document.getElementById('offer-bar');
   function pad(n){return String(n).padStart(2,'0');}
+  var intId=null;
   function tick(){
     var d=END-Date.now();
-    if(d<=0){ bar.style.display='none'; return; }
+    if(d<=0){
+      bar.innerHTML='🚚 Envío <b>GRATIS</b> a todo Chile';
+      if(intId) clearInterval(intId);
+      return;
+    }
     var h=Math.floor(d/3600000), m=Math.floor(d%3600000/60000), s=Math.floor(d%60000/1000);
     document.getElementById('offer-cd-top').textContent=pad(h)+':'+pad(m)+':'+pad(s);
   }
-  tick(); setInterval(tick,1000);
+  tick(); intId=setInterval(tick,1000);
 })();
 </script>
 <header>
@@ -991,6 +996,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         let selectedShipping = null;
+        // Oferta de lanzamiento: al vencer (12-jul 23:59 Chile) el precio sube
+        // a $44.990 y el envío pasa a ser gratis en todo Chile. Todo el sitio
+        // y el backend cambian solos usando esta misma fecha.
+        const OFERTA_END = new Date('2026-07-12T23:59:59-04:00').getTime();
+        const ofertaActiva = () => Date.now() < OFERTA_END;
+        const precioBanda = () => ofertaActiva() ? 38990 : 44990;
+        const envioGratis = () => !ofertaActiva();
         const PRODUCT_PRICE = 38990;
 
         // ── Regiones y comunas de Chile ──
@@ -1128,16 +1140,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               return;
             }
 
+            // Tras la oferta de lanzamiento, el envío es gratis: lo paga la tienda
+            if (envioGratis()) {
+              data.carriers = data.carriers.map(c => ({ ...c, precioNormal: c.price, price: 0 }));
+            }
+
             let html = '<div class="carrier-list">';
             // Opciones de courier con su precio real
             data.carriers.forEach(c => {
-              const price = c.price.toLocaleString('es-CL');
+              const priceLabel = (c.price === 0 && c.precioNormal)
+                ? `<span style="text-decoration:line-through;color:#777;font-size:.62rem;margin-right:6px;">$${c.precioNormal.toLocaleString('es-CL')}</span>GRATIS`
+                : '$' + c.price.toLocaleString('es-CL');
               const encoded = encodeURIComponent(JSON.stringify(c));
               const eta = fechaEntrega(c.deliveryTime);
               html += `<label class="carrier-option" onclick="selectCarrier('${encoded}','${encodeURIComponent(commune)}','${encodeURIComponent(region)}','${encodeURIComponent(address)}')">
                 <input type="radio" name="carrier" value="${c.carrier}">
                 <div style="flex:1"><div class="carrier-name">${c.carrier}</div><div class="carrier-time">${c.deliveryTime}</div>${eta ? `<div class="carrier-eta">${eta}</div>` : ''}</div>
-                <div class="carrier-price">$${price}</div>
+                <div class="carrier-price" ${c.price === 0 ? 'style="color:#69c46d;"' : ''}>${priceLabel}</div>
               </label>`;
             });
             html += '</div>';
@@ -1194,7 +1213,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           document.getElementById('checkout-overlay').classList.add('show');
           document.body.style.overflow = 'hidden';
           if (typeof updateStockUI === 'function') updateStockUI();
-          if (window.fbq) fbq('track', 'InitiateCheckout', { value: 38990, currency: 'CLP', content_name: 'DEUS Band' });
+          if (window.fbq) fbq('track', 'InitiateCheckout', { value: precioBanda(), currency: 'CLP', content_name: 'DEUS Band' });
         }
         // Rescate: el primer intento de cierre muestra la barra de WhatsApp en vez de cerrar
         let rescateMostrado = false;
@@ -1227,7 +1246,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           actualizarTotalCheckout();
         }
         function subtotalCheckout() {
-          return 38990 * checkoutQty + (upsellTapones ? UPSELL_PRICE : 0);
+          return precioBanda() * checkoutQty + (upsellTapones ? UPSELL_PRICE : 0);
         }
         function cambiarCantidadCheckout(delta) {
           const color = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'negra';
@@ -1237,12 +1256,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           actualizarTotalCheckout();
         }
         function actualizarTotalCheckout() {
-          const bandTotal = 38990 * checkoutQty;
+          const bandTotal = precioBanda() * checkoutQty;
           const total = subtotalCheckout() + (selectedShipping?.price || 0);
           if (document.getElementById('total-display')) {
             document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
           }
-          document.getElementById('co-prod-price').innerHTML = `<span class="co-price-old">$${(44990 * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`;
+          document.getElementById('co-prod-price').innerHTML = ofertaActiva()
+            ? `<span class="co-price-old">$${(44990 * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`
+            : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`;
         }
 
         // ── CARRITO ──
@@ -1250,7 +1271,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         cart = cart.filter(item => item && item.id && item.nombre).map(item => ({
           ...item,
           cantidad: item.cantidad || 1,
-          precio: item.precio || 38990
+          precio: item.precio || precioBanda()
         }));
         function actualizarCarrito() {
           cart = cart.map(item => {
@@ -1313,7 +1334,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               nombre: 'DEUS Band',
               color: color,
               colorLabel: colorLabel,
-              precio: 38990,
+              precio: precioBanda(),
               imagen: bandImages[color],
               cantidad: cantidad
             });
@@ -2103,6 +2124,18 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   window.addEventListener('scroll',onScroll,{passive:true});
   onScroll();
+})();
+
+// Al vencer la oferta de lanzamiento, todos los precios visibles del sitio
+// pasan a $44.990 con envío gratis (mismo interruptor que usa el backend).
+(function(){
+  if (typeof ofertaActiva === 'undefined' || ofertaActiva()) return;
+  var po=document.querySelector('.price-old'); if(po) po.style.display='none';
+  var pb=document.querySelector('.price-block'); if(pb) pb.innerHTML='<sup>$</sup>44.990 <span class="price-offer-tag">ENVÍO GRATIS</span>';
+  var cp=document.getElementById('co-prod-price'); if(cp) cp.innerHTML='<span class="co-price-now">$44.990</span>';
+  var td=document.getElementById('total-display'); if(td) td.textContent='$44.990';
+  var fc=document.querySelector('.fc-price'); if(fc) fc.innerHTML='$44.990 <small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>';
+  var sb=document.querySelector('.sb-price'); if(sb) sb.innerHTML='<b>$44.990</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>';
 })();
 </script>
 

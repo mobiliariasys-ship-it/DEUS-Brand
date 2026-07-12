@@ -4,7 +4,10 @@ const { WebpayPlus, Options, IntegrationApiKeys, IntegrationCommerceCodes, Envir
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
 const { decrementStock } = require('../services/stock');
 
+// Oferta de lanzamiento hasta el 12-jul-2026 23:59 (Chile); después $44.990
+const OFERTA_END = new Date('2026-07-12T23:59:59-04:00').getTime();
 const PRODUCT_PRICE = 38990;
+const precioBanda = () => Date.now() < OFERTA_END ? 38990 : 44990;
 const pedidosWebpay = new Map(); // buyOrder -> pedido
 
 // Producción si hay credenciales reales; si no, integración (pruebas)
@@ -31,7 +34,7 @@ router.post('/webpay/crear', async (req, res) => {
   const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
   try {
     const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
-    const amount = PRODUCT_PRICE * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+    const amount = precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
     const buyOrder = 'deus-' + Date.now();
     const sessionId = 'sess-' + Date.now();
     const returnUrl = `${getBaseUrl(req)}/webpay/retorno`;
@@ -43,7 +46,7 @@ router.post('/webpay/crear', async (req, res) => {
       preference_id: buyOrder,
       created_at: new Date().toISOString(),
       product: 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
-      product_price: PRODUCT_PRICE * qty + (tapones ? 12990 : 0),
+      product_price: precioBanda() * qty + (tapones ? 12990 : 0),
       cantidad: qty,
       tapones: !!tapones,
       color: selectedColor,

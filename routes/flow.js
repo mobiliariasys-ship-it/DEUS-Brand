@@ -5,7 +5,10 @@ const crypto = require('crypto');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
 const { decrementStock } = require('../services/stock');
 
+// Oferta de lanzamiento hasta el 12-jul-2026 23:59 (Chile); después $44.990
+const OFERTA_END = new Date('2026-07-12T23:59:59-04:00').getTime();
 const PRODUCT_PRICE = 38990;
+const precioBanda = () => Date.now() < OFERTA_END ? 38990 : 44990;
 const pedidosFlow = new Map();
 
 // Producción por defecto; sandbox si FLOW_ENV=sandbox
@@ -59,7 +62,7 @@ router.post('/flow/crear', async (req, res) => {
   const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
   try {
     const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
-    const amount = PRODUCT_PRICE * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+    const amount = precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
     const commerceOrder = 'deus-' + Date.now();
     const base = getBaseUrl(req);
 
@@ -83,7 +86,7 @@ router.post('/flow/crear', async (req, res) => {
       preference_id: commerceOrder,
       created_at: new Date().toISOString(),
       product: 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
-      product_price: PRODUCT_PRICE * qty + (tapones ? 12990 : 0),
+      product_price: precioBanda() * qty + (tapones ? 12990 : 0),
       cantidad: qty, tapones: !!tapones,
       color: selectedColor,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
