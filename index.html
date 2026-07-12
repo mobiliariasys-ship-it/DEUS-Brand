@@ -691,6 +691,10 @@ body.sb-on .wa-float{bottom:82px;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
 .stock-note{font-size:.78rem;color:#e8b464;letter-spacing:.5px;margin:0 0 16px;}
+.proof-line{font-size:.74rem;color:#aaa;letter-spacing:.5px;margin:0 0 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.proof-line:hover{color:#ddd;}
+.proof-line .proof-stars{color:#e9c46a;font-size:.85rem;letter-spacing:2px;}
+.proof-line b{color:#ddd;}
 .upsell-card{display:flex;align-items:center;gap:12px;margin-top:16px;background:#131313;border:1px solid var(--border);border-radius:10px;padding:12px;}
 .upsell-card.added{border-color:#7fc9a0;background:#101710;}
 .upsell-img{width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;}
@@ -839,6 +843,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="price-old">Precio normal: <span class="old-amount">$44.990</span></div>
       <div class="price-block"><sup>$</sup>38.990 <span class="price-offer-tag">OFERTA</span></div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
+      <div class="proof-line" onclick="document.querySelector('.reviews').scrollIntoView({behavior:'smooth'})" role="link" tabindex="0">
+        <span class="proof-stars">★★★★★</span> <b>5.0</b> · reseñas de la comunidad
+      </div>
 
       <div class="cta-row">
         <button class="btn-p" onclick="abrirCheckout()">Comprar ahora</button>
@@ -1635,18 +1642,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     function stopAuto(){ if(auto){ clearInterval(auto); auto=null; } }
     // Descarga y decodifica TODOS los cuadros antes de girar,
     // así no se pega en los cuadros más pesados (p. ej. el sensor encendido).
-    for(var i=0;i<N;i++){
-      (function(i){
-        var im=new Image();
-        im.onload=function(){
-          frames[i]=im;
-          var fin=function(){ if(--pendientes===0) startAuto(); if(i===BLUE) draw(); };
-          if(im.decode) im.decode().then(fin).catch(fin); else fin();
-        };
-        im.onerror=function(){ if(--pendientes===0) startAuto(); };
-        im.src=src(i);
-      })(i);
+    // La descarga (~1MB) parte recién cuando el visitante se acerca a la
+    // sección, para no competir con la carga inicial de la página.
+    var cargado=false;
+    function cargarCuadros(){
+      if(cargado) return; cargado=true;
+      for(var i=0;i<N;i++){
+        (function(i){
+          var im=new Image();
+          im.onload=function(){
+            frames[i]=im;
+            var fin=function(){ if(--pendientes===0) startAuto(); if(i===BLUE) draw(); };
+            if(im.decode) im.decode().then(fin).catch(fin); else fin();
+          };
+          im.onerror=function(){ if(--pendientes===0) startAuto(); };
+          im.src=src(i);
+        })(i);
+      }
     }
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(entries){
+        if(entries.some(function(e){return e.isIntersecting;})){ cargarCuadros(); io.disconnect(); }
+      },{rootMargin:'900px'});
+      io.observe(wrap);
+    } else { cargarCuadros(); }
     var dragging=false, startX=0, startIdx=0, firstTouch=true;
     wrap.addEventListener('pointerdown',function(e){
       dragging=true; stopAuto();
