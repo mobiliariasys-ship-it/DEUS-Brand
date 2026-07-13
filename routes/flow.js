@@ -125,7 +125,7 @@ router.post('/flow/confirmacion', async (req, res) => {
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },
         transaction_amount: st.amount,
         id: st.commerceOrder
-      }).catch(e => console.error('[email]', e.message));
+      }, pedido).catch(e => console.error('[email]', e.message));
       // Confirmación al cliente
       enviarConfirmacionCliente({
         email: (pedido && pedido.customer && pedido.customer.email) || st.payer,

@@ -96,7 +96,7 @@ async function handleRetorno(req, res) {
         payer: { email: (pedido && pedido.customer && pedido.customer.email) || '(Pago con Webpay)' },
         transaction_amount: result.amount,
         id: result.buy_order
-      }).catch(e => console.error('[email]', e.message));
+      }, pedido).catch(e => console.error('[email]', e.message));
       // Confirmación al cliente (el correo lo tomamos del pedido guardado)
       enviarConfirmacionCliente({
         email: pedido && pedido.customer && pedido.customer.email,

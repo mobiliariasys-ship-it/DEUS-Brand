@@ -191,16 +191,17 @@ app.post('/notificaciones', async (req, res) => {
       console.log(`[webhook] Pago ${info.id} — estado: ${info.status}`);
 
       if (info.status === 'approved') {
-        await enviarPagoConfirmado(info);
-        decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago
-
-        // Correo de confirmación al cliente. Usamos la metadata del pago (que
-        // guardamos al crear la preferencia); si el pedido está en memoria y
-        // coincide el correo, tomamos de ahí la dirección completa.
+        // Datos del pedido (metadata del pago + pedido en memoria) para tener
+        // dirección y comprador completos en el correo de despacho.
         const meta = info.metadata || {};
         const emailCliente = meta.customer_email || info.payer?.email;
-        marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
         const pedido = pedidos.find(p => p.customer?.email && p.customer.email === emailCliente);
+
+        await enviarPagoConfirmado(info, pedido);
+        decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago
+
+        // Correo de confirmación al cliente (usa metadata + pedido en memoria).
+        marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
         enviarConfirmacionCliente({
           email: emailCliente,
           name: meta.customer_name || pedido?.customer?.name,

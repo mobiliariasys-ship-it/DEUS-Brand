@@ -174,22 +174,58 @@ async function enviarPedidoNuevo(pedido) {
 }
 
 // ── Correo: pago confirmado ──
-async function enviarPagoConfirmado(payment) {
+// pedido (opcional): trae los datos completos de despacho del comprador.
+async function enviarPagoConfirmado(payment, pedido) {
+  const c = pedido?.customer || {};
+  const dir = pedido?.shipping?.address || {};
+  const correoCliente = c.email || payment.payer?.email || '—';
+  const fila = (label, val) => val
+    ? `<tr><td style="padding:6px 0;color:#888">${label}</td><td style="text-align:right"><b>${val}</b></td></tr>`
+    : '';
+  const envioCosto = pedido?.shipping?.cost;
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee">
       <div style="background:#0a7d2c;color:#fff;padding:20px 24px">
-        <h2 style="margin:0">✅ PAGO CONFIRMADO</h2>
+        <h2 style="margin:0">✅ PAGO CONFIRMADO — DESPACHAR</h2>
       </div>
       <div style="padding:24px;font-size:14px">
-        <p><b>Comprador:</b> ${payment.payer?.email || '—'}</p>
-        <p><b>Monto:</b> ${money(payment.transaction_amount)}</p>
-        <p><b>ID de pago:</b> ${payment.id}</p>
-        <p style="margin-top:16px;color:#0a7d2c"><b>Ya puedes coordinar el envío.</b></p>
+        <h3 style="margin:0 0 12px">Quien recibe</h3>
+        <table style="width:100%;border-collapse:collapse">
+          ${fila('Nombre', c.name)}
+          ${fila('RUT', c.rut)}
+          ${fila('Correo', correoCliente)}
+          ${fila('Teléfono', c.phone)}
+        </table>
+
+        <h3 style="margin:20px 0 12px">Producto</h3>
+        <table style="width:100%;border-collapse:collapse">
+          ${fila('Detalle', pedido?.product || 'DEUS Band')}
+          ${fila('Color', (pedido?.color || '').toString().toUpperCase())}
+          ${pedido?.cantidad ? fila('Cantidad', pedido.cantidad) : ''}
+          ${pedido?.tapones ? fila('Extra', 'Tapones de oído DEUS') : ''}
+        </table>
+
+        <h3 style="margin:20px 0 12px">Dirección de envío</h3>
+        <table style="width:100%;border-collapse:collapse">
+          ${fila('Empresa', pedido?.shipping?.carrier)}
+          ${fila('Región', dir.region)}
+          ${fila('Comuna', dir.commune)}
+          ${fila('Dirección', dir.address)}
+          ${fila('Costo envío', (envioCosto === 0) ? 'GRATIS' : (envioCosto ? money(envioCosto) : ''))}
+        </table>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:2px solid #0a7d2c;display:flex;justify-content:space-between">
+          <b style="font-size:16px">TOTAL PAGADO</b>
+          <b style="font-size:16px">${money(payment.transaction_amount)}</b>
+        </div>
+        <p style="margin-top:14px;font-size:12px;color:#999">ID de pago: ${payment.id}${pedido?.method ? ' · ' + pedido.method : ''}</p>
+        <p style="margin-top:14px;color:#0a7d2c"><b>Pago aprobado — ya puedes coordinar el envío.</b></p>
       </div>
     </div>`;
   // Asunto único por pago para que Gmail no junte pagos distintos en un mismo hilo
   const refPago = String(payment.id || Date.now()).slice(-8);
-  await enviarCorreo(`✅ Pago confirmado DEUS Band — ${money(payment.transaction_amount)} #${refPago}`, html);
+  const nombre = c.name ? ` — ${c.name}` : '';
+  await enviarCorreo(`✅ Pago confirmado DEUS Band${nombre} (${money(payment.transaction_amount)}) #${refPago}`, html);
 }
 
 // ── Correo AL CLIENTE: su compra fue recibida ──
