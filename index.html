@@ -105,10 +105,16 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
   "aggregateRating": {
     "@type": "AggregateRating",
     "ratingValue": "5.0",
-    "reviewCount": "4",
+    "reviewCount": "5",
     "bestRating": "5"
   },
   "review": [
+    {
+      "@type": "Review",
+      "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+      "author": { "@type": "Person", "name": "@Pdrozzzz" },
+      "reviewBody": "Muy bueno, llegó en el tiempo correspondiente y la atención 10 de 10, y del producto nada que decir, muy bueno."
+    },
     {
       "@type": "Review",
       "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
@@ -435,6 +441,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .reviews-sub{font-size:.62rem;letter-spacing:2px;color:#d9bf92;margin-top:8px;text-transform:uppercase;}
 .reviews-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}
 .review-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.review-photo{width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:14px;display:block;}
 .review-stars{color:#e9c46a;font-size:.8rem;letter-spacing:2px;margin-bottom:10px;}
 .review-text{color:#d8d8d8;font-size:.86rem;line-height:1.6;margin-bottom:14px;}
 .review-author{font-size:.66rem;letter-spacing:1px;color:var(--silver);}
@@ -1822,6 +1829,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="reviews-sub">★★★★★ · Comentarios de Instagram</div>
     </div>
     <div class="reviews-grid">
+      <div class="review-card">
+        <img class="review-photo" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Muy bueno, llegó en el tiempo correspondiente y la atención 10 de 10, y del producto nada que decir, muy bueno."</p>
+        <div class="review-author"><span class="review-ig">@Pdrozzzz</span> · Instagram</div>
+      </div>
       <div class="review-card">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"La batería me dura muchísimo y lo de medir el sueño es adictivo. Súper cómoda para dormir con ella."</p>
