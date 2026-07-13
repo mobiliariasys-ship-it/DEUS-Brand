@@ -6,8 +6,8 @@ const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = r
 const { decrementStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 
-// Oferta de lanzamiento hasta el 13-jul-2026 18:00 (Chile); después $44.990
-const OFERTA_END = new Date('2026-07-13T17:59:59-04:00').getTime();
+// Oferta de lanzamiento hasta el 15-jul-2026 18:00 (Chile); después $44.990
+const OFERTA_END = new Date('2026-07-15T17:59:59-04:00').getTime();
 const PRODUCT_PRICE = 38990;
 const precioBanda = () => Date.now() < OFERTA_END ? 38990 : 44990;
 const pedidosFlow = new Map();
