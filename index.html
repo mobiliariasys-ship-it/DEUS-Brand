@@ -809,7 +809,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="announce-bar" id="offer-bar">⚡ Oferta $38.990 · termina en <b id="offer-cd-top" style="font-variant-numeric:tabular-nums;">--:--:--</b></div>
 <script>
 (function(){
-  var END=new Date('2026-07-12T23:59:59-04:00').getTime();
+  var END=new Date('2026-07-13T17:59:59-04:00').getTime();
   var bar=document.getElementById('offer-bar');
   function pad(n){return String(n).padStart(2,'0');}
   var intId=null;
@@ -1060,7 +1060,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Oferta de lanzamiento: al vencer (12-jul 23:59 Chile) el precio sube
         // a $44.990 y el envío pasa a ser gratis en todo Chile. Todo el sitio
         // y el backend cambian solos usando esta misma fecha.
-        const OFERTA_END = new Date('2026-07-12T23:59:59-04:00').getTime();
+        const OFERTA_END = new Date('2026-07-13T17:59:59-04:00').getTime();
         const ofertaActiva = () => Date.now() < OFERTA_END;
         const precioBanda = () => ofertaActiva() ? 38990 : 44990;
         const envioGratis = () => !ofertaActiva();
