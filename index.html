@@ -248,6 +248,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .hdr-right{display:flex;align-items:center;gap:16px;}
 .hdr-ig-btn{color:#b5b5b5;display:flex;align-items:center;transition:color .2s,transform .15s;}
 .hdr-ig-btn:hover{color:#fff;transform:scale(1.08);}
+.hdr-pulse{display:inline-flex;align-items:baseline;gap:4px;background:#141414;border:1px solid var(--border);border-radius:14px;padding:4px 10px;font-size:.72rem;color:#e8e8e8;}
+.hdr-pulse b{font-variant-numeric:tabular-nums;font-weight:700;}
+.hdr-pulse small{font-size:.52rem;color:#888;letter-spacing:.5px;}
+.hdr-pulse-heart{color:#e05555;font-size:.8rem;animation:hdrBeat 1.1s ease-in-out infinite;}
+@keyframes hdrBeat{0%,100%{transform:scale(1);}12%{transform:scale(1.35);}24%{transform:scale(1);}36%{transform:scale(1.18);}48%{transform:scale(1);}}
+@media(max-width:360px){.hdr-pulse small{display:none;}}
 .hdr-cart-btn{background:none;border:none;color:#b5b5b5;display:flex;align-items:center;gap:6px;cursor:pointer;transition:color .2s,transform .15s;position:relative;}
 .hdr-cart-btn:hover{color:#fff;transform:scale(1.08);}
 .hdr-cart-count{background:#e05555;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;position:absolute;top:-8px;right:-8px;}
@@ -829,6 +835,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
   <div class="hdr-right">
+    <div class="hdr-pulse" title="Ritmo cardíaco en vivo"><span class="hdr-pulse-heart">♥</span><b id="hdr-bpm">--</b><small>bpm</small></div>
     <a href="https://www.instagram.com/deusbrand.cl/" target="_blank" rel="noopener noreferrer" class="hdr-ig-btn" aria-label="Síguenos en Instagram">
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg>
     </a>
@@ -2257,8 +2264,9 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
 // Pulso "en vivo": el bpm sigue el ritmo real del día según la hora local.
 // Madrugada = sueño profundo (bajo); 18-21h = hora peak de gym (alto).
 (function(){
-  var el=document.getElementById('bpm-val');
-  if(!el) return;
+  var elSueno=document.getElementById('bpm-val');   // pulso en la imagen del sueño
+  var elHdr=document.getElementById('hdr-bpm');      // pulso en el header
+  if(!elSueno && !elHdr) return;
   // Rangos según frecuencia cardiaca real (reposo adulto: 60-100 bpm;
   // en sueño profundo baja un 10-20% bajo el reposo; en ejercicio sube).
   function rangoPorHora(h){
@@ -2273,7 +2281,8 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   }
   var r=rangoPorHora(new Date().getHours());
   var bpm=Math.round((r[0]+r[1])/2);
-  el.textContent=bpm;
+  function pintar(){ if(elSueno) elSueno.textContent=bpm; if(elHdr) elHdr.textContent=bpm; }
+  pintar();
   setInterval(function(){
     r=rangoPorHora(new Date().getHours());
     // Camina de a 1-2 puntos hacia dentro del rango de la hora actual
@@ -2281,7 +2290,7 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
     if(bpm<r[0]) paso=Math.abs(paso);
     if(bpm>r[1]) paso=-Math.abs(paso);
     bpm=Math.max(r[0]-2,Math.min(r[1]+2,bpm+paso));
-    el.textContent=bpm;
+    pintar();
   },2400);
 })();
 
