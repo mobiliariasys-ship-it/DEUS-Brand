@@ -2281,7 +2281,14 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   }
   var r=rangoPorHora(new Date().getHours());
   var bpm=Math.round((r[0]+r[1])/2);
-  function pintar(){ if(elSueno) elSueno.textContent=bpm; if(elHdr) elHdr.textContent=bpm; }
+  var corazones=document.querySelectorAll('.hdr-pulse-heart, .bpm-heart');
+  function pintar(){
+    if(elSueno) elSueno.textContent=bpm;
+    if(elHdr) elHdr.textContent=bpm;
+    // El latido va al ritmo del bpm: un ciclo = 60/bpm segundos
+    var dur=(60/bpm).toFixed(2)+'s';
+    corazones.forEach(function(h){ h.style.animationDuration=dur; });
+  }
   pintar();
   setInterval(function(){
     r=rangoPorHora(new Date().getHours());
