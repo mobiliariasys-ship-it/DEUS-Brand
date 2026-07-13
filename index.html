@@ -441,7 +441,12 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .reviews-sub{font-size:.62rem;letter-spacing:2px;color:#d9bf92;margin-top:8px;text-transform:uppercase;}
 .reviews-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}
 .review-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;}
-.review-photo{width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:14px;display:block;}
+.review-photo{width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:14px;display:block;cursor:zoom-in;transition:opacity .2s;}
+.review-photo:hover{opacity:.9;}
+.foto-lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;}
+.foto-lightbox.show{display:flex;}
+.foto-lightbox img{max-width:100%;max-height:90vh;border-radius:10px;}
+.foto-lightbox-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:2.2rem;line-height:1;cursor:pointer;}
 .review-stars{color:#e9c46a;font-size:.8rem;letter-spacing:2px;margin-bottom:10px;}
 .review-text{color:#d8d8d8;font-size:.86rem;line-height:1.6;margin-bottom:14px;}
 .review-author{font-size:.66rem;letter-spacing:1px;color:var(--silver);}
@@ -1830,7 +1835,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
     <div class="reviews-grid">
       <div class="review-card">
-        <img class="review-photo" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async">
+        <img class="review-photo" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Muy bueno, llegó en el tiempo correspondiente y la atención 10 de 10, y del producto nada que decir, muy bueno."</p>
         <div class="review-author"><span class="review-ig">@Pdrozzzz</span> · Instagram</div>
@@ -2212,6 +2217,25 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
+<!-- Visor de fotos de reseñas (ampliar al pinchar) -->
+<div class="foto-lightbox" id="foto-lightbox" onclick="cerrarFotoResena()">
+  <button class="foto-lightbox-close" onclick="cerrarFotoResena()" aria-label="Cerrar">&times;</button>
+  <img id="foto-lightbox-img" src="" alt="Foto de reseña DEUS Band">
+</div>
+<script>
+function abrirFotoResena(src){
+  event.stopPropagation();
+  document.getElementById('foto-lightbox-img').src = src;
+  document.getElementById('foto-lightbox').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function cerrarFotoResena(){
+  document.getElementById('foto-lightbox').classList.remove('show');
+  if(!document.getElementById('reviews-modal').classList.contains('show')) document.body.style.overflow='';
+}
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFotoResena(); });
+</script>
+
 <!-- Modal de reseñas (se abre desde las estrellas junto al precio) -->
 <div class="reviews-modal" id="reviews-modal" onclick="if(event.target===this)cerrarResenasModal()">
   <div class="reviews-modal-box">
@@ -2283,14 +2307,14 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   // Ritmo cardiaco tranquilo (reposo saludable). Se mantiene en 58-74 durante
   // todo el día para transmitir calma, no alarma.
   function rangoPorHora(h){
-    if(h<6)  return [58,64];    // sueño profundo
-    if(h<9)  return [60,68];    // despertando
-    if(h<12) return [62,72];    // mañana
-    if(h<15) return [64,74];    // mediodía
-    if(h<18) return [64,74];    // tarde
-    if(h<21) return [66,74];    // tarde-noche
-    if(h<23) return [62,70];    // bajando la noche
-    return [58,66];             // preparándose para dormir
+    if(h<6)  return [52,58];    // sueño profundo
+    if(h<9)  return [54,60];    // despertando
+    if(h<12) return [56,64];    // mañana
+    if(h<15) return [58,66];    // mediodía
+    if(h<18) return [58,68];    // tarde
+    if(h<21) return [58,68];    // tarde-noche
+    if(h<23) return [56,64];    // bajando la noche
+    return [52,60];             // preparándose para dormir
   }
   var r=rangoPorHora(new Date().getHours());
   var bpm=Math.round((r[0]+r[1])/2);
