@@ -2307,14 +2307,14 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   // Ritmo cardiaco tranquilo (reposo saludable). Se mantiene en 58-74 durante
   // todo el día para transmitir calma, no alarma.
   function rangoPorHora(h){
-    if(h<6)  return [46,52];    // sueño profundo (madrugada, más bajo)
-    if(h<9)  return [54,60];    // despertando
-    if(h<12) return [56,64];    // mañana
-    if(h<15) return [56,64];    // mediodía
-    if(h<18) return [56,64];    // tarde
-    if(h<21) return [54,62];    // tarde-noche
-    if(h<23) return [50,58];    // bajando la noche
-    return [48,54];             // preparándose para dormir
+    if(h<6)  return [54,58];    // madrugada / sueño profundo (mínimo 54)
+    if(h<9)  return [58,64];    // despertando
+    if(h<12) return [62,70];    // mañana
+    if(h<15) return [64,72];    // mediodía (máximo 72)
+    if(h<18) return [64,72];    // tarde
+    if(h<21) return [62,70];    // tarde-noche
+    if(h<23) return [58,64];    // bajando la noche
+    return [54,60];             // preparándose para dormir
   }
   var r=rangoPorHora(new Date().getHours());
   var bpm=Math.round((r[0]+r[1])/2);
