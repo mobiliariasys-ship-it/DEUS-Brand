@@ -538,12 +538,12 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .rot-badge{position:absolute;top:14px;right:14px;z-index:2;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:#e8e8e8;border:1.5px solid #3a3a3a;background:rgba(8,8,8,.6);border-radius:16px;padding:4px 12px;pointer-events:none;}
 .rot-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%, transparent 48%, #080808 96%);}
 /* Visor 360 en pantalla completa (al tocar el sensor) */
-.rot-full{display:none;position:fixed;inset:0;background:#000;z-index:2200;align-items:center;justify-content:center;overflow:hidden;}
+.rot-full{display:none;position:fixed;inset:0;background:#080808;z-index:2200;align-items:center;justify-content:center;overflow:hidden;}
 .rot-full.show{display:flex;}
 .rot-full canvas{width:min(94vw,94vh);height:min(94vw,94vh);cursor:grab;touch-action:none;will-change:transform;}
 .rot-full canvas:active{cursor:grabbing;}
-/* Difuminado que funde el cuadro del video con el negro total: sin borde visible */
-.rot-full-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%, transparent 55%, #000 88%);}
+/* Difuminado que funde el cuadro del video con el fondo: sin borde visible */
+.rot-full-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%, transparent 55%, #080808 88%);}
 .rot-full-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:2.3rem;line-height:1;cursor:pointer;z-index:3;}
 .rot-full-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ccc;letter-spacing:1px;background:rgba(0,0,0,.6);border:1px solid #2a2a2a;padding:7px 16px;border-radius:16px;z-index:3;white-space:nowrap;}
 /* El visor 360 ocupa su propia fila centrada, más grande que las demás imágenes */
