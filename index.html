@@ -1686,7 +1686,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <div class="how-row row-360">
       <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra para girar">
-        <canvas id="rot360-canvas" width="640" height="640" style="width:100%;height:100%;display:block;"></canvas>
+        <canvas id="rot360-canvas" width="900" height="900" style="width:100%;height:100%;display:block;"></canvas>
         <div class="rot-vignette"></div>
         <div class="rot-badge">360°</div>
         <div class="rot-hint" id="rot360-hint">↔ Arrastra para girar la banda</div>
@@ -1732,6 +1732,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var canvas=document.getElementById('rot360-canvas');
     if(!wrap||!canvas) return;
     var ctx=canvas.getContext('2d');
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
     function src(i){ return 'img/rot360/f_'+String(i+1).padStart(3,'0')+'.webp'; }
     var frames=new Array(N), pendientes=N, idx=BLUE, auto=null;
     function draw(){ var f=frames[idx]; if(f&&f.complete) ctx.drawImage(f,0,0,canvas.width,canvas.height); }
@@ -1803,13 +1804,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         full.innerHTML='<button class="rot-full-close" aria-label="Cerrar">&times;</button><canvas width="900" height="900"></canvas><div class="rot-full-vig"></div><div class="rot-full-hint">↔ Arrastra para girar · pellizca para acercar</div>';
         document.body.appendChild(full);
         fc=full.querySelector('canvas'); fctx=fc.getContext('2d');
+        fctx.imageSmoothingEnabled=true; fctx.imageSmoothingQuality='high';
         full.querySelector('.rot-full-close').addEventListener('click',cerrarFull);
         full.addEventListener('click',function(e){ if(e.target===full) cerrarFull(); });
 
         // Desktop: arrastrar gira; rueda del mouse hace zoom
         var fd=false, fsx=0, fsi=0;
         fc.addEventListener('pointerdown',function(e){ if(e.pointerType==='mouse'){ fd=true; fsx=e.clientX; fsi=fidx; try{fc.setPointerCapture(e.pointerId);}catch(_){} } });
-        fc.addEventListener('pointermove',function(e){ if(fd && zScale===1){ fidx=((fsi+Math.round((e.clientX-fsx)/6))%N+N)%N; drawFull(); } });
+        fc.addEventListener('pointermove',function(e){ if(fd){ fidx=((fsi+Math.round((e.clientX-fsx)/6))%N+N)%N; drawFull(); } });
         ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ fc.addEventListener(ev,function(){ fd=false; }); });
         fc.addEventListener('wheel',function(e){ e.preventDefault(); zScale=Math.max(1,Math.min(3, zScale - e.deltaY*0.002)); if(zScale===1){zx=0;zy=0;} applyZoom(); }, {passive:false});
 
@@ -1818,7 +1820,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         fc.addEventListener('touchstart',function(e){
           if(e.touches.length===2){ modo='pinch'; d0=dist(e.touches); s0=zScale; }
           else if(e.touches.length===1){
-            if(zScale>1){ modo='pan'; lx=e.touches[0].clientX; ly=e.touches[0].clientY; }
+            if(zScale>1){ modo='pan'; lx=e.touches[0].clientX; ly=e.touches[0].clientY; rsx=e.touches[0].clientX; rsi=fidx; }
             else { modo='rot'; rsx=e.touches[0].clientX; rsi=fidx; }
           }
         },{passive:true});
@@ -1828,8 +1830,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if(zScale===1){ zx=0; zy=0; }
             applyZoom();
           } else if(modo==='pan'){
-            zx+=e.touches[0].clientX-lx; zy+=e.touches[0].clientY-ly;
-            lx=e.touches[0].clientX; ly=e.touches[0].clientY; applyZoom();
+            // Con zoom: horizontal GIRA la banda, vertical la mueve para ver detalle
+            fidx=((rsi+Math.round((e.touches[0].clientX-rsx)/6))%N+N)%N; drawFull();
+            zy+=e.touches[0].clientY-ly; ly=e.touches[0].clientY; applyZoom();
           } else if(modo==='rot'){
             fidx=((rsi+Math.round((e.touches[0].clientX-rsx)/6))%N+N)%N; drawFull();
           }
