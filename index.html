@@ -729,6 +729,10 @@ body.sb-on .wa-float{bottom:82px;}
 .co-prod img{width:64px;height:64px;border-radius:8px;object-fit:cover;background:#1e1e1e;border:1px solid var(--border);flex-shrink:0;}
 .co-prod-name{font-size:.82rem;font-weight:700;color:#f2f2f2;}
 .co-prod-color{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);margin-top:2px;}
+.co-color-pick{display:flex;align-items:center;gap:7px;margin-top:7px;}
+.co-color-label{font-size:.58rem;color:#999;letter-spacing:.5px;margin-right:2px;}
+.co-cdot{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:border-color .15s;}
+.co-cdot.active{border-color:#fff;}
 .co-prod-price{margin-top:4px;display:flex;align-items:baseline;gap:8px;}
 .co-price-old{font-size:.72rem;color:#888;text-decoration:line-through;}
 .co-price-now{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;line-height:1;}
@@ -958,6 +962,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div>
                 <div class="co-prod-name">DEUS Band</div>
                 <div class="co-prod-color" id="co-prod-color">Color negro</div>
+                <div class="co-color-pick" id="co-color-pick">
+                  <span class="co-color-label">Confirma tu color:</span>
+                  <span class="co-cdot" data-color="negra" style="background:#111;" title="Negro" onclick="setCheckoutColor('negra')"></span>
+                  <span class="co-cdot" data-color="gris" style="background:#888;" title="Gris" onclick="setCheckoutColor('gris')"></span>
+                  <span class="co-cdot" data-color="rosada" style="background:#e8b4bc;" title="Rosado" onclick="setCheckoutColor('rosada')"></span>
+                </div>
                 <div class="co-prod-price" id="co-prod-price"><span class="co-price-old">$44.990</span><span class="co-price-now">$38.990</span></div>
                 <div class="co-cuotas">Hasta 3 cuotas sin interés con tarjeta de crédito</div>
               </div>
@@ -1276,12 +1286,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         // ── Abrir / cerrar el checkout ──
+        // Color confirmado en el checkout (bloqueado al abrir; el cliente lo puede
+        // cambiar con los puntos del checkout). La orden usa ESTE, no la posición
+        // del carrusel — así un swipe accidental ya no cambia el color comprado.
+        let checkoutColor = 'negra';
+        function setCheckoutColor(color) {
+          checkoutColor = color;
+          const coColor = document.getElementById('co-prod-color');
+          if (coColor) coColor.textContent = 'Color ' + (COLOR_LABEL[color] || color);
+          const coImg = document.getElementById('co-prod-img');
+          if (coImg && bandImages[color]) coImg.src = bandImages[color];
+          document.querySelectorAll('.co-cdot').forEach(d => d.classList.toggle('active', d.dataset.color === color));
+        }
         function abrirCheckout() {
           const colorActual = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris';
           if (typeof AGOTADOS !== 'undefined' && AGOTADOS[colorActual]) {
             alert('El color negro está agotado. Elige el color gris para comprar.');
             return;
           }
+          setCheckoutColor(colorActual); // bloquea el color con el que se abrió
           checkoutQty = 1;
           upsellTapones = false;
           const upCard = document.getElementById('upsell-card');
@@ -1508,7 +1531,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             customerRut: document.getElementById('co-rut').value.trim(),
             customerEmail: document.getElementById('co-email').value.trim(),
             customerPhone: document.getElementById('co-fono').value.trim(),
-            selectedColor: (typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : null),
+            selectedColor: checkoutColor,
             cantidad: checkoutQty,
             tapones: upsellTapones,
             shippingCarrier: selectedShipping?.carrier || null,
