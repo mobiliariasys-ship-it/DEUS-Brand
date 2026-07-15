@@ -538,12 +538,14 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .rot-badge{position:absolute;top:14px;right:14px;z-index:2;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:#e8e8e8;border:1.5px solid #3a3a3a;background:rgba(8,8,8,.6);border-radius:16px;padding:4px 12px;pointer-events:none;}
 .rot-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%, transparent 48%, #080808 96%);}
 /* Visor 360 en pantalla completa (al tocar el sensor) */
-.rot-full{display:none;position:fixed;inset:0;background:#050505;z-index:2200;align-items:center;justify-content:center;}
+.rot-full{display:none;position:fixed;inset:0;background:#000;z-index:2200;align-items:center;justify-content:center;overflow:hidden;}
 .rot-full.show{display:flex;}
-.rot-full canvas{width:min(92vw,92vh);height:min(92vw,92vh);cursor:grab;touch-action:none;}
+.rot-full canvas{width:min(94vw,94vh);height:min(94vw,94vh);cursor:grab;touch-action:none;will-change:transform;}
 .rot-full canvas:active{cursor:grabbing;}
-.rot-full-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:2.3rem;line-height:1;cursor:pointer;z-index:2;}
-.rot-full-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-size:.72rem;color:#ccc;letter-spacing:1.5px;background:rgba(8,8,8,.7);border:1px solid #333;padding:7px 16px;border-radius:16px;}
+/* Difuminado que funde el cuadro del video con el negro total: sin borde visible */
+.rot-full-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%, transparent 55%, #000 88%);}
+.rot-full-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:2.3rem;line-height:1;cursor:pointer;z-index:3;}
+.rot-full-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ccc;letter-spacing:1px;background:rgba(0,0,0,.6);border:1px solid #2a2a2a;padding:7px 16px;border-radius:16px;z-index:3;white-space:nowrap;}
 /* El visor 360 ocupa su propia fila centrada, más grande que las demás imágenes */
 .how-row.row-360{grid-template-columns:1fr;gap:6px;}
 .row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
@@ -1787,29 +1789,66 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       });
     });
 
-    // ── Visor 360 en pantalla completa ──
+    // ── Visor 360 en pantalla completa (con zoom) ──
     var full=null, fc=null, fctx=null, fidx=BLUE;
+    var zScale=1, zx=0, zy=0; // zoom y desplazamiento
     function drawFull(){ var f=frames[fidx]; if(f&&f.complete) fctx.drawImage(f,0,0,fc.width,fc.height); }
+    function applyZoom(){ fc.style.transform='translate('+zx+'px,'+zy+'px) scale('+zScale+')'; }
+    function resetZoom(){ zScale=1; zx=0; zy=0; applyZoom(); }
+    function dist(t){ var dx=t[0].clientX-t[1].clientX, dy=t[0].clientY-t[1].clientY; return Math.hypot(dx,dy); }
     function abrirFull(){
       if(!full){
         full=document.createElement('div');
         full.className='rot-full';
-        full.innerHTML='<button class="rot-full-close" aria-label="Cerrar">&times;</button><canvas width="900" height="900"></canvas><div class="rot-full-hint">↔ Arrastra para girar la banda</div>';
+        full.innerHTML='<button class="rot-full-close" aria-label="Cerrar">&times;</button><canvas width="900" height="900"></canvas><div class="rot-full-vig"></div><div class="rot-full-hint">↔ Arrastra para girar · pellizca para acercar</div>';
         document.body.appendChild(full);
         fc=full.querySelector('canvas'); fctx=fc.getContext('2d');
         full.querySelector('.rot-full-close').addEventListener('click',cerrarFull);
         full.addEventListener('click',function(e){ if(e.target===full) cerrarFull(); });
+
+        // Desktop: arrastrar gira; rueda del mouse hace zoom
         var fd=false, fsx=0, fsi=0;
-        fc.addEventListener('pointerdown',function(e){ fd=true; fsx=e.clientX; fsi=fidx; try{fc.setPointerCapture(e.pointerId);}catch(_){} });
-        fc.addEventListener('pointermove',function(e){ if(!fd)return; fidx=((fsi+Math.round((e.clientX-fsx)/6))%N+N)%N; drawFull(); });
+        fc.addEventListener('pointerdown',function(e){ if(e.pointerType==='mouse'){ fd=true; fsx=e.clientX; fsi=fidx; try{fc.setPointerCapture(e.pointerId);}catch(_){} } });
+        fc.addEventListener('pointermove',function(e){ if(fd && zScale===1){ fidx=((fsi+Math.round((e.clientX-fsx)/6))%N+N)%N; drawFull(); } });
         ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ fc.addEventListener(ev,function(){ fd=false; }); });
+        fc.addEventListener('wheel',function(e){ e.preventDefault(); zScale=Math.max(1,Math.min(3, zScale - e.deltaY*0.002)); if(zScale===1){zx=0;zy=0;} applyZoom(); }, {passive:false});
+
+        // Móvil: 1 dedo gira (o desplaza si está con zoom), 2 dedos pellizcan
+        var modo=null, d0=0, s0=1, lx=0, ly=0, rsx=0, rsi=0;
+        fc.addEventListener('touchstart',function(e){
+          if(e.touches.length===2){ modo='pinch'; d0=dist(e.touches); s0=zScale; }
+          else if(e.touches.length===1){
+            if(zScale>1){ modo='pan'; lx=e.touches[0].clientX; ly=e.touches[0].clientY; }
+            else { modo='rot'; rsx=e.touches[0].clientX; rsi=fidx; }
+          }
+        },{passive:true});
+        fc.addEventListener('touchmove',function(e){
+          if(modo==='pinch' && e.touches.length===2){
+            zScale=Math.max(1,Math.min(3, s0*dist(e.touches)/d0));
+            if(zScale===1){ zx=0; zy=0; }
+            applyZoom();
+          } else if(modo==='pan'){
+            zx+=e.touches[0].clientX-lx; zy+=e.touches[0].clientY-ly;
+            lx=e.touches[0].clientX; ly=e.touches[0].clientY; applyZoom();
+          } else if(modo==='rot'){
+            fidx=((rsi+Math.round((e.touches[0].clientX-rsx)/6))%N+N)%N; drawFull();
+          }
+        },{passive:true});
+        fc.addEventListener('touchend',function(e){ if(e.touches.length===0) modo=null; });
+        // Doble toque: acerca a 2x o vuelve a 1x
+        var lastTap=0;
+        fc.addEventListener('touchend',function(e){
+          var now=Date.now();
+          if(now-lastTap<300){ zScale = zScale>1 ? 1 : 2; if(zScale===1){zx=0;zy=0;} applyZoom(); }
+          lastTap=now;
+        });
       }
-      fidx=idx;
+      fidx=idx; resetZoom();
       full.classList.add('show');
       document.body.style.overflow='hidden';
       drawFull();
     }
-    function cerrarFull(){ if(full) full.classList.remove('show'); document.body.style.overflow=''; }
+    function cerrarFull(){ if(full) full.classList.remove('show'); document.body.style.overflow=''; resetZoom(); }
     document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFull(); });
   })();
   </script>
