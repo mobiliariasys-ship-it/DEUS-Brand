@@ -537,6 +537,13 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 @keyframes hintPulse{0%,100%{transform:translateX(-50%) scale(1);opacity:.95;}50%{transform:translateX(-50%) scale(1.05);opacity:1;}}
 .rot-badge{position:absolute;top:14px;right:14px;z-index:2;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:#e8e8e8;border:1.5px solid #3a3a3a;background:rgba(8,8,8,.6);border-radius:16px;padding:4px 12px;pointer-events:none;}
 .rot-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%, transparent 48%, #080808 96%);}
+/* Visor 360 en pantalla completa (al tocar el sensor) */
+.rot-full{display:none;position:fixed;inset:0;background:#050505;z-index:2200;align-items:center;justify-content:center;}
+.rot-full.show{display:flex;}
+.rot-full canvas{width:min(92vw,92vh);height:min(92vw,92vh);cursor:grab;touch-action:none;}
+.rot-full canvas:active{cursor:grabbing;}
+.rot-full-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:2.3rem;line-height:1;cursor:pointer;z-index:2;}
+.rot-full-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-size:.72rem;color:#ccc;letter-spacing:1.5px;background:rgba(8,8,8,.7);border:1px solid #333;padding:7px 16px;border-radius:16px;}
 /* El visor 360 ocupa su propia fila centrada, más grande que las demás imágenes */
 .how-row.row-360{grid-template-columns:1fr;gap:6px;}
 .row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
@@ -1760,9 +1767,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       },{rootMargin:'900px'});
       io.observe(wrap);
     } else { cargarCuadros(); }
-    var dragging=false, startX=0, startIdx=0, firstTouch=true;
+    var dragging=false, startX=0, startIdx=0, firstTouch=true, movido=0;
     wrap.addEventListener('pointerdown',function(e){
-      dragging=true; stopAuto();
+      dragging=true; movido=0; stopAuto();
       if(firstTouch){ firstTouch=false; show(BLUE); } // al primer toque parte desde el sensor azul
       startX=e.clientX; startIdx=idx;
       var h=document.getElementById('rot360-hint'); if(h) h.style.display='none';
@@ -1770,11 +1777,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
     wrap.addEventListener('pointermove',function(e){
       if(!dragging) return;
-      show(startIdx + Math.round((e.clientX-startX)/6));
+      var d=e.clientX-startX; movido=Math.max(movido,Math.abs(d));
+      show(startIdx + Math.round(d/6));
     });
     ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
-      wrap.addEventListener(ev,function(){ dragging=false; });
+      wrap.addEventListener(ev,function(){
+        if(ev==='pointerup' && movido<8) abrirFull(); // toque sin arrastrar = abrir grande
+        dragging=false;
+      });
     });
+
+    // ── Visor 360 en pantalla completa ──
+    var full=null, fc=null, fctx=null, fidx=BLUE;
+    function drawFull(){ var f=frames[fidx]; if(f&&f.complete) fctx.drawImage(f,0,0,fc.width,fc.height); }
+    function abrirFull(){
+      if(!full){
+        full=document.createElement('div');
+        full.className='rot-full';
+        full.innerHTML='<button class="rot-full-close" aria-label="Cerrar">&times;</button><canvas width="900" height="900"></canvas><div class="rot-full-hint">↔ Arrastra para girar la banda</div>';
+        document.body.appendChild(full);
+        fc=full.querySelector('canvas'); fctx=fc.getContext('2d');
+        full.querySelector('.rot-full-close').addEventListener('click',cerrarFull);
+        full.addEventListener('click',function(e){ if(e.target===full) cerrarFull(); });
+        var fd=false, fsx=0, fsi=0;
+        fc.addEventListener('pointerdown',function(e){ fd=true; fsx=e.clientX; fsi=fidx; try{fc.setPointerCapture(e.pointerId);}catch(_){} });
+        fc.addEventListener('pointermove',function(e){ if(!fd)return; fidx=((fsi+Math.round((e.clientX-fsx)/6))%N+N)%N; drawFull(); });
+        ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ fc.addEventListener(ev,function(){ fd=false; }); });
+      }
+      fidx=idx;
+      full.classList.add('show');
+      document.body.style.overflow='hidden';
+      drawFull();
+    }
+    function cerrarFull(){ if(full) full.classList.remove('show'); document.body.style.overflow=''; }
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFull(); });
   })();
   </script>
 
@@ -2106,7 +2142,7 @@ function setColor(color, el) {
     const dx = e.changedTouches[0].clientX - startX;
     if (dx < -40) goSlide(currentSlide + 1);
     else if (dx > 40) goSlide(currentSlide - 1);
-    else if (Math.abs(dx) < 10) abrirZoom();
+    else abrirZoom(); // cualquier toque que no sea swipe abre el zoom
   }, {passive:true});
   // Mouse drag para desktop
   slider.addEventListener('mousedown', e => { startX = e.clientX; isDown = true; });
@@ -2116,7 +2152,7 @@ function setColor(color, el) {
     const dx = e.clientX - startX;
     if (dx < -40) goSlide(currentSlide + 1);
     else if (dx > 40) goSlide(currentSlide - 1);
-    else if (Math.abs(dx) < 10) abrirZoom();
+    else abrirZoom(); // clic simple abre el zoom
   });
 
   let lbIndex = 0;
