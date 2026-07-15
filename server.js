@@ -8,10 +8,10 @@ const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, envi
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
 
-// Oferta de lanzamiento hasta el 15-jul-2026 18:00 (Chile). Al vencer, el
+// Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile). Al vencer, el
 // precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
 // El front usa esta misma fecha, así el cambio ocurre solo y sincronizado.
-const OFERTA_END = new Date('2026-07-15T17:59:59-04:00').getTime();
+const OFERTA_END = new Date('2026-07-17T06:59:00-04:00').getTime();
 const precioBanda = () => Date.now() < OFERTA_END ? 38990 : 44990;
 
 const app = express();
