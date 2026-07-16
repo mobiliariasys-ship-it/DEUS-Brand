@@ -837,7 +837,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 <div class="topbar" id="topbar">
-<div class="announce-bar" id="offer-bar">🔥 Oferta de julio $42.990 <s style="opacity:.6;">$48.990</s> · termina en <b id="offer-cd-top" style="font-variant-numeric:tabular-nums;">--:--:--</b></div>
+<div class="announce-bar" id="offer-bar">🔥 Oferta $42.990 <s style="opacity:.6;">$48.990</s> · termina en <b id="offer-cd-top" style="font-variant-numeric:tabular-nums;">--:--:--</b></div>
 <script>
 (function(){
   var END=new Date('2026-08-01T00:00:00-04:00').getTime();
@@ -909,7 +909,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="price-old">Precio normal: <span class="old-amount">$48.990</span></div>
-      <div class="price-block"><sup>$</sup>42.990 <span class="price-offer-tag">OFERTA JULIO</span></div>
+      <div class="price-block"><sup>$</sup>42.990 <span class="price-offer-tag">OFERTA</span></div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
       <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas">
         <span class="proof-stars">★★★★★</span> <b>5.0</b> · reseñas de la comunidad <span class="proof-arrow">›</span>
@@ -1817,14 +1817,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // Móvil: 1 dedo gira (o desplaza si está con zoom), 2 dedos pellizcan
         var modo=null, d0=0, s0=1, lx=0, ly=0, rsx=0, rsi=0;
+        var gMulti=false, gMoved=false, gsx=0, gsy=0; // estado del gesto actual
         fc.addEventListener('touchstart',function(e){
-          if(e.touches.length===2){ modo='pinch'; d0=dist(e.touches); s0=zScale; }
+          if(e.touches.length===2){ modo='pinch'; d0=dist(e.touches); s0=zScale; gMulti=true; }
           else if(e.touches.length===1){
+            gsx=e.touches[0].clientX; gsy=e.touches[0].clientY;
             if(zScale>1){ modo='pan'; lx=e.touches[0].clientX; ly=e.touches[0].clientY; rsx=e.touches[0].clientX; rsi=fidx; }
             else { modo='rot'; rsx=e.touches[0].clientX; rsi=fidx; }
           }
         },{passive:true});
         fc.addEventListener('touchmove',function(e){
+          if(e.touches.length){
+            if(Math.abs(e.touches[0].clientX-gsx)>10 || Math.abs(e.touches[0].clientY-gsy)>10) gMoved=true;
+          }
           if(modo==='pinch' && e.touches.length===2){
             zScale=Math.max(1,Math.min(3, s0*dist(e.touches)/d0));
             if(zScale===1){ zx=0; zy=0; }
@@ -1837,13 +1842,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             fidx=((rsi+Math.round((e.touches[0].clientX-rsx)/6))%N+N)%N; drawFull();
           }
         },{passive:true});
-        fc.addEventListener('touchend',function(e){ if(e.touches.length===0) modo=null; });
-        // Doble toque: acerca a 2x o vuelve a 1x
+        // Doble toque: SOLO cuenta un gesto de 1 dedo sin arrastre ni pellizco.
+        // (Al soltar un pellizco se disparan dos touchend seguidos; antes eso se
+        //  confundía con doble-toque y devolvía el zoom a 1x —el "rebote".)
         var lastTap=0;
         fc.addEventListener('touchend',function(e){
+          if(e.touches.length>0) return;        // aún quedan dedos: espera a soltar todo
+          modo=null;
+          var tapLimpio = !gMulti && !gMoved;   // no fue pellizco ni arrastre
+          gMulti=false; gMoved=false;
+          if(!tapLimpio){ lastTap=0; return; }  // un pellizco nunca dispara doble-toque
           var now=Date.now();
-          if(now-lastTap<300){ zScale = zScale>1 ? 1 : 2; if(zScale===1){zx=0;zy=0;} applyZoom(); }
-          lastTap=now;
+          if(now-lastTap<300){ zScale = zScale>1 ? 1 : 2; if(zScale===1){zx=0;zy=0;} applyZoom(); lastTap=0; }
+          else { lastTap=now; }
         });
       }
       fidx=idx; resetZoom();
@@ -2139,7 +2150,7 @@ function updateStockUI() {
   if (AGOTADOS[color]) {
     texto = '⚫ Color negro AGOTADO — restock pronto · disponible en gris';
   } else if (color === 'negra') {
-    texto = '🔥 Pocas unidades disponibles';
+    texto = '🔥 Pocas unidades disponibles de este color';
   }
   [document.getElementById('stock-note'), document.getElementById('co-stock')].forEach(el => {
     if (el) { el.textContent = texto; el.style.display = texto ? '' : 'none'; }
