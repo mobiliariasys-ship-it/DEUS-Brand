@@ -7,9 +7,9 @@ const { decrementStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
-const OFERTA_END = new Date('2026-07-17T06:59:00-04:00').getTime();
-const PRODUCT_PRICE = 38990;
-const precioBanda = () => Date.now() < OFERTA_END ? 38990 : 44990;
+const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
+const PRODUCT_PRICE = 42990;
+const precioBanda = () => Date.now() < OFERTA_END ? 42990 : 48990;
 const pedidosFlow = new Map();
 
 // Producción por defecto; sandbox si FLOW_ENV=sandbox
