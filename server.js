@@ -285,6 +285,17 @@ app.post('/admin/marcar-self', (req, res) => {
   res.sendStatus(204);
 });
 
+// Registrar ticket del sorteo (desde la web)
+app.post('/sorteo', (req, res) => {
+  const { nombre, rut, orden } = req.body || {};
+  if (!nombre || !rut || !orden) {
+    return res.status(400).json({ error: 'Faltan datos: nombre, rut, orden' });
+  }
+  const result = metrics.registrarTicket(nombre, rut, orden);
+  if (result.error) return res.status(409).json(result);
+  res.json({ ok: true, message: 'Ticket registrado' });
+});
+
 // Reseña enviada por un cliente → llega al correo para aprobar
 app.post('/resenas', async (req, res) => {
   try {

@@ -83,11 +83,19 @@
       <div class="stat"><div class="k">Visitas hoy</div><div class="v" id="s-vhoy">0</div></div>
       <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
       <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
+      <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
     </div>
 
     <section>
       <div class="sec-h"><h2>📊 Últimos 30 días</h2></div>
       <div class="chart-container"><canvas id="chartDecibeles" width="800" height="200"></canvas></div>
+    </section>
+
+    <section>
+      <div class="sec-h"><h2>🎟️ Tickets del sorteo</h2><button class="btn" onclick="elegirGanador()">Elegir ganador 🎲</button></div>
+      <div class="winner" id="winner"></div>
+      <div class="scroll"><table id="t-tickets"><thead><tr><th>Nombre</th><th>RUT</th><th>N° orden</th><th>Verif.</th><th>Fecha</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="tickets-empty" style="display:none">Aún no hay tickets canjeados.</div>
     </section>
 
     <section>
@@ -146,6 +154,9 @@
     document.getElementById('s-vent-hoy-m').textContent=money(d.ventas.hoy.monto);
     document.getElementById('s-vent-tot').childNodes[0].nodeValue=d.ventas.total.count+' ';
     document.getElementById('s-vent-tot-m').textContent=money(d.ventas.total.monto);
+    document.getElementById('s-tickets').textContent=d.ticketsTotal||0;
+    tickets=d.tickets||[];
+    rows('#t-tickets',tickets,function(t){ return '<td>'+esc(t.nombre)+'</td><td>'+esc(t.rut)+'</td><td>'+esc(t.orden)+'</td><td>'+(t.verificado?'<span class="ok">✓</span>':'<span class="no">revisar</span>')+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');
     rows('#t-ventas',d.ventas.ultimas||[],function(v){ return '<td>'+fecha(v.fecha)+'</td><td>'+esc(v.nombre||'—')+'</td><td>'+esc(v.metodo)+'</td><td>'+money(v.monto)+'</td>'; },'ventas-empty');
     actualizarChart(d);
     document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
@@ -255,6 +266,15 @@
         w.innerHTML='<div style="font-size:.66rem;letter-spacing:3px;color:var(--gold)">🏆 GANADOR DEL MES</div><div class="big">'+esc(g.nombre)+'</div><div style="color:#bbb;font-size:.8rem">RUT '+esc(g.rut)+' · orden '+esc(g.orden)+'</div>';
       }
     },70);
+  }
+
+  // Función para registrar ticket desde el frontend (canje en la web)
+  function registrarTicket(nombre,rut,orden){
+    return fetch(BASE+'/sorteo',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({nombre:nombre,rut:rut,orden:orden})
+    }).then(function(r){ return r.json(); });
   }
 
   // Auto-login si ya hay clave guardada

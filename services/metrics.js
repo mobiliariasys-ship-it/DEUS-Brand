@@ -9,6 +9,7 @@ let vistasTotal = 0;
 const vistasPorDia = {};         // 'YYYY-MM-DD' (Chile) -> N
 const ventas = [];               // { monto, fecha, metodo, nombre, orden }
 const vistasHistorico = {};      // Historial de vistas por día (últimos 30 días)
+const tickets = [];              // Tickets del sorteo { nombre, rut, orden, verificado, fecha }
 
 function hoyChile() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
@@ -90,14 +91,37 @@ function ultimos30Dias() {
   return dias;
 }
 
+function registrarTicket(nombre, rut, orden) {
+  const ticketExistente = tickets.find(t => t.orden === String(orden));
+  if (ticketExistente) return { error: 'Ticket ya registrado' };
+  tickets.push({
+    nombre: String(nombre || '').slice(0, 100),
+    rut: String(rut || '').slice(0, 20),
+    orden: String(orden || '').slice(0, 50),
+    verificado: false,
+    fecha: new Date().toISOString()
+  });
+  return { ok: true };
+}
+
+function obtenerTickets() {
+  return tickets;
+}
+
+function obtenerTicketsTotal() {
+  return tickets.length;
+}
+
 function snapshot() {
   return {
     visitantesEnVivo: visitantesEnVivo(),
     vistasHoy: vistasPorDia[hoyChile()] || 0,
     vistasTotal,
     ventas: resumenVentas(),
-    ultimos30: ultimos30Dias()
+    ultimos30: ultimos30Dias(),
+    tickets: obtenerTickets(),
+    ticketsTotal: obtenerTicketsTotal()
   };
 }
 
-module.exports = { ping, marcarComoOwner, registrarVenta, snapshot, visitantesEnVivo };
+module.exports = { ping, marcarComoOwner, registrarVenta, registrarTicket, obtenerTickets, snapshot, visitantesEnVivo };
