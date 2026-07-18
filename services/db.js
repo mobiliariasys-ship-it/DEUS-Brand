@@ -7,7 +7,13 @@
 // para lo que hoy son solo unos arreglos.
 const { Pool } = require('pg');
 
-const connectionString = (process.env.DATABASE_URL || '').trim();
+// 'require'/'prefer'/'verify-ca' hoy se comportan igual que 'verify-full' en
+// 'pg', pero la librería avisa que eso cambiará en una versión futura (dejaría
+// de verificar el certificado). Se fija 'verify-full' explícito en la URL
+// para no depender de ese comportamiento transitorio: queda seguro para
+// siempre y de paso se va el warning en los logs.
+const connectionString = (process.env.DATABASE_URL || '').trim()
+  .replace(/sslmode=(require|prefer|verify-ca)\b/i, 'sslmode=verify-full');
 const activa = !!connectionString;
 
 let pool = null;
@@ -15,10 +21,13 @@ let listo = null;
 
 function getPool() {
   if (!pool) {
-    pool = new Pool({
-      connectionString,
-      ssl: { rejectUnauthorized: false } // necesario para la mayoría de los Postgres gestionados (Neon, Render, etc.)
-    });
+    const opts = { connectionString };
+    // Si la URL no trae "sslmode" (proveedores sin ese parámetro en la URL),
+    // se usa un modo permisivo de respaldo para no bloquear la conexión.
+    if (!/sslmode=/i.test(connectionString)) {
+      opts.ssl = { rejectUnauthorized: false };
+    }
+    pool = new Pool(opts);
     pool.on('error', err => console.error('[db] Error inesperado en el pool:', err.message));
   }
   return pool;
