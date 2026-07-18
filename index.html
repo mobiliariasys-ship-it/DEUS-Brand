@@ -2246,8 +2246,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           render(); anim=requestAnimationFrame(step);
         })();
       }
+      // Auto-rotación: avanza sola, con vuelta al inicio. Se pausa al
+      // interactuar y retoma sola un rato después de soltar.
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var autoIv=null, reanudarTimer=null;
+      function pararAuto(){ if(autoIv){ clearInterval(autoIv); autoIv=null; } }
+      function iniciarAuto(){
+        if(reduceMotion || autoIv) return;
+        autoIv=setInterval(function(){
+          var next=Math.round(target)+1;
+          if(next>n-1) next=0;
+          animateTo(next);
+        },3200);
+      }
+      function reanudarPronto(){ clearTimeout(reanudarTimer); reanudarTimer=setTimeout(iniciarAuto,1800); }
+
       var x0=null,y0=null,p0=0,drag=false,horiz=null;
-      function down(x,y){ x0=x; y0=y; p0=pos; drag=true; horiz=null; cancelAnimationFrame(anim); }
+      function down(x,y){ x0=x; y0=y; p0=pos; drag=true; horiz=null; pararAuto(); cancelAnimationFrame(anim); }
       function move(x,y){
         if(!drag) return;
         var dx=x-x0, dy=y-y0;
@@ -2257,7 +2272,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         pos=Math.max(-0.35,Math.min(n-0.65,p0-dx/paso));
         render();
       }
-      function up(){ if(!drag) return; drag=false; if(horiz) animateTo(Math.round(pos)); horiz=null; }
+      function up(){ if(!drag) return; drag=false; if(horiz) animateTo(Math.round(pos)); horiz=null; reanudarPronto(); }
 
       // Flechas: mantener presionada avanza pantalla por pantalla (con vuelta al inicio)
       var holdIv=null;
@@ -2266,8 +2281,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if(next<0) next=n-1; else if(next>n-1) next=0;
         animateTo(next);
       }
-      function holdStart(dir){ cancelAnimationFrame(anim); holdStep(dir); clearInterval(holdIv); holdIv=setInterval(function(){ holdStep(dir); },520); }
-      function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } }
+      function holdStart(dir){ pararAuto(); cancelAnimationFrame(anim); holdStep(dir); clearInterval(holdIv); holdIv=setInterval(function(){ holdStep(dir); },520); }
+      function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } reanudarPronto(); }
       function bindHold(btn,dir){
         if(!btn) return;
         var start=function(e){ e.stopPropagation(); e.preventDefault(); holdStart(dir); };
@@ -2289,8 +2304,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       stage.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
       window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
       window.addEventListener('mouseup',up);
+      stage.addEventListener('mouseenter',pararAuto);
+      stage.addEventListener('mouseleave',reanudarPronto);
       window.addEventListener('resize',render);
       render();
+
+      // Arranca sola apenas el carrusel entra en pantalla
+      if('IntersectionObserver' in window){
+        var io=new IntersectionObserver(function(entradas){
+          entradas.forEach(function(en){ if(en.isIntersecting) iniciarAuto(); else pararAuto(); });
+        },{threshold:0.35});
+        io.observe(stage);
+      } else { iniciarAuto(); }
     })();
     </script>
 
