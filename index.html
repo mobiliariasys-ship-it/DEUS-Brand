@@ -1569,6 +1569,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           cantidad: item.cantidad || 1,
           precio: item.precio || precioBanda()
         }));
+        // Fusiona por seguridad ítems duplicados con el mismo id (pueden haber
+        // quedado guardados de una sesión con un bug anterior): sin esto, borrar
+        // uno de los duplicados podía dejar el carrito en un estado inconsistente.
+        cart = cart.reduce((acc, item) => {
+          const existente = acc.find(x => x.id === item.id);
+          if (existente) existente.cantidad += item.cantidad;
+          else acc.push(item);
+          return acc;
+        }, []);
         function actualizarCarrito() {
           cart = cart.map(item => {
             if (!item.cantidad || item.cantidad < 1) item.cantidad = 1;
@@ -1585,6 +1594,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
           renderizarCarrito();
         }
+        // Sincroniza el badge y el panel con lo guardado apenas carga la
+        // página — si no, un carrito con productos de antes se ve vacío
+        // hasta la primera vez que se agrega/quita algo en la sesión nueva.
+        document.addEventListener('DOMContentLoaded', actualizarCarrito);
         let qtyDialogColor = null;
         function abrirDialogoCarrito() {
           qtyDialogColor = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris';
