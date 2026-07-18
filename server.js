@@ -246,10 +246,15 @@ app.post('/sorteo', async (req, res) => {
     return res.status(400).json({ error: 'Completa nombre, n° de orden e Instagram.' });
   }
 
+  // Solo entra al sorteo si ese n° de orden corresponde a un pago YA
+  // CONFIRMADO (de cualquiera de los 3 métodos) — no basta con que exista
+  // un pedido creado, tiene que estar efectivamente pagado.
+  if (!metrics.ordenConfirmada(orden)) {
+    return res.status(404).json({ error: 'No encontramos ese n° de orden entre los pagos confirmados. Revisa el número en tu correo de confirmación de compra.' });
+  }
+
   const yaExiste = ticketsSorteo.some(t => t.orden.toLowerCase() === orden.toLowerCase());
-  // ¿La orden coincide con un pedido real? (si sigue en memoria)
-  const pedido = pedidos.find(p => String(p.preference_id || '').toLowerCase() === orden.toLowerCase());
-  const entry = { nombre, instagram, orden, verificado: !!pedido, fecha: new Date().toISOString() };
+  const entry = { nombre, instagram, orden, verificado: true, fecha: new Date().toISOString() };
 
   if (!yaExiste) { ticketsSorteo.push(entry); persist.save('tickets.json', ticketsSorteo).catch(e => console.error('[tickets] Error guardando:', e.message)); }
   // Siempre avisamos al dueño (registro en su correo), aunque sea reintento

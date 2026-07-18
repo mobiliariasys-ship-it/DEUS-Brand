@@ -96,6 +96,22 @@ function registrarVenta(v) {
   guardar();
 }
 
+// ¿Ese n° de orden corresponde a un pago ya confirmado? Cubre los 3 métodos
+// (MercadoPago, Webpay, Flow) porque todos pasan por registrarVenta().
+// El correo que le llega al CLIENTE muestra solo los últimos 8 caracteres
+// del n° de orden ("Pedido XXXXXXXX"), así que además del calce exacto se
+// acepta que el n° ingresado sea el sufijo (mínimo 6 caracteres) del guardado.
+function ordenConfirmada(orden) {
+  const o = String(orden || '').trim().toLowerCase();
+  if (!o) return false;
+  return ventas.some(v => {
+    const guardado = v.orden.toLowerCase();
+    if (guardado === o) return true;
+    if (o.length >= 6 && guardado.endsWith(o)) return true;
+    return false;
+  });
+}
+
 function resumenVentas() {
   const d = hoyChile();
   let hoyCount = 0, hoyMonto = 0, totMonto = 0;
@@ -155,4 +171,4 @@ function snapshot() {
   };
 }
 
-module.exports = { init, ping, registrarVenta, snapshot, visitantesEnVivo };
+module.exports = { init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo };
