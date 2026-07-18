@@ -8,6 +8,7 @@ const sesionesOwner = new Set(); // sids del dueño (excluir de visitantes en vi
 let vistasTotal = 0;
 const vistasPorDia = {};         // 'YYYY-MM-DD' (Chile) -> N
 const ventas = [];               // { monto, fecha, metodo, nombre, orden }
+const vistasHistorico = {};      // Historial de vistas por día (últimos 30 días)
 
 function hoyChile() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
@@ -25,6 +26,7 @@ function ping(sid, nueva, esOwner) {
     vistasTotal++;
     const d = hoyChile();
     vistasPorDia[d] = (vistasPorDia[d] || 0) + 1;
+    vistasHistorico[d] = (vistasHistorico[d] || 0) + 1;
   }
 }
 
@@ -74,12 +76,27 @@ function resumenVentas() {
   };
 }
 
+function ultimos30Dias() {
+  const dias = [];
+  for (let i = 29; i >= 0; i--) {
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() - i);
+    const dateStr = fecha.toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    dias.push({
+      fecha: dateStr,
+      vistas: vistasHistorico[dateStr] || 0
+    });
+  }
+  return dias;
+}
+
 function snapshot() {
   return {
     visitantesEnVivo: visitantesEnVivo(),
     vistasHoy: vistasPorDia[hoyChile()] || 0,
     vistasTotal,
-    ventas: resumenVentas()
+    ventas: resumenVentas(),
+    ultimos30: ultimos30Dias()
   };
 }
 

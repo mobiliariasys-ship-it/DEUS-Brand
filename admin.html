@@ -51,7 +51,9 @@
   .winner .big{font-size:1.3rem;font-weight:800;color:var(--gold);margin:4px 0;}
   .pill{font-size:.6rem;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:#aaa;}
   .self-tag{font-size:.6rem;padding:3px 8px;border-radius:20px;background:rgba(105,196,109,.15);border:1px solid rgba(105,196,109,.3);color:var(--green);margin-left:8px;display:inline-block;}
-  @media(max-width:560px){.stat .v{font-size:1.5rem;} .btn-sm{margin-top:6px;}}
+  .chart-container{width:100%;overflow-x:auto;background:#0f0f0f;border-radius:12px;padding:12px;border:1px solid var(--border);}
+  #chartDecibeles{width:100%;height:auto;display:block;min-width:600px;}
+  @media(max-width:560px){.stat .v{font-size:1.5rem;} .btn-sm{margin-top:6px;} .chart-container{padding:8px;}}
 </style>
 </head>
 <body>
@@ -84,6 +86,11 @@
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
       <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
     </div>
+
+    <section>
+      <div class="sec-h"><h2>📊 Últimos 30 días</h2></div>
+      <div class="chart-container"><canvas id="chartDecibeles" width="800" height="200"></canvas></div>
+    </section>
 
     <section>
       <div class="sec-h"><h2>🎟️ Tickets del sorteo</h2><button class="btn" onclick="elegirGanador()">Elegir ganador 🎲</button></div>
@@ -160,6 +167,7 @@
     rows('#t-tickets',tickets,function(t){ return '<td>'+esc(t.nombre)+'</td><td>'+esc(t.rut)+'</td><td>'+esc(t.orden)+'</td><td>'+(t.verificado?'<span class="ok">✓</span>':'<span class="no">revisar</span>')+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');
     rows('#t-ventas',d.ventas.ultimas||[],function(v){ return '<td>'+fecha(v.fecha)+'</td><td>'+esc(v.nombre||'—')+'</td><td>'+esc(v.metodo)+'</td><td>'+money(v.monto)+'</td>'; },'ventas-empty');
     rows('#t-pedidos',d.pedidos||[],function(p){ return '<td>'+fecha(p.fecha)+'</td><td>'+esc(p.nombre||'—')+'</td><td>'+esc(p.comuna||'—')+'</td><td>'+esc((p.color||'—'))+'</td><td>'+money(p.total)+'</td><td><span class="pill">'+esc(p.estado||'—')+'</span></td>'; },'pedidos-empty');
+    actualizarChart(d);
     document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
   }
   function esc(s){ return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
@@ -189,6 +197,69 @@
     }else{
       document.getElementById('btn-self').textContent='Excluir mis vistas';
       document.getElementById('self-indicator').innerHTML='';
+    }
+  }
+
+  var chartData=[];
+  var chartAnimTargets=[];
+
+  function dibujarChart(){
+    var canvas=document.getElementById('chartDecibeles');
+    if(!canvas) return;
+    var ctx=canvas.getContext('2d');
+    var w=canvas.width, h=canvas.height;
+    var pad=30, barW=22, gap=2;
+
+    ctx.fillStyle='#0a0a0a';
+    ctx.fillRect(0,0,w,h);
+
+    if(!chartData.length) return;
+
+    var maxV=Math.max(1, Math.max(...chartData.map(function(d){ return d.vistas; })));
+    var totalBars=chartData.length;
+    var areaW=w-pad*2;
+    var barTotalW=barW+gap;
+    var startX=Math.max(pad, (areaW-(totalBars*barTotalW))/2+pad);
+
+    ctx.strokeStyle='#262626';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(pad,h-pad);
+    ctx.lineTo(w-pad,h-pad);
+    ctx.stroke();
+
+    for(var i=0; i<chartData.length; i++){
+      var idx=i;
+      var target=chartAnimTargets[idx]||0;
+      var actual=chartData[idx].vistas;
+      target+=(actual-target)*0.15;
+      chartAnimTargets[idx]=target;
+
+      var barH=Math.max(2, (target/maxV)*(h-pad*1.5));
+      var x=startX+(i*barTotalW);
+      var y=h-pad-barH;
+
+      var hue=Math.floor((i/chartData.length)*60);
+      ctx.fillStyle='hsla('+(120-hue)+', 70%, 50%, 0.8)';
+      ctx.fillRect(x,y,barW,barH);
+
+      ctx.fillStyle='#888';
+      ctx.font='.7rem monospace';
+      ctx.textAlign='center';
+      var dateStr=chartData[i].fecha;
+      var dia=dateStr.split('-')[2];
+      ctx.fillText(dia,x+barW/2,h-pad+14);
+    }
+
+    requestAnimationFrame(dibujarChart);
+  }
+
+  function actualizarChart(datos){
+    chartData=datos.ultimos30||[];
+    chartAnimTargets=new Array(chartData.length).fill(0);
+    if(chartData.length>0 && !document.getElementById('chartDecibeles').dataset.animando){
+      document.getElementById('chartDecibeles').dataset.animando='true';
+      dibujarChart();
     }
   }
 
