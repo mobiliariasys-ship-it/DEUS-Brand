@@ -51,7 +51,7 @@
   .pill{font-size:.6rem;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:#aaa;}
   .self-tag{font-size:.6rem;padding:2px 8px;border-radius:20px;background:rgba(105,196,109,.15);border:1px solid rgba(105,196,109,.3);color:var(--green);margin-left:8px;}
   .chart-container{width:100%;overflow-x:auto;background:#0f0f0f;border-radius:10px;padding:12px;border:1px solid #1c1c1c;}
-  #chartDias{width:100%;height:auto;display:block;min-width:560px;}
+  #chartDias,#chartVentas{width:100%;height:auto;display:block;min-width:560px;}
   @media(max-width:560px){.stat .v{font-size:1.5rem;}}
 </style>
 </head>
@@ -89,6 +89,11 @@
     <section>
       <div class="sec-h"><h2>📊 Vistas · últimos 30 días</h2><span class="pill" id="chart-total"></span></div>
       <div class="chart-container"><canvas id="chartDias" width="820" height="200"></canvas></div>
+    </section>
+
+    <section>
+      <div class="sec-h"><h2>💰 Ventas · últimos 30 días</h2><span class="pill" id="chart-ventas-total"></span></div>
+      <div class="chart-container"><canvas id="chartVentas" width="820" height="200"></canvas></div>
     </section>
 
     <section>
@@ -154,56 +159,63 @@
     rows('#t-tickets',tickets,function(t){ return '<td>'+esc(t.nombre)+'</td><td>'+esc(t.rut)+'</td><td>'+esc(t.orden)+'</td><td>'+(t.verificado?'<span class="ok">✓</span>':'<span class="no">revisar</span>')+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');
     rows('#t-ventas',d.ventas.ultimas||[],function(v){ return '<td>'+fecha(v.fecha)+'</td><td>'+esc(v.nombre||'—')+'</td><td>'+esc(v.metodo)+'</td><td>'+money(v.monto)+'</td>'; },'ventas-empty');
     rows('#t-pedidos',d.pedidos||[],function(p){ return '<td>'+fecha(p.fecha)+'</td><td>'+esc(p.nombre||'—')+'</td><td>'+esc(p.comuna||'—')+'</td><td>'+esc((p.color||'—'))+'</td><td>'+money(p.total)+'</td><td><span class="pill">'+esc(p.estado||'—')+'</span></td>'; },'pedidos-empty');
-    dibujarChart(d.ultimos30||[]);
+    var u30=d.ultimos30||[];
+    var totalVistas=0; u30.forEach(function(x){ totalVistas+=x.vistas; });
+    document.getElementById('chart-total').textContent=totalVistas+' vistas en 30 días';
+    dibujarBarras('chartDias', u30.map(function(x){ return { fecha:x.fecha, valor:x.vistas }; }), '#69c46d');
+    var v30=d.ventas30||[];
+    var totalV=0, totalM=0; v30.forEach(function(x){ totalV+=x.ventas; totalM+=x.monto; });
+    document.getElementById('chart-ventas-total').textContent=totalV+' ventas · '+money(totalM);
+    dibujarBarras('chartVentas', v30.map(function(x){ return { fecha:x.fecha, valor:x.ventas }; }), '#c19a5b');
     document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
   }
 
-  // Gráfico de barras (estilo ecualizador) con las vistas de los últimos 30 días
-  var chartData=[], chartAlturas=[], chartCorriendo=false;
-  function dibujarChart(datos){
-    chartData=datos;
-    var total=0; datos.forEach(function(d){ total+=d.vistas; });
-    document.getElementById('chart-total').textContent=total+' vistas en 30 días';
-    if(chartAlturas.length!==datos.length) chartAlturas=new Array(datos.length).fill(0);
-    if(!chartCorriendo && datos.length){ chartCorriendo=true; requestAnimationFrame(frameChart); }
+  // Gráficos de barras (estilo ecualizador): un estado por canvas.
+  // datos = [{fecha:'YYYY-MM-DD', valor:N}]; colorBase = color de la base del degradado.
+  var charts={};
+  function dibujarBarras(id, datos, colorBase){
+    var st=charts[id]||(charts[id]={alturas:[],corriendo:false});
+    st.datos=datos; st.colorBase=colorBase;
+    if(st.alturas.length!==datos.length) st.alturas=new Array(datos.length).fill(0);
+    if(!st.corriendo && datos.length){ st.corriendo=true; requestAnimationFrame(function(){ frameBarras(id); }); }
   }
-  function frameChart(){
-    var canvas=document.getElementById('chartDias');
-    if(!canvas||!chartData.length){ chartCorriendo=false; return; }
+  function frameBarras(id){
+    var st=charts[id], canvas=document.getElementById(id);
+    if(!canvas||!st||!st.datos.length){ if(st) st.corriendo=false; return; }
     var ctx=canvas.getContext('2d');
     var w=canvas.width, h=canvas.height, padB=26, padT=14, padX=10;
     ctx.clearRect(0,0,w,h);
-    var n=chartData.length;
+    var n=st.datos.length;
     var gap=3, barW=(w-padX*2-gap*(n-1))/n;
-    var maxV=1; chartData.forEach(function(d){ if(d.vistas>maxV) maxV=d.vistas; });
+    var maxV=1; st.datos.forEach(function(d){ if(d.valor>maxV) maxV=d.valor; });
     var quieto=true;
     for(var i=0;i<n;i++){
-      var objetivo=(chartData[i].vistas/maxV)*(h-padB-padT);
-      chartAlturas[i]+=(objetivo-chartAlturas[i])*0.18;
-      if(Math.abs(objetivo-chartAlturas[i])>0.5) quieto=false;
-      var barH=Math.max(2,chartAlturas[i]);
+      var objetivo=(st.datos[i].valor/maxV)*(h-padB-padT);
+      st.alturas[i]+=(objetivo-st.alturas[i])*0.18;
+      if(Math.abs(objetivo-st.alturas[i])>0.5) quieto=false;
+      var barH=Math.max(2,st.alturas[i]);
       var x=padX+i*(barW+gap), y=h-padB-barH;
       var g=ctx.createLinearGradient(0,y,0,h-padB);
-      g.addColorStop(0,'#e7cf9c'); g.addColorStop(1,'#69c46d');
+      g.addColorStop(0,'#e7cf9c'); g.addColorStop(1,st.colorBase);
       ctx.fillStyle=g;
-      ctx.globalAlpha=chartData[i].vistas?0.9:0.25;
+      ctx.globalAlpha=st.datos[i].valor?0.9:0.25;
       ctx.fillRect(x,y,barW,barH);
       ctx.globalAlpha=1;
-      // Cifra sobre la barra (solo si hay vistas)
-      if(chartData[i].vistas){
+      // Cifra sobre la barra (solo si hay valor)
+      if(st.datos[i].valor){
         ctx.fillStyle='#ddd'; ctx.font='10px monospace'; ctx.textAlign='center';
-        ctx.fillText(String(chartData[i].vistas),x+barW/2,y-4);
+        ctx.fillText(String(st.datos[i].valor),x+barW/2,y-4);
       }
       // Día del mes bajo la barra (uno de cada dos para no saturar)
       if(i%2===0){
         ctx.fillStyle='#777'; ctx.font='9px monospace'; ctx.textAlign='center';
-        ctx.fillText(chartData[i].fecha.slice(8),x+barW/2,h-10);
+        ctx.fillText(st.datos[i].fecha.slice(8),x+barW/2,h-10);
       }
     }
     ctx.strokeStyle='#262626'; ctx.beginPath();
     ctx.moveTo(padX,h-padB+.5); ctx.lineTo(w-padX,h-padB+.5); ctx.stroke();
-    if(quieto){ chartCorriendo=false; return; }
-    requestAnimationFrame(frameChart);
+    if(quieto){ st.corriendo=false; return; }
+    requestAnimationFrame(function(){ frameBarras(id); });
   }
 
   // Excluir/incluir las vistas del dueño (se comparte con la web por localStorage)

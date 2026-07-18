@@ -101,6 +101,26 @@ function ultimos30Dias() {
   return dias;
 }
 
+// Ventas diarias (cantidad y monto) de los últimos 30 días.
+function ventas30Dias() {
+  const porDia = {};
+  for (const v of ventas) {
+    const d = new Date(v.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    if (!porDia[d]) porDia[d] = { count: 0, monto: 0 };
+    porDia[d].count++;
+    porDia[d].monto += v.monto;
+  }
+  const dias = [];
+  const ahora = Date.now();
+  for (let i = 29; i >= 0; i--) {
+    const dateStr = new Date(ahora - i * 86400000)
+      .toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    const dia = porDia[dateStr] || { count: 0, monto: 0 };
+    dias.push({ fecha: dateStr, ventas: dia.count, monto: dia.monto });
+  }
+  return dias;
+}
+
 function snapshot() {
   return {
     visitantesEnVivo: visitantesEnVivo(),
@@ -108,7 +128,8 @@ function snapshot() {
     vistasTotal,
     tiempoPromedioSeg: tiempoPromedioSeg(),
     ventas: resumenVentas(),
-    ultimos30: ultimos30Dias()
+    ultimos30: ultimos30Dias(),
+    ventas30: ventas30Dias()
   };
 }
 
