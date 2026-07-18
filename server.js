@@ -4,10 +4,10 @@ const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const shippingRoutes = require('./routes/shipping');
 const transbankRoutes = require('./routes/transbank');
 const flowRoutes = require('./routes/flow');
-const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarResena, diagnostico } = require('./services/email');
+const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, diagnostico } = require('./services/email');
 const { getStock, decrementStock, setStock } = require('./services/stock');
-const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
 const metrics = require('./services/metrics');
+const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile). Al vencer, el
 // precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
@@ -224,6 +224,124 @@ app.get('/pedidos', (req, res) => {
   res.json(pedidos);
 });
 
+// ── Sorteo mensual: canje de tickets ──
+// El comprador ingresa nombre, RUT y n° de orden de envío para canjear su
+// ticket. Se registra, se verifica contra los pedidos (best-effort) y se
+// envía un correo al dueño (ese correo es el registro permanente del mes).
+const ticketsSorteo = [];
+app.post('/sorteo', async (req, res) => {
+  const nombre = (req.body?.nombre || '').toString().trim().slice(0, 90);
+  const rut = (req.body?.rut || '').toString().trim().slice(0, 20);
+  const orden = (req.body?.orden || '').toString().trim().slice(0, 60);
+
+  if (!nombre || !rut || !orden) {
+    return res.status(400).json({ error: 'Completa nombre, RUT y n° de orden de envío.' });
+  }
+
+  const yaExiste = ticketsSorteo.some(t => t.orden.toLowerCase() === orden.toLowerCase());
+  // ¿La orden coincide con un pedido real? (si sigue en memoria)
+  const pedido = pedidos.find(p => String(p.preference_id || '').toLowerCase() === orden.toLowerCase());
+  const entry = { nombre, rut, orden, verificado: !!pedido, fecha: new Date().toISOString() };
+
+  if (!yaExiste) ticketsSorteo.push(entry);
+  // Siempre avisamos al dueño (registro en su correo), aunque sea reintento
+  enviarTicketSorteo(entry).catch(e => console.error('[sorteo] email:', e.message));
+
+  res.json({ ok: true, duplicado: yaExiste });
+});
+
+// Lista de tickets del mes (admin, protegida con STOCK_KEY)
+// Uso: /sorteo/lista?clave=MICLAVE
+app.get('/sorteo/lista', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+  res.json({ total: ticketsSorteo.length, tickets: ticketsSorteo });
+});
+
+// ── Presencia: latido de cada visitante para contar "en vivo" ──
+// esOwner=true marca la sesión como del dueño y no se cuenta en las métricas.
+app.post('/track/ping', (req, res) => {
+  metrics.ping(req.body?.sid, !!req.body?.nueva, !!req.body?.esOwner);
+  res.sendStatus(204);
+});
+
+// ── Panel de administración (protegido con STOCK_KEY) ──
+// Uso: /admin/stats?clave=MICLAVE
+app.get('/admin/stats', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+  const snap = metrics.snapshot();
+  const pedidosRecientes = pedidos.slice(-15).reverse().map(p => ({
+    fecha: p.created_at, nombre: p.customer?.name, comuna: p.shipping?.address?.commune,
+    color: p.color, total: p.total, estado: p.status, id: p.preference_id
+  }));
+  res.json({
+    ...snap,
+    tickets: ticketsSorteo.slice().reverse(),
+    ticketsTotal: ticketsSorteo.length,
+    pedidos: pedidosRecientes,
+    stock: getStock()
+  });
+});
+
+// ── Aviso de envío al cliente ──
+// Lo dispara el Google Apps Script del Gmail del dueño cuando llega el correo
+// de ChileExpress/Starken con el n° de seguimiento. El script extrae el correo
+// del cliente (que viene en ese correo oficial) y el tracking, y hace POST aquí.
+// Se envía al correo EXACTO de la transportadora → cliente correcto garantizado.
+// Protegido con STOCK_KEY. Dedupe por (correo+tracking) mientras viva el proceso;
+// el dedupe real lo hace la etiqueta "procesado" del Apps Script.
+const enviosNotificados = new Set();
+app.post('/envio/despachado', async (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if (((req.body && req.body.clave) || req.query.clave || '') !== clave) {
+    return res.status(403).json({ error: 'Clave incorrecta' });
+  }
+  const email = (req.body?.email || '').toString().trim();
+  const tracking = (req.body?.tracking || '').toString().trim();
+  const carrier = (req.body?.carrier || '').toString().trim();
+  const name = (req.body?.name || '').toString().trim();
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return res.status(400).json({ error: 'Correo del cliente inválido' });
+  }
+  if (!tracking) return res.status(400).json({ error: 'Falta el n° de seguimiento' });
+
+  const dedupeKey = (email + '|' + tracking).toLowerCase();
+  if (enviosNotificados.has(dedupeKey)) {
+    return res.json({ ok: true, duplicado: true });
+  }
+  enviosNotificados.add(dedupeKey);
+
+  // Si el pedido sigue en memoria, enriquecemos con nombre/color/transportadora.
+  const pedido = pedidos.find(p => (p.customer?.email || '').toLowerCase() === email.toLowerCase());
+
+  try {
+    const ok = await enviarEnvioDespachado({
+      email,
+      name: name || pedido?.customer?.name,
+      tracking,
+      carrier: carrier || pedido?.shipping?.carrier,
+      color: pedido?.color
+    });
+    if (!ok) {
+      // No se pudo enviar (p. ej. correo caído): no lo damos por procesado
+      // para que el Apps Script reintente en su próxima pasada.
+      enviosNotificados.delete(dedupeKey);
+      return res.status(502).json({ ok: false, error: 'No se pudo enviar el aviso, reintentar' });
+    }
+    if (pedido) pedido.status = 'enviado';
+    res.json({ ok: true, cliente: email, tracking, encontrado_en_pedidos: !!pedido });
+  } catch (e) {
+    enviosNotificados.delete(dedupeKey); // permite reintentar si falló
+    console.error('[envio] Error avisando al cliente:', e.message);
+    res.status(500).json({ error: 'No se pudo avisar al cliente' });
+  }
+});
+
 // Stock restante (para el contador de unidades en la web)
 app.get('/stock', (req, res) => {
   res.json({ remaining: getStock() });
@@ -258,42 +376,6 @@ app.get('/email/diagnostico', async (req, res) => {
 // Devuelve una respuesta mínima para que no descargue toda la página.
 app.get('/ping', (req, res) => {
   res.type('text/plain').send('ok');
-});
-
-// Rastreo de visitantes en vivo: registra un ping de sesión (con opción de marcar como "self"/dueño)
-app.post('/track/ping', (req, res) => {
-  const { sid, nueva, esOwner } = req.body || {};
-  metrics.ping(sid, nueva, esOwner);
-  res.sendStatus(204);
-});
-
-// Admin stats: retorna métricas en vivo (protegido con STOCK_KEY)
-app.get('/admin/stats', (req, res) => {
-  const clave = (process.env.STOCK_KEY || '').trim();
-  if (!clave) return res.status(404).send('No disponible');
-  if ((req.query.clave || '') !== clave) return res.status(403).send('Clave incorrecta');
-  res.json(metrics.snapshot());
-});
-
-// Marcar una sesión como del dueño (para excluir del conteo en vivo)
-app.post('/admin/marcar-self', (req, res) => {
-  const clave = (process.env.STOCK_KEY || '').trim();
-  if (!clave) return res.status(404).send('No disponible');
-  if ((req.query.clave || '') !== clave) return res.status(403).send('Clave incorrecta');
-  const { sid } = req.body || {};
-  if (sid) metrics.marcarComoOwner(sid);
-  res.sendStatus(204);
-});
-
-// Registrar ticket del sorteo (desde la web)
-app.post('/sorteo', (req, res) => {
-  const { nombre, rut, orden } = req.body || {};
-  if (!nombre || !rut || !orden) {
-    return res.status(400).json({ error: 'Faltan datos: nombre, rut, orden' });
-  }
-  const result = metrics.registrarTicket(nombre, rut, orden);
-  if (result.error) return res.status(409).json(result);
-  res.json({ ok: true, message: 'Ticket registrado' });
 });
 
 // Reseña enviada por un cliente → llega al correo para aprobar

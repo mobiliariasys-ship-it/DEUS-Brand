@@ -22,6 +22,10 @@ function enviarViaResend(subject, html, attachments, to) {
       subject,
       html
     };
+    // Reply-To: como wellness@ no tiene bandeja, las respuestas del cliente
+    // se dirigen a un buzón real (por defecto, el Gmail del dueño).
+    const replyTo = process.env.MAIL_REPLY_TO || process.env.GMAIL_USER;
+    if (replyTo) body.reply_to = replyTo;
     if (attachments && attachments.length) body.attachments = attachments;
     const payload = JSON.stringify(body);
 
@@ -70,7 +74,8 @@ async function enviarViaGmail(subject, html, to) {
   const t = getTransport();
   if (!t) return false;
   try {
-    await t.sendMail({ from: `"DEUS Band" <${process.env.GMAIL_USER}>`, to: to || destinatario(), subject, html });
+    const replyTo = process.env.MAIL_REPLY_TO || process.env.GMAIL_USER;
+    await t.sendMail({ from: `"DEUS Band" <${process.env.GMAIL_USER}>`, to: to || destinatario(), subject, html, replyTo });
     console.log('[email] Enviado vía Gmail');
     return true;
   } catch (e) { console.error('[email] Gmail error', e.message); return false; }
@@ -243,13 +248,13 @@ async function enviarConfirmacionCliente(datos) {
   const html = `
     <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee">
       <div style="background:#080808;color:#fff;padding:28px 24px;text-align:center">
-        <h1 style="margin:0;letter-spacing:4px;font-size:22px;font-weight:normal">DEUS BAND</h1>
+        <img src="https://deusbrand.cl/img/logo-email.png" alt="DEUS BRAND" width="190" style="width:190px;max-width:72%;height:auto;display:inline-block;border:0;line-height:100%;outline:none;text-decoration:none;">
       </div>
       <div style="padding:32px 28px;color:#222;font-size:15px;line-height:1.6">
         <div style="text-align:center;font-size:40px;margin-bottom:8px">✅</div>
         <h2 style="text-align:center;margin:0 0 20px;font-size:20px;color:#0a7d2c">¡Tu compra fue recibida!</h2>
         <p>Hola <b>${nombre}</b>,</p>
-        <p>Recibimos tu pago correctamente y ya estamos preparando tu pedido. <b>Pronto haremos tu envío</b>.</p>
+        <p>Recibimos tu compra correctamente y ya estamos preparando tu <b>DEUS Band</b>. <b>Pronto haremos tu envío</b>.</p>
         <div style="background:#f7f7f7;border-radius:10px;padding:18px 20px;margin:22px 0">
           <table style="width:100%;border-collapse:collapse;font-size:14px">
             <tr><td style="padding:5px 0;color:#888">Producto</td><td style="text-align:right"><b>DEUS Band${datos.color ? ' — ' + String(datos.color).toUpperCase() : ''}</b></td></tr>
@@ -259,6 +264,11 @@ async function enviarConfirmacionCliente(datos) {
           </table>
         </div>
         <p style="margin:22px 0 6px">El envío llega en <b>1 a 3 días hábiles</b>.</p>
+        <div style="margin:22px 0 6px;background:#fbf6ec;border:1px solid #e6d6b3;border-radius:10px;padding:16px 18px;text-align:center">
+          <div style="font-size:26px;line-height:1;margin-bottom:6px">🎁</div>
+          <b style="color:#8a6d2f">¡Ya estás participando en el sorteo mensual!</b>
+          <div style="font-size:13px;color:#7a6a4a;margin-top:6px">Con tu compra ganaste tu ticket para el sorteo de <b>una DEUS Band + Tapones de oído</b>. Sorteamos 1 vez al mes — te avisamos si ganas.</div>
+        </div>
         <p style="margin-top:26px;color:#555">Gracias por confiar en DEUS. ✨</p>
       </div>
       <div style="background:#f0f0f0;padding:16px 24px;text-align:center;color:#999;font-size:12px">
@@ -270,4 +280,68 @@ async function enviarConfirmacionCliente(datos) {
   return ok;
 }
 
-module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarResena, diagnostico };
+// ── Correo AL CLIENTE: su pedido fue despachado (con n° de seguimiento) ──
+// datos: { email, name, tracking, carrier, color }
+async function enviarEnvioDespachado(datos) {
+  const email = (datos.email || '').trim();
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    console.log('[email] Envío: cliente sin correo válido, no se avisa:', email || '(vacío)');
+    return false;
+  }
+  const nombre = (datos.name || '').trim().split(' ')[0] || 'Hola';
+  const tracking = (datos.tracking || '').toString().trim();
+  const carrier = (datos.carrier || 'la transportadora').toString().trim();
+  // Link de seguimiento según la empresa
+  const carrierLow = carrier.toLowerCase();
+  let trackUrl = '';
+  if (/chilexpress/.test(carrierLow)) trackUrl = 'https://www.chilexpress.cl/seguimiento-en-linea';
+  else if (/starken/.test(carrierLow)) trackUrl = 'https://www.starken.cl/seguimiento';
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee">
+      <div style="background:#080808;color:#fff;padding:28px 24px;text-align:center">
+        <img src="https://deusbrand.cl/img/logo-email.png" alt="DEUS BRAND" width="190" style="width:190px;max-width:72%;height:auto;display:inline-block;border:0;line-height:100%;outline:none;text-decoration:none;">
+      </div>
+      <div style="padding:32px 28px;color:#222;font-size:15px;line-height:1.6">
+        <div style="text-align:center;font-size:40px;margin-bottom:8px">📦</div>
+        <h2 style="text-align:center;margin:0 0 20px;font-size:20px;color:#0a7d2c">¡Tu DEUS Band ya fue enviada!</h2>
+        <p>Hola <b>${nombre}</b>,</p>
+        <p>Tu pedido ya está en camino con <b>${carrier}</b>. Puedes seguir tu envío con este número de orden:</p>
+        <div style="background:#f7f7f7;border:1px dashed #cfcfcf;border-radius:10px;padding:18px 20px;margin:22px 0;text-align:center">
+          <div style="color:#888;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">N° de seguimiento</div>
+          <div style="font-size:22px;font-weight:bold;letter-spacing:1px;color:#080808">${tracking || '—'}</div>
+          ${datos.color ? `<div style="margin-top:10px;color:#888;font-size:13px">DEUS Band — ${String(datos.color).toUpperCase()}</div>` : ''}
+        </div>
+        ${trackUrl ? `<p style="text-align:center;margin:0 0 22px"><a href="${trackUrl}" style="display:inline-block;background:#080808;color:#fff;text-decoration:none;padding:12px 26px;border-radius:8px;font-size:14px">Seguir mi envío</a></p>` : ''}
+        <p style="margin:0 0 6px">El envío llega en <b>1 a 3 días hábiles</b>.</p>
+        <p style="margin-top:26px;color:#555">Gracias por confiar en DEUS. ✨</p>
+      </div>
+      <div style="background:#f0f0f0;padding:16px 24px;text-align:center;color:#999;font-size:12px">
+        DEUS Band · deusbrand.cl
+      </div>
+    </div>`;
+  const ok = await enviarCorreo(`📦 Tu DEUS Band va en camino — N° ${tracking}`, html, null, email);
+  console.log(ok ? '[email] Aviso de envío enviado al cliente: ' + email : '[email] No se pudo avisar el envío al cliente: ' + email);
+  return ok;
+}
+
+// ── Correo AL DUEÑO: alguien canjeó un ticket del sorteo mensual ──
+async function enviarTicketSorteo(t) {
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #eee">
+      <div style="background:#20160a;color:#e7cf9c;padding:18px 22px">
+        <h2 style="margin:0;letter-spacing:1px">🎟️ NUEVO TICKET — Sorteo mensual</h2>
+      </div>
+      <div style="padding:22px;font-size:14px">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:7px 0;color:#888">Nombre</td><td style="text-align:right"><b>${(t.nombre||'—').replace(/</g,'&lt;')}</b></td></tr>
+          <tr><td style="padding:7px 0;color:#888">RUT</td><td style="text-align:right"><b>${(t.rut||'—').replace(/</g,'&lt;')}</b></td></tr>
+          <tr><td style="padding:7px 0;color:#888">N° de orden de envío</td><td style="text-align:right"><b>${(t.orden||'—').replace(/</g,'&lt;')}</b></td></tr>
+          <tr><td style="padding:7px 0;color:#888">Orden verificada en el sistema</td><td style="text-align:right"><b style="color:${t.verificado?'#0a7d2c':'#c0392b'}">${t.verificado?'SÍ ✓':'no encontrada — revisar manualmente'}</b></td></tr>
+        </table>
+        <p style="margin-top:16px;font-size:12px;color:#999">Fecha: ${new Date(t.fecha||Date.now()).toLocaleString('es-CL')}<br>Guarda este correo: es tu registro de participantes del mes.</p>
+      </div>
+    </div>`;
+  await enviarCorreo(`🎟️ Ticket sorteo — ${t.nombre || 'sin nombre'} (orden ${t.orden || '—'})`, html);
+}
+
+module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, diagnostico };

@@ -344,6 +344,16 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .info-sub{font-size:.68rem;letter-spacing:3px;text-transform:uppercase;color:var(--silver);margin-bottom:26px;}
 
 .spec-list{list-style:none;margin-top:26px;margin-bottom:26px;display:flex;flex-direction:column;gap:8px;}
+.specs-sec{max-width:1100px;margin:0 auto;padding:10px 24px 0;}
+.specs-sec .spec-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0;}
+@media(max-width:760px){
+  .specs-sec{padding:6px 16px 0;}
+  .specs-sec .spec-list{grid-template-columns:1fr 1fr;gap:9px;}
+  .specs-sec .spec-list li{flex-direction:column;align-items:flex-start;gap:9px;padding:13px 13px;font-size:.66rem;line-height:1.45;transform:none!important;}
+  .specs-sec .spec-icon{width:34px;height:34px;}
+  .specs-sec .spec-icon svg{width:17px;height:17px;}
+  .specs-sec .spec-label{font-size:.74rem;}
+}
 .spec-list li{
   display:flex;gap:13px;align-items:center;
   padding:13px 15px;border:1px solid var(--border);border-radius:11px;
@@ -356,8 +366,26 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .spec-label{display:block;font-weight:700;color:var(--white);font-size:.86rem;margin-bottom:2px;letter-spacing:.2px;}
 
 .offer-kicker{font-size:.66rem;letter-spacing:2.5px;text-transform:uppercase;color:#d9bf92;margin-bottom:10px;font-weight:600;}
-.price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#ddd;text-decoration:line-through;text-decoration-color:#e05555;text-decoration-thickness:2px;margin-left:8px;vertical-align:middle;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:2px;color:#69c46d;border:1px solid #69c46d;padding:3px 8px;vertical-align:middle;margin-left:8px;}.offer-cd{display:inline-flex;gap:4px;vertical-align:middle;margin-left:8px;}.offer-cd .cdb{display:inline-flex;flex-direction:column;align-items:center;background:#1c1c1c;border:1px solid #3a3a3a;border-radius:6px;padding:3px 6px 2px;min-width:26px;}.offer-cd .cdb b{font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:#d9bf92;line-height:1;letter-spacing:.5px;}.offer-cd .cdb small{font-family:'DM Sans',sans-serif;font-size:.42rem;letter-spacing:.5px;color:#909090;text-transform:uppercase;margin-top:1px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:22px;}
+.price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;color:#c9c9c9;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);text-decoration-thickness:1.5px;margin-left:8px;vertical-align:middle;}.price-save{display:inline-block;font-family:'DM Sans',sans-serif;font-size:.66rem;letter-spacing:1px;color:#d9bf92;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:3px 10px;margin-left:10px;vertical-align:middle;font-weight:600;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:2px;color:#7fd589;background:rgba(105,196,109,.12);border:1px solid rgba(105,196,109,.5);border-radius:6px;padding:4px 10px;vertical-align:middle;margin-left:8px;font-weight:600;}.offer-cd{display:inline-flex;gap:4px;vertical-align:middle;margin-left:8px;}.offer-cd .cdb{display:inline-flex;flex-direction:column;align-items:center;background:#1c1c1c;border:1px solid #3a3a3a;border-radius:6px;padding:3px 6px 2px;min-width:26px;}.offer-cd .cdb b{font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:#d9bf92;line-height:1;letter-spacing:.5px;}.offer-cd .cdb small{font-family:'DM Sans',sans-serif;font-size:.42rem;letter-spacing:.5px;color:#909090;text-transform:uppercase;margin-top:1px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:22px;}
 .price-block sup{font-family:'DM Sans',sans-serif;font-size:1.2rem;color:var(--silver);vertical-align:top;margin-top:10px;margin-right:2px;font-weight:300;}
+/* Mejores prácticas mockup: pill de oferta, orden precio→normal, tarjetas */
+.offer-pill{display:inline-block;align-self:flex-start;background:linear-gradient(135deg,#911f1f,#6b1313);color:#ffdede;font-size:.64rem;letter-spacing:1.8px;font-weight:700;text-transform:uppercase;border-radius:20px;padding:7px 16px;margin-bottom:12px;}
+.price-block{margin-bottom:6px;}
+.price-old{margin-bottom:18px;}
+.price-block .price-save{vertical-align:middle;margin-left:12px;font-size:.72rem;padding:5px 12px;}
+.reassure-item small{display:block;color:#8f8f8f;font-size:.63rem;font-weight:400;margin-top:3px;line-height:1.45;}
+.app-badge-phones{margin-left:auto;height:82px;width:auto;border-radius:10px;flex-shrink:0;}
+.day-card{margin-top:16px;border:1px solid rgba(105,196,109,.35);border-radius:14px;padding:18px 18px 16px;text-align:center;background:rgba(105,196,109,.03);}
+.day-shield{line-height:0;margin-bottom:8px;}
+.day-title{font-size:.68rem;letter-spacing:2.5px;color:#7fd589;font-weight:700;text-transform:uppercase;margin-bottom:14px;}
+.day-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;text-align:left;}
+.day-item{display:flex;gap:9px;align-items:flex-start;font-size:.68rem;color:#cfcfcf;line-height:1.5;}
+.day-item svg{flex-shrink:0;margin-top:1px;}
+.day-item b{color:#eee;}
+.join-line{margin-top:18px;display:flex;align-items:center;gap:9px;font-size:.72rem;color:#bdbdbd;line-height:1.5;}
+.join-line svg{flex-shrink:0;}
+.join-line b{color:#eee;}
+@media(max-width:420px){.reassure{gap:8px;}.reassure-item{font-size:.66rem;}.day-grid{grid-template-columns:1fr;}}
 
 .cta-row{display:grid;grid-template-columns:1fr auto;gap:8px;}
 .btn-p{
@@ -465,8 +493,8 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .resist-badge svg{flex-shrink:0;}
 .resist-badge b{display:block;font-size:.86rem;letter-spacing:.3px;margin-bottom:3px;color:var(--white);}
 .resist-badge span{font-size:.76rem;color:var(--silver);line-height:1.5;}
-.reassure{display:flex;flex-direction:column;gap:11px;margin-top:18px;}
-.reassure-item{display:flex;align-items:center;gap:10px;font-size:.75rem;color:#cfcfcf;letter-spacing:.3px;line-height:1.3;}
+.reassure{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px;}
+.reassure-item{display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-size:.72rem;color:#cfcfcf;letter-spacing:.3px;line-height:1.35;}
 .reassure-item svg{flex-shrink:0;}
 .reassure-item b{color:#fff;font-weight:600;}
 /* Botón flotante WhatsApp */
@@ -478,6 +506,44 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .btn-review{background:transparent;border:1px solid #4a4a4a;color:#e8e8e8;padding:12px 26px;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;transition:all .2s;border-radius:5px;}
 .btn-review:hover{border-color:#e8e8e8;background:#e8e8e8;color:#080808;}
 .btn-review.full{width:100%;margin-top:6px;}
+/* Sorteo mensual: pestaña lateral + modal */
+.rifa-tab{position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:900;cursor:pointer;
+  background:linear-gradient(135deg,#e7cf9c,#c19a5b);color:#20160a;
+  writing-mode:vertical-rl;font-family:'DM Sans',sans-serif;font-weight:800;font-size:.66rem;
+  letter-spacing:2px;text-transform:uppercase;padding:16px 9px;border-radius:0 12px 12px 0;
+  box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.15) inset;
+  display:flex;align-items:center;gap:8px;transition:padding .2s,filter .2s;animation:rifaPulse 2.6s ease-in-out infinite;}
+.rifa-tab:hover{padding-right:14px;filter:brightness(1.06);}
+.rifa-tab .rifa-emoji-tab{writing-mode:horizontal-tb;font-size:1.1rem;}
+@keyframes rifaPulse{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.15) inset;}50%{box-shadow:0 6px 26px rgba(217,191,146,.55),0 0 0 1px rgba(255,255,255,.25) inset;}}
+@media(max-width:600px){.rifa-tab{font-size:.58rem;padding:13px 7px;letter-spacing:1.5px;}}
+.rifa-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2100;align-items:center;justify-content:center;padding:24px 16px;}
+.rifa-overlay.show{display:flex;}
+.rifa-modal{position:relative;width:100%;max-width:420px;border-radius:16px;padding:30px 26px 26px;text-align:center;
+  background:radial-gradient(120% 90% at 50% 0%,#22190c 0%,#0f0f0f 55%);border:1px solid rgba(217,191,146,.35);
+  box-shadow:0 24px 60px rgba(0,0,0,.6);}
+.rifa-close{position:absolute;top:10px;right:15px;background:none;border:none;color:#999;font-size:1.7rem;line-height:1;cursor:pointer;}
+.rifa-emoji{font-size:44px;margin-bottom:6px;}
+.rifa-badge{display:inline-block;font-size:.56rem;letter-spacing:3px;text-transform:uppercase;color:#e7cf9c;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:5px 12px;margin-bottom:12px;font-weight:700;}
+.rifa-modal h3{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1.5px;margin:0 0 6px;color:#fff;}
+.rifa-prize{font-size:1rem;color:#f0e4cd;margin:0 0 20px;line-height:1.4;}
+.rifa-prize b{color:#fff;}
+.rifa-steps{display:flex;flex-direction:column;gap:12px;text-align:left;margin-bottom:22px;}
+.rifa-step{display:flex;gap:11px;align-items:flex-start;font-size:.82rem;color:#cfcfcf;line-height:1.5;}
+.rifa-step .rn{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:rgba(217,191,146,.15);border:1px solid rgba(217,191,146,.5);color:#e7cf9c;font-size:.9rem;display:flex;align-items:center;justify-content:center;}
+.rifa-step b{color:#fff;}
+.rifa-cta{display:block;width:100%;background:linear-gradient(135deg,#e7cf9c,#c19a5b);color:#20160a;border:none;border-radius:10px;padding:14px;font-family:'DM Sans',sans-serif;font-weight:800;font-size:.9rem;letter-spacing:.5px;cursor:pointer;transition:transform .12s,filter .2s;}
+.rifa-cta:hover{transform:translateY(-1px);filter:brightness(1.05);}
+.rifa-fine{font-size:.66rem;color:#8a8a8a;margin-top:12px;line-height:1.4;}
+.rifa-or{display:flex;align-items:center;gap:12px;margin:18px 0 14px;color:#7a7a7a;font-size:.58rem;letter-spacing:2px;text-transform:uppercase;}
+.rifa-or::before,.rifa-or::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.12);}
+.rifa-claim-title{font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#e7cf9c;margin-bottom:11px;font-weight:700;}
+.rifa-input{width:100%;box-sizing:border-box;background:#141414;border:1px solid rgba(255,255,255,.14);color:#f2f2f2;padding:11px 13px;font-family:'DM Sans',sans-serif;font-size:.82rem;margin-bottom:9px;border-radius:8px;}
+.rifa-input::placeholder{color:#777;}
+.rifa-input:focus{outline:none;border-color:rgba(217,191,146,.6);}
+.rifa-cta-2{background:transparent;border:1px solid rgba(217,191,146,.55);color:#e7cf9c;margin-top:3px;}
+.rifa-cta-2:hover{background:rgba(217,191,146,.12);filter:none;}
+.rifa-msg{font-size:.73rem;margin-top:10px;min-height:1em;line-height:1.45;}
 .resena-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
 .resena-modal{position:relative;background:#0f0f0f;border:1px solid var(--border);width:100%;max-width:440px;border-radius:10px;padding:28px 24px;}
 .resena-close{position:absolute;top:12px;right:16px;background:none;border:none;color:#888;font-size:1.6rem;line-height:1;cursor:pointer;font-family:'DM Sans',sans-serif;}
@@ -510,19 +576,18 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .app-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .app-title{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:3px;line-height:1;margin-bottom:12px;}
 .app-sub{font-size:.82rem;color:var(--silver);letter-spacing:.5px;line-height:1.7;margin:0 auto 26px;max-width:460px;}
-.app-shot{width:100%;max-width:1000px;height:auto;display:block;margin:0 auto;border-radius:10px;}
-.app-shot-wrap{margin:6px auto 30px;max-width:1000px;}
-.app-shot-hint{display:none;}
-@media(max-width:640px){
-.app-shot-wrap{position:relative;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-left:-24px;margin-right:-24px;padding:0 24px;scrollbar-width:none;}
-.app-shot-wrap::-webkit-scrollbar{display:none;}
-.app-shot-wrap::before,.app-shot-wrap::after{content:'';position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s;pointer-events:none;font-size:32px;font-weight:bold;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4);z-index:10;}
-.app-shot-wrap:hover::before,.app-shot-wrap:hover::after{opacity:.5;}
-.app-shot-wrap::before{content:'←';left:8px;}
-.app-shot-wrap::after{content:'→';right:8px;}
-.app-shot{width:175%;max-width:none;}
-.app-shot-hint{display:block;font-size:.65rem;letter-spacing:2px;color:var(--silver);text-transform:uppercase;margin:10px 0 24px;}
-}
+/* Carrusel 3D de pantallas de la app: giran al deslizar, flotando sobre el fondo de ondas */
+.app-stage{position:relative;max-width:1000px;height:470px;margin:10px auto 20px;perspective:1300px;overflow:hidden;touch-action:pan-y;cursor:grab;}
+.app-stage:active{cursor:grabbing;}
+.app-stage::before,.app-stage::after{position:absolute;top:50%;transform:translateY(-50%);z-index:5;font-size:2rem;color:rgba(255,255,255,.35);text-shadow:0 2px 8px rgba(0,0,0,.5);pointer-events:none;transition:color .25s;}
+.app-stage::before{content:'‹';left:10px;}
+.app-stage::after{content:'›';right:10px;}
+.app-stage:hover::before,.app-stage:hover::after{color:rgba(255,255,255,.65);}
+.fan-ph{position:absolute;left:50%;top:50%;height:86%;width:auto;will-change:transform,opacity;filter:drop-shadow(0 22px 34px rgba(0,0,0,.6));animation:fanFloat 6s ease-in-out infinite;-webkit-user-drag:none;user-select:none;pointer-events:none;}
+@keyframes fanFloat{0%,100%{margin-top:0}50%{margin-top:-10px}}
+.app-shot-hint{display:block;font-size:.65rem;letter-spacing:2px;color:var(--silver);text-transform:uppercase;margin:2px 0 24px;}
+@media(prefers-reduced-motion:reduce){.fan-ph{animation:none;}}
+@media(max-width:640px){.app-stage{height:400px;margin-left:-8px;margin-right:-8px;}}
 .app-icon{width:60px;height:60px;border-radius:14px;display:block;margin:14px auto 20px;box-shadow:0 6px 22px rgba(0,0,0,.45);}
 .how{max-width:1100px;margin:0 auto;padding:64px 24px 8px;}
 .how-head{text-align:center;margin-bottom:44px;}
@@ -534,12 +599,37 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .how-img img{width:100%;height:100%;object-fit:cover;display:block;}
 .how-img.contain{background:#0f0f0f;}
 .how-img.seamless{background:transparent;border:none;}
+.how-vidwrap{position:relative;cursor:pointer;}
+.how-poster{width:100%;height:100%;object-fit:cover;display:block;}
+.how-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s ease;pointer-events:none;}
+.how-vidwrap.is-playing .how-vid{opacity:1;}
+.how-play{position:absolute;bottom:12px;right:12px;width:38px;height:38px;border-radius:50%;background:rgba(8,8,8,.6);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;padding-left:2px;backdrop-filter:blur(3px);transition:opacity .25s;pointer-events:none;z-index:2;}
+.how-vidwrap.is-playing .how-play{opacity:0;}
+/* Carrusel de características (3 en el espacio de una) */
+.feat-car{position:relative;max-width:680px;margin:6px auto 0;overflow:hidden;transition:height .4s ease;}
+.feat-track{display:flex;align-items:flex-start;transition:transform .4s cubic-bezier(.22,.61,.36,1);}
+.feat-slide{min-width:100%;box-sizing:border-box;padding:0 6px;}
+/* Apila: imagen cuadrada centrada arriba, texto centrado abajo */
+.feat-slide .how-row{display:flex;flex-direction:column;align-items:center;gap:0;margin:0;grid-template-columns:none;}
+.feat-slide .how-row .how-img{order:0;width:100%;max-width:420px;aspect-ratio:1/1!important;min-height:0!important;margin:0 auto;}
+.feat-slide .how-img video,.feat-slide .how-img img{width:100%;height:100%;object-fit:cover;}
+.feat-slide .how-txt{max-width:520px;margin:16px auto 0;text-align:center;}
+/* Slide del ciclista en modo cine: ancho y grande, sin recortar a cuadrado */
+.feat-cine .how-row .how-img{max-width:680px!important;width:100%;aspect-ratio:960/608!important;border-radius:12px;}
+.feat-arrow{position:absolute;top:210px;transform:translateY(-50%);z-index:3;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:rgba(255,255,255,.92);font-size:1.5rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding-bottom:3px;transition:background .2s;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
+.feat-arrow:hover{background:rgba(255,255,255,.28);}
+.feat-arrow.prev{left:8px;}
+.feat-arrow.next{right:8px;}
+.feat-dots{display:flex;justify-content:center;gap:8px;margin:18px 0 0;}
+.feat-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);cursor:pointer;transition:all .2s;}
+.feat-dot.active{background:#fff;width:22px;border-radius:4px;}
+@media(max-width:760px){.feat-arrow{width:34px;height:34px;font-size:1.3rem;}}
 .rot-360{position:relative;cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;}
 .rot-360:active{cursor:grabbing;}
-.rot-360::before,.rot-360::after{content:'';position:absolute;top:50%;transform:translateY(-50%);width:60px;height:60px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s;pointer-events:none;font-size:40px;font-weight:bold;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4);z-index:10;}
-.rot-360:hover::before,.rot-360:hover::after{opacity:.5;}
-.rot-360::before{content:'←';left:12px;}
-.rot-360::after{content:'→';right:12px;}
+.rot-360::before,.rot-360::after{position:absolute;top:50%;transform:translateY(-50%);z-index:5;font-size:2rem;color:rgba(255,255,255,.35);text-shadow:0 2px 8px rgba(0,0,0,.5);pointer-events:none;transition:color .25s;}
+.rot-360::before{content:'‹';left:10px;}
+.rot-360::after{content:'›';right:10px;}
+.rot-360:hover::before,.rot-360:hover::after{color:rgba(255,255,255,.65);}
 .rot-360 img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
 .rot-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ddd;letter-spacing:1.5px;background:rgba(8,8,8,.75);border:1px solid #3a3a3a;padding:7px 16px;border-radius:16px;white-space:nowrap;z-index:2;animation:hintPulse 2.2s ease-in-out infinite;}
 @keyframes hintPulse{0%,100%{transform:translateX(-50%) scale(1);opacity:.95;}50%{transform:translateX(-50%) scale(1.05);opacity:1;}}
@@ -644,7 +734,7 @@ body.sb-on .wa-float{bottom:82px;}
 .fc-line{font-family:'Bebas Neue',sans-serif;font-size:2.3rem;letter-spacing:2px;line-height:1.15;color:var(--silver);}
 .fc-line.strong{color:var(--white);font-size:2.6rem;margin-top:2px;}
 .fc-price{margin:22px 0 24px;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;}
-.fc-price .fold{font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--silver);text-decoration:line-through;text-decoration-color:#e05555;margin-right:10px;vertical-align:middle;}
+.fc-price .fold{font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--silver);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);margin-right:10px;vertical-align:middle;}
 @media(max-width:600px){.fc-line{font-size:1.9rem;}.fc-line.strong{font-size:2.2rem;}}
 .monitor-head{text-align:center;margin-bottom:24px;}
 .monitor-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
@@ -658,7 +748,7 @@ body.sb-on .wa-float{bottom:82px;}
 .btn-metrics:hover{border-color:#e8e8e8;color:#e8e8e8;}
 @media(max-width:520px){.monitor-grid{grid-template-columns:1fr 1fr;}.metric{padding:11px 12px;gap:9px;}.metric .lbl{font-size:.76rem;}.m-extra{display:none;}.monitor.open .m-extra{display:flex;}.btn-metrics{display:block;}}
 @media(max-width:760px){.how-row{grid-template-columns:1fr;gap:18px;margin-bottom:38px;}.how-row.reverse .how-img{order:0;}.how-img{min-height:230px;}}
-.app-stores{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+.app-stores{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:6px 0 44px;}
 .store-btn{display:inline-flex;align-items:center;gap:11px;background:#161616;border:1px solid var(--border);color:#f2f2f2;padding:11px 22px;text-decoration:none;transition:border-color .2s,transform .12s;}
 .store-btn:hover{border-color:#e8e8e8;transform:translateY(-1px);}
 .store-btn svg{flex-shrink:0;}
@@ -668,6 +758,12 @@ body.sb-on .wa-float{bottom:82px;}
 .compat-row{display:flex;gap:26px;justify-content:center;align-items:flex-start;flex-wrap:wrap;}
 .compat-pill{display:flex;flex-direction:column;align-items:center;gap:8px;}
 .compat-icon{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(0,0,0,.45);}
+/* Triángulo: Da Halo arriba, Strava + Apple Health abajo */
+.app-tri{display:flex;flex-direction:column;align-items:center;gap:12px;margin:20px auto 6px;}
+.app-tri .tri-apex img{width:64px;height:64px;border-radius:15px;display:block;box-shadow:0 6px 22px rgba(0,0,0,.45);object-fit:cover;}
+.app-tri .tri-connect{font-size:.55rem;letter-spacing:3px;text-transform:uppercase;color:#777;}
+.app-tri .tri-base{display:flex;justify-content:center;gap:60px;}
+.app-tri .compat-pill small{font-size:.72rem;letter-spacing:.5px;color:var(--silver);}
 .compat-pill small{font-size:.62rem;letter-spacing:1px;color:#aaa;}
 .app-free{display:inline-block;margin:2px auto 22px;font-size:.7rem;letter-spacing:1.5px;color:#69c46d;border:1px solid rgba(105,196,109,.45);border-radius:20px;padding:7px 18px;font-weight:600;text-transform:uppercase;}
 .respaldo{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:24px;padding-top:18px;border-top:1px solid #1e1e1e;}
@@ -886,6 +982,73 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <span>Escríbenos</span>
 </a>
 
+<!-- Pestaña lateral: Sorteo mensual -->
+<div class="rifa-tab" onclick="abrirRifa()" role="button" tabindex="0" aria-label="Ver sorteo mensual">
+  <span class="rifa-emoji-tab">🎁</span> Sorteo mensual
+</div>
+
+<!-- Modal: Sorteo mensual -->
+<div class="rifa-overlay" id="rifaOverlay" onclick="if(event.target===this)cerrarRifa()">
+  <div class="rifa-modal">
+    <button class="rifa-close" onclick="cerrarRifa()" aria-label="Cerrar">&times;</button>
+    <div class="rifa-emoji">🎁</div>
+    <div class="rifa-badge">Sorteo mensual DEUS</div>
+    <h3>Gana 1 DEUS Band + Tapones de oído</h3>
+    <p class="rifa-prize">Cada mes sorteamos <b>una DEUS Band</b> y unos <b>Tapones de oído DEUS</b> entre nuestros compradores.</p>
+    <div class="rifa-steps">
+      <div class="rifa-step"><span class="rn">1</span><span>Compras tu <b>DEUS Band</b> en la web.</span></div>
+      <div class="rifa-step"><span class="rn">2</span><span>Ganas <b>1 ticket</b> por cada banda comprada — automático, sin costo extra.</span></div>
+      <div class="rifa-step"><span class="rn">3</span><span>Sorteamos <b>1 vez al mes</b>. Mientras más bandas, más tickets y más chances.</span></div>
+    </div>
+    <button class="rifa-cta" onclick="cerrarRifa();abrirCheckout&&abrirCheckout()">Comprar y participar</button>
+    <div class="rifa-or"><span>ya compraste</span></div>
+    <div class="rifa-claim">
+      <div class="rifa-claim-title">🎟️ Canjea tu ticket</div>
+      <input class="rifa-input" id="rf-nombre" placeholder="Nombre completo" autocomplete="name">
+      <input class="rifa-input" id="rf-rut" placeholder="RUT (ej: 12.345.678-9)">
+      <input class="rifa-input" id="rf-orden" placeholder="N° de orden de envío">
+      <button class="rifa-cta rifa-cta-2" onclick="canjearTicket()">Canjear mi ticket</button>
+      <div class="rifa-msg" id="rf-msg" role="status"></div>
+    </div>
+    <div class="rifa-fine">1 ticket por banda comprada. Te avisamos al correo si ganas.</div>
+  </div>
+</div>
+<script>
+  function abrirRifa(){ var o=document.getElementById('rifaOverlay'); if(o){ o.classList.add('show'); document.body.style.overflow='hidden'; } }
+  function cerrarRifa(){ var o=document.getElementById('rifaOverlay'); if(o){ o.classList.remove('show'); document.body.style.overflow=''; } }
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRifa(); });
+  // Latido de presencia para el panel (visitantes en vivo)
+  (function(){
+    var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
+    var sid=sessionStorage.getItem('deus-sid');
+    var nueva=!sid;
+    if(!sid){ sid=Date.now().toString(36)+Math.random().toString(36).slice(2,8); sessionStorage.setItem('deus-sid',sid); }
+    function esOwner(){ try{ return localStorage.getItem('deus-admin-self')==='true'||!!localStorage.getItem('deus-admin-key'); }catch(e){ return false; } }
+    function ping(n){ try{ fetch(base+'/track/ping',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({sid:sid,nueva:!!n,esOwner:esOwner()})}).catch(function(){}); }catch(e){} }
+    ping(nueva);
+    setInterval(function(){ if(!document.hidden) ping(false); },15000);
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden) ping(false); });
+  })();
+  async function canjearTicket(){
+    var nombre=(document.getElementById('rf-nombre').value||'').trim();
+    var rut=(document.getElementById('rf-rut').value||'').trim();
+    var orden=(document.getElementById('rf-orden').value||'').trim();
+    var msg=document.getElementById('rf-msg');
+    if(!nombre||!rut||!orden){ msg.style.color='#e6a5a5'; msg.textContent='Completa nombre, RUT y n° de orden de envío.'; return; }
+    msg.style.color='#9a9a9a'; msg.textContent='Enviando...';
+    var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
+    try{
+      var res=await fetch(base+'/sorteo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:nombre,rut:rut,orden:orden})});
+      var d=await res.json().catch(function(){return {};});
+      if(res.ok&&d.ok){
+        msg.style.color='#7fd589';
+        msg.textContent=d.duplicado?'✅ Este n° de orden ya estaba registrado. ¡Sigues participando!':'✅ ¡Ticket canjeado! Ya estás en el sorteo de este mes.';
+        document.getElementById('rf-nombre').value='';document.getElementById('rf-rut').value='';document.getElementById('rf-orden').value='';
+      } else { msg.style.color='#e6a5a5'; msg.textContent=(d&&d.error)||'No se pudo canjear. Revisa los datos e intenta de nuevo.'; }
+    }catch(e){ msg.style.color='#e6a5a5'; msg.textContent='Sin conexión. Intenta nuevamente en unos segundos.'; }
+  }
+</script>
+
 <main>
 
   <!-- ══ DEUS BAND DETAIL ══ -->
@@ -916,8 +1079,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="cdot" style="background:#e8b4bc;" title="Rosado" onclick="setColor('rosada',this)"></div>
       </div>
 
+      <div class="price-block"><sup>$</sup>42.990 <span class="price-save">-12% DCTO</span></div>
       <div class="price-old">Precio normal: <span class="old-amount">$48.990</span></div>
-      <div class="price-block"><sup>$</sup>42.990 <span class="price-offer-tag">OFERTA</span></div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
       <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas">
         <span class="proof-stars">★★★★★</span> <b>5.0</b> · reseñas de la comunidad <span class="proof-arrow">›</span>
@@ -931,9 +1094,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="reassure">
-        <div class="reassure-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Pago 100% seguro</b> — Webpay por Flow y Mercado Pago</span></div>
-        <div class="reassure-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg><span><b>Envío a todo Chile</b> con seguimiento Starken</span></div>
-        <div class="reassure-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span><b>Garantía de satisfacción 30 días</b></span></div>
+        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Pago 100% seguro</b><small>Webpay por Flow y Mercado Pago</small></span></div>
+        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg><span><b>Envío a todo Chile</b><small>con seguimiento Starken</small></span></div>
+        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span><b>Garantía de satisfacción 30 días</b><small>Devolución fácil y sin preguntas</small></span></div>
       </div>
 
       <div class="resist-badge app-badge">
@@ -942,21 +1105,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <b>App Da Halo — iOS y Android</b>
           <div class="app-badge-sub">100% gratis · sin pagos ni suscripciones</div>
         </div>
+        <img src="img/app-phones.webp" alt="Pantallas de la app Da Halo" class="app-badge-phones" loading="lazy" decoding="async">
       </div>
 
-      <div class="resist-badge">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e8e8e8" stroke-width="1.6"><path d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg>
-        <div>
-          <b>Estructura de aleación de zinc de alta resistencia</b>
+      <div class="day-card">
+        <div class="day-shield"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#69c46d" stroke-width="1.7"><path d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="day-title">Diseñada para tu día a día</div>
+        <div class="day-grid">
+          <div class="day-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#69c46d" stroke-width="1.6"><path d="M12 2.7S5.5 10 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 10 12 2.7 12 2.7z"/></svg><span>Resistente al sudor y salpicaduras <b>(1 ATM)</b></span></div>
+          <div class="day-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#69c46d" stroke-width="1.6"><rect x="6" y="4" width="12" height="18" rx="2"/><path d="M10 2h4"/><rect x="9" y="13" width="6" height="6" fill="#69c46d" stroke="none"/></svg><span>Batería de hasta <b>20 días</b></span></div>
+          <div class="day-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#69c46d" stroke-width="1.6"><rect x="4" y="3" width="6" height="18" rx="3"/><rect x="14" y="3" width="6" height="18" rx="2"/></svg><span>Incluye <b>2 correas</b> — silicona y nylon high tech</span></div>
+          <div class="day-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#69c46d" stroke-width="1.6"><path d="M11 15h2l1-9-6 10h2l-1 6z" /></svg><span>Estructura de <b>aleación de zinc</b> de alta resistencia</span></div>
         </div>
       </div>
-
-      <div class="straps-tag">✓ Incluye 2 correas — Silicona y nylon high tech</div>
-      <div class="brand-compat" style="margin-top:8px;">
+      <div class="brand-compat" style="margin-top:14px;">
         <span class="cmp-label">Compatible con</span>
         <span class="cmp-pill"><span class="cmp-ico" style="background:#FC4C02"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0 3.46 13.828h4.169"/></svg></span>Strava</span>
         <span class="cmp-pill"><span class="cmp-ico" style="background:#fff"><svg width="14" height="14" viewBox="0 0 24 24" fill="#FA3E5D" aria-hidden="true"><path d="M12 21s-6.55-4.27-9.2-7.4C.83 11.3 1.2 8.2 3.4 6.74c1.94-1.28 4.36-.74 5.62.98L12 11.3l2.98-3.58c1.26-1.72 3.68-2.26 5.62-.98 2.2 1.46 2.57 4.56.6 6.86C18.55 16.73 12 21 12 21z"/></svg></span>Apple Health</span>
       </div>
+
+      <div class="join-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e8b4bc" stroke-width="1.7"><path d="M12 21s-6.55-4.27-9.2-7.4C.83 11.3 1.2 8.2 3.4 6.74c1.94-1.28 4.36-.74 5.62.98L12 11.3l2.98-3.58c1.26-1.72 3.68-2.26 5.62-.98 2.2 1.46 2.57 4.56.6 6.86C18.55 16.73 12 21 12 21z"/></svg><span>Únete a <b>+200 personas</b> que ya mejoran su rendimiento sin distracciones cada día.</span></div>
 
       <!-- ── CHECKOUT (paso 2): se abre al hacer clic en Comprar ── -->
       <div class="checkout-overlay" id="checkout-overlay" onclick="if(event.target===this)cerrarCheckout()">
@@ -1671,20 +1839,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
         }
       </script>
-      <ul class="spec-list">
-        <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
-        <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
-        <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
-        
-        <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
-      </ul>
-      
       </div>
-      
+
     </div>
   </div>
 
-
+  <!-- ESPECIFICACIONES CLAVE (fuera de la tarjeta del producto) -->
+  <section class="specs-sec">
+    <ul class="spec-list">
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
+    </ul>
+  </section>
 
   <!-- COMO FUNCIONA -->
   <section class="how" id="tecnologia">
@@ -1704,35 +1872,131 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p>Sensor óptico de alta sensibilidad que mide tu frecuencia cardíaca, oxígeno en sangre y variabilidad en tiempo real, día y noche. Precisión constante en cada latido. Su estructura está fabricada en <b>aleación de zinc de alta resistencia</b>.</p>
       </div>
     </div>
-    <div class="how-row">
-      <div class="how-img natural"><video src="img/diseno-video.mp4" autoplay muted loop playsinline preload="metadata" aria-label="DEUS Band sin distracciones"></video></div>
-      <div class="how-txt">
-        <h3>Diseño sin distracciones</h3>
-        <p>Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
+    <!-- Carrusel: 3 características cambiables (imagen cuadrada arriba, texto abajo) -->
+    <div class="feat-car" id="featCar">
+      <div class="feat-track" id="featTrack">
+        <div class="feat-slide feat-cine">
+          <div class="how-row">
+            <div class="how-img natural"><video muted loop playsinline preload="metadata" aria-label="DEUS Band ciclista"><source src="img/diseno-video.webm" type="video/webm"><source src="img/diseno-video.mp4" type="video/mp4"></video></div>
+            <div class="how-txt">
+              <h3>Diseño sin distracciones</h3>
+              <p>Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
+            </div>
+          </div>
+        </div>
+        <div class="feat-slide">
+          <div class="how-row reverse">
+            <div class="how-img sleep-live">
+              <img src="img/img-8195c9b9.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async">
+              <div class="sleep-scan"></div>
+              <div class="sleep-bpm"><span class="bpm-heart">♥</span> <b id="bpm-val">52</b> bpm</div>
+            </div>
+            <div class="how-txt">
+              <h3>Optimiza tu sueño</h3>
+              <p>Mide tus fases de sueño —profundo, ligero y REM— y la calidad de tu descanso. Despierta recuperado y mejora tus noches con datos reales.</p>
+            </div>
+          </div>
+        </div>
+        <div class="feat-slide">
+          <div class="how-row">
+            <div class="how-img"><img src="img/img-93c330d7.webp" alt="DEUS Band durante el deporte" loading="lazy" decoding="async"></div>
+            <div class="how-txt">
+              <h3>Úsala 24/7</h3>
+              <p>Pensada para acompañarte siempre — al entrenar, en el trabajo y al dormir. Detecta tu actividad automáticamente: empieza y termina sin que tengas que tocar nada.</p>
+            </div>
+          </div>
+        </div>
       </div>
+      <button class="feat-arrow prev" id="featPrev" aria-label="Anterior">‹</button>
+      <button class="feat-arrow next" id="featNext" aria-label="Siguiente">›</button>
     </div>
-
-    <div class="how-row reverse">
-      <div class="how-img sleep-live">
-        <img src="img/img-8195c9b9.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async">
-        <div class="sleep-scan"></div>
-        <div class="sleep-bpm"><span class="bpm-heart">♥</span> <b id="bpm-val">52</b> bpm</div>
-      </div>
-      <div class="how-txt">
-        <h3>Optimiza tu sueño</h3>
-        <p>Mide tus fases de sueño —profundo, ligero y REM— y la calidad de tu descanso. Despierta recuperado y mejora tus noches con datos reales.</p>
-      </div>
-    </div>
-
-    <div class="how-row">
-      <div class="how-img"><img src="img/img-93c330d7.webp" alt="DEUS Band en la muñeca durante el deporte" loading="lazy" decoding="async"></div>
-      <div class="how-txt">
-        <h3>Úsala 24/7</h3>
-        <p>Pensada para acompañarte siempre — al entrenar, en el trabajo y al dormir. Detecta tu actividad automáticamente: empieza y termina sin que tengas que tocar nada.</p>
-      </div>
+    <div class="feat-dots" id="featDots">
+      <span class="feat-dot active" onclick="featGo(0)"></span>
+      <span class="feat-dot" onclick="featGo(1)"></span>
+      <span class="feat-dot" onclick="featGo(2)"></span>
     </div>
 
   </section>
+  <script>
+  (function(){
+    var car=document.getElementById('featCar'), track=document.getElementById('featTrack');
+    if(!car||!track) return;
+    var slides=track.children, dots=document.getElementById('featDots').children;
+    var n=slides.length, cur=0;
+    var prev=document.getElementById('featPrev'), next=document.getElementById('featNext');
+    function centrarFlechas(){
+      if(!prev||!next||!slides[cur]) return;
+      var img=slides[cur].querySelector('.how-img'); if(!img) return;
+      var cr=car.getBoundingClientRect(), ir=img.getBoundingClientRect();
+      var c=((ir.top-cr.top)+ir.height/2)+'px'; prev.style.top=c; next.style.top=c;
+    }
+    function setH(){ if(slides[cur]) car.style.height=slides[cur].offsetHeight+'px'; centrarFlechas(); }
+    // Si la slide activa tiene video (el ciclista), lo reinicia y reproduce
+    function reproducirActivo(){
+      var v=slides[cur]&&slides[cur].querySelector('video');
+      if(v){ try{ v.currentTime=0; }catch(e){} var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+    }
+    function render(){
+      track.style.transform='translateX('+(-cur*100)+'%)';
+      for(var i=0;i<n;i++){ if(dots[i]) dots[i].classList.toggle('active',i===cur); }
+      setH(); reproducirActivo();
+    }
+    // Auto-rotación (se pausa al pasar el mouse; se reinicia al interactuar)
+    var timer=null, hover=false;
+    function pararAuto(){ if(timer){ clearTimeout(timer); timer=null; } }
+    function iniciarAuto(){ pararAuto(); if(hover) return; timer=setTimeout(function(){ featGo(cur+1); }, 5000); }
+    window.featGo=function(i){ cur=(i+n)%n; render(); iniciarAuto(); };
+    // Recalcular la altura cuando cargan las imágenes/el video o cambia el tamaño
+    window.addEventListener('load',setH);
+    window.addEventListener('resize',setH);
+    track.querySelectorAll('img,video').forEach(function(m){
+      m.addEventListener('load',setH); m.addEventListener('loadeddata',setH);
+    });
+    setTimeout(setH,300);
+    if(prev) prev.onclick=function(){ featGo(cur-1); };
+    if(next) next.onclick=function(){ featGo(cur+1); };
+    // Arrastre orgánico: la slide sigue el dedo/cursor y al soltar decide
+    var x0=null,y0=null,drag=false,horiz=null,w=1;
+    function pos(){ return -cur*100; }
+    function down(x,y){ x0=x; y0=y; drag=true; horiz=null; w=car.clientWidth||1; pararAuto(); }
+    function move(x,y){
+      if(!drag||x0===null) return;
+      var dx=x-x0, dy=y-y0;
+      if(horiz===null && (Math.abs(dx)>6||Math.abs(dy)>6)) horiz=Math.abs(dx)>Math.abs(dy);
+      if(!horiz) return;
+      var off=dx/w*100;
+      // resistencia en los extremos (primera y última slide)
+      if((cur===0&&off>0)||(cur===n-1&&off<0)) off*=0.35;
+      track.style.transition='none';
+      track.style.transform='translateX('+(pos()+off)+'%)';
+    }
+    function up(x){
+      if(!drag||x0===null) return; drag=false;
+      var dx=x-x0;
+      track.style.transition='';
+      if(horiz && Math.abs(dx)>w*0.18) featGo(cur+(dx<0?1:-1));
+      else { render(); iniciarAuto(); }
+      x0=y0=null; horiz=null;
+    }
+    car.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+    car.addEventListener('touchmove',function(e){ move(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+    car.addEventListener('touchend',function(e){ up(e.changedTouches[0].clientX); },{passive:true});
+    car.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
+    window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
+    window.addEventListener('mouseup',function(e){ up(e.clientX); });
+    car.addEventListener('mouseenter',function(){ hover=true; pararAuto(); });
+    car.addEventListener('mouseleave',function(){ hover=false; iniciarAuto(); });
+    render();
+    // La auto-rotación parte recién cuando el carrusel entra en pantalla,
+    // así siempre se ve primero la slide del ciclista.
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(entradas){
+        entradas.forEach(function(x){ if(x.isIntersecting) iniciarAuto(); else pararAuto(); });
+      },{threshold:0.35});
+      io.observe(car);
+    } else { iniciarAuto(); }
+  })();
+  </script>
   <script>
   (function(){
     var N=85, BLUE=72; // f_073: cuadro del sensor azul; f_074-085: fundido que cierra la vuelta
@@ -1906,33 +2170,73 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- APP -->
   <section class="app-sec" id="app">
+    <!-- 1. La App + 100% gratis (arriba de la imagen) -->
     <div class="app-kicker">La App</div>
-    <h2 class="app-title">Da Halo</h2>
-    <img class="app-icon" src="img/img-c9eeead6.webp" alt="Icono Da Halo" loading="lazy" decoding="async">
-    <div class="compat-caption">Compatible con</div>
-    <div class="compat-row">
-      <div class="compat-pill">
-        <span class="compat-icon" style="background:#FC4C02"><svg width="34" height="34" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0 3.46 13.828h4.169"/></svg></span>
-        <small>Strava</small>
-      </div>
-      <div class="compat-pill">
-        <span class="compat-icon" style="background:#fff"><svg width="36" height="36" viewBox="0 0 24 24" fill="#FA3E5D" aria-hidden="true"><path d="M12 21s-6.55-4.27-9.2-7.4C.83 11.3 1.2 8.2 3.4 6.74c1.94-1.28 4.36-.74 5.62.98L12 11.3l2.98-3.58c1.26-1.72 3.68-2.26 5.62-.98 2.2 1.46 2.57 4.56.6 6.86C18.55 16.73 12 21 12 21z"/></svg></span>
-        <small>Apple Health</small>
-      </div>
-    </div>
-
-    <div class="app-sub">Conecta tu DEUS Band con la app <b>Da Halo</b> y mira tu actividad, sueño y ritmo cardíaco en tiempo real.</div>
     <div class="app-free">✓ 100% gratis · Sin suscripciones</div>
-    <div class="app-shot-wrap" id="appShotWrap"><img class="app-shot" src="img/img-025d064e.webp" alt="App Da Halo - pantallas de actividad, sueno y bienestar" loading="lazy" decoding="async" onload="centerAppShot()"></div>
-    <div class="app-shot-hint">← Desliza para ver las pantallas →</div>
+
+    <!-- 2. Pantallas de la app: carrusel 3D flotante -->
+    <div class="app-stage" id="appStage">
+      <img class="fan-ph" src="img/app-rot-1.webp" alt="App Da Halo — resumen del día" loading="lazy" decoding="async">
+      <img class="fan-ph" src="img/app-rot-2.webp" alt="App Da Halo — análisis del sueño" loading="lazy" decoding="async">
+      <img class="fan-ph" src="img/app-rot-3.webp" alt="App Da Halo — actividad y pasos" loading="lazy" decoding="async">
+      <img class="fan-ph" src="img/app-rot-4.webp" alt="App Da Halo — entrenamiento con GPS" loading="lazy" decoding="async">
+    </div>
+    <div class="app-shot-hint">Desliza para rotar las pantallas</div>
     <script>
-    function centerAppShot(){
-      var w=document.getElementById('appShotWrap');
-      if(w){ w.scrollLeft=(w.scrollWidth-w.clientWidth)/2; }
-    }
-    window.addEventListener('load',centerAppShot);
-    window.addEventListener('resize',centerAppShot);
+    (function(){
+      var stage=document.getElementById('appStage');
+      if(!stage) return;
+      var phones=[].slice.call(stage.querySelectorAll('.fan-ph'));
+      var n=phones.length, pos=0, target=0, anim=null;
+      function render(){
+        var w=stage.clientWidth;
+        phones.forEach(function(ph,i){
+          var off=i-pos;
+          var x=off*w*0.26;
+          var sc=Math.max(.5,1-Math.abs(off)*.16);
+          var op=Math.max(0,1-Math.abs(off)*.32);
+          ph.style.transform='translate(calc(-50% + '+x+'px),-50%) rotateY('+(-off*24)+'deg) scale('+sc+')';
+          ph.style.zIndex=String(100-Math.round(Math.abs(off)*10));
+          ph.style.opacity=op;
+        });
+      }
+      function animateTo(t){
+        target=Math.max(0,Math.min(n-1,t));
+        cancelAnimationFrame(anim);
+        (function step(){
+          pos+=(target-pos)*0.16;
+          if(Math.abs(target-pos)<0.004){ pos=target; render(); return; }
+          render(); anim=requestAnimationFrame(step);
+        })();
+      }
+      var x0=null,y0=null,p0=0,drag=false,horiz=null;
+      function down(x,y){ x0=x; y0=y; p0=pos; drag=true; horiz=null; cancelAnimationFrame(anim); }
+      function move(x,y){
+        if(!drag) return;
+        var dx=x-x0, dy=y-y0;
+        if(horiz===null && (Math.abs(dx)>8||Math.abs(dy)>8)) horiz=Math.abs(dx)>Math.abs(dy);
+        if(!horiz) return;
+        var paso=stage.clientWidth*0.26;
+        pos=Math.max(-0.35,Math.min(n-0.65,p0-dx/paso));
+        render();
+      }
+      function up(){ if(!drag) return; drag=false; if(horiz) animateTo(Math.round(pos)); horiz=null; }
+      stage.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+      // passive:false para poder frenar el scroll vertical de la página mientras rotan
+      stage.addEventListener('touchmove',function(e){
+        move(e.touches[0].clientX,e.touches[0].clientY);
+        if(horiz) e.preventDefault();
+      },{passive:false});
+      stage.addEventListener('touchend',up,{passive:true});
+      stage.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
+      window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
+      window.addEventListener('mouseup',up);
+      window.addEventListener('resize',render);
+      render();
+    })();
     </script>
+
+    <!-- 2. Botones de descarga -->
     <div class="app-stores">
       <a class="store-btn" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M17.05 12.04c-.03-2.85 2.33-4.22 2.43-4.29-1.32-1.94-3.38-2.2-4.11-2.23-1.75-.18-3.41 1.03-4.3 1.03-.88 0-2.25-1.01-3.7-.98-1.9.03-3.66 1.11-4.64 2.81-1.98 3.44-.51 8.53 1.42 11.32.94 1.37 2.06 2.9 3.53 2.85 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.4 3.43-2.78 1.08-1.59 1.53-3.13 1.55-3.21-.03-.01-2.98-1.14-3.01-4.52zM14.6 4.2c.78-.95 1.31-2.27 1.16-3.58-1.13.05-2.49.75-3.3 1.7-.72.84-1.36 2.18-1.19 3.46 1.26.1 2.55-.64 3.33-1.58z"/></svg>
@@ -1942,6 +2246,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <svg width="20" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M4 2.5v19c0 .6.7 1 1.2.6l14.6-9.5c.5-.3.5-1.1 0-1.4L5.2 1.9C4.7 1.6 4 1.9 4 2.5z"/></svg>
         <span><span class="st-small">Disponible en</span><span class="st-big">Google Play</span></span>
       </a>
+    </div>
+
+    <!-- 4. Da Halo + Strava + Apple Health juntos en triángulo -->
+    <h2 class="app-title">Da Halo</h2>
+    <div class="app-sub">Conecta tu DEUS Band con la app <b>Da Halo</b> y mira tu actividad, sueño y ritmo cardíaco en tiempo real.</div>
+    <div class="app-tri">
+      <div class="tri-apex">
+        <img src="img/img-c9eeead6.webp" alt="Da Halo" loading="lazy" decoding="async">
+      </div>
+      <div class="tri-connect">se conecta con</div>
+      <div class="tri-base">
+        <div class="compat-pill">
+          <span class="compat-icon" style="background:#FC4C02"><svg width="34" height="34" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0 3.46 13.828h4.169"/></svg></span>
+          <small>Strava</small>
+        </div>
+        <div class="compat-pill">
+          <span class="compat-icon" style="background:#fff"><svg width="36" height="36" viewBox="0 0 24 24" fill="#FA3E5D" aria-hidden="true"><path d="M12 21s-6.55-4.27-9.2-7.4C.83 11.3 1.2 8.2 3.4 6.74c1.94-1.28 4.36-.74 5.62.98L12 11.3l2.98-3.58c1.26-1.72 3.68-2.26 5.62-.98 2.2 1.46 2.57 4.56.6 6.86C18.55 16.73 12 21 12 21z"/></svg></span>
+          <small>Apple Health</small>
+        </div>
+      </div>
     </div>
 
   </section>
@@ -2469,24 +2793,12 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
 (function(){
   if (typeof ofertaActiva === 'undefined' || ofertaActiva()) return;
   var po=document.querySelector('.price-old'); if(po) po.style.display='none';
+  var opill=document.querySelector('.offer-pill'); if(opill) opill.style.display='none';
   var pb=document.querySelector('.price-block'); if(pb) pb.innerHTML='<sup>$</sup>48.990 <span class="price-offer-tag">ENVÍO GRATIS</span>';
   var cp=document.getElementById('co-prod-price'); if(cp) cp.innerHTML='<span class="co-price-now">$48.990</span>';
   var td=document.getElementById('total-display'); if(td) td.textContent='$48.990';
   var fc=document.querySelector('.fc-price'); if(fc) fc.innerHTML='$48.990 <small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>';
   var sb=document.querySelector('.sb-price'); if(sb) sb.innerHTML='<b>$48.990</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>';
-})();
-
-// Latido de presencia para el panel (visitantes en vivo)
-(function(){
-  var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
-  var sid=sessionStorage.getItem('deus-sid');
-  var nueva=!sid;
-  if(!sid){ sid=Date.now().toString(36)+Math.random().toString(36).slice(2,8); sessionStorage.setItem('deus-sid',sid); }
-  var esOwner=localStorage.getItem('deus-admin-self')==='true'||localStorage.getItem('deus-admin-key');
-  function ping(n){ try{ fetch(base+'/track/ping',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({sid:sid,nueva:!!n,esOwner:!!esOwner})}).catch(function(){}); }catch(e){} }
-  ping(nueva);
-  setInterval(function(){ if(!document.hidden) ping(false); },15000);
-  document.addEventListener('visibilitychange',function(){ if(!document.hidden) ping(false); });
 })();
 </script>
 

@@ -38,7 +38,6 @@
   .sec-h h2{font-size:.82rem;letter-spacing:1.5px;text-transform:uppercase;color:#ddd;margin:0;}
   .btn{background:var(--gold);color:#20160a;border:none;padding:9px 15px;border-radius:8px;font-weight:700;font-size:.74rem;cursor:pointer;}
   .btn.ghost{background:transparent;border:1px solid var(--border);color:#bbb;}
-  .btn-sm{padding:5px 10px;font-size:.66rem;margin-left:6px;}
   table{width:100%;border-collapse:collapse;font-size:.76rem;}
   th{text-align:left;color:#888;font-weight:600;padding:7px 8px;border-bottom:1px solid var(--border);letter-spacing:.5px;}
   td{padding:9px 8px;border-bottom:1px solid #1c1c1c;color:#cfcfcf;}
@@ -50,10 +49,10 @@
   .winner.show{display:block;}
   .winner .big{font-size:1.3rem;font-weight:800;color:var(--gold);margin:4px 0;}
   .pill{font-size:.6rem;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:#aaa;}
-  .self-tag{font-size:.6rem;padding:3px 8px;border-radius:20px;background:rgba(105,196,109,.15);border:1px solid rgba(105,196,109,.3);color:var(--green);margin-left:8px;display:inline-block;}
-  .chart-container{width:100%;overflow-x:auto;background:#0f0f0f;border-radius:12px;padding:12px;border:1px solid var(--border);}
-  #chartDecibeles{width:100%;height:auto;display:block;min-width:600px;}
-  @media(max-width:560px){.stat .v{font-size:1.5rem;} .btn-sm{margin-top:6px;} .chart-container{padding:8px;}}
+  .self-tag{font-size:.6rem;padding:2px 8px;border-radius:20px;background:rgba(105,196,109,.15);border:1px solid rgba(105,196,109,.3);color:var(--green);margin-left:8px;}
+  .chart-container{width:100%;overflow-x:auto;background:#0f0f0f;border-radius:10px;padding:12px;border:1px solid #1c1c1c;}
+  #chartDias{width:100%;height:auto;display:block;min-width:560px;}
+  @media(max-width:560px){.stat .v{font-size:1.5rem;}}
 </style>
 </head>
 <body>
@@ -73,22 +72,23 @@
       <div class="logo">DEUS <small>Panel de control</small></div>
       <div style="text-align:right">
         <div class="updated" id="updated">—</div>
-        <button class="btn ghost btn-sm" id="btn-self" style="margin-top:6px;margin-right:6px;" onclick="toggleExcluirSelf()">Excluir mis vistas</button>
-        <button class="btn ghost btn-sm" style="margin-top:6px;" onclick="salir()">Salir</button>
+        <button class="btn ghost" id="btn-self" style="margin-top:6px;padding:5px 10px;font-size:.66rem;margin-right:6px" onclick="toggleSelf()">Excluir mis vistas</button>
+        <button class="btn ghost" style="margin-top:6px;padding:5px 10px;font-size:.66rem" onclick="salir()">Salir</button>
       </div>
     </header>
 
     <div class="grid">
-      <div class="stat live"><div class="k"><span class="dot on"></span>Viendo ahora<span id="self-indicator"></span></div><div class="v" id="s-live">0</div></div>
+      <div class="stat live"><div class="k"><span class="dot on"></span>Viendo ahora</div><div class="v" id="s-live">0</div></div>
       <div class="stat"><div class="k">Visitas hoy</div><div class="v" id="s-vhoy">0</div></div>
       <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
       <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
+      <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
     </div>
 
     <section>
-      <div class="sec-h"><h2>📊 Últimos 30 días</h2></div>
-      <div class="chart-container"><canvas id="chartDecibeles" width="800" height="200"></canvas></div>
+      <div class="sec-h"><h2>📊 Vistas · últimos 30 días</h2><span class="pill" id="chart-total"></span></div>
+      <div class="chart-container"><canvas id="chartDias" width="820" height="200"></canvas></div>
     </section>
 
     <section>
@@ -102,6 +102,12 @@
       <div class="sec-h"><h2>💳 Últimas ventas</h2></div>
       <div class="scroll"><table id="t-ventas"><thead><tr><th>Fecha</th><th>Cliente</th><th>Método</th><th>Monto</th></tr></thead><tbody></tbody></table></div>
       <div class="empty" id="ventas-empty" style="display:none">Sin ventas registradas todavía.</div>
+    </section>
+
+    <section>
+      <div class="sec-h"><h2>📦 Pedidos recientes</h2></div>
+      <div class="scroll"><table id="t-pedidos"><thead><tr><th>Fecha</th><th>Cliente</th><th>Comuna</th><th>Color</th><th>Total</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
     </section>
 
     <p style="font-size:.66rem;color:#666;line-height:1.5;margin-top:18px">
@@ -125,20 +131,7 @@
     clave=k;
     cargar(true);
   }
-  function salir(){ localStorage.removeItem('deus-admin-key'); localStorage.removeItem('deus-admin-self'); location.reload(); }
-
-  function toggleExcluirSelf(){
-    var esExcluido=localStorage.getItem('deus-admin-self')==='true';
-    if(esExcluido){
-      localStorage.removeItem('deus-admin-self');
-      document.getElementById('btn-self').textContent='Excluir mis vistas';
-      document.getElementById('self-indicator').innerHTML='';
-    }else{
-      localStorage.setItem('deus-admin-self','true');
-      document.getElementById('btn-self').textContent='Incluir mis vistas';
-      document.getElementById('self-indicator').innerHTML='<span class="self-tag">Excluido</span>';
-    }
-  }
+  function salir(){ localStorage.removeItem('deus-admin-key'); location.reload(); }
 
   function rows(tbodySel, arr, render, emptyId){
     var tb=document.querySelector(tbodySel+' tbody'); tb.innerHTML='';
@@ -154,12 +147,74 @@
     document.getElementById('s-vent-hoy-m').textContent=money(d.ventas.hoy.monto);
     document.getElementById('s-vent-tot').childNodes[0].nodeValue=d.ventas.total.count+' ';
     document.getElementById('s-vent-tot-m').textContent=money(d.ventas.total.monto);
-    document.getElementById('s-tickets').textContent=d.ticketsTotal||0;
+    document.getElementById('s-tickets').textContent=d.ticketsTotal;
+    document.getElementById('s-stock').textContent=(d.stock==null?'—':d.stock);
     tickets=d.tickets||[];
     rows('#t-tickets',tickets,function(t){ return '<td>'+esc(t.nombre)+'</td><td>'+esc(t.rut)+'</td><td>'+esc(t.orden)+'</td><td>'+(t.verificado?'<span class="ok">✓</span>':'<span class="no">revisar</span>')+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');
     rows('#t-ventas',d.ventas.ultimas||[],function(v){ return '<td>'+fecha(v.fecha)+'</td><td>'+esc(v.nombre||'—')+'</td><td>'+esc(v.metodo)+'</td><td>'+money(v.monto)+'</td>'; },'ventas-empty');
-    actualizarChart(d);
+    rows('#t-pedidos',d.pedidos||[],function(p){ return '<td>'+fecha(p.fecha)+'</td><td>'+esc(p.nombre||'—')+'</td><td>'+esc(p.comuna||'—')+'</td><td>'+esc((p.color||'—'))+'</td><td>'+money(p.total)+'</td><td><span class="pill">'+esc(p.estado||'—')+'</span></td>'; },'pedidos-empty');
+    dibujarChart(d.ultimos30||[]);
     document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
+  }
+
+  // Gráfico de barras (estilo ecualizador) con las vistas de los últimos 30 días
+  var chartData=[], chartAlturas=[], chartCorriendo=false;
+  function dibujarChart(datos){
+    chartData=datos;
+    var total=0; datos.forEach(function(d){ total+=d.vistas; });
+    document.getElementById('chart-total').textContent=total+' vistas en 30 días';
+    if(chartAlturas.length!==datos.length) chartAlturas=new Array(datos.length).fill(0);
+    if(!chartCorriendo && datos.length){ chartCorriendo=true; requestAnimationFrame(frameChart); }
+  }
+  function frameChart(){
+    var canvas=document.getElementById('chartDias');
+    if(!canvas||!chartData.length){ chartCorriendo=false; return; }
+    var ctx=canvas.getContext('2d');
+    var w=canvas.width, h=canvas.height, padB=26, padT=14, padX=10;
+    ctx.clearRect(0,0,w,h);
+    var n=chartData.length;
+    var gap=3, barW=(w-padX*2-gap*(n-1))/n;
+    var maxV=1; chartData.forEach(function(d){ if(d.vistas>maxV) maxV=d.vistas; });
+    var quieto=true;
+    for(var i=0;i<n;i++){
+      var objetivo=(chartData[i].vistas/maxV)*(h-padB-padT);
+      chartAlturas[i]+=(objetivo-chartAlturas[i])*0.18;
+      if(Math.abs(objetivo-chartAlturas[i])>0.5) quieto=false;
+      var barH=Math.max(2,chartAlturas[i]);
+      var x=padX+i*(barW+gap), y=h-padB-barH;
+      var g=ctx.createLinearGradient(0,y,0,h-padB);
+      g.addColorStop(0,'#e7cf9c'); g.addColorStop(1,'#69c46d');
+      ctx.fillStyle=g;
+      ctx.globalAlpha=chartData[i].vistas?0.9:0.25;
+      ctx.fillRect(x,y,barW,barH);
+      ctx.globalAlpha=1;
+      // Cifra sobre la barra (solo si hay vistas)
+      if(chartData[i].vistas){
+        ctx.fillStyle='#ddd'; ctx.font='10px monospace'; ctx.textAlign='center';
+        ctx.fillText(String(chartData[i].vistas),x+barW/2,y-4);
+      }
+      // Día del mes bajo la barra (uno de cada dos para no saturar)
+      if(i%2===0){
+        ctx.fillStyle='#777'; ctx.font='9px monospace'; ctx.textAlign='center';
+        ctx.fillText(chartData[i].fecha.slice(8),x+barW/2,h-10);
+      }
+    }
+    ctx.strokeStyle='#262626'; ctx.beginPath();
+    ctx.moveTo(padX,h-padB+.5); ctx.lineTo(w-padX,h-padB+.5); ctx.stroke();
+    if(quieto){ chartCorriendo=false; return; }
+    requestAnimationFrame(frameChart);
+  }
+
+  // Excluir/incluir las vistas del dueño (se comparte con la web por localStorage)
+  function toggleSelf(){
+    var excluido=localStorage.getItem('deus-admin-self')==='true';
+    if(excluido) localStorage.removeItem('deus-admin-self');
+    else localStorage.setItem('deus-admin-self','true');
+    pintarSelf();
+  }
+  function pintarSelf(){
+    var excluido=localStorage.getItem('deus-admin-self')==='true';
+    document.getElementById('btn-self').textContent=excluido?'Mis vistas: excluidas ✓':'Excluir mis vistas';
   }
   function esc(s){ return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
 
@@ -168,90 +223,11 @@
       if(r.status===403||r.status===404){ throw new Error('clave'); }
       return r.json();
     }).then(function(d){
-      if(primera){
-        localStorage.setItem('deus-admin-key',clave);
-        document.getElementById('login').style.display='none';
-        document.getElementById('panel').style.display='block';
-        actualizarIndicadorSelf();
-      }
+      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; }
       pintar(d);
     }).catch(function(e){
       if(e.message==='clave'){ document.getElementById('loginErr').textContent='Clave incorrecta.'; localStorage.removeItem('deus-admin-key'); }
     });
-  }
-
-  function actualizarIndicadorSelf(){
-    var esExcluido=localStorage.getItem('deus-admin-self')==='true';
-    if(esExcluido){
-      document.getElementById('btn-self').textContent='Incluir mis vistas';
-      document.getElementById('self-indicator').innerHTML='<span class="self-tag">Excluido</span>';
-    }else{
-      document.getElementById('btn-self').textContent='Excluir mis vistas';
-      document.getElementById('self-indicator').innerHTML='';
-    }
-  }
-
-  var chartData=[];
-  var chartAnimTargets=[];
-
-  function dibujarChart(){
-    var canvas=document.getElementById('chartDecibeles');
-    if(!canvas) return;
-    var ctx=canvas.getContext('2d');
-    var w=canvas.width, h=canvas.height;
-    var pad=30, barW=22, gap=2;
-
-    ctx.fillStyle='#0a0a0a';
-    ctx.fillRect(0,0,w,h);
-
-    if(!chartData.length) return;
-
-    var maxV=Math.max(1, Math.max(...chartData.map(function(d){ return d.vistas; })));
-    var totalBars=chartData.length;
-    var areaW=w-pad*2;
-    var barTotalW=barW+gap;
-    var startX=Math.max(pad, (areaW-(totalBars*barTotalW))/2+pad);
-
-    ctx.strokeStyle='#262626';
-    ctx.lineWidth=1;
-    ctx.beginPath();
-    ctx.moveTo(pad,h-pad);
-    ctx.lineTo(w-pad,h-pad);
-    ctx.stroke();
-
-    for(var i=0; i<chartData.length; i++){
-      var idx=i;
-      var target=chartAnimTargets[idx]||0;
-      var actual=chartData[idx].vistas;
-      target+=(actual-target)*0.15;
-      chartAnimTargets[idx]=target;
-
-      var barH=Math.max(2, (target/maxV)*(h-pad*1.5));
-      var x=startX+(i*barTotalW);
-      var y=h-pad-barH;
-
-      var hue=Math.floor((i/chartData.length)*60);
-      ctx.fillStyle='hsla('+(120-hue)+', 70%, 50%, 0.8)';
-      ctx.fillRect(x,y,barW,barH);
-
-      ctx.fillStyle='#888';
-      ctx.font='.7rem monospace';
-      ctx.textAlign='center';
-      var dateStr=chartData[i].fecha;
-      var dia=dateStr.split('-')[2];
-      ctx.fillText(dia,x+barW/2,h-pad+14);
-    }
-
-    requestAnimationFrame(dibujarChart);
-  }
-
-  function actualizarChart(datos){
-    chartData=datos.ultimos30||[];
-    chartAnimTargets=new Array(chartData.length).fill(0);
-    if(chartData.length>0 && !document.getElementById('chartDecibeles').dataset.animando){
-      document.getElementById('chartDecibeles').dataset.animando='true';
-      dibujarChart();
-    }
   }
 
   function elegirGanador(){
@@ -268,17 +244,9 @@
     },70);
   }
 
-  // Función para registrar ticket desde el frontend (canje en la web)
-  function registrarTicket(nombre,rut,orden){
-    return fetch(BASE+'/sorteo',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({nombre:nombre,rut:rut,orden:orden})
-    }).then(function(r){ return r.json(); });
-  }
-
   // Auto-login si ya hay clave guardada
   if(clave){ cargar(true); }
+  pintarSelf();
   document.getElementById('key').addEventListener('keydown',function(e){ if(e.key==='Enter') entrar(); });
   // Refresco en vivo
   setInterval(function(){ if(clave && document.getElementById('panel').style.display!=='none') cargar(false); }, 5000);

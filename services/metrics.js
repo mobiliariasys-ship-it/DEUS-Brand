@@ -4,45 +4,35 @@
 // llega al correo del dueño como respaldo permanente).
 
 const sesiones = new Map();      // sid -> última vez visto (ms)
-const sesionesOwner = new Set(); // sids del dueño (excluir de visitantes en vivo)
+const sesionesOwner = new Set(); // sids del dueño: no cuentan como visitantes ni como vistas
 let vistasTotal = 0;
 const vistasPorDia = {};         // 'YYYY-MM-DD' (Chile) -> N
-const ventas = [];               // { monto, fecha, metodo, nombre, orden }
-const vistasHistorico = {};      // Historial de vistas por día (últimos 30 días)
-const tickets = [];              // Tickets del sorteo { nombre, rut, orden, verificado, fecha }
 
 function hoyChile() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
 }
 
+const ventas = [];               // { monto, fecha, metodo, nombre, orden }
+
 // Registra actividad de un visitante. `nueva` = primera carga de la sesión.
-// `esOwner` = si es true, la sesión se marca como del dueño y no cuenta en visitantesEnVivo.
+// `esOwner` marca la sesión como del dueño: se ve en vivo pero no se cuenta.
 function ping(sid, nueva, esOwner) {
   if (!sid) return;
   sesiones.set(String(sid), Date.now());
-  if (esOwner) {
-    sesionesOwner.add(String(sid));
-  }
+  if (esOwner) sesionesOwner.add(String(sid));
   if (nueva && !esOwner) {
     vistasTotal++;
     const d = hoyChile();
     vistasPorDia[d] = (vistasPorDia[d] || 0) + 1;
-    vistasHistorico[d] = (vistasHistorico[d] || 0) + 1;
   }
 }
 
-// Marcar una sesión existente como del dueño (para cuando el admin se da cuenta que necesita excluirse)
-function marcarComoOwner(sid) {
-  if (sid) sesionesOwner.add(String(sid));
-}
-
-// Visitantes activos en los últimos 35 s (excluye al dueño, limpia los viejos).
+// Visitantes activos en los últimos 35 s (y limpia los viejos).
 function visitantesEnVivo() {
   const limite = Date.now() - 35000;
   let n = 0;
   for (const [sid, t] of sesiones) {
     if (t > limite) {
-      // Solo contar si no es el dueño
       if (!sesionesOwner.has(sid)) n++;
     } else {
       sesiones.delete(sid);
@@ -77,39 +67,16 @@ function resumenVentas() {
   };
 }
 
+// Vistas diarias de los últimos 30 días (fecha Chile, día por día).
 function ultimos30Dias() {
   const dias = [];
+  const ahora = Date.now();
   for (let i = 29; i >= 0; i--) {
-    const fecha = new Date();
-    fecha.setDate(fecha.getDate() - i);
-    const dateStr = fecha.toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
-    dias.push({
-      fecha: dateStr,
-      vistas: vistasHistorico[dateStr] || 0
-    });
+    const dateStr = new Date(ahora - i * 86400000)
+      .toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    dias.push({ fecha: dateStr, vistas: vistasPorDia[dateStr] || 0 });
   }
   return dias;
-}
-
-function registrarTicket(nombre, rut, orden) {
-  const ticketExistente = tickets.find(t => t.orden === String(orden));
-  if (ticketExistente) return { error: 'Ticket ya registrado' };
-  tickets.push({
-    nombre: String(nombre || '').slice(0, 100),
-    rut: String(rut || '').slice(0, 20),
-    orden: String(orden || '').slice(0, 50),
-    verificado: false,
-    fecha: new Date().toISOString()
-  });
-  return { ok: true };
-}
-
-function obtenerTickets() {
-  return tickets;
-}
-
-function obtenerTicketsTotal() {
-  return tickets.length;
 }
 
 function snapshot() {
@@ -118,10 +85,8 @@ function snapshot() {
     vistasHoy: vistasPorDia[hoyChile()] || 0,
     vistasTotal,
     ventas: resumenVentas(),
-    ultimos30: ultimos30Dias(),
-    tickets: obtenerTickets(),
-    ticketsTotal: obtenerTicketsTotal()
+    ultimos30: ultimos30Dias()
   };
 }
 
-module.exports = { ping, marcarComoOwner, registrarVenta, registrarTicket, obtenerTickets, snapshot, visitantesEnVivo };
+module.exports = { ping, registrarVenta, snapshot, visitantesEnVivo };
