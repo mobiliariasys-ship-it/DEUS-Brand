@@ -1,20 +1,28 @@
 // Métricas en vivo para el panel de administración.
-// Todo en memoria: los visitantes en vivo son efímeros por naturaleza; las
-// ventas del día se reinician si Render reinicia (por eso cada venta también
-// llega al correo del dueño como respaldo permanente).
+// Los visitantes "en vivo" son efímeros por naturaleza (no se guardan).
+// Ventas y vistas SÍ se guardan en disco (metrics-data.json) para sobrevivir
+// si el servicio se duerme y despierta por inactividad. Igual pueden perderse
+// en un deploy nuevo (disco efímero de Render) — por eso cada venta y cada
+// ticket también llegan al correo del dueño como respaldo permanente.
+const persist = require('./persist');
+const DATA_FILE = 'metrics-data.json';
 
-const sesiones = new Map();      // sid -> { inicio, ultimo } (ms)
+const guardado = persist.load(DATA_FILE, {});
+const sesiones = new Map();      // sid -> { inicio, ultimo } (ms) — no se persiste, es en vivo
 const sesionesOwner = new Set(); // sids del dueño: no cuentan como visitantes ni como vistas
-let vistasTotal = 0;
-const vistasPorDia = {};         // 'YYYY-MM-DD' (Chile) -> N
-let duracionTotalMs = 0;         // suma de duración de sesiones ya terminadas (sin el dueño)
-let duracionN = 0;               // cuántas sesiones terminadas acumula duracionTotalMs
+let vistasTotal = guardado.vistasTotal || 0;
+const vistasPorDia = guardado.vistasPorDia || {};   // 'YYYY-MM-DD' (Chile) -> N
+let duracionTotalMs = guardado.duracionTotalMs || 0; // suma de duración de sesiones ya terminadas (sin el dueño)
+let duracionN = guardado.duracionN || 0;             // cuántas sesiones terminadas acumula duracionTotalMs
+const ventas = guardado.ventas || [];                // { monto, fecha, metodo, nombre, orden }
+
+function guardar() {
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, ventas });
+}
 
 function hoyChile() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
 }
-
-const ventas = [];               // { monto, fecha, metodo, nombre, orden }
 
 // Registra actividad de un visitante. `nueva` = primera carga de la sesión.
 // `esOwner` marca la sesión como del dueño: se ve en vivo pero no se cuenta.
@@ -29,6 +37,7 @@ function ping(sid, nueva, esOwner) {
     vistasTotal++;
     const d = hoyChile();
     vistasPorDia[d] = (vistasPorDia[d] || 0) + 1;
+    guardar();
   }
 }
 
@@ -44,6 +53,7 @@ function visitantesEnVivo() {
       if (!sesionesOwner.has(sid)) {
         duracionTotalMs += s.ultimo - s.inicio;
         duracionN++;
+        guardar();
       }
       sesiones.delete(sid);
       sesionesOwner.delete(sid);
@@ -72,6 +82,7 @@ function registrarVenta(v) {
     nombre: v.nombre || '',
     orden: v.orden ? String(v.orden) : ''
   });
+  guardar();
 }
 
 function resumenVentas() {

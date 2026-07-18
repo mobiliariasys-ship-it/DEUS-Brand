@@ -7,6 +7,7 @@ const flowRoutes = require('./routes/flow');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, diagnostico } = require('./services/email');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
+const persist = require('./services/persist');
 const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile). Al vencer, el
@@ -60,8 +61,10 @@ const client = new MercadoPagoConfig({
   options: { timeout: 5000 }
 });
 
-// Almacén temporal de pedidos (en producción usar base de datos)
-const pedidos = [];
+// Pedidos: se guardan en disco para sobrevivir si el servicio se duerme y
+// despierta por inactividad (Render). En producción real usar una base de datos.
+const pedidos = persist.load('pedidos.json', []);
+function guardarPedidos() { persist.save('pedidos.json', pedidos); }
 
 app.post('/crear-preferencia', async (req, res) => {
   const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
@@ -164,6 +167,7 @@ app.post('/crear-preferencia', async (req, res) => {
       status: 'pending'
     };
     pedidos.push(pedido);
+    guardarPedidos();
 
     // Enviar correo con los datos del pedido (no bloquea la respuesta)
     enviarPedidoNuevo(pedido).catch(err => console.error('[email] Error:', err.message));
@@ -230,7 +234,7 @@ app.get('/pedidos', (req, res) => {
 // registra, se verifica contra los pedidos (best-effort) y se envía un correo
 // al dueño (ese correo es el registro permanente del mes). Si gana, se le
 // avisa por Instagram.
-const ticketsSorteo = [];
+const ticketsSorteo = persist.load('tickets.json', []);
 app.post('/sorteo', async (req, res) => {
   const nombre = (req.body?.nombre || '').toString().trim().slice(0, 90);
   const orden = (req.body?.orden || '').toString().trim().slice(0, 60);
@@ -246,7 +250,7 @@ app.post('/sorteo', async (req, res) => {
   const pedido = pedidos.find(p => String(p.preference_id || '').toLowerCase() === orden.toLowerCase());
   const entry = { nombre, instagram, orden, verificado: !!pedido, fecha: new Date().toISOString() };
 
-  if (!yaExiste) ticketsSorteo.push(entry);
+  if (!yaExiste) { ticketsSorteo.push(entry); persist.save('tickets.json', ticketsSorteo); }
   // Siempre avisamos al dueño (registro en su correo), aunque sea reintento
   enviarTicketSorteo(entry).catch(e => console.error('[sorteo] email:', e.message));
 
@@ -336,7 +340,7 @@ app.post('/envio/despachado', async (req, res) => {
       enviosNotificados.delete(dedupeKey);
       return res.status(502).json({ ok: false, error: 'No se pudo enviar el aviso, reintentar' });
     }
-    if (pedido) pedido.status = 'enviado';
+    if (pedido) { pedido.status = 'enviado'; guardarPedidos(); }
     res.json({ ok: true, cliente: email, tracking, encontrado_en_pedidos: !!pedido });
   } catch (e) {
     enviosNotificados.delete(dedupeKey); // permite reintentar si falló

@@ -1,6 +1,9 @@
 .env
 node_modules/
 stock.json
+metrics-data.json
+pedidos.json
+tickets.json
 
 # Archivos temporales de procesamiento de imágenes
 *.jpg
