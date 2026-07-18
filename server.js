@@ -225,23 +225,26 @@ app.get('/pedidos', (req, res) => {
 });
 
 // ── Sorteo mensual: canje de tickets ──
-// El comprador ingresa nombre, RUT y n° de orden de envío para canjear su
-// ticket. Se registra, se verifica contra los pedidos (best-effort) y se
-// envía un correo al dueño (ese correo es el registro permanente del mes).
+// El comprador ingresa nombre, n° de orden de envío e Instagram para canjear
+// su ticket (1 ticket por compra, sin importar la cantidad de bandas). Se
+// registra, se verifica contra los pedidos (best-effort) y se envía un correo
+// al dueño (ese correo es el registro permanente del mes). Si gana, se le
+// avisa por Instagram.
 const ticketsSorteo = [];
 app.post('/sorteo', async (req, res) => {
   const nombre = (req.body?.nombre || '').toString().trim().slice(0, 90);
-  const rut = (req.body?.rut || '').toString().trim().slice(0, 20);
   const orden = (req.body?.orden || '').toString().trim().slice(0, 60);
+  let instagram = (req.body?.instagram || '').toString().trim().slice(0, 60);
+  if (instagram && instagram[0] !== '@') instagram = '@' + instagram;
 
-  if (!nombre || !rut || !orden) {
-    return res.status(400).json({ error: 'Completa nombre, RUT y n° de orden de envío.' });
+  if (!nombre || !orden || !instagram) {
+    return res.status(400).json({ error: 'Completa nombre, n° de orden e Instagram.' });
   }
 
   const yaExiste = ticketsSorteo.some(t => t.orden.toLowerCase() === orden.toLowerCase());
   // ¿La orden coincide con un pedido real? (si sigue en memoria)
   const pedido = pedidos.find(p => String(p.preference_id || '').toLowerCase() === orden.toLowerCase());
-  const entry = { nombre, rut, orden, verificado: !!pedido, fecha: new Date().toISOString() };
+  const entry = { nombre, instagram, orden, verificado: !!pedido, fecha: new Date().toISOString() };
 
   if (!yaExiste) ticketsSorteo.push(entry);
   // Siempre avisamos al dueño (registro en su correo), aunque sea reintento

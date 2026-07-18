@@ -588,10 +588,13 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 /* Carrusel 3D de pantallas de la app: giran al deslizar, flotando sobre el fondo de ondas */
 .app-stage{position:relative;max-width:1000px;height:470px;margin:10px auto 20px;perspective:1300px;overflow:hidden;touch-action:pan-y;cursor:grab;}
 .app-stage:active{cursor:grabbing;}
-.app-stage::before,.app-stage::after{position:absolute;top:50%;transform:translateY(-50%);z-index:5;font-size:2rem;color:rgba(255,255,255,.35);text-shadow:0 2px 8px rgba(0,0,0,.5);pointer-events:none;transition:color .25s;}
-.app-stage::before{content:'‹';left:10px;}
-.app-stage::after{content:'›';right:10px;}
-.app-stage:hover::before,.app-stage:hover::after{color:rgba(255,255,255,.65);}
+/* Flechas: mantener presionada (click/touch) gira mientras se sostiene */
+.hold-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:6;width:44px;height:44px;border-radius:50%;border:none;background:rgba(0,0,0,.26);color:rgba(255,255,255,.5);font-size:1.9rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0 0 3px;-webkit-tap-highlight-color:transparent;touch-action:none;user-select:none;-webkit-user-select:none;transition:background .2s,color .2s,transform .1s;}
+.hold-arrow:hover{color:#fff;background:rgba(0,0,0,.4);}
+.hold-arrow:active{color:#20160a;background:rgba(231,207,156,.85);transform:translateY(-50%) scale(.92);}
+.hold-arrow.l{left:10px;}
+.hold-arrow.r{right:10px;}
+@media(max-width:640px){.hold-arrow{width:38px;height:38px;font-size:1.6rem;}}
 .fan-ph{position:absolute;left:50%;top:50%;height:86%;width:auto;will-change:transform,opacity;filter:drop-shadow(0 22px 34px rgba(0,0,0,.6));animation:fanFloat 6s ease-in-out infinite;-webkit-user-drag:none;user-select:none;pointer-events:none;}
 @keyframes fanFloat{0%,100%{margin-top:0}50%{margin-top:-10px}}
 .app-shot-hint{display:block;font-size:.65rem;letter-spacing:2px;color:var(--silver);text-transform:uppercase;margin:2px 0 24px;}
@@ -635,10 +638,6 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 @media(max-width:760px){.feat-arrow{width:34px;height:34px;font-size:1.3rem;}}
 .rot-360{position:relative;cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;}
 .rot-360:active{cursor:grabbing;}
-.rot-360::before,.rot-360::after{position:absolute;top:50%;transform:translateY(-50%);z-index:5;font-size:2rem;color:rgba(255,255,255,.35);text-shadow:0 2px 8px rgba(0,0,0,.5);pointer-events:none;transition:color .25s;}
-.rot-360::before{content:'‹';left:10px;}
-.rot-360::after{content:'›';right:10px;}
-.rot-360:hover::before,.rot-360:hover::after{color:rgba(255,255,255,.65);}
 .rot-360 img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
 .rot-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ddd;letter-spacing:1.5px;background:rgba(8,8,8,.75);border:1px solid #3a3a3a;padding:7px 16px;border-radius:16px;white-space:nowrap;z-index:2;animation:hintPulse 2.2s ease-in-out infinite;}
 @keyframes hintPulse{0%,100%{transform:translateX(-50%) scale(1);opacity:.95;}50%{transform:translateX(-50%) scale(1.05);opacity:1;}}
@@ -1006,20 +1005,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p class="rifa-prize">Cada mes sorteamos <b>una DEUS Band</b> y unos <b>Tapones de oído DEUS</b> entre nuestros compradores.</p>
     <div class="rifa-steps">
       <div class="rifa-step"><span class="rn">1</span><span>Compras tu <b>DEUS Band</b> en la web.</span></div>
-      <div class="rifa-step"><span class="rn">2</span><span>Ganas <b>1 ticket</b> por cada banda comprada — automático, sin costo extra.</span></div>
-      <div class="rifa-step"><span class="rn">3</span><span>Sorteamos <b>1 vez al mes</b>. Mientras más bandas, más tickets y más chances.</span></div>
+      <div class="rifa-step"><span class="rn">2</span><span>Ganas <b>1 ticket por compra</b> — automático, sin costo extra.</span></div>
+      <div class="rifa-step"><span class="rn">3</span><span>Sorteamos <b>1 vez al mes</b> y <b>te avisamos por Instagram</b>.</span></div>
     </div>
     <button class="rifa-cta" onclick="cerrarRifa();abrirCheckout&&abrirCheckout()">Comprar y participar</button>
     <div class="rifa-or"><span>ya compraste</span></div>
     <div class="rifa-claim">
       <div class="rifa-claim-title">🎟️ Canjea tu ticket</div>
       <input class="rifa-input" id="rf-nombre" placeholder="Nombre completo" autocomplete="name">
-      <input class="rifa-input" id="rf-rut" placeholder="RUT (ej: 12.345.678-9)">
       <input class="rifa-input" id="rf-orden" placeholder="N° de orden de envío">
+      <input class="rifa-input" id="rf-instagram" placeholder="@tu_instagram" autocapitalize="none" autocomplete="off">
       <button class="rifa-cta rifa-cta-2" onclick="canjearTicket()">Canjear mi ticket</button>
       <div class="rifa-msg" id="rf-msg" role="status"></div>
     </div>
-    <div class="rifa-fine">1 ticket por banda comprada. Te avisamos al correo si ganas.</div>
+    <div class="rifa-fine">1 ticket por compra. Si ganas, <b>te avisamos por Instagram</b>.</div>
   </div>
 </div>
 <script>
@@ -1040,19 +1039,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   })();
   async function canjearTicket(){
     var nombre=(document.getElementById('rf-nombre').value||'').trim();
-    var rut=(document.getElementById('rf-rut').value||'').trim();
     var orden=(document.getElementById('rf-orden').value||'').trim();
+    var instagram=(document.getElementById('rf-instagram').value||'').trim();
     var msg=document.getElementById('rf-msg');
-    if(!nombre||!rut||!orden){ msg.style.color='#e6a5a5'; msg.textContent='Completa nombre, RUT y n° de orden de envío.'; return; }
+    if(!nombre||!orden||!instagram){ msg.style.color='#e6a5a5'; msg.textContent='Completa nombre, n° de orden e Instagram.'; return; }
     msg.style.color='#9a9a9a'; msg.textContent='Enviando...';
     var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
     try{
-      var res=await fetch(base+'/sorteo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:nombre,rut:rut,orden:orden})});
+      var res=await fetch(base+'/sorteo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:nombre,orden:orden,instagram:instagram})});
       var d=await res.json().catch(function(){return {};});
       if(res.ok&&d.ok){
         msg.style.color='#7fd589';
-        msg.textContent=d.duplicado?'✅ Este n° de orden ya estaba registrado. ¡Sigues participando!':'✅ ¡Ticket canjeado! Ya estás en el sorteo de este mes.';
-        document.getElementById('rf-nombre').value='';document.getElementById('rf-rut').value='';document.getElementById('rf-orden').value='';
+        msg.textContent=d.duplicado?'✅ Este n° de orden ya estaba registrado. ¡Sigues participando!':'✅ ¡Ticket canjeado! Si ganas, te avisamos por Instagram.';
+        document.getElementById('rf-nombre').value='';document.getElementById('rf-orden').value='';document.getElementById('rf-instagram').value='';
       } else { msg.style.color='#e6a5a5'; msg.textContent=(d&&d.error)||'No se pudo canjear. Revisa los datos e intenta de nuevo.'; }
     }catch(e){ msg.style.color='#e6a5a5'; msg.textContent='Sin conexión. Intenta nuevamente en unos segundos.'; }
   }
@@ -1870,10 +1869,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
       <div class="how-row row-360">
-      <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra para girar">
+      <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra o mantén una flecha para girar">
         <canvas id="rot360-canvas" width="900" height="900" style="width:100%;height:100%;display:block;"></canvas>
         <div class="rot-vignette"></div>
         <div class="rot-badge">360°</div>
+        <button class="hold-arrow l" id="rot360-arrow-l" type="button" aria-label="Girar a la izquierda">‹</button>
+        <button class="hold-arrow r" id="rot360-arrow-r" type="button" aria-label="Girar a la derecha">›</button>
         <div class="rot-hint" id="rot360-hint">↔ Arrastra para girar la banda</div>
       </div>
       <div class="how-txt">
@@ -2071,6 +2072,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       });
     });
 
+    // ── Flechas: mantener presionada gira la banda mientras se sostiene ──
+    var holdIv=null;
+    function holdStart(dir){
+      stopAuto();
+      firstTouch=false;
+      var h=document.getElementById('rot360-hint'); if(h) h.style.display='none';
+      show(idx+dir);
+      clearInterval(holdIv);
+      holdIv=setInterval(function(){ show(idx+dir); },70);
+    }
+    function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } }
+    function bindHold(btn,dir){
+      if(!btn) return;
+      btn.addEventListener('pointerdown',function(e){ e.stopPropagation(); e.preventDefault(); holdStart(dir); try{btn.setPointerCapture(e.pointerId);}catch(_){} });
+      ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ btn.addEventListener(ev,function(e){ e.stopPropagation(); holdStop(); }); });
+    }
+    bindHold(document.getElementById('rot360-arrow-l'),-1);
+    bindHold(document.getElementById('rot360-arrow-r'), 1);
+
     // ── Visor 360 en pantalla completa (con zoom) ──
     var full=null, fc=null, fctx=null, fidx=BLUE;
     var zScale=1, zx=0, zy=0; // zoom y desplazamiento
@@ -2189,6 +2209,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <img class="fan-ph" src="img/app-rot-2.webp" alt="App Da Halo — análisis del sueño" loading="lazy" decoding="async">
       <img class="fan-ph" src="img/app-rot-3.webp" alt="App Da Halo — actividad y pasos" loading="lazy" decoding="async">
       <img class="fan-ph" src="img/app-rot-4.webp" alt="App Da Halo — entrenamiento con GPS" loading="lazy" decoding="async">
+      <button class="hold-arrow l" id="appArrowL" type="button" aria-label="Pantalla anterior">‹</button>
+      <button class="hold-arrow r" id="appArrowR" type="button" aria-label="Pantalla siguiente">›</button>
     </div>
     <div class="app-shot-hint">Desliza para rotar las pantallas</div>
     <script>
@@ -2230,6 +2252,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         render();
       }
       function up(){ if(!drag) return; drag=false; if(horiz) animateTo(Math.round(pos)); horiz=null; }
+
+      // Flechas: mantener presionada avanza pantalla por pantalla (con vuelta al inicio)
+      var holdIv=null;
+      function holdStep(dir){
+        var next=Math.round(target)+dir;
+        if(next<0) next=n-1; else if(next>n-1) next=0;
+        animateTo(next);
+      }
+      function holdStart(dir){ cancelAnimationFrame(anim); holdStep(dir); clearInterval(holdIv); holdIv=setInterval(function(){ holdStep(dir); },520); }
+      function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } }
+      function bindHold(btn,dir){
+        if(!btn) return;
+        var start=function(e){ e.stopPropagation(); e.preventDefault(); holdStart(dir); };
+        btn.addEventListener('mousedown',start);
+        btn.addEventListener('touchstart',start,{passive:false});
+        ['mouseup','mouseleave','touchend','touchcancel'].forEach(function(ev){ btn.addEventListener(ev,function(e){ e.stopPropagation(); holdStop(); }); });
+      }
+      bindHold(document.getElementById('appArrowL'),-1);
+      bindHold(document.getElementById('appArrowR'), 1);
+      window.addEventListener('mouseup',holdStop);
+
       stage.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
       // passive:false para poder frenar el scroll vertical de la página mientras rotan
       stage.addEventListener('touchmove',function(e){

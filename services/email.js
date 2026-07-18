@@ -267,7 +267,7 @@ async function enviarConfirmacionCliente(datos) {
         <div style="margin:22px 0 6px;background:#fbf6ec;border:1px solid #e6d6b3;border-radius:10px;padding:16px 18px;text-align:center">
           <div style="font-size:26px;line-height:1;margin-bottom:6px">🎁</div>
           <b style="color:#8a6d2f">¡Ya estás participando en el sorteo mensual!</b>
-          <div style="font-size:13px;color:#7a6a4a;margin-top:6px">Con tu compra ganaste tu ticket para el sorteo de <b>una DEUS Band + Tapones de oído</b>. Sorteamos 1 vez al mes — te avisamos si ganas.</div>
+          <div style="font-size:13px;color:#7a6a4a;margin-top:6px">Con tu compra ganaste tu ticket para el sorteo de <b>una DEUS Band + Tapones de oído</b>. Sorteamos 1 vez al mes — si ganas, te avisamos por Instagram.</div>
         </div>
         <p style="margin-top:26px;color:#555">Gracias por confiar en DEUS. ✨</p>
       </div>
@@ -334,7 +334,7 @@ async function enviarTicketSorteo(t) {
       <div style="padding:22px;font-size:14px">
         <table style="width:100%;border-collapse:collapse">
           <tr><td style="padding:7px 0;color:#888">Nombre</td><td style="text-align:right"><b>${(t.nombre||'—').replace(/</g,'&lt;')}</b></td></tr>
-          <tr><td style="padding:7px 0;color:#888">RUT</td><td style="text-align:right"><b>${(t.rut||'—').replace(/</g,'&lt;')}</b></td></tr>
+          <tr><td style="padding:7px 0;color:#888">Instagram</td><td style="text-align:right"><b>${(t.instagram||'—').replace(/</g,'&lt;')}</b></td></tr>
           <tr><td style="padding:7px 0;color:#888">N° de orden de envío</td><td style="text-align:right"><b>${(t.orden||'—').replace(/</g,'&lt;')}</b></td></tr>
           <tr><td style="padding:7px 0;color:#888">Orden verificada en el sistema</td><td style="text-align:right"><b style="color:${t.verificado?'#0a7d2c':'#c0392b'}">${t.verificado?'SÍ ✓':'no encontrada — revisar manualmente'}</b></td></tr>
         </table>
