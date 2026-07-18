@@ -275,17 +275,6 @@ app.get('/admin/stats', (req, res) => {
   res.json(metrics.snapshot());
 });
 
-// Stats públicas: retorna solo datos anónimos para mostrar en la web
-app.get('/stats/public', (req, res) => {
-  const snap = metrics.snapshot();
-  res.json({
-    visitantesEnVivo: snap.visitantesEnVivo,
-    vistasHoy: snap.vistasHoy,
-    ticketsTotal: snap.ticketsTotal,
-    ultimos30: snap.ultimos30
-  });
-});
-
 // Marcar una sesión como del dueño (para excluir del conteo en vivo)
 app.post('/admin/marcar-self', (req, res) => {
   const clave = (process.env.STOCK_KEY || '').trim();
