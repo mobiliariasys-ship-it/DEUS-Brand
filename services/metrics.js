@@ -7,17 +7,28 @@
 const persist = require('./persist');
 const DATA_FILE = 'metrics-data.json';
 
-const guardado = persist.load(DATA_FILE, {});
 const sesiones = new Map();      // sid -> { inicio, ultimo } (ms) — no se persiste, es en vivo
 const sesionesOwner = new Set(); // sids del dueño: no cuentan como visitantes ni como vistas
-let vistasTotal = guardado.vistasTotal || 0;
-const vistasPorDia = guardado.vistasPorDia || {};   // 'YYYY-MM-DD' (Chile) -> N
-let duracionTotalMs = guardado.duracionTotalMs || 0; // suma de duración de sesiones ya terminadas (sin el dueño)
-let duracionN = guardado.duracionN || 0;             // cuántas sesiones terminadas acumula duracionTotalMs
-const ventas = guardado.ventas || [];                // { monto, fecha, metodo, nombre, orden }
+let vistasTotal = 0;
+const vistasPorDia = {};   // 'YYYY-MM-DD' (Chile) -> N
+let duracionTotalMs = 0;   // suma de duración de sesiones ya terminadas (sin el dueño)
+let duracionN = 0;         // cuántas sesiones terminadas acumula duracionTotalMs
+const ventas = [];         // { monto, fecha, metodo, nombre, orden }
+
+// Carga lo guardado (disco o base de datos) antes de que el servidor empiece
+// a recibir tráfico. server.js hace `await metrics.init()` al arrancar.
+async function init() {
+  const guardado = await persist.load(DATA_FILE, {});
+  vistasTotal = guardado.vistasTotal || 0;
+  Object.assign(vistasPorDia, guardado.vistasPorDia || {});
+  duracionTotalMs = guardado.duracionTotalMs || 0;
+  duracionN = guardado.duracionN || 0;
+  ventas.push(...(guardado.ventas || []));
+}
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, ventas });
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, ventas })
+    .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
 function hoyChile() {
@@ -144,4 +155,4 @@ function snapshot() {
   };
 }
 
-module.exports = { ping, registrarVenta, snapshot, visitantesEnVivo };
+module.exports = { init, ping, registrarVenta, snapshot, visitantesEnVivo };

@@ -61,10 +61,11 @@ const client = new MercadoPagoConfig({
   options: { timeout: 5000 }
 });
 
-// Pedidos: se guardan en disco para sobrevivir si el servicio se duerme y
-// despierta por inactividad (Render). En producción real usar una base de datos.
-const pedidos = persist.load('pedidos.json', []);
-function guardarPedidos() { persist.save('pedidos.json', pedidos); }
+// Pedidos: se guardan en disco (o en Postgres si hay DATABASE_URL) para
+// sobrevivir a reinicios del servidor. Se cargan de forma async al arrancar,
+// ver arranque() al final del archivo.
+const pedidos = [];
+function guardarPedidos() { persist.save('pedidos.json', pedidos).catch(e => console.error('[pedidos] Error guardando:', e.message)); }
 
 app.post('/crear-preferencia', async (req, res) => {
   const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
@@ -234,7 +235,7 @@ app.get('/pedidos', (req, res) => {
 // registra, se verifica contra los pedidos (best-effort) y se envía un correo
 // al dueño (ese correo es el registro permanente del mes). Si gana, se le
 // avisa por Instagram.
-const ticketsSorteo = persist.load('tickets.json', []);
+const ticketsSorteo = [];
 app.post('/sorteo', async (req, res) => {
   const nombre = (req.body?.nombre || '').toString().trim().slice(0, 90);
   const orden = (req.body?.orden || '').toString().trim().slice(0, 60);
@@ -250,7 +251,7 @@ app.post('/sorteo', async (req, res) => {
   const pedido = pedidos.find(p => String(p.preference_id || '').toLowerCase() === orden.toLowerCase());
   const entry = { nombre, instagram, orden, verificado: !!pedido, fecha: new Date().toISOString() };
 
-  if (!yaExiste) { ticketsSorteo.push(entry); persist.save('tickets.json', ticketsSorteo); }
+  if (!yaExiste) { ticketsSorteo.push(entry); persist.save('tickets.json', ticketsSorteo).catch(e => console.error('[tickets] Error guardando:', e.message)); }
   // Siempre avisamos al dueño (registro en su correo), aunque sea reintento
   enviarTicketSorteo(entry).catch(e => console.error('[sorteo] email:', e.message));
 
@@ -407,6 +408,17 @@ app.post('/resenas', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor DEUS corriendo en http://localhost:${PORT}`);
-});
+// Carga lo guardado (disco o Postgres) antes de aceptar tráfico, así ninguna
+// venta/ticket/vista que llegue justo al arrancar se registra sobre datos vacíos.
+async function arrancar() {
+  await metrics.init();
+  const pedidosGuardados = await persist.load('pedidos.json', []);
+  pedidos.push(...pedidosGuardados);
+  const ticketsGuardados = await persist.load('tickets.json', []);
+  ticketsSorteo.push(...ticketsGuardados);
+
+  app.listen(PORT, () => {
+    console.log(`Servidor DEUS corriendo en http://localhost:${PORT}`);
+  });
+}
+arrancar();

@@ -15,6 +15,7 @@
     "express": "^4.19.2",
     "mercadopago": "^2.0.15",
     "nodemailer": "^6.10.1",
+    "pg": "^8.13.1",
     "transbank-sdk": "^6.1.1"
   }
 }
