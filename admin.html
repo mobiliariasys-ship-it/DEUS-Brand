@@ -80,6 +80,7 @@
     <div class="grid">
       <div class="stat live"><div class="k"><span class="dot on"></span>Viendo ahora</div><div class="v" id="s-live">0</div></div>
       <div class="stat"><div class="k">Visitas hoy</div><div class="v" id="s-vhoy">0</div></div>
+      <div class="stat"><div class="k">Tiempo promedio</div><div class="v" id="s-tprom">—</div></div>
       <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
       <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
@@ -123,6 +124,7 @@
   var tickets=[];
 
   function money(n){ return '$'+(Number(n)||0).toLocaleString('es-CL'); }
+  function tiempo(seg){ seg=Number(seg)||0; if(seg<60) return seg+'s'; var m=Math.floor(seg/60), s=seg%60; return m+'m '+(s<10?'0':'')+s+'s'; }
   function fecha(s){ try{ return new Date(s).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return '—'; } }
 
   function entrar(){
@@ -143,6 +145,7 @@
   function pintar(d){
     document.getElementById('s-live').textContent=d.visitantesEnVivo;
     document.getElementById('s-vhoy').textContent=d.vistasHoy;
+    document.getElementById('s-tprom').textContent=tiempo(d.tiempoPromedioSeg);
     document.getElementById('s-vent-hoy').childNodes[0].nodeValue=d.ventas.hoy.count+' ';
     document.getElementById('s-vent-hoy-m').textContent=money(d.ventas.hoy.monto);
     document.getElementById('s-vent-tot').childNodes[0].nodeValue=d.ventas.total.count+' ';

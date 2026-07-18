@@ -3,10 +3,12 @@
 // ventas del día se reinician si Render reinicia (por eso cada venta también
 // llega al correo del dueño como respaldo permanente).
 
-const sesiones = new Map();      // sid -> última vez visto (ms)
+const sesiones = new Map();      // sid -> { inicio, ultimo } (ms)
 const sesionesOwner = new Set(); // sids del dueño: no cuentan como visitantes ni como vistas
 let vistasTotal = 0;
 const vistasPorDia = {};         // 'YYYY-MM-DD' (Chile) -> N
+let duracionTotalMs = 0;         // suma de duración de sesiones ya terminadas (sin el dueño)
+let duracionN = 0;               // cuántas sesiones terminadas acumula duracionTotalMs
 
 function hoyChile() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
@@ -18,7 +20,10 @@ const ventas = [];               // { monto, fecha, metodo, nombre, orden }
 // `esOwner` marca la sesión como del dueño: se ve en vivo pero no se cuenta.
 function ping(sid, nueva, esOwner) {
   if (!sid) return;
-  sesiones.set(String(sid), Date.now());
+  const ahora = Date.now();
+  const s = sesiones.get(String(sid));
+  if (s) s.ultimo = ahora;
+  else sesiones.set(String(sid), { inicio: ahora, ultimo: ahora });
   if (esOwner) sesionesOwner.add(String(sid));
   if (nueva && !esOwner) {
     vistasTotal++;
@@ -27,19 +32,36 @@ function ping(sid, nueva, esOwner) {
   }
 }
 
-// Visitantes activos en los últimos 35 s (y limpia los viejos).
+// Visitantes activos en los últimos 35 s (y limpia los viejos, acumulando
+// la duración de cada sesión terminada para el tiempo promedio de visita).
 function visitantesEnVivo() {
   const limite = Date.now() - 35000;
   let n = 0;
-  for (const [sid, t] of sesiones) {
-    if (t > limite) {
+  for (const [sid, s] of sesiones) {
+    if (s.ultimo > limite) {
       if (!sesionesOwner.has(sid)) n++;
     } else {
+      if (!sesionesOwner.has(sid)) {
+        duracionTotalMs += s.ultimo - s.inicio;
+        duracionN++;
+      }
       sesiones.delete(sid);
       sesionesOwner.delete(sid);
     }
   }
   return n;
+}
+
+// Tiempo promedio de visita en segundos (sesiones terminadas + las activas).
+function tiempoPromedioSeg() {
+  let total = duracionTotalMs, cuenta = duracionN;
+  for (const [sid, s] of sesiones) {
+    if (!sesionesOwner.has(sid)) {
+      total += s.ultimo - s.inicio;
+      cuenta++;
+    }
+  }
+  return cuenta ? Math.round(total / cuenta / 1000) : 0;
 }
 
 function registrarVenta(v) {
@@ -84,6 +106,7 @@ function snapshot() {
     visitantesEnVivo: visitantesEnVivo(),
     vistasHoy: vistasPorDia[hoyChile()] || 0,
     vistasTotal,
+    tiempoPromedioSeg: tiempoPromedioSeg(),
     ventas: resumenVentas(),
     ultimos30: ultimos30Dias()
   };
