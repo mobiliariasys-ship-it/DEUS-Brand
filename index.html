@@ -240,6 +240,10 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
 *{margin:0;padding:0;box-sizing:border-box;}
 h1,h2{font-weight:400;font-size:inherit;}
 body{background:var(--black);font-family:'DM Sans',sans-serif;color:var(--white);}
+/* Sin desborde horizontal: si algo se pasa del ancho (marca de agua, carrito
+   fuera de pantalla), Safari iOS agranda el lienzo y los modales fijos quedan
+   más anchos que la pantalla. clip lo corta sin crear un scroll nuevo. */
+html,body{overflow-x:hidden;overflow-x:clip;}
 .announce-bar{background:#C1CFD0;color:#1b2b2b;text-align:center;padding:9px 16px;font-size:.7rem;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;}
 .promo-timer{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:7px;}
 .promo-label{font-size:.55rem;letter-spacing:2.5px;color:#1b2b2b;}
@@ -517,11 +521,16 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .rifa-tab .rifa-emoji-tab{writing-mode:horizontal-tb;font-size:1.1rem;}
 @keyframes rifaPulse{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.15) inset;}50%{box-shadow:0 6px 26px rgba(217,191,146,.55),0 0 0 1px rgba(255,255,255,.25) inset;}}
 @media(max-width:600px){.rifa-tab{font-size:.58rem;padding:13px 7px;letter-spacing:1.5px;}}
-.rifa-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2100;align-items:center;justify-content:center;padding:24px 16px;}
+.rifa-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2100;align-items:center;justify-content:center;
+  padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));}
 .rifa-overlay.show{display:flex;}
 .rifa-modal{position:relative;width:100%;max-width:420px;border-radius:16px;padding:30px 26px 26px;text-align:center;
   background:radial-gradient(120% 90% at 50% 0%,#22190c 0%,#0f0f0f 55%);border:1px solid rgba(217,191,146,.35);
-  box-shadow:0 24px 60px rgba(0,0,0,.6);}
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
+  /* Safari iOS: nunca más alto que lo visible (dvh descuenta la barra de direcciones);
+     si el contenido no cabe, se desplaza dentro del modal */
+  max-height:calc(100vh - 28px);max-height:calc(100dvh - 28px);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .rifa-close{position:absolute;top:10px;right:15px;background:none;border:none;color:#999;font-size:1.7rem;line-height:1;cursor:pointer;}
 .rifa-emoji{font-size:44px;margin-bottom:6px;}
 .rifa-badge{display:inline-block;font-size:.56rem;letter-spacing:3px;text-transform:uppercase;color:#e7cf9c;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:5px 12px;margin-bottom:12px;font-weight:700;}
