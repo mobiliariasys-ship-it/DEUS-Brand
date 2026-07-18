@@ -1999,6 +1999,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
   </section>
 
+  <!-- ESTADÍSTICAS EN VIVO -->
+  <section class="stats-live-section">
+    <div class="stats-live-content">
+      <h2>Comunidad en vivo</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="stat-online">0</div>
+          <div class="stat-label">Viendo ahora</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-today">0</div>
+          <div class="stat-label">Visitas hoy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-tickets">0</div>
+          <div class="stat-label">Tickets canjeados</div>
+        </div>
+      </div>
+      <div class="chart-section">
+        <h3>Últimos 30 días</h3>
+        <div class="chart-wrapper"><canvas id="chartPublic" width="800" height="180"></canvas></div>
+      </div>
+    </div>
+  </section>
+
   <!-- MODAL RESEÑA -->
   <div class="resena-overlay" id="resenaOverlay">
     <div class="resena-modal">
@@ -2108,31 +2133,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <summary>¿Qué diferencia hay con un smartwatch?</summary>
       <p>Un smartwatch te llena de notificaciones y hay que cargarlo casi a diario. La DEUS Band es una <b>smartband sin pantalla</b>: cero distracciones, hasta 20 días de batería y foco 100% en tus datos de salud y entrenamiento. Ideal si buscas medir tu cuerpo sin cargar un reloj en la muñeca.</p>
     </details>
-  </section>
-
-  <!-- ESTADÍSTICAS EN VIVO -->
-  <section class="stats-live-section">
-    <div class="stats-live-content">
-      <h2>Comunidad en vivo</h2>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-number" id="stat-online">0</div>
-          <div class="stat-label">Viendo ahora</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" id="stat-today">0</div>
-          <div class="stat-label">Visitas hoy</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" id="stat-tickets">0</div>
-          <div class="stat-label">Tickets canjeados</div>
-        </div>
-      </div>
-      <div class="chart-section">
-        <h3>Últimos 30 días</h3>
-        <div class="chart-wrapper"><canvas id="chartPublic" width="800" height="180"></canvas></div>
-      </div>
-    </div>
   </section>
 
   <!-- CIERRE -->
