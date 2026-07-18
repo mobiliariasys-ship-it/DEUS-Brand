@@ -2026,6 +2026,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       auto=setInterval(function(){ show(idx+1); },60);
     }
     function stopAuto(){ if(auto){ clearInterval(auto); auto=null; } }
+    // Tras interactuar (arrastrar o flechas), la banda retoma el giro sola
+    var reanudarTimer=null;
+    function reanudarPronto(){ clearTimeout(reanudarTimer); reanudarTimer=setTimeout(startAuto,1800); }
     // Descarga y decodifica TODOS los cuadros antes de girar,
     // así no se pega en los cuadros más pesados (p. ej. el sensor encendido).
     // La descarga (~1MB) parte recién cuando el visitante se acerca a la
@@ -2045,6 +2048,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           im.src=src(i);
         })(i);
       }
+      // Respaldo: aunque un cuadro se cuelgue, la banda empieza a girar igual
+      setTimeout(startAuto,3500);
     }
     if('IntersectionObserver' in window){
       var io=new IntersectionObserver(function(entries){
@@ -2069,6 +2074,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       wrap.addEventListener(ev,function(){
         if(ev==='pointerup' && movido<8) abrirFull(); // toque sin arrastrar = abrir grande
         dragging=false;
+        reanudarPronto(); // vuelve a girar sola tras soltar
       });
     });
 
@@ -2082,7 +2088,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       clearInterval(holdIv);
       holdIv=setInterval(function(){ show(idx+dir); },70);
     }
-    function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } }
+    function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } reanudarPronto(); }
     function bindHold(btn,dir){
       if(!btn) return;
       btn.addEventListener('pointerdown',function(e){ e.stopPropagation(); e.preventDefault(); holdStart(dir); try{btn.setPointerCapture(e.pointerId);}catch(_){} });
