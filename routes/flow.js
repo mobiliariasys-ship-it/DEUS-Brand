@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
 const { decrementStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
+const metrics = require('../services/metrics');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
@@ -121,6 +122,7 @@ router.post('/flow/confirmacion', async (req, res) => {
       if (pedido) pedido.status = 'paid';
       marcarPagado(st.commerceOrder); // cancela el correo de recuperación
       decrementStock(st.commerceOrder);
+      metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder });
       enviarPagoConfirmado({
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },
         transaction_amount: st.amount,

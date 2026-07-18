@@ -7,6 +7,7 @@ const flowRoutes = require('./routes/flow');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarResena, diagnostico } = require('./services/email');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
+const metrics = require('./services/metrics');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile). Al vencer, el
 // precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
@@ -199,6 +200,7 @@ app.post('/notificaciones', async (req, res) => {
 
         await enviarPagoConfirmado(info, pedido);
         decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago
+        metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: meta.customer_name || pedido?.customer?.name, orden: info.id });
 
         // Correo de confirmación al cliente (usa metadata + pedido en memoria).
         marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
@@ -256,6 +258,31 @@ app.get('/email/diagnostico', async (req, res) => {
 // Devuelve una respuesta mínima para que no descargue toda la página.
 app.get('/ping', (req, res) => {
   res.type('text/plain').send('ok');
+});
+
+// Rastreo de visitantes en vivo: registra un ping de sesión (con opción de marcar como "self"/dueño)
+app.post('/track/ping', (req, res) => {
+  const { sid, nueva, esOwner } = req.body || {};
+  metrics.ping(sid, nueva, esOwner);
+  res.sendStatus(204);
+});
+
+// Admin stats: retorna métricas en vivo (protegido con STOCK_KEY)
+app.get('/admin/stats', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).send('No disponible');
+  if ((req.query.clave || '') !== clave) return res.status(403).send('Clave incorrecta');
+  res.json(metrics.snapshot());
+});
+
+// Marcar una sesión como del dueño (para excluir del conteo en vivo)
+app.post('/admin/marcar-self', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).send('No disponible');
+  if ((req.query.clave || '') !== clave) return res.status(403).send('Clave incorrecta');
+  const { sid } = req.body || {};
+  if (sid) metrics.marcarComoOwner(sid);
+  res.sendStatus(204);
 });
 
 // Reseña enviada por un cliente → llega al correo para aprobar

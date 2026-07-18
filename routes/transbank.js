@@ -4,6 +4,7 @@ const { WebpayPlus, Options, IntegrationApiKeys, IntegrationCommerceCodes, Envir
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
 const { decrementStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
+const metrics = require('../services/metrics');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
@@ -92,6 +93,7 @@ async function handleRetorno(req, res) {
     if (aprobado) {
       marcarPagado(result.buy_order); // cancela el correo de recuperación
       decrementStock(result.buy_order);
+      metrics.registrarVenta({ monto: result.amount, metodo: 'Webpay', nombre: pedido && pedido.customer && pedido.customer.name, orden: result.buy_order });
       enviarPagoConfirmado({
         payer: { email: (pedido && pedido.customer && pedido.customer.email) || '(Pago con Webpay)' },
         transaction_amount: result.amount,

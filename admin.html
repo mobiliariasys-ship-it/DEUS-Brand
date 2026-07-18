@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>DEUS · Panel</title>
+<style>
+  :root{--bg:#0a0a0a;--card:#141414;--border:#262626;--gold:#e7cf9c;--green:#69c46d;--silver:#9a9a9a;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:#eee;font-family:'DM Sans',system-ui,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px 18px 60px;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;}
+  .logo{font-weight:800;letter-spacing:3px;font-size:1rem;}
+  .logo small{color:var(--silver);font-weight:400;letter-spacing:2px;font-size:.6rem;display:block;}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#3a3a3a;margin-right:6px;}
+  .dot.on{background:var(--green);box-shadow:0 0 0 0 rgba(105,196,109,.6);animation:pulse 2s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(105,196,109,.55)}70%{box-shadow:0 0 0 8px rgba(105,196,109,0)}100%{box-shadow:0 0 0 0 rgba(105,196,109,0)}}
+  .updated{font-size:.66rem;color:#777;}
+  /* login */
+  #login{max-width:360px;margin:14vh auto 0;text-align:center;}
+  #login h1{font-weight:800;letter-spacing:2px;font-size:1.2rem;}
+  #login p{color:var(--silver);font-size:.82rem;margin-bottom:18px;}
+  #login input{width:100%;background:#141414;border:1px solid var(--border);color:#fff;padding:13px 15px;border-radius:9px;font-size:.9rem;margin-bottom:10px;}
+  #login button{width:100%;background:var(--gold);color:#20160a;border:none;padding:13px;border-radius:9px;font-weight:800;font-size:.9rem;cursor:pointer;}
+  #login .err{color:#e08080;font-size:.78rem;min-height:1em;margin-top:8px;}
+  /* stats */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:22px;}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 16px;}
+  .stat .k{font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--silver);margin-bottom:8px;display:flex;align-items:center;}
+  .stat .v{font-size:1.9rem;font-weight:800;line-height:1;}
+  .stat .v small{font-size:.8rem;color:var(--silver);font-weight:500;}
+  .stat.live .v{color:var(--green);}
+  .stat.gold{border-color:rgba(231,207,156,.35);}
+  .stat.gold .v{color:var(--gold);}
+  section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;}
+  .sec-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .sec-h h2{font-size:.82rem;letter-spacing:1.5px;text-transform:uppercase;color:#ddd;margin:0;}
+  .btn{background:var(--gold);color:#20160a;border:none;padding:9px 15px;border-radius:8px;font-weight:700;font-size:.74rem;cursor:pointer;}
+  .btn.ghost{background:transparent;border:1px solid var(--border);color:#bbb;}
+  .btn-sm{padding:5px 10px;font-size:.66rem;margin-left:6px;}
+  table{width:100%;border-collapse:collapse;font-size:.76rem;}
+  th{text-align:left;color:#888;font-weight:600;padding:7px 8px;border-bottom:1px solid var(--border);letter-spacing:.5px;}
+  td{padding:9px 8px;border-bottom:1px solid #1c1c1c;color:#cfcfcf;}
+  tr:last-child td{border-bottom:none;}
+  .ok{color:var(--green);} .no{color:#e0a05a;}
+  .empty{color:#666;font-size:.78rem;padding:14px 4px;}
+  .scroll{overflow-x:auto;}
+  .winner{margin-top:12px;background:linear-gradient(135deg,#22190c,#0f0f0f);border:1px solid rgba(231,207,156,.4);border-radius:12px;padding:16px;text-align:center;display:none;}
+  .winner.show{display:block;}
+  .winner .big{font-size:1.3rem;font-weight:800;color:var(--gold);margin:4px 0;}
+  .pill{font-size:.6rem;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:#aaa;}
+  .self-tag{font-size:.6rem;padding:3px 8px;border-radius:20px;background:rgba(105,196,109,.15);border:1px solid rgba(105,196,109,.3);color:var(--green);margin-left:8px;display:inline-block;}
+  @media(max-width:560px){.stat .v{font-size:1.5rem;} .btn-sm{margin-top:6px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- LOGIN -->
+  <div id="login">
+    <h1>DEUS · Panel privado</h1>
+    <p>Ingresa tu clave para ver el panel.</p>
+    <input id="key" type="password" placeholder="Clave (STOCK_KEY)" autocomplete="current-password">
+    <button onclick="entrar()">Entrar</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+
+  <!-- PANEL -->
+  <div id="panel" style="display:none;">
+    <header>
+      <div class="logo">DEUS <small>Panel de control</small></div>
+      <div style="text-align:right">
+        <div class="updated" id="updated">—</div>
+        <button class="btn ghost btn-sm" id="btn-self" style="margin-top:6px;margin-right:6px;" onclick="toggleExcluirSelf()">Excluir mis vistas</button>
+        <button class="btn ghost btn-sm" style="margin-top:6px;" onclick="salir()">Salir</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="stat live"><div class="k"><span class="dot on"></span>Viendo ahora<span id="self-indicator"></span></div><div class="v" id="s-live">0</div></div>
+      <div class="stat"><div class="k">Visitas hoy</div><div class="v" id="s-vhoy">0</div></div>
+      <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
+      <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
+      <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
+      <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
+    </div>
+
+    <section>
+      <div class="sec-h"><h2>🎟️ Tickets del sorteo</h2><button class="btn" onclick="elegirGanador()">Elegir ganador 🎲</button></div>
+      <div class="winner" id="winner"></div>
+      <div class="scroll"><table id="t-tickets"><thead><tr><th>Nombre</th><th>RUT</th><th>N° orden</th><th>Verif.</th><th>Fecha</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="tickets-empty" style="display:none">Aún no hay tickets canjeados.</div>
+    </section>
+
+    <section>
+      <div class="sec-h"><h2>💳 Últimas ventas</h2></div>
+      <div class="scroll"><table id="t-ventas"><thead><tr><th>Fecha</th><th>Cliente</th><th>Método</th><th>Monto</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ventas-empty" style="display:none">Sin ventas registradas todavía.</div>
+    </section>
+
+    <section>
+      <div class="sec-h"><h2>📦 Pedidos recientes</h2></div>
+      <div class="scroll"><table id="t-pedidos"><thead><tr><th>Fecha</th><th>Cliente</th><th>Comuna</th><th>Color</th><th>Total</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
+    </section>
+
+    <p style="font-size:.66rem;color:#666;line-height:1.5;margin-top:18px">
+      Las visitas en vivo son en tiempo real. Ventas y pedidos se reinician si el servidor de Render reinicia,
+      pero cada venta y cada ticket también te llegan por correo (respaldo permanente).
+    </p>
+  </div>
+</div>
+
+<script>
+  var BASE=(location.hostname==='localhost'||location.hostname==='127.0.0.1')?'':'';
+  var clave=localStorage.getItem('deus-admin-key')||'';
+  var tickets=[];
+
+  function money(n){ return '$'+(Number(n)||0).toLocaleString('es-CL'); }
+  function fecha(s){ try{ return new Date(s).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return '—'; } }
+
+  function entrar(){
+    var k=document.getElementById('key').value.trim();
+    if(!k){ return; }
+    clave=k;
+    cargar(true);
+  }
+  function salir(){ localStorage.removeItem('deus-admin-key'); localStorage.removeItem('deus-admin-self'); location.reload(); }
+
+  function toggleExcluirSelf(){
+    var esExcluido=localStorage.getItem('deus-admin-self')==='true';
+    if(esExcluido){
+      localStorage.removeItem('deus-admin-self');
+      document.getElementById('btn-self').textContent='Excluir mis vistas';
+      document.getElementById('self-indicator').innerHTML='';
+    }else{
+      localStorage.setItem('deus-admin-self','true');
+      document.getElementById('btn-self').textContent='Incluir mis vistas';
+      document.getElementById('self-indicator').innerHTML='<span class="self-tag">Excluido</span>';
+    }
+  }
+
+  function rows(tbodySel, arr, render, emptyId){
+    var tb=document.querySelector(tbodySel+' tbody'); tb.innerHTML='';
+    document.getElementById(emptyId).style.display=arr.length?'none':'block';
+    document.querySelector(tbodySel).style.display=arr.length?'':'none';
+    arr.forEach(function(x){ var tr=document.createElement('tr'); tr.innerHTML=render(x); tb.appendChild(tr); });
+  }
+
+  function pintar(d){
+    document.getElementById('s-live').textContent=d.visitantesEnVivo;
+    document.getElementById('s-vhoy').textContent=d.vistasHoy;
+    document.getElementById('s-vent-hoy').childNodes[0].nodeValue=d.ventas.hoy.count+' ';
+    document.getElementById('s-vent-hoy-m').textContent=money(d.ventas.hoy.monto);
+    document.getElementById('s-vent-tot').childNodes[0].nodeValue=d.ventas.total.count+' ';
+    document.getElementById('s-vent-tot-m').textContent=money(d.ventas.total.monto);
+    document.getElementById('s-tickets').textContent=d.ticketsTotal;
+    document.getElementById('s-stock').textContent=(d.stock==null?'—':d.stock);
+    tickets=d.tickets||[];
+    rows('#t-tickets',tickets,function(t){ return '<td>'+esc(t.nombre)+'</td><td>'+esc(t.rut)+'</td><td>'+esc(t.orden)+'</td><td>'+(t.verificado?'<span class="ok">✓</span>':'<span class="no">revisar</span>')+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');
+    rows('#t-ventas',d.ventas.ultimas||[],function(v){ return '<td>'+fecha(v.fecha)+'</td><td>'+esc(v.nombre||'—')+'</td><td>'+esc(v.metodo)+'</td><td>'+money(v.monto)+'</td>'; },'ventas-empty');
+    rows('#t-pedidos',d.pedidos||[],function(p){ return '<td>'+fecha(p.fecha)+'</td><td>'+esc(p.nombre||'—')+'</td><td>'+esc(p.comuna||'—')+'</td><td>'+esc((p.color||'—'))+'</td><td>'+money(p.total)+'</td><td><span class="pill">'+esc(p.estado||'—')+'</span></td>'; },'pedidos-empty');
+    document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
+
+  function cargar(primera){
+    fetch(BASE+'/admin/stats?clave='+encodeURIComponent(clave)).then(function(r){
+      if(r.status===403||r.status===404){ throw new Error('clave'); }
+      return r.json();
+    }).then(function(d){
+      if(primera){
+        localStorage.setItem('deus-admin-key',clave);
+        document.getElementById('login').style.display='none';
+        document.getElementById('panel').style.display='block';
+        actualizarIndicadorSelf();
+      }
+      pintar(d);
+    }).catch(function(e){
+      if(e.message==='clave'){ document.getElementById('loginErr').textContent='Clave incorrecta.'; localStorage.removeItem('deus-admin-key'); }
+    });
+  }
+
+  function actualizarIndicadorSelf(){
+    var esExcluido=localStorage.getItem('deus-admin-self')==='true';
+    if(esExcluido){
+      document.getElementById('btn-self').textContent='Incluir mis vistas';
+      document.getElementById('self-indicator').innerHTML='<span class="self-tag">Excluido</span>';
+    }else{
+      document.getElementById('btn-self').textContent='Excluir mis vistas';
+      document.getElementById('self-indicator').innerHTML='';
+    }
+  }
+
+  function elegirGanador(){
+    if(!tickets.length){ return; }
+    var w=document.getElementById('winner'); w.classList.add('show');
+    var i=0, spins=18+Math.floor(Math.random()*8);
+    var iv=setInterval(function(){
+      var t=tickets[Math.floor(Math.random()*tickets.length)];
+      w.innerHTML='<div style="font-size:.7rem;letter-spacing:2px;color:#888">SORTEANDO…</div><div class="big">'+esc(t.nombre)+'</div>';
+      if(++i>=spins){ clearInterval(iv);
+        var g=tickets[Math.floor(Math.random()*tickets.length)];
+        w.innerHTML='<div style="font-size:.66rem;letter-spacing:3px;color:var(--gold)">🏆 GANADOR DEL MES</div><div class="big">'+esc(g.nombre)+'</div><div style="color:#bbb;font-size:.8rem">RUT '+esc(g.rut)+' · orden '+esc(g.orden)+'</div>';
+      }
+    },70);
+  }
+
+  // Auto-login si ya hay clave guardada
+  if(clave){ cargar(true); }
+  document.getElementById('key').addEventListener('keydown',function(e){ if(e.key==='Enter') entrar(); });
+  // Refresco en vivo
+  setInterval(function(){ if(clave && document.getElementById('panel').style.display!=='none') cargar(false); }, 5000);
+</script>
+</body>
+</html>

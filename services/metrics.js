@@ -1,0 +1,86 @@
+// Métricas en vivo para el panel de administración.
+// Todo en memoria: los visitantes en vivo son efímeros por naturaleza; las
+// ventas del día se reinician si Render reinicia (por eso cada venta también
+// llega al correo del dueño como respaldo permanente).
+
+const sesiones = new Map();      // sid -> última vez visto (ms)
+const sesionesOwner = new Set(); // sids del dueño (excluir de visitantes en vivo)
+let vistasTotal = 0;
+const vistasPorDia = {};         // 'YYYY-MM-DD' (Chile) -> N
+const ventas = [];               // { monto, fecha, metodo, nombre, orden }
+
+function hoyChile() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+}
+
+// Registra actividad de un visitante. `nueva` = primera carga de la sesión.
+// `esOwner` = si es true, la sesión se marca como del dueño y no cuenta en visitantesEnVivo.
+function ping(sid, nueva, esOwner) {
+  if (!sid) return;
+  sesiones.set(String(sid), Date.now());
+  if (esOwner) {
+    sesionesOwner.add(String(sid));
+  }
+  if (nueva && !esOwner) {
+    vistasTotal++;
+    const d = hoyChile();
+    vistasPorDia[d] = (vistasPorDia[d] || 0) + 1;
+  }
+}
+
+// Marcar una sesión existente como del dueño (para cuando el admin se da cuenta que necesita excluirse)
+function marcarComoOwner(sid) {
+  if (sid) sesionesOwner.add(String(sid));
+}
+
+// Visitantes activos en los últimos 35 s (excluye al dueño, limpia los viejos).
+function visitantesEnVivo() {
+  const limite = Date.now() - 35000;
+  let n = 0;
+  for (const [sid, t] of sesiones) {
+    if (t > limite) {
+      // Solo contar si no es el dueño
+      if (!sesionesOwner.has(sid)) n++;
+    } else {
+      sesiones.delete(sid);
+      sesionesOwner.delete(sid);
+    }
+  }
+  return n;
+}
+
+function registrarVenta(v) {
+  ventas.push({
+    monto: Number(v.monto) || 0,
+    fecha: new Date().toISOString(),
+    metodo: v.metodo || '',
+    nombre: v.nombre || '',
+    orden: v.orden ? String(v.orden) : ''
+  });
+}
+
+function resumenVentas() {
+  const d = hoyChile();
+  let hoyCount = 0, hoyMonto = 0, totMonto = 0;
+  for (const v of ventas) {
+    totMonto += v.monto;
+    const dv = new Date(v.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    if (dv === d) { hoyCount++; hoyMonto += v.monto; }
+  }
+  return {
+    hoy: { count: hoyCount, monto: hoyMonto },
+    total: { count: ventas.length, monto: totMonto },
+    ultimas: ventas.slice(-12).reverse()
+  };
+}
+
+function snapshot() {
+  return {
+    visitantesEnVivo: visitantesEnVivo(),
+    vistasHoy: vistasPorDia[hoyChile()] || 0,
+    vistasTotal,
+    ventas: resumenVentas()
+  };
+}
+
+module.exports = { ping, marcarComoOwner, registrarVenta, snapshot, visitantesEnVivo };

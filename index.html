@@ -2467,6 +2467,19 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   var fc=document.querySelector('.fc-price'); if(fc) fc.innerHTML='$48.990 <small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>';
   var sb=document.querySelector('.sb-price'); if(sb) sb.innerHTML='<b>$48.990</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>';
 })();
+
+// Latido de presencia para el panel (visitantes en vivo)
+(function(){
+  var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
+  var sid=sessionStorage.getItem('deus-sid');
+  var nueva=!sid;
+  if(!sid){ sid=Date.now().toString(36)+Math.random().toString(36).slice(2,8); sessionStorage.setItem('deus-sid',sid); }
+  var esOwner=localStorage.getItem('deus-admin-self')==='true'||localStorage.getItem('deus-admin-key');
+  function ping(n){ try{ fetch(base+'/track/ping',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({sid:sid,nueva:!!n,esOwner:!!esOwner})}).catch(function(){}); }catch(e){} }
+  ping(nueva);
+  setInterval(function(){ if(!document.hidden) ping(false); },15000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) ping(false); });
+})();
 </script>
 
 <!-- Visor con zoom de la foto del producto -->
