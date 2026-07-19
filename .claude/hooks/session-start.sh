@@ -12,14 +12,18 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-cd "${CLAUDE_PROJECT_DIR:-$(pwd)}"
-
-# graphify (y otras tools de uv/pip) viven en ~/.local/bin: dejarlo en el PATH
-# de toda la sesión para que 'graphify' esté disponible siempre.
-export PATH="$HOME/.local/bin:$PATH"
+# Modo ASYNC: la sesión arranca de inmediato y esto corre en segundo plano
+# (hasta 5 min de margen). El PATH se escribe ANTES del JSON para que quede
+# disponible aunque la sesión parta antes de que termine la instalación.
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$CLAUDE_ENV_FILE"
 fi
+echo '{"async": true, "asyncTimeout": 300000}'
+
+cd "${CLAUDE_PROJECT_DIR:-$(pwd)}"
+
+# graphify (y otras tools de uv/pip) viven en ~/.local/bin
+export PATH="$HOME/.local/bin:$PATH"
 
 # 1) Dependencias de Node (backend). npm install aprovecha el cache del contenedor.
 if [ -f package.json ]; then

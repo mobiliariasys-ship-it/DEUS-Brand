@@ -19,8 +19,8 @@ graphify path "A()" "B()"                    # cómo se conectan dos piezas
   `graphify-src/*-inline.js` (generado). Cada bloque lleva un marcador
   `// ═══ index.html:LNNN ═══` con la línea real del HTML — **edita siempre el
   HTML original en esa línea**, nunca el archivo generado.
-- `.graphifyignore` excluye `img/` y `scratch_scripts.js` (copia obsoleta del
-  frontend, no referenciada). No corras extracción semántica sobre `img/`.
+- `.graphifyignore` excluye `img/` (assets pesados). No corras extracción
+  semántica sobre `img/`.
 - `index.html` mide ~2.900 líneas (~19k tokens solo su JS inline): leerlo
   entero es el anti-patrón que este setup evita.
 

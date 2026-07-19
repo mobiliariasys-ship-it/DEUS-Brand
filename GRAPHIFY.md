@@ -66,6 +66,6 @@ post-commit) lo extrae **siempre fresco** a `graphify-src/*-inline.js`, con un
 marcador `// ═══ index.html:LNNN ═══` por bloque que apunta a la línea real del
 HTML. Así el grafo cubre el frontend actual sin leer ~19k tokens de HTML.
 
-`.graphifyignore` excluye del grafo `img/` (assets pesados) y
-`scratch_scripts.js` (copia obsoleta del frontend de julio-7, no referenciada
-por ningún HTML — candidata a borrarse del repo).
+`.graphifyignore` excluye del grafo `img/` (assets pesados). La antigua copia
+obsoleta del frontend (`scratch_scripts.js`) fue eliminada del repo: la
+extracción fresca de `graphify-src/` la reemplaza por completo.
