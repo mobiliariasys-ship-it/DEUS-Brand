@@ -54,5 +54,18 @@ Dentro de Claude Code también podés escribir `/graphify` para invocar la skill
 | Leer `server.js`, `routes/*.js`, `services/*.js` completos para ubicar una función (~miles de tokens). | Una consulta al grafo devuelve los nodos relevantes con `archivo:línea` en unos cientos de tokens. |
 | El asistente re-lee archivos en cada pregunta. | El grafo persiste en `graphify-out/` y se consulta las veces que haga falta. |
 
-El estado actual del proyecto: **215 nodos, ~314 conexiones, 14 comunidades**
-detectadas automáticamente.
+El estado actual del proyecto: **~319 nodos** (backend + frontend) y ~27
+comunidades detectadas automáticamente.
+
+## Cobertura del frontend (optimización clave)
+
+El JS del sitio vive como `<script>` inline dentro de `index.html` (~20
+bloques, ~78KB) y `admin.html`, invisible para el análisis AST de HTML. Por eso
+`scripts/graphify-extract-frontend.py` (invocado por el setup y por el git hook
+post-commit) lo extrae **siempre fresco** a `graphify-src/*-inline.js`, con un
+marcador `// ═══ index.html:LNNN ═══` por bloque que apunta a la línea real del
+HTML. Así el grafo cubre el frontend actual sin leer ~19k tokens de HTML.
+
+`.graphifyignore` excluye del grafo `img/` (assets pesados) y
+`scratch_scripts.js` (copia obsoleta del frontend de julio-7, no referenciada
+por ningún HTML — candidata a borrarse del repo).
