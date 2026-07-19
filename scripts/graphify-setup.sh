@@ -46,6 +46,9 @@ graphify update . --no-cluster
 echo "▸ Detectando comunidades (sin LLM, sin tokens)..."
 graphify cluster-only . --no-label --no-viz
 
+echo "▸ Instalando git hook post-commit (refresca el grafo solo tras cada commit)..."
+graphify hook install >/dev/null 2>&1 || echo "  (aviso: no se pudo instalar el git hook; refrescá manual con 'graphify update .')"
+
 echo ""
 echo "✓ Listo. El grafo está en graphify-out/graph.json"
 echo ""
