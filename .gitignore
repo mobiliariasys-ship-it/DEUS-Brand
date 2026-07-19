@@ -5,6 +5,9 @@ metrics-data.json
 pedidos.json
 tickets.json
 
+# Graphify: grafo de conocimiento (artefacto derivado, se regenera con scripts/graphify-setup.sh)
+graphify-out/
+
 # Archivos temporales de procesamiento de imágenes
 *.jpg
 *.jpeg

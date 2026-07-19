@@ -1,0 +1,58 @@
+# Graphify · optimización de tokens para DEUS Band
+
+[Graphify](https://github.com/Graphify-Labs/graphify) (MIT) convierte el código
+del proyecto en un **grafo de conocimiento** consultable. En vez de que el
+asistente lea archivos enteros para entender cómo se conecta todo (lo que gasta
+muchos tokens), consulta el grafo y recibe una respuesta compacta con las
+funciones/archivos relevantes y su ubicación exacta (`archivo:línea`).
+
+- El código se analiza **localmente con tree-sitter (AST)** — sin LLM, sin API
+  key y **sin gastar tokens** al construir el grafo.
+- La optimización de tokens ocurre en las **consultas**: cada respuesta viene
+  acotada por un presupuesto de tokens (`--budget`, 2000 por defecto).
+
+## Puesta en marcha (una sola vez por entorno)
+
+```bash
+bash scripts/graphify-setup.sh
+```
+
+Esto instala graphify, registra la skill `/graphify` para Claude Code y
+construye el grafo en `graphify-out/graph.json`.
+
+> **Nota:** el grafo (`graphify-out/`) es un artefacto derivado y está en
+> `.gitignore` — no se commitea porque cambia con cada modificación del código
+> y se regenera en segundos. En un entorno nuevo (p. ej. una sesión nueva de
+> Claude Code en la nube), volvé a correr el script de arriba: la instalación
+> vive solo en ese contenedor.
+
+## Uso diario
+
+```bash
+# Preguntar por el código sin abrir archivos enteros
+graphify query "cómo se verifica el ticket del sorteo" --budget 800
+
+# Explicar una función y sus vecinos en el grafo
+graphify explain "registrarVenta()"
+
+# Ver qué se rompería si tocás algo (impacto inverso)
+graphify affected "ordenConfirmada()"
+
+# Camino más corto entre dos piezas del código
+graphify path "canjearTicket()" "ordenConfirmada()"
+
+# Refrescar el grafo tras cambios de código (sin LLM, sin tokens)
+graphify update .
+```
+
+Dentro de Claude Code también podés escribir `/graphify` para invocar la skill.
+
+## Cómo ayuda a ahorrar tokens
+
+| Sin graphify | Con graphify |
+|---|---|
+| Leer `server.js`, `routes/*.js`, `services/*.js` completos para ubicar una función (~miles de tokens). | Una consulta al grafo devuelve los nodos relevantes con `archivo:línea` en unos cientos de tokens. |
+| El asistente re-lee archivos en cada pregunta. | El grafo persiste en `graphify-out/` y se consulta las veces que haga falta. |
+
+El estado actual del proyecto: **215 nodos, ~314 conexiones, 14 comunidades**
+detectadas automáticamente.
