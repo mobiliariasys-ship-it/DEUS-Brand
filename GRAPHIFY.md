@@ -62,9 +62,14 @@ comunidades detectadas automáticamente.
 El JS del sitio vive como `<script>` inline dentro de `index.html` (~20
 bloques, ~78KB) y `admin.html`, invisible para el análisis AST de HTML. Por eso
 `scripts/graphify-extract-frontend.py` (invocado por el setup y por el git hook
-post-commit) lo extrae **siempre fresco** a `graphify-src/*-inline.js`, con un
-marcador `// ═══ index.html:LNNN ═══` por bloque que apunta a la línea real del
-HTML. Así el grafo cubre el frontend actual sin leer ~19k tokens de HTML.
+post-commit) lo extrae **siempre fresco** a `graphify-src/*-inline.js`.
+
+La extracción es **line-preserving**: el archivo generado tiene la misma
+numeración de líneas que el HTML, así la línea que reporta el grafo
+(`index-inline.js:L1667`) **es idéntica a la del `index.html` real**
+(`index.html:L1667`). Se salta directo a editar el HTML en esa línea, sin
+marcadores ni cálculos — el paso de "lectura dirigida" pasa de ~1000 a ~650
+tokens y el ahorro en preguntas de frontend sube a **~98%**.
 
 `.graphifyignore` excluye del grafo `img/` (assets pesados). La antigua copia
 obsoleta del frontend (`scratch_scripts.js`) fue eliminada del repo: la

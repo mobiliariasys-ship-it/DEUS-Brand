@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 """Extrae el JS inline de las páginas HTML a graphify-src/ para que Graphify
-lo indexe SIEMPRE FRESCO.
+lo indexe SIEMPRE FRESCO — con los números de línea PRESERVADOS.
 
 Por qué existe: el frontend de DEUS Band vive como <script> inline dentro de
 index.html (~20 bloques, ~78KB de JS) y admin.html. tree-sitter no extrae ese
 JS desde el HTML, así que sin esto el grafo queda ciego al frontend — justo lo
-que más se desarrolla. Cada bloque va precedido de un marcador con el archivo
-y la LÍNEA REAL del HTML de origen, para saltar directo al lugar correcto.
+que más se desarrolla.
+
+Optimización clave (ahorro de tokens): la extracción es "line-preserving". El
+archivo generado tiene EXACTAMENTE la misma numeración de líneas que el HTML
+original: cada bloque de JS se coloca en su offset real y los huecos se rellenan
+con líneas en blanco. Así el grafo apunta a `index-inline.js:L1254` y esa línea
+ES la línea 1254 de index.html — sin marcadores ni cálculos: se salta directo
+a editar el HTML en esa línea. La línea 1 lleva un recordatorio de a qué HTML
+corresponde el archivo.
 
 Se ejecuta desde scripts/graphify-setup.sh (y por lo tanto en cada sesión y en
 cada commit vía el git hook). graphify-src/ está en .gitignore (artefacto) y
@@ -32,7 +39,11 @@ for pagina in PAGINAS:
     if not src.exists():
         continue
     html = src.read_text(encoding="utf-8")
-    partes = []
+    total_lineas = html.count("\n") + 1
+    # Lienzo de líneas en blanco del mismo largo que el HTML: rellenamos solo
+    # las líneas que corresponden a JS inline, dejando el resto vacío.
+    lineas = [""] * (total_lineas + 1)
+    bloques_pagina = 0
     for m in SCRIPT_RE.finditer(html):
         cuerpo = m.group(1)
         if not cuerpo.strip():
@@ -41,12 +52,21 @@ for pagina in PAGINAS:
         tag = html[m.start():html.index(">", m.start()) + 1].lower()
         if "application/ld+json" in tag:
             continue
-        linea = html.count("\n", 0, m.start()) + 1
-        partes.append(f"// ═══ {pagina}:L{linea} ═══\n{cuerpo.strip()}\n")
+        # Línea (1-based) donde arranca el CONTENIDO del <script> en el HTML.
+        inicio_cuerpo = m.start(1)
+        linea0 = html.count("\n", 0, inicio_cuerpo)  # 0-based del cuerpo
+        for i, texto in enumerate(cuerpo.split("\n")):
+            idx = linea0 + i
+            if 0 <= idx < len(lineas):
+                lineas[idx] = texto
+        bloques_pagina += 1
         total_bloques += 1
+    # Recordatorio en la línea 1 (desplaza a nadie: la línea 1 del HTML es
+    # <!doctype>, nunca JS). Mantiene el mapeo 1:1 para el resto.
+    lineas[0] = f"// Extraído de {pagina} — numeración de líneas IDÉNTICA al HTML original. Editá {pagina}, no este archivo."
     destino = OUT_DIR / f"{Path(pagina).stem}-inline.js"
-    destino.write_text("\n".join(partes), encoding="utf-8")
-    print(f"  {destino.relative_to(ROOT)}: {len(partes)} bloques desde {pagina}")
+    destino.write_text("\n".join(lineas), encoding="utf-8")
+    print(f"  {destino.relative_to(ROOT)}: {bloques_pagina} bloques desde {pagina} (líneas 1:1 con el HTML)")
 
 print(f"  total: {total_bloques} bloques de JS inline extraídos")
 sys.exit(0)
