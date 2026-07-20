@@ -14,7 +14,7 @@ const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/reco
 // precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
 // El front usa esta misma fecha, así el cambio ocurre solo y sincronizado.
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
-const precioBanda = () => Date.now() < OFERTA_END ? 42990 : 48990;
+const precioBanda = () => Date.now() < OFERTA_END ? 48990 : 54990;
 
 const app = express();
 const PORT = process.env.PORT || 3000;

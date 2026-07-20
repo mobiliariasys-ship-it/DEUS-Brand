@@ -8,8 +8,8 @@ const metrics = require('../services/metrics');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
-const PRODUCT_PRICE = 42990;
-const precioBanda = () => Date.now() < OFERTA_END ? 42990 : 48990;
+const PRODUCT_PRICE = 48990;
+const precioBanda = () => Date.now() < OFERTA_END ? 48990 : 54990;
 const pedidosWebpay = new Map(); // buyOrder -> pedido
 
 // Producción si hay credenciales reales; si no, integración (pruebas)
