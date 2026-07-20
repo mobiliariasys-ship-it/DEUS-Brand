@@ -205,7 +205,8 @@ app.post('/notificaciones', async (req, res) => {
 
         await enviarPagoConfirmado(info, pedido);
         decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago
-        metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: meta.customer_name || pedido?.customer?.name, orden: info.id });
+        // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
+        const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: meta.customer_name || pedido?.customer?.name, orden: info.id, email: emailCliente });
 
         // Correo de confirmación al cliente (usa metadata + pedido en memoria).
         marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
@@ -216,7 +217,8 @@ app.post('/notificaciones', async (req, res) => {
           id: info.id,
           color: meta.selected_color || pedido?.color,
           carrier: meta.shipping_carrier || pedido?.shipping?.carrier,
-          address: pedido?.shipping?.address
+          address: pedido?.shipping?.address,
+          ticket: ticketMP && ticketMP.numero
         }).catch(err => console.error('[email] Confirmación cliente:', err.message));
       }
     } catch (err) {
@@ -229,38 +231,28 @@ app.get('/pedidos', (req, res) => {
   res.json(pedidos);
 });
 
-// ── Sorteo mensual: canje de tickets ──
-// El comprador ingresa nombre, n° de orden de envío e Instagram para canjear
-// su ticket (1 ticket por compra, sin importar la cantidad de bandas). Se
-// registra, se verifica contra los pedidos (best-effort) y se envía un correo
-// al dueño (ese correo es el registro permanente del mes). Si gana, se le
-// avisa por Instagram.
-const ticketsSorteo = [];
+// ── Sorteo mensual ──
+// El ticket se asigna AUTOMÁTICAMENTE al confirmarse el pago (1 por compra, en
+// metrics.registrarVenta). Este endpoint es opcional: el comprador agrega su
+// Instagram a su ticket ya existente para que le avisemos si gana.
 app.post('/sorteo', async (req, res) => {
   const nombre = (req.body?.nombre || '').toString().trim().slice(0, 90);
   const orden = (req.body?.orden || '').toString().trim().slice(0, 60);
-  let instagram = (req.body?.instagram || '').toString().trim().slice(0, 60);
-  if (instagram && instagram[0] !== '@') instagram = '@' + instagram;
+  const instagram = (req.body?.instagram || '').toString().trim().slice(0, 60);
 
-  if (!nombre || !orden || !instagram) {
-    return res.status(400).json({ error: 'Completa nombre, n° de orden e Instagram.' });
+  if (!orden || !instagram) {
+    return res.status(400).json({ error: 'Completa n° de orden e Instagram.' });
   }
 
-  // Solo entra al sorteo si ese n° de orden corresponde a un pago YA
-  // CONFIRMADO (de cualquiera de los 3 métodos) — no basta con que exista
-  // un pedido creado, tiene que estar efectivamente pagado.
-  if (!metrics.ordenConfirmada(orden)) {
+  // Solo si ese n° de orden corresponde a un pago YA CONFIRMADO (los 3 métodos).
+  const r = metrics.reclamarInstagram({ orden, instagram, nombre });
+  if (!r) {
     return res.status(404).json({ error: 'No encontramos ese n° de orden entre los pagos confirmados. Revisa el número en tu correo de confirmación de compra.' });
   }
+  // Avisamos al dueño (registro en su correo).
+  enviarTicketSorteo(r.ticket).catch(e => console.error('[sorteo] email:', e.message));
 
-  const yaExiste = ticketsSorteo.some(t => t.orden.toLowerCase() === orden.toLowerCase());
-  const entry = { nombre, instagram, orden, verificado: true, fecha: new Date().toISOString() };
-
-  if (!yaExiste) { ticketsSorteo.push(entry); persist.save('tickets.json', ticketsSorteo).catch(e => console.error('[tickets] Error guardando:', e.message)); }
-  // Siempre avisamos al dueño (registro en su correo), aunque sea reintento
-  enviarTicketSorteo(entry).catch(e => console.error('[sorteo] email:', e.message));
-
-  res.json({ ok: true, duplicado: yaExiste });
+  res.json({ ok: true, duplicado: r.yaTenia, ticket: r.ticket.numero });
 });
 
 // Lista de tickets del mes (admin, protegida con STOCK_KEY)
@@ -269,7 +261,8 @@ app.get('/sorteo/lista', (req, res) => {
   const clave = (process.env.STOCK_KEY || '').trim();
   if (!clave) return res.status(404).json({ error: 'No disponible' });
   if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
-  res.json({ total: ticketsSorteo.length, tickets: ticketsSorteo });
+  const tks = metrics.obtenerTickets();
+  res.json({ total: tks.length, tickets: tks });
 });
 
 // ── Presencia: latido de cada visitante para contar "en vivo" ──
@@ -292,8 +285,6 @@ app.get('/admin/stats', (req, res) => {
   }));
   res.json({
     ...snap,
-    tickets: ticketsSorteo.slice().reverse(),
-    ticketsTotal: ticketsSorteo.length,
     pedidos: pedidosRecientes,
     stock: getStock()
   });
@@ -416,11 +407,9 @@ app.post('/resenas', async (req, res) => {
 // Carga lo guardado (disco o Postgres) antes de aceptar tráfico, así ninguna
 // venta/ticket/vista que llegue justo al arrancar se registra sobre datos vacíos.
 async function arrancar() {
-  await metrics.init();
+  await metrics.init(); // carga ventas, tickets y vistas persistidos
   const pedidosGuardados = await persist.load('pedidos.json', []);
   pedidos.push(...pedidosGuardados);
-  const ticketsGuardados = await persist.load('tickets.json', []);
-  ticketsSorteo.push(...ticketsGuardados);
 
   app.listen(PORT, () => {
     console.log(`Servidor DEUS corriendo en http://localhost:${PORT}`);

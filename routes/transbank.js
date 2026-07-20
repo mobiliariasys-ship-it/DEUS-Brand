@@ -93,7 +93,8 @@ async function handleRetorno(req, res) {
     if (aprobado) {
       marcarPagado(result.buy_order); // cancela el correo de recuperación
       decrementStock(result.buy_order);
-      metrics.registrarVenta({ monto: result.amount, metodo: 'Webpay', nombre: pedido && pedido.customer && pedido.customer.name, orden: result.buy_order });
+      // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
+      const ticketWP = metrics.registrarVenta({ monto: result.amount, metodo: 'Webpay', nombre: pedido && pedido.customer && pedido.customer.name, orden: result.buy_order, email: pedido && pedido.customer && pedido.customer.email });
       enviarPagoConfirmado({
         payer: { email: (pedido && pedido.customer && pedido.customer.email) || '(Pago con Webpay)' },
         transaction_amount: result.amount,
@@ -107,7 +108,8 @@ async function handleRetorno(req, res) {
         id: result.buy_order,
         color: pedido && pedido.color,
         carrier: pedido && pedido.shipping && pedido.shipping.carrier,
-        address: pedido && pedido.shipping && pedido.shipping.address
+        address: pedido && pedido.shipping && pedido.shipping.address,
+        ticket: ticketWP && ticketWP.numero
       }).catch(e => console.error('[email] Confirmación cliente:', e.message));
       return res.redirect(`/success.html?monto=${Number(result.amount) || ''}&orden=${encodeURIComponent(result.buy_order || '')}`);
     }

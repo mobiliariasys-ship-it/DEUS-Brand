@@ -122,7 +122,8 @@ router.post('/flow/confirmacion', async (req, res) => {
       if (pedido) pedido.status = 'paid';
       marcarPagado(st.commerceOrder); // cancela el correo de recuperación
       decrementStock(st.commerceOrder);
-      metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder });
+      // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
+      const ticketFlow = metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder, email: (pedido && pedido.customer && pedido.customer.email) || st.payer });
       enviarPagoConfirmado({
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },
         transaction_amount: st.amount,
@@ -136,7 +137,8 @@ router.post('/flow/confirmacion', async (req, res) => {
         id: st.commerceOrder,
         color: pedido && pedido.color,
         carrier: pedido && pedido.shipping && pedido.shipping.carrier,
-        address: pedido && pedido.shipping && pedido.shipping.address
+        address: pedido && pedido.shipping && pedido.shipping.address,
+        ticket: ticketFlow && ticketFlow.numero
       }).catch(e => console.error('[email] Confirmación cliente:', e.message));
     } else if (pedido) pedido.status = 'rejected';
   } catch (e) { console.error('[flow/confirmacion] Error:', e.message); }

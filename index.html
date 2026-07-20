@@ -1005,20 +1005,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p class="rifa-prize">Cada mes sorteamos <b>una DEUS Band</b> y unos <b>Tapones de oído DEUS</b> entre nuestros compradores.</p>
     <div class="rifa-steps">
       <div class="rifa-step"><span class="rn">1</span><span>Compras tu <b>DEUS Band</b> en la web.</span></div>
-      <div class="rifa-step"><span class="rn">2</span><span>Ganas <b>1 ticket por compra</b> — automático, sin costo extra.</span></div>
-      <div class="rifa-step"><span class="rn">3</span><span>Sorteamos <b>1 vez al mes</b> y <b>te avisamos por Instagram</b>.</span></div>
+      <div class="rifa-step"><span class="rn">2</span><span>Se te asigna <b>un N° de ticket automático</b> al confirmarse el pago — te llega en el correo de tu compra.</span></div>
+      <div class="rifa-step"><span class="rn">3</span><span>Sorteamos <b>1 vez al mes</b>. Deja tu Instagram abajo y <b>te avisamos si ganas</b>.</span></div>
     </div>
     <button class="rifa-cta" onclick="cerrarRifa();abrirCheckout&&abrirCheckout()">Comprar y participar</button>
     <div class="rifa-or"><span>ya compraste</span></div>
     <div class="rifa-claim">
-      <div class="rifa-claim-title">🎟️ Canjea tu ticket</div>
-      <input class="rifa-input" id="rf-nombre" placeholder="Nombre completo" autocomplete="name">
-      <input class="rifa-input" id="rf-orden" placeholder="N° de orden de envío">
+      <div class="rifa-claim-title">🔔 Avísame si gano</div>
+      <input class="rifa-input" id="rf-orden" placeholder="N° de orden de tu compra">
       <input class="rifa-input" id="rf-instagram" placeholder="@tu_instagram" autocapitalize="none" autocomplete="off">
-      <button class="rifa-cta rifa-cta-2" onclick="canjearTicket()">Canjear mi ticket</button>
+      <button class="rifa-cta rifa-cta-2" onclick="canjearTicket()">Guardar mi Instagram</button>
       <div class="rifa-msg" id="rf-msg" role="status"></div>
     </div>
-    <div class="rifa-fine">1 ticket por compra. Si ganas, <b>te avisamos por Instagram</b>.</div>
+    <div class="rifa-fine">Tu ticket ya está asignado con tu compra. Deja tu Instagram para que <b>te avisemos si ganas</b>.</div>
   </div>
 </div>
 <script>
@@ -1038,21 +1037,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     document.addEventListener('visibilitychange',function(){ if(!document.hidden) ping(false); });
   })();
   async function canjearTicket(){
-    var nombre=(document.getElementById('rf-nombre').value||'').trim();
     var orden=(document.getElementById('rf-orden').value||'').trim();
     var instagram=(document.getElementById('rf-instagram').value||'').trim();
     var msg=document.getElementById('rf-msg');
-    if(!nombre||!orden||!instagram){ msg.style.color='#e6a5a5'; msg.textContent='Completa nombre, n° de orden e Instagram.'; return; }
-    msg.style.color='#9a9a9a'; msg.textContent='Enviando...';
+    if(!orden||!instagram){ msg.style.color='#e6a5a5'; msg.textContent='Completa el n° de orden y tu Instagram.'; return; }
+    msg.style.color='#9a9a9a'; msg.textContent='Guardando...';
     var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
     try{
-      var res=await fetch(base+'/sorteo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:nombre,orden:orden,instagram:instagram})});
+      var res=await fetch(base+'/sorteo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orden:orden,instagram:instagram})});
       var d=await res.json().catch(function(){return {};});
       if(res.ok&&d.ok){
         msg.style.color='#7fd589';
-        msg.textContent=d.duplicado?'✅ Este n° de orden ya estaba registrado. ¡Sigues participando!':'✅ ¡Ticket canjeado! Si ganas, te avisamos por Instagram.';
-        document.getElementById('rf-nombre').value='';document.getElementById('rf-orden').value='';document.getElementById('rf-instagram').value='';
-      } else { msg.style.color='#e6a5a5'; msg.textContent=(d&&d.error)||'No se pudo canjear. Revisa los datos e intenta de nuevo.'; }
+        var num=d.ticket?(' Tu ticket es el N° '+String(d.ticket).padStart(4,'0')+'.'):'';
+        msg.textContent=(d.duplicado?'✅ Instagram actualizado.':'✅ ¡Listo! Te avisaremos por Instagram si ganas.')+num;
+        document.getElementById('rf-orden').value='';document.getElementById('rf-instagram').value='';
+      } else { msg.style.color='#e6a5a5'; msg.textContent=(d&&d.error)||'No se pudo guardar. Revisa los datos e intenta de nuevo.'; }
     }catch(e){ msg.style.color='#e6a5a5'; msg.textContent='Sin conexión. Intenta nuevamente en unos segundos.'; }
   }
 </script>

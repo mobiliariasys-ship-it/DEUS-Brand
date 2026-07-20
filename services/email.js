@@ -267,7 +267,8 @@ async function enviarConfirmacionCliente(datos) {
         <div style="margin:22px 0 6px;background:#fbf6ec;border:1px solid #e6d6b3;border-radius:10px;padding:16px 18px;text-align:center">
           <div style="font-size:26px;line-height:1;margin-bottom:6px">🎁</div>
           <b style="color:#8a6d2f">¡Ya estás participando en el sorteo mensual!</b>
-          <div style="font-size:13px;color:#7a6a4a;margin-top:6px">Con tu compra ganaste tu ticket para el sorteo de <b>una DEUS Band + Tapones de oído</b>. Sorteamos 1 vez al mes — si ganas, te avisamos por Instagram.</div>
+          ${datos.ticket ? `<div style="margin:10px auto 4px;display:inline-block;background:#20160a;color:#e7cf9c;border-radius:8px;padding:8px 18px;font-size:18px;font-weight:bold;letter-spacing:1px">Tu ticket N° ${String(datos.ticket).padStart(4, '0')}</div>` : ''}
+          <div style="font-size:13px;color:#7a6a4a;margin-top:6px">Con tu compra ganaste tu ticket para el sorteo de <b>una DEUS Band + Tapones de oído</b>. Sorteamos 1 vez al mes. Para avisarte si ganas, deja tu Instagram en la web (pestaña del sorteo, con tu n° de orden).</div>
         </div>
         <p style="margin-top:26px;color:#555">Gracias por confiar en DEUS. ✨</p>
       </div>
@@ -333,10 +334,10 @@ async function enviarTicketSorteo(t) {
       </div>
       <div style="padding:22px;font-size:14px">
         <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:7px 0;color:#888">N° de ticket</td><td style="text-align:right"><b>${t.numero ? '#' + String(t.numero).padStart(4, '0') : '—'}</b></td></tr>
           <tr><td style="padding:7px 0;color:#888">Nombre</td><td style="text-align:right"><b>${(t.nombre||'—').replace(/</g,'&lt;')}</b></td></tr>
           <tr><td style="padding:7px 0;color:#888">Instagram</td><td style="text-align:right"><b>${(t.instagram||'—').replace(/</g,'&lt;')}</b></td></tr>
           <tr><td style="padding:7px 0;color:#888">N° de orden de envío</td><td style="text-align:right"><b>${(t.orden||'—').replace(/</g,'&lt;')}</b></td></tr>
-          <tr><td style="padding:7px 0;color:#888">Orden verificada en el sistema</td><td style="text-align:right"><b style="color:${t.verificado?'#0a7d2c':'#c0392b'}">${t.verificado?'SÍ ✓':'no encontrada — revisar manualmente'}</b></td></tr>
         </table>
         <p style="margin-top:16px;font-size:12px;color:#999">Fecha: ${new Date(t.fecha||Date.now()).toLocaleString('es-CL')}<br>Guarda este correo: es tu registro de participantes del mes.</p>
       </div>

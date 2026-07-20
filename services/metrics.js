@@ -14,6 +14,9 @@ const vistasPorDia = {};   // 'YYYY-MM-DD' (Chile) -> N
 let duracionTotalMs = 0;   // suma de duración de sesiones ya terminadas (sin el dueño)
 let duracionN = 0;         // cuántas sesiones terminadas acumula duracionTotalMs
 const ventas = [];         // { monto, fecha, metodo, nombre, orden }
+// Tickets del sorteo. Se asigna 1 por compra confirmada (número correlativo),
+// automáticamente. { numero, nombre, orden, email, instagram, verificado, automatico, fecha }
+const tickets = [];
 
 // Carga lo guardado (disco o base de datos) antes de que el servidor empiece
 // a recibir tráfico. server.js hace `await metrics.init()` al arrancar.
@@ -24,10 +27,11 @@ async function init() {
   duracionTotalMs = guardado.duracionTotalMs || 0;
   duracionN = guardado.duracionN || 0;
   ventas.push(...(guardado.ventas || []));
+  tickets.push(...(guardado.tickets || []));
 }
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, ventas })
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, ventas, tickets })
     .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
@@ -85,6 +89,9 @@ function tiempoPromedioSeg() {
   return cuenta ? Math.round(total / cuenta / 1000) : 0;
 }
 
+// Registra la venta confirmada Y le asigna automáticamente un ticket del
+// sorteo (1 por compra). Devuelve el ticket asignado (con su número) para
+// poder mostrárselo al cliente en el correo de confirmación.
 function registrarVenta(v) {
   ventas.push({
     monto: Number(v.monto) || 0,
@@ -93,8 +100,64 @@ function registrarVenta(v) {
     nombre: v.nombre || '',
     orden: v.orden ? String(v.orden) : ''
   });
+  const ticket = asignarTicket({ nombre: v.nombre, orden: v.orden, email: v.email });
   guardar();
+  return ticket;
 }
+
+// Busca un ticket por n° de orden (calce exacto o por sufijo, como en
+// ordenConfirmada, porque el correo al cliente muestra solo los últimos 8).
+function buscarTicketPorOrden(orden) {
+  const o = String(orden || '').trim().toLowerCase();
+  if (!o) return null;
+  return tickets.find(t => {
+    const g = String(t.orden || '').toLowerCase();
+    return g === o || (o.length >= 6 && g.endsWith(o)) || (g.length >= 6 && o.endsWith(g));
+  }) || null;
+}
+
+// Asigna un ticket a una compra. Idempotente por n° de orden: si ya hay un
+// ticket para esa orden (p. ej. reintento del webhook), devuelve el mismo, sin
+// duplicar ni gastar un número nuevo.
+function asignarTicket({ nombre, orden, email } = {}) {
+  const ordenStr = String(orden || '').trim();
+  if (!ordenStr) return null;
+  const existente = buscarTicketPorOrden(ordenStr);
+  if (existente) return existente;
+  const numero = tickets.reduce((max, t) => Math.max(max, t.numero || 0), 0) + 1;
+  const ticket = {
+    numero,
+    nombre: (nombre || '').toString().slice(0, 90),
+    orden: ordenStr.slice(0, 60),
+    email: (email || '').toString().slice(0, 120),
+    instagram: '',
+    verificado: true,
+    automatico: true,
+    fecha: new Date().toISOString()
+  };
+  tickets.push(ticket);
+  return ticket;
+}
+
+// Canje manual: el comprador agrega su Instagram para que le avisemos si gana.
+// Si ya tiene ticket (asignado al pagar), le adjunta el Instagram; si no existe
+// pero la orden está confirmada, crea el ticket ahí mismo. Devuelve el ticket
+// (o null si la orden no corresponde a un pago confirmado).
+function reclamarInstagram({ orden, instagram, nombre } = {}) {
+  if (!ordenConfirmada(orden)) return null;
+  let ticket = buscarTicketPorOrden(orden);
+  if (!ticket) ticket = asignarTicket({ nombre, orden });
+  let ig = String(instagram || '').trim().slice(0, 60);
+  if (ig && ig[0] !== '@') ig = '@' + ig;
+  const yaTenia = !!ticket.instagram;
+  if (ig) ticket.instagram = ig;
+  if (nombre && !ticket.nombre) ticket.nombre = String(nombre).slice(0, 90);
+  guardar();
+  return { ticket, yaTenia };
+}
+
+function obtenerTickets() { return tickets; }
+function ticketsTotal() { return tickets.length; }
 
 // ¿Ese n° de orden corresponde a un pago ya confirmado? Cubre los 3 métodos
 // (MercadoPago, Webpay, Flow) porque todos pasan por registrarVenta().
@@ -167,8 +230,13 @@ function snapshot() {
     tiempoPromedioSeg: tiempoPromedioSeg(),
     ventas: resumenVentas(),
     ultimos30: ultimos30Dias(),
-    ventas30: ventas30Dias()
+    ventas30: ventas30Dias(),
+    tickets: tickets.slice().reverse(),
+    ticketsTotal: tickets.length
   };
 }
 
-module.exports = { init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo };
+module.exports = {
+  init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo,
+  asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden
+};
