@@ -1471,20 +1471,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (coImg && bandImages[color]) coImg.src = bandImages[color];
           document.querySelectorAll('.co-cdot').forEach(d => d.classList.toggle('active', d.dataset.color === color));
         }
-        function abrirCheckout() {
-          const colorActual = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris';
+        // colorForzado/qtyForzada: cuando se compra DESDE EL CARRITO, el color y
+        // la cantidad vienen del carrito — NO de la posición del carrusel (así un
+        // swipe accidental ya no cambia el color que se cobra).
+        function abrirCheckout(colorForzado, qtyForzada) {
+          const colorActual = colorForzado || (typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris');
           if (typeof AGOTADOS !== 'undefined' && AGOTADOS[colorActual]) {
             alert('El color negro está agotado. Elige el color gris para comprar.');
             return;
           }
           setCheckoutColor(colorActual); // bloquea el color con el que se abrió
-          checkoutQty = 1;
+          checkoutQty = (qtyForzada && qtyForzada > 0) ? qtyForzada : 1;
           upsellTapones = false;
           const upCard = document.getElementById('upsell-card');
           const upBtn = document.getElementById('upsell-btn');
           if (upCard) upCard.classList.remove('added');
           if (upBtn) upBtn.textContent = '+ Agregar';
-          document.getElementById('co-qty-display').textContent = '1';
+          document.getElementById('co-qty-display').textContent = String(checkoutQty);
           actualizarTotalCheckout();
           document.getElementById('checkout-overlay').classList.add('show');
           document.body.style.overflow = 'hidden';
@@ -1635,6 +1638,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
         function agregarAlCarrito() {
           confirmarCantidad();
+        }
+        // Comprar desde el carrito: usa el color y la cantidad DEL CARRITO, no del
+        // carrusel. Si hay varios colores, toma el del primer ítem (el checkout
+        // cobra un color por orden) y su cantidad — el modal lo muestra claro.
+        function comprarDesdeCarrito() {
+          cerrarCarrito();
+          if (!cart.length) { abrirCheckout(); return; }
+          const color = cart[0].color;
+          const qty = cart.reduce((s, i) => s + (i.color === color ? (i.cantidad || 1) : 0), 0);
+          abrirCheckout(color, qty);
         }
         function abrirCarrito() {
           document.getElementById('cart-drawer').classList.add('open');
@@ -2554,21 +2567,25 @@ let stockRestante = null;
 const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 
 // Sincroniza aviso de stock, foto y color en página y checkout
+function textoStock(color) {
+  if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — restock pronto · disponible en gris';
+  if (color === 'negra') return '🔥 Pocas unidades disponibles de este color';
+  return '';
+}
 function updateStockUI() {
-  const color = colorOrder[currentSlide];
+  // Aviso de stock EN LA PÁGINA: usa el color del carrusel (lo que se ve).
+  const pageColor = colorOrder[currentSlide];
+  const stockNote = document.getElementById('stock-note');
+  if (stockNote) { const t = textoStock(pageColor); stockNote.textContent = t; stockNote.style.display = t ? '' : 'none'; }
+  // Modal de CHECKOUT: refleja el color BLOQUEADO del checkout (checkoutColor),
+  // no la posición del carrusel — así lo que se ve al pagar es lo que se cobra.
+  const cc = (typeof checkoutColor !== 'undefined' && checkoutColor) ? checkoutColor : pageColor;
   const coImg = document.getElementById('co-prod-img');
-  if (coImg && bandImages[color]) coImg.src = bandImages[color];
+  if (coImg && bandImages[cc]) coImg.src = bandImages[cc];
   const coColor = document.getElementById('co-prod-color');
-  if (coColor) coColor.textContent = 'Color ' + COLOR_LABEL[color];
-  let texto = '';
-  if (AGOTADOS[color]) {
-    texto = '⚫ Color negro AGOTADO — restock pronto · disponible en gris';
-  } else if (color === 'negra') {
-    texto = '🔥 Pocas unidades disponibles de este color';
-  }
-  [document.getElementById('stock-note'), document.getElementById('co-stock')].forEach(el => {
-    if (el) { el.textContent = texto; el.style.display = texto ? '' : 'none'; }
-  });
+  if (coColor) coColor.textContent = 'Color ' + COLOR_LABEL[cc];
+  const coStock = document.getElementById('co-stock');
+  if (coStock) { const t = textoStock(cc); coStock.textContent = t; coStock.style.display = t ? '' : 'none'; }
 }
 
 function cargarStock() {
@@ -2745,7 +2762,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span class="cart-total-label">Total:</span>
       <span class="cart-total-price" id="cart-total-price">$0</span>
     </div>
-    <button class="cart-cta" onclick="cerrarCarrito(); abrirCheckout();">Comprar ahora</button>
+    <button class="cart-cta" onclick="comprarDesdeCarrito()">Comprar ahora</button>
   </div>
 </div>
 
