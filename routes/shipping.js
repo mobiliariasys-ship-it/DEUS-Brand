@@ -140,25 +140,28 @@ async function rateBluexpress(commune, region) {
 
 // ── Tarifas Starken por región (según distancia desde Santiago) ──
 const TARIFAS = {
+  // Santiago (RM) y Valparaíso NO suben (cercanas, tarifa base).
   'metropolitana':      { price: 3890, dias: '1-2 días hábiles' },
   'valparaiso':         { price: 3890, dias: '1-2 días hábiles' },
-  'ohiggins':           { price: 3890, dias: '1-2 días hábiles' },
-  'maule':              { price: 4090, dias: '2-3 días hábiles' },
-  'nuble':              { price: 4290, dias: '2-3 días hábiles' },
-  'biobio':             { price: 4390, dias: '2-3 días hábiles' },
-  'la araucania':       { price: 4690, dias: '2-3 días hábiles' },
-  'araucania':          { price: 4690, dias: '2-3 días hábiles' },
-  'los rios':           { price: 4890, dias: '2-3 días hábiles' },
-  'los lagos':          { price: 4990, dias: '2-3 días hábiles' },
-  'coquimbo':           { price: 4490, dias: '2-3 días hábiles' },
-  'atacama':            { price: 4790, dias: '2-3 días hábiles' },
-  // Referencia real Starken: Antofagasta $5.400 (jul 2026). Regiones más
-  // lejanas escalan desde ahí según distancia a Santiago.
-  'antofagasta':        { price: 5400, dias: '2-3 días hábiles' },
-  'tarapaca':           { price: 5700, dias: '3-4 días hábiles' },
-  'arica y parinacota': { price: 5900, dias: '3-4 días hábiles' },
-  'aysen':              { price: 5900, dias: '3-5 días hábiles' },
-  'magallanes':         { price: 5900, dias: '3-5 días hábiles' }
+  // O'Higgins (VI región): ajustada al costo real de Starken ($5.200).
+  'ohiggins':           { price: 5200, dias: '1-2 días hábiles' },
+  // El resto sube ~10% sobre la tarifa anterior.
+  'maule':              { price: 4490, dias: '2-3 días hábiles' },
+  'nuble':              { price: 4690, dias: '2-3 días hábiles' },
+  'biobio':             { price: 4790, dias: '2-3 días hábiles' },
+  'la araucania':       { price: 5190, dias: '2-3 días hábiles' },
+  'araucania':          { price: 5190, dias: '2-3 días hábiles' },
+  'los rios':           { price: 5390, dias: '2-3 días hábiles' },
+  'los lagos':          { price: 5490, dias: '2-3 días hábiles' },
+  'coquimbo':           { price: 4990, dias: '2-3 días hábiles' },
+  'atacama':            { price: 5290, dias: '2-3 días hábiles' },
+  // Referencia real Starken: Antofagasta ~$5.400 (jul 2026). Regiones más
+  // lejanas escalan desde ahí según distancia a Santiago (con el +10%).
+  'antofagasta':        { price: 5990, dias: '2-3 días hábiles' },
+  'tarapaca':           { price: 6290, dias: '3-4 días hábiles' },
+  'arica y parinacota': { price: 6490, dias: '3-4 días hábiles' },
+  'aysen':              { price: 6490, dias: '3-5 días hábiles' },
+  'magallanes':         { price: 6490, dias: '3-5 días hábiles' }
 };
 
 function normRegion(r) {
