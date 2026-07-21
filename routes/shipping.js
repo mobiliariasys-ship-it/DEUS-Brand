@@ -143,9 +143,9 @@ const TARIFAS = {
   // Santiago (RM) y Valparaíso NO suben (cercanas, tarifa base).
   'metropolitana':      { price: 3890, dias: '1-2 días hábiles' },
   'valparaiso':         { price: 3890, dias: '1-2 días hábiles' },
-  // O'Higgins (VI región): costo real de Starken ($5.200).
-  'ohiggins':           { price: 5200, dias: '1-2 días hábiles' },
-  // Números cerrados por región.
+  // O'Higgins (VI región).
+  'ohiggins':           { price: 4800, dias: '1-2 días hábiles' },
+  // Números cerrados por región. Tope de envío: $5.800 (nada cobra más).
   'maule':              { price: 4400, dias: '2-3 días hábiles' },
   'nuble':              { price: 4800, dias: '2-3 días hábiles' },
   'biobio':             { price: 4800, dias: '2-3 días hábiles' },
@@ -155,11 +155,11 @@ const TARIFAS = {
   'los lagos':          { price: 5400, dias: '2-3 días hábiles' },
   'coquimbo':           { price: 5200, dias: '2-3 días hábiles' },
   'atacama':            { price: 5400, dias: '2-3 días hábiles' },
-  'antofagasta':        { price: 5900, dias: '2-3 días hábiles' },
-  'tarapaca':           { price: 6300, dias: '3-4 días hábiles' },
-  'arica y parinacota': { price: 6400, dias: '3-4 días hábiles' },
-  'aysen':              { price: 6400, dias: '3-5 días hábiles' },
-  'magallanes':         { price: 6400, dias: '3-5 días hábiles' }
+  'antofagasta':        { price: 5800, dias: '2-3 días hábiles' },
+  'tarapaca':           { price: 5800, dias: '3-4 días hábiles' },
+  'arica y parinacota': { price: 5800, dias: '3-4 días hábiles' },
+  'aysen':              { price: 5800, dias: '3-5 días hábiles' },
+  'magallanes':         { price: 5800, dias: '3-5 días hábiles' }
 };
 
 function normRegion(r) {
