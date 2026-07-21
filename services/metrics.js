@@ -89,6 +89,14 @@ function tiempoPromedioSeg() {
   return cuenta ? Math.round(total / cuenta / 1000) : 0;
 }
 
+// Reinicia el promedio de tiempo (borra lo acumulado). Útil para limpiar el
+// tiempo del dueño que quedó contado antes de excluirse.
+function resetTiempoPromedio() {
+  duracionTotalMs = 0;
+  duracionN = 0;
+  guardar();
+}
+
 // Registra la venta confirmada Y le asigna automáticamente un ticket del
 // sorteo (1 por compra). Devuelve el ticket asignado (con su número) para
 // poder mostrárselo al cliente en el correo de confirmación.
@@ -238,5 +246,6 @@ function snapshot() {
 
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo,
-  asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden
+  asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
+  resetTiempoPromedio
 };

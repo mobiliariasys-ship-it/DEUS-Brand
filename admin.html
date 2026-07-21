@@ -80,7 +80,7 @@
     <div class="grid">
       <div class="stat live"><div class="k"><span class="dot on"></span>Viendo ahora</div><div class="v" id="s-live">0</div></div>
       <div class="stat"><div class="k">Visitas hoy</div><div class="v" id="s-vhoy">0</div></div>
-      <div class="stat"><div class="k">Tiempo promedio</div><div class="v" id="s-tprom">—</div></div>
+      <div class="stat"><div class="k">Tiempo promedio <span onclick="resetTiempo()" title="Reiniciar el promedio (limpia tu tiempo)" style="margin-left:auto;cursor:pointer;color:#777;font-size:.8rem">⟳</span></div><div class="v" id="s-tprom">—</div></div>
       <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
       <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
@@ -241,6 +241,14 @@
     }).catch(function(e){
       if(e.message==='clave'){ document.getElementById('loginErr').textContent='Clave incorrecta.'; localStorage.removeItem('deus-admin-key'); }
     });
+  }
+
+  function resetTiempo(){
+    if(!confirm('¿Reiniciar el promedio de tiempo? (limpia el tiempo ya contado)')) return;
+    fetch(BASE+'/admin/reset-tiempo?clave='+encodeURIComponent(clave),{method:'POST'})
+      .then(function(r){ return r.json(); })
+      .then(function(){ cargar(false); })
+      .catch(function(){});
   }
 
   function elegirGanador(){

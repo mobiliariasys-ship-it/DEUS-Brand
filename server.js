@@ -290,6 +290,15 @@ app.get('/admin/stats', (req, res) => {
   });
 });
 
+// Reinicia el promedio de tiempo (limpia el tiempo del dueño ya contado). Protegido.
+app.post('/admin/reset-tiempo', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+  metrics.resetTiempoPromedio();
+  res.json({ ok: true });
+});
+
 // ── Aviso de envío al cliente ──
 // Lo dispara el Google Apps Script del Gmail del dueño cuando llega el correo
 // de ChileExpress/Starken con el n° de seguimiento. El script extrae el correo
