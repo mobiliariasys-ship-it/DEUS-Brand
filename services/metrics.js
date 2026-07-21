@@ -14,6 +14,11 @@ const vistasPorDia = {};   // 'YYYY-MM-DD' (Chile) -> N
 let duracionTotalMs = 0;   // suma de duración de sesiones ya terminadas (sin el dueño)
 let duracionN = 0;         // cuántas sesiones terminadas acumula duracionTotalMs
 let checkoutsTotal = 0;    // cuántas veces se abrió el checkout (paso medio del embudo, sin el dueño)
+// Conducta del visitante: contadores agregados por evento (1 por sesión, sin el
+// dueño). Clave 'hito:precio', 'accion:color', 'disp:movil', 'fuente:instagram'…
+// No guarda nada personal, solo cuántas sesiones hicieron cada cosa.
+const eventos = {};
+const EVENTO_OK = /^(hito|accion|disp|fuente):[a-z0-9_-]{1,24}$/;
 const ventas = [];         // { monto, fecha, metodo, nombre, orden }
 // Tickets del sorteo. Se asigna 1 por compra confirmada (número correlativo),
 // automáticamente. { numero, nombre, orden, email, instagram, verificado, automatico, fecha }
@@ -28,12 +33,13 @@ async function init() {
   duracionTotalMs = guardado.duracionTotalMs || 0;
   duracionN = guardado.duracionN || 0;
   checkoutsTotal = guardado.checkoutsTotal || 0;
+  Object.assign(eventos, guardado.eventos || {});
   ventas.push(...(guardado.ventas || []));
   tickets.push(...(guardado.tickets || []));
 }
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, ventas, tickets })
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, ventas, tickets })
     .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
@@ -104,6 +110,18 @@ function resetTiempoPromedio() {
 function registrarCheckout(esOwner) {
   if (esOwner) return;
   checkoutsTotal++;
+  guardar();
+}
+
+// Registra un evento de conducta (scroll, click, dispositivo, fuente). El
+// frontend ya deduplica 1 vez por sesión, así que acá solo sumamos. Valida el
+// formato para no ensuciar los datos y limita la cantidad de claves distintas.
+function registrarEvento(ev, esOwner) {
+  if (esOwner) return;
+  const k = String(ev || '').trim().toLowerCase();
+  if (!EVENTO_OK.test(k)) return;
+  if (eventos[k] === undefined && Object.keys(eventos).length >= 120) return;
+  eventos[k] = (eventos[k] || 0) + 1;
   guardar();
 }
 
@@ -254,12 +272,13 @@ function snapshot() {
     tickets: tickets.slice().reverse(),
     ticketsTotal: tickets.length,
     conversion,                                     // % ventas ÷ visitas
-    embudo: { visitas: vistasTotal, checkouts: checkoutsTotal, ventas: comprasN }
+    embudo: { visitas: vistasTotal, checkouts: checkoutsTotal, ventas: comprasN },
+    conducta: { ...eventos }                         // contadores de conducta del visitante
   };
 }
 
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
-  resetTiempoPromedio, registrarCheckout
+  resetTiempoPromedio, registrarCheckout, registrarEvento
 };

@@ -1015,9 +1015,57 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     function ping(n){ try{ fetch(base+'/track/ping',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({sid:sid,nueva:!!n,esOwner:esOwner()})}).catch(function(){}); }catch(e){} }
     // Embudo: registra 1 sola vez por sesión que el visitante abrió el checkout.
     window.deusTrackCheckout=function(){ try{ if(sessionStorage.getItem('deus-co-tracked'))return; sessionStorage.setItem('deus-co-tracked','1'); fetch(base+'/track/checkout',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({esOwner:esOwner()})}).catch(function(){}); }catch(e){} };
+    // Conducta: cada evento se manda 1 sola vez por sesión (dedupe por clave).
+    window.deusEvento=function(ev){ try{ if(!ev)return; var f='deus-ev-'+ev; if(sessionStorage.getItem(f))return; sessionStorage.setItem(f,'1'); fetch(base+'/track/event',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({ev:ev,esOwner:esOwner()})}).catch(function(){}); }catch(e){} };
     ping(nueva);
     setInterval(function(){ if(!document.hidden) ping(false); },15000);
     document.addEventListener('visibilitychange',function(){ if(!document.hidden) ping(false); });
+  })();
+  // Conducta del visitante: mide hasta dónde scrollea, qué toca, con qué
+  // dispositivo y de qué fuente llega. Todo vía window.deusEvento (1 vez por
+  // sesión). No corre para el dueño (deusEvento ya lo filtra).
+  (function(){
+    function ev(e){ if(window.deusEvento) window.deusEvento(e); }
+    function start(){
+      // 1) Dispositivo (una vez por sesión)
+      var movil = window.matchMedia('(max-width:760px)').matches || ('ontouchstart' in window && window.innerWidth<900);
+      ev('disp:'+(movil?'movil':'desktop'));
+      // 2) Fuente de tráfico (UTM > referrer > directo)
+      try{
+        var qs=new URLSearchParams(location.search), src=(qs.get('utm_source')||'').toLowerCase(), ref='';
+        if(!src){ var r=(document.referrer||''); if(!r){ src='directo'; }
+          else { ref=r.toLowerCase();
+            if(/instagram|ig\.me|l\.instagram/.test(ref)) src='instagram';
+            else if(/facebook|fb\.|fb\.me|l\.facebook/.test(ref)) src='facebook';
+            else if(/tiktok/.test(ref)) src='tiktok';
+            else if(/google/.test(ref)) src='google';
+            else if(/bing|duckduck|yahoo/.test(ref)) src='buscador';
+            else if(/wa\.me|whatsapp/.test(ref)) src='whatsapp';
+            else if(location.hostname && ref.indexOf(location.hostname)>-1) src='interno';
+            else src='otro'; } }
+        src=src.replace(/[^a-z0-9_-]/g,'').slice(0,24)||'otro';
+        ev('fuente:'+src);
+      }catch(e){ ev('fuente:otro'); }
+      // 3) Hitos de scroll (cada sección que entra en pantalla, una vez)
+      var hitos=[['.price-block','precio'],['#tecnologia','tecnologia'],['#app','app'],['.reviews','reviews'],['.final-cta','final']];
+      if('IntersectionObserver' in window){
+        var io=new IntersectionObserver(function(ents){
+          ents.forEach(function(en){ if(en.isIntersecting){ var n=en.target.getAttribute('data-hito'); if(n){ ev('hito:'+n); io.unobserve(en.target); } } });
+        },{threshold:.4});
+        hitos.forEach(function(h){ var el=document.querySelector(h[0]); if(el){ el.setAttribute('data-hito',h[1]); io.observe(el); } });
+      }
+      // 4) Interacciones (delegación de clicks, una vez por tipo)
+      document.addEventListener('click',function(e){
+        var t=e.target;
+        if(t.closest('.cdot,.co-cdot')) ev('accion:color');
+        if(t.closest('.hdr-cart-btn,.btn-cart')) ev('accion:carrito');
+        if(t.closest('.proof-line,[onclick*="abrirResenas"]')) ev('accion:resenas');
+        if(t.closest('#rot360,.hold-arrow')) ev('accion:girar');
+      },true);
+      // Giro del 360° también por arrastre (no solo click)
+      var r360=document.getElementById('rot360'); if(r360) r360.addEventListener('pointerdown',function(){ ev('accion:girar'); });
+    }
+    if(document.readyState!=='loading') start(); else document.addEventListener('DOMContentLoaded',start);
   })();
   async function canjearTicket(){
     var orden=(document.getElementById('rf-orden').value||'').trim();

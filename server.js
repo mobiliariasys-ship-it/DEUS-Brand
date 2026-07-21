@@ -278,6 +278,12 @@ app.post('/track/checkout', (req, res) => {
   res.sendStatus(204);
 });
 
+// Conducta del visitante: scroll por secciones, clicks, dispositivo, fuente.
+app.post('/track/event', (req, res) => {
+  metrics.registrarEvento(req.body?.ev, !!req.body?.esOwner);
+  res.sendStatus(204);
+});
+
 // ── Panel de administración (protegido con STOCK_KEY) ──
 // Uso: /admin/stats?clave=MICLAVE
 app.get('/admin/stats', (req, res) => {
