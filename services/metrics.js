@@ -13,6 +13,7 @@ let vistasTotal = 0;
 const vistasPorDia = {};   // 'YYYY-MM-DD' (Chile) -> N
 let duracionTotalMs = 0;   // suma de duración de sesiones ya terminadas (sin el dueño)
 let duracionN = 0;         // cuántas sesiones terminadas acumula duracionTotalMs
+let checkoutsTotal = 0;    // cuántas veces se abrió el checkout (paso medio del embudo, sin el dueño)
 const ventas = [];         // { monto, fecha, metodo, nombre, orden }
 // Tickets del sorteo. Se asigna 1 por compra confirmada (número correlativo),
 // automáticamente. { numero, nombre, orden, email, instagram, verificado, automatico, fecha }
@@ -26,12 +27,13 @@ async function init() {
   Object.assign(vistasPorDia, guardado.vistasPorDia || {});
   duracionTotalMs = guardado.duracionTotalMs || 0;
   duracionN = guardado.duracionN || 0;
+  checkoutsTotal = guardado.checkoutsTotal || 0;
   ventas.push(...(guardado.ventas || []));
   tickets.push(...(guardado.tickets || []));
 }
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, ventas, tickets })
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, ventas, tickets })
     .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
@@ -94,6 +96,14 @@ function tiempoPromedioSeg() {
 function resetTiempoPromedio() {
   duracionTotalMs = 0;
   duracionN = 0;
+  guardar();
+}
+
+// Registra que una sesión abrió el checkout (el paso del medio del embudo:
+// visitas → abrieron checkout → pagaron). El dueño no cuenta.
+function registrarCheckout(esOwner) {
+  if (esOwner) return;
+  checkoutsTotal++;
   guardar();
 }
 
@@ -231,6 +241,8 @@ function ventas30Dias() {
 }
 
 function snapshot() {
+  const comprasN = ventas.length;
+  const conversion = vistasTotal ? +((comprasN / vistasTotal) * 100).toFixed(1) : 0;
   return {
     visitantesEnVivo: visitantesEnVivo(),
     vistasHoy: vistasPorDia[hoyChile()] || 0,
@@ -240,12 +252,14 @@ function snapshot() {
     ultimos30: ultimos30Dias(),
     ventas30: ventas30Dias(),
     tickets: tickets.slice().reverse(),
-    ticketsTotal: tickets.length
+    ticketsTotal: tickets.length,
+    conversion,                                     // % ventas ÷ visitas
+    embudo: { visitas: vistasTotal, checkouts: checkoutsTotal, ventas: comprasN }
   };
 }
 
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
-  resetTiempoPromedio
+  resetTiempoPromedio, registrarCheckout
 };

@@ -272,6 +272,12 @@ app.post('/track/ping', (req, res) => {
   res.sendStatus(204);
 });
 
+// Paso intermedio del embudo: el visitante abrió el checkout.
+app.post('/track/checkout', (req, res) => {
+  metrics.registrarCheckout(!!req.body?.esOwner);
+  res.sendStatus(204);
+});
+
 // ── Panel de administración (protegido con STOCK_KEY) ──
 // Uso: /admin/stats?clave=MICLAVE
 app.get('/admin/stats', (req, res) => {

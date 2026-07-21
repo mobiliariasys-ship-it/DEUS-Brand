@@ -1013,6 +1013,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if(!sid){ sid=Date.now().toString(36)+Math.random().toString(36).slice(2,8); sessionStorage.setItem('deus-sid',sid); }
     function esOwner(){ try{ return localStorage.getItem('deus-admin-self')==='true'||!!localStorage.getItem('deus-admin-key'); }catch(e){ return false; } }
     function ping(n){ try{ fetch(base+'/track/ping',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({sid:sid,nueva:!!n,esOwner:esOwner()})}).catch(function(){}); }catch(e){} }
+    // Embudo: registra 1 sola vez por sesión que el visitante abrió el checkout.
+    window.deusTrackCheckout=function(){ try{ if(sessionStorage.getItem('deus-co-tracked'))return; sessionStorage.setItem('deus-co-tracked','1'); fetch(base+'/track/checkout',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({esOwner:esOwner()})}).catch(function(){}); }catch(e){} };
     ping(nueva);
     setInterval(function(){ if(!document.hidden) ping(false); },15000);
     document.addEventListener('visibilitychange',function(){ if(!document.hidden) ping(false); });
@@ -1493,6 +1495,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           document.body.style.overflow = 'hidden';
           if (typeof updateStockUI === 'function') updateStockUI();
           if (window.fbq) fbq('track', 'InitiateCheckout', { value: precioBanda(), currency: 'CLP', content_name: 'DEUS Band' });
+          if (window.deusTrackCheckout) window.deusTrackCheckout();
         }
         // Rescate: el primer intento de cierre muestra la barra de WhatsApp en vez de cerrar
         let rescateMostrado = false;

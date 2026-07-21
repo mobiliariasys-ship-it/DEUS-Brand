@@ -34,6 +34,12 @@
   .stat.gold{border-color:rgba(231,207,156,.35);}
   .stat.gold .v{color:var(--gold);}
   section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;}
+  .fn-row{display:flex;align-items:center;gap:12px;margin:10px 0;}
+  .fn-lbl{width:150px;flex:none;font-size:.9rem;color:var(--silver);}
+  .fn-track{flex:1;background:#1e1e1e;border-radius:8px;height:30px;overflow:hidden;}
+  .fn-bar{height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#c19a5b,#e7cf9c);transition:width .6s ease;}
+  .fn-val{width:96px;flex:none;text-align:right;font-weight:700;font-size:.95rem;}
+  .fn-val small{color:var(--silver);font-weight:400;font-size:.78rem;}
   .sec-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
   .sec-h h2{font-size:.82rem;letter-spacing:1.5px;text-transform:uppercase;color:#ddd;margin:0;}
   .btn{background:var(--gold);color:#20160a;border:none;padding:9px 15px;border-radius:8px;font-weight:700;font-size:.74rem;cursor:pointer;}
@@ -84,7 +90,17 @@
       <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
       <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
+      <div class="stat"><div class="k">Conversión</div><div class="v" id="s-conv">—</div></div>
     </div>
+
+    <section>
+      <div class="sec-h"><h2>🫗 Embudo · dónde se caen</h2><span class="pill" id="funnel-conv"></span></div>
+      <div id="funnel">
+        <div class="fn-row"><div class="fn-lbl">👀 Visitas</div><div class="fn-track"><div class="fn-bar" id="fn-vis"></div></div><div class="fn-val" id="fn-vis-v">0</div></div>
+        <div class="fn-row"><div class="fn-lbl">🛒 Abrieron checkout</div><div class="fn-track"><div class="fn-bar" id="fn-co"></div></div><div class="fn-val" id="fn-co-v">0</div></div>
+        <div class="fn-row"><div class="fn-lbl">✅ Pagaron</div><div class="fn-track"><div class="fn-bar" id="fn-pay"></div></div><div class="fn-val" id="fn-pay-v">0</div></div>
+      </div>
+    </section>
 
     <section>
       <div class="sec-h"><h2>📊 Vistas · últimos 30 días</h2><span class="pill" id="chart-total"></span></div>
@@ -146,6 +162,20 @@
     arr.forEach(function(x){ var tr=document.createElement('tr'); tr.innerHTML=render(x); tb.appendChild(tr); });
   }
 
+  // Embudo: barras proporcionales a las visitas (la base = 100%) y % de cada paso.
+  function pintarEmbudo(e, conv){
+    var vis=e.visitas||0, co=e.checkouts||0, pay=e.ventas||0;
+    var base=Math.max(vis,1);
+    var pct=function(n){ return Math.round(n/base*100); };
+    document.getElementById('fn-vis').style.width='100%';
+    document.getElementById('fn-co').style.width=pct(co)+'%';
+    document.getElementById('fn-pay').style.width=pct(pay)+'%';
+    document.getElementById('fn-vis-v').innerHTML=vis+' <small>100%</small>';
+    document.getElementById('fn-co-v').innerHTML=co+' <small>'+pct(co)+'%</small>';
+    document.getElementById('fn-pay-v').innerHTML=pay+' <small>'+pct(pay)+'%</small>';
+    document.getElementById('funnel-conv').textContent='Conversión '+conv+'%';
+  }
+
   function pintar(d){
     document.getElementById('s-live').textContent=d.visitantesEnVivo;
     document.getElementById('s-vhoy').textContent=d.vistasHoy;
@@ -155,6 +185,8 @@
     document.getElementById('s-vent-tot').childNodes[0].nodeValue=d.ventas.total.count+' ';
     document.getElementById('s-vent-tot-m').textContent=money(d.ventas.total.monto);
     document.getElementById('s-tickets').textContent=d.ticketsTotal;
+    document.getElementById('s-conv').textContent=(d.conversion!=null?d.conversion:0)+'%';
+    pintarEmbudo(d.embudo||{visitas:0,checkouts:0,ventas:0},d.conversion||0);
     tickets=d.tickets||[];
     rows('#t-tickets',tickets,function(t){ return '<td><b>#'+String(t.numero||0).padStart(4,"0")+'</b></td><td>'+esc(t.nombre||'—')+'</td><td>'+esc(t.instagram||'—')+'</td><td>'+esc(t.orden)+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');
     rows('#t-ventas',d.ventas.ultimas||[],function(v){ return '<td>'+fecha(v.fecha)+'</td><td>'+esc(v.nombre||'—')+'</td><td>'+esc(v.metodo)+'</td><td>'+money(v.monto)+'</td>'; },'ventas-empty');
