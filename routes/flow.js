@@ -9,8 +9,8 @@ const metrics = require('../services/metrics');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
-const PRODUCT_PRICE = 48990;
-const precioBanda = () => Date.now() < OFERTA_END ? 48990 : 54990;
+const PRODUCT_PRICE = 54990;
+const precioBanda = () => 54990; // descuento retirado: precio normal $54.990
 const pedidosFlow = new Map();
 
 // Producción por defecto; sandbox si FLOW_ENV=sandbox
