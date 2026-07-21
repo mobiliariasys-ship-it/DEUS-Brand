@@ -199,25 +199,54 @@ app.post('/notificaciones', async (req, res) => {
       if (info.status === 'approved') {
         // Datos del pedido (metadata del pago + pedido en memoria) para tener
         // dirección y comprador completos en el correo de despacho.
+        // La METADATA del pago describe exactamente lo que el cliente pagó
+        // (color, cantidad, dirección). Es la fuente autoritativa: un mismo
+        // email puede tener varios pedidos pendientes (p. ej. configuró negro
+        // y después pagó rosado), y buscar por email a secas devolvía el
+        // pedido equivocado → el correo de DESPACHO mostraba un color distinto
+        // al de la compra. Ahora el color sale del pago real, no del primer
+        // pedido que calce.
         const meta = info.metadata || {};
         const emailCliente = meta.customer_email || info.payer?.email;
-        const pedido = pedidos.find(p => p.customer?.email && p.customer.email === emailCliente);
+        // Pedido en memoria (el más RECIENTE que calce) solo para completar lo
+        // que no viaje en la metadata.
+        const enMemoria = [...pedidos].reverse().find(p => (p.customer?.email || '').toLowerCase() === (emailCliente || '').toLowerCase()) || {};
+        const taponesPago = meta.tapones !== undefined ? (meta.tapones === true || meta.tapones === 'true') : !!enMemoria.tapones;
+        const costoPago = (meta.shipping_cost !== undefined && meta.shipping_cost !== null && meta.shipping_cost !== '') ? Number(meta.shipping_cost) : enMemoria.shipping?.cost;
+        const pedido = {
+          product: enMemoria.product || 'DEUS Band',
+          color: meta.selected_color || enMemoria.color,
+          cantidad: Number(meta.cantidad) || enMemoria.cantidad,
+          tapones: taponesPago,
+          method: enMemoria.method || 'MercadoPago',
+          customer: {
+            name: meta.customer_name || enMemoria.customer?.name,
+            rut: meta.customer_rut || enMemoria.customer?.rut,
+            email: emailCliente,
+            phone: meta.customer_phone || enMemoria.customer?.phone
+          },
+          shipping: {
+            carrier: meta.shipping_carrier || enMemoria.shipping?.carrier,
+            cost: costoPago,
+            address: meta.shipping_address || enMemoria.shipping?.address
+          }
+        };
 
         await enviarPagoConfirmado(info, pedido);
         decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago
         // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
-        const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: meta.customer_name || pedido?.customer?.name, orden: info.id, email: emailCliente });
+        const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: pedido.customer.name, orden: info.id, email: emailCliente });
 
-        // Correo de confirmación al cliente (usa metadata + pedido en memoria).
+        // Correo de confirmación al cliente (mismos datos autoritativos del pago).
         marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
         enviarConfirmacionCliente({
           email: emailCliente,
-          name: meta.customer_name || pedido?.customer?.name,
+          name: pedido.customer.name,
           monto: info.transaction_amount,
           id: info.id,
-          color: meta.selected_color || pedido?.color,
-          carrier: meta.shipping_carrier || pedido?.shipping?.carrier,
-          address: pedido?.shipping?.address,
+          color: pedido.color,
+          carrier: pedido.shipping.carrier,
+          address: pedido.shipping.address,
           ticket: ticketMP && ticketMP.numero
         }).catch(err => console.error('[email] Confirmación cliente:', err.message));
       }
