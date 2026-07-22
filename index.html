@@ -354,6 +354,9 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .spec-list{list-style:none;margin-top:26px;margin-bottom:26px;display:flex;flex-direction:column;gap:8px;}
 .specs-sec{max-width:1100px;margin:0 auto;padding:10px 24px 0;}
 .specs-sec .spec-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0;}
+/* Specs ubicadas dentro de "Cómo funciona", debajo del 360°: sin doble padding
+   lateral y con aire arriba para separarlas del texto del sensor. */
+.specs-in-how{padding-left:0;padding-right:0;padding-top:0;margin-top:26px;}
 @media(max-width:760px){
   .specs-sec{padding:6px 16px 0;}
   .specs-sec .spec-list{grid-template-columns:1fr 1fr;gap:9px;}
@@ -1936,16 +1939,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </div>
 
-  <!-- ESPECIFICACIONES CLAVE (fuera de la tarjeta del producto) -->
-  <section class="specs-sec">
-    <ul class="spec-list">
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
-    </ul>
-  </section>
-
   <!-- COMO FUNCIONA -->
   <section class="how" id="tecnologia">
     <div class="how-head">
@@ -1967,6 +1960,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p>Sensor óptico de alta sensibilidad que mide tu frecuencia cardíaca, oxígeno en sangre y variabilidad en tiempo real, día y noche. Precisión constante en cada latido. Su estructura está fabricada en <b>aleación de zinc de alta resistencia</b>.</p>
       </div>
     </div>
+
+    <!-- ESPECIFICACIONES CLAVE (debajo del sensor / 360° para darle protagonismo al giro) -->
+    <section class="specs-sec specs-in-how">
+      <ul class="spec-list">
+        <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
+        <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
+        <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
+        <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
+      </ul>
+    </section>
+
     <!-- Carrusel: 3 características cambiables (imagen cuadrada arriba, texto abajo) -->
     <div class="feat-car" id="featCar">
       <div class="feat-track" id="featTrack">
