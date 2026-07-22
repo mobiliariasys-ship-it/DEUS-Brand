@@ -19,6 +19,11 @@ let checkoutsTotal = 0;    // cuántas veces se abrió el checkout (paso medio d
 // No guarda nada personal, solo cuántas sesiones hicieron cada cosa.
 const eventos = {};
 const EVENTO_OK = /^(hito|accion|disp|fuente):[a-z0-9_-]{1,24}$/;
+// Conversión por acción: de las sesiones que COMPRARON, cuántas habían hecho
+// cada acción/hito (llega desde success.html). Cruzado con `eventos` da el % de
+// gente que compró después de hacer X (p. ej. girar el 360°).
+const conversiones = {};
+let conversionesN = 0;     // total de compras rastreadas desde el frontend
 const ventas = [];         // { monto, fecha, metodo, nombre, orden }
 // Tickets del sorteo. Se asigna 1 por compra confirmada (número correlativo),
 // automáticamente. { numero, nombre, orden, email, instagram, verificado, automatico, fecha }
@@ -34,12 +39,14 @@ async function init() {
   duracionN = guardado.duracionN || 0;
   checkoutsTotal = guardado.checkoutsTotal || 0;
   Object.assign(eventos, guardado.eventos || {});
+  Object.assign(conversiones, guardado.conversiones || {});
+  conversionesN = guardado.conversionesN || 0;
   ventas.push(...(guardado.ventas || []));
   tickets.push(...(guardado.tickets || []));
 }
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, ventas, tickets })
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, conversiones, conversionesN, ventas, tickets })
     .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
@@ -122,6 +129,23 @@ function registrarEvento(ev, esOwner) {
   if (!EVENTO_OK.test(k)) return;
   if (eventos[k] === undefined && Object.keys(eventos).length >= 120) return;
   eventos[k] = (eventos[k] || 0) + 1;
+  guardar();
+}
+
+// Registra una compra y qué acciones/hitos había hecho esa sesión (success.html
+// manda los flags de la sesión). Cruzado con `eventos` da el % que compró tras
+// cada acción. El dueño no cuenta.
+function registrarConversion(acciones, esOwner) {
+  if (esOwner) return;
+  conversionesN++;
+  if (Array.isArray(acciones)) {
+    for (const raw of acciones) {
+      const k = String(raw || '').trim().toLowerCase();
+      if (!EVENTO_OK.test(k)) continue;
+      if (conversiones[k] === undefined && Object.keys(conversiones).length >= 120) continue;
+      conversiones[k] = (conversiones[k] || 0) + 1;
+    }
+  }
   guardar();
 }
 
@@ -273,12 +297,14 @@ function snapshot() {
     ticketsTotal: tickets.length,
     conversion,                                     // % ventas ÷ visitas
     embudo: { visitas: vistasTotal, checkouts: checkoutsTotal, ventas: comprasN },
-    conducta: { ...eventos }                         // contadores de conducta del visitante
+    conducta: { ...eventos },                        // contadores de conducta del visitante
+    conversionAccion: { ...conversiones },           // compradores que hicieron cada acción
+    conversionesN                                    // total de compras rastreadas
   };
 }
 
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
-  resetTiempoPromedio, registrarCheckout, registrarEvento
+  resetTiempoPromedio, registrarCheckout, registrarEvento, registrarConversion
 };

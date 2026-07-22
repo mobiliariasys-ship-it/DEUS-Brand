@@ -64,5 +64,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <p>Tu DEUS Band está en camino.<br>Recibirás un correo con el detalle de tu pedido.</p>
   <a href="/">Volver al inicio</a>
 </div>
+<script>
+// Correlación conducta→compra: al confirmarse el pago, mandamos qué acciones e
+// hitos había hecho esta sesión (guardados en sessionStorage por index.html).
+// El backend cruza esto con cuántos las hicieron → % que compró tras cada una.
+(function(){
+  try{
+    if(sessionStorage.getItem('deus-conv-sent')) return; // 1 sola vez por sesión
+    sessionStorage.setItem('deus-conv-sent','1');
+    function esOwner(){ try{ return localStorage.getItem('deus-admin-self')==='true'||!!localStorage.getItem('deus-admin-key'); }catch(e){ return false; } }
+    var acciones=[];
+    for(var i=0;i<sessionStorage.length;i++){
+      var k=sessionStorage.key(i);
+      if(k && k.indexOf('deus-ev-')===0){ acciones.push(k.slice(8)); } // 'accion:girar', 'hito:precio', etc.
+    }
+    var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
+    fetch(base+'/track/conversion',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({acciones:acciones,esOwner:esOwner()})}).catch(function(){});
+  }catch(e){}
+})();
+</script>
 </body>
 </html>

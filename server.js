@@ -313,6 +313,13 @@ app.post('/track/event', (req, res) => {
   res.sendStatus(204);
 });
 
+// Conversión: al pagar, success.html manda las acciones que hizo la sesión,
+// para cruzar qué acción lleva más a comprar (p. ej. girar el 360°).
+app.post('/track/conversion', (req, res) => {
+  metrics.registrarConversion(req.body?.acciones, !!req.body?.esOwner);
+  res.sendStatus(204);
+});
+
 // ── Panel de administración (protegido con STOCK_KEY) ──
 // Uso: /admin/stats?clave=MICLAVE
 app.get('/admin/stats', (req, res) => {

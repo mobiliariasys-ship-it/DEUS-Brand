@@ -76,6 +76,27 @@
   status = 200
   force = true
 
+# Tracking de conducta (visitas, eventos, checkout, conversión) → backend.
+[[redirects]]
+  from = "/track/*"
+  to = "https://deus-band.onrender.com/track/:splat"
+  status = 200
+  force = true
+
+# Canje del sorteo.
+[[redirects]]
+  from = "/sorteo"
+  to = "https://deus-band.onrender.com/sorteo"
+  status = 200
+  force = true
+
+# Panel de administración (protegido con STOCK_KEY).
+[[redirects]]
+  from = "/admin/*"
+  to = "https://deus-band.onrender.com/admin/:splat"
+  status = 200
+  force = true
+
 # ── Cache para los assets pesados (imágenes, videos, cuadros del 360) ──
 [[headers]]
   for = "/img/*"
