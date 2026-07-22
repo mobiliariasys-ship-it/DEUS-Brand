@@ -643,12 +643,14 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .rot-360{position:relative;cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;}
 .rot-360:active{cursor:grabbing;}
 .rot-360 img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
-.rot-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ddd;letter-spacing:1.5px;background:rgba(8,8,8,.75);border:1px solid #3a3a3a;padding:7px 16px;border-radius:16px;white-space:nowrap;z-index:2;animation:hintPulse 2.2s ease-in-out infinite;}
-@keyframes hintPulse{0%,100%{transform:translateX(-50%) scale(1);opacity:.95;}50%{transform:translateX(-50%) scale(1.05);opacity:1;}}
+.rot-hint-wrap{text-align:center;margin:14px 0 2px;}
+.rot-hint{display:inline-block;font-size:.7rem;color:#ddd;letter-spacing:1.5px;background:rgba(8,8,8,.75);border:1px solid #3a3a3a;padding:7px 16px;border-radius:16px;white-space:nowrap;animation:hintPulse 2.2s ease-in-out infinite;}
+@media(max-width:640px){.rot-hint{font-size:.62rem;letter-spacing:.8px;padding:6px 13px;}}
+@keyframes hintPulse{0%,100%{transform:scale(1);opacity:.95;}50%{transform:scale(1.05);opacity:1;}}
 /* Señal de "agarrame": un dedo que hace el gesto de arrastrar sobre la banda.
    Aparece cuando la banda se detiene y se esconde en cuanto el visitante la toca. */
-.rot-finger{position:absolute;left:50%;top:50%;z-index:3;font-size:2.4rem;pointer-events:none;opacity:0;color:transparent;text-shadow:0 0 0 rgba(125,216,242,.62);filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));will-change:transform,opacity;}
-.rot-finger.on{animation:fingerSwipe 1.9s ease-in-out infinite;}
+.rot-finger{position:absolute;left:50%;top:50%;z-index:3;font-size:2.3rem;pointer-events:none;opacity:0;color:transparent;text-shadow:0 0 0 rgba(130,214,244,.5);filter:drop-shadow(0 2px 5px rgba(0,0,0,.4));will-change:transform,opacity;}
+.rot-finger.on{animation:fingerSwipe 2.2s ease-in-out infinite;}
 @keyframes fingerSwipe{
   0%{transform:translate(-50%,-50%) translateX(-58px) rotate(-8deg);opacity:0;}
   12%{opacity:1;}
@@ -1958,8 +1960,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="hold-arrow l" id="rot360-arrow-l" type="button" aria-label="Girar a la izquierda">‹</button>
         <button class="hold-arrow r" id="rot360-arrow-r" type="button" aria-label="Girar a la derecha">›</button>
         <div class="rot-finger" id="rot360-finger" aria-hidden="true">👆</div>
-        <div class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor</div>
       </div>
+      <div class="rot-hint-wrap"><span class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor</span></div>
       <div class="how-txt">
         <h3>Sensor de alta precisión</h3>
         <p>Sensor óptico de alta sensibilidad que mide tu frecuencia cardíaca, oxígeno en sangre y variabilidad en tiempo real, día y noche. Precisión constante en cada latido. Su estructura está fabricada en <b>aleación de zinc de alta resistencia</b>.</p>
@@ -2114,7 +2116,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // Un objeto quieto con una pista clara invita a tocarlo mucho más que uno
     // que gira solo (ese se lee como un video y la gente solo lo mira pasar).
     function mostrarPista(){ if(interactuado) return; if(elHint) elHint.style.display=''; if(elFinger && !reduceMov) elFinger.classList.add('on'); }
-    function ocultarPista(){ if(elFinger) elFinger.classList.remove('on'); } // solo esconde la mano; el texto queda fijo
+    function ocultarPista(){ if(elHint) elHint.style.display='none'; if(elFinger) elFinger.classList.remove('on'); }
     // Una SOLA vuelta de demostración (muestra que es 3D) y frena en el ángulo
     // hero, dejando la pista visible. NO gira infinito: eso mataba la interacción.
     function startAuto(){
@@ -2131,7 +2133,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // Al soltar, la banda se queda donde la dejó el visitante (no vuelve a girar
     // sola): el control es de él. Solo la vuelta inicial es automática.
     function reanudarPronto(){ /* sin auto-giro tras interactuar */ }
-    function marcarInteraccion(){ interactuado=true; ocultarPista(); stopAuto(); }
+    // La pista (mano + texto) desaparece SOLO cuando la GIRAN (arrastre o flechas),
+    // NO cuando solo la tocan/clickean (un toque abre el visor grande y deja la pista).
+    function marcarRotacion(){ if(interactuado) return; interactuado=true; ocultarPista(); stopAuto(); }
     // Descarga y decodifica TODOS los cuadros antes de girar,
     // así no se pega en los cuadros más pesados (p. ej. el sensor encendido).
     // La descarga (~1MB) parte recién cuando el visitante se acerca a la
@@ -2139,6 +2143,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var cargado=false;
     function cargarCuadros(){
       if(cargado) return; cargado=true;
+      mostrarPista(); // la manito + texto aparecen apenas la sección entra en vista (clave en celular)
       for(var i=0;i<N;i++){
         (function(i){
           var im=new Image();
@@ -2162,14 +2167,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     } else { cargarCuadros(); }
     var dragging=false, startX=0, startIdx=0, firstTouch=true, movido=0;
     wrap.addEventListener('pointerdown',function(e){
-      dragging=true; movido=0; marcarInteraccion();
-      if(firstTouch){ firstTouch=false; show(BLUE); } // al primer toque enciende el sensor azul
+      dragging=true; movido=0; stopAuto();             // frena la demo; NO esconde la pista todavía
+      if(firstTouch){ firstTouch=false; show(BLUE); }  // al primer toque enciende el sensor azul
       startX=e.clientX; startIdx=idx;
       try{ wrap.setPointerCapture(e.pointerId); }catch(_){}
     });
     wrap.addEventListener('pointermove',function(e){
       if(!dragging) return;
       var d=e.clientX-startX; movido=Math.max(movido,Math.abs(d));
+      if(movido>8) marcarRotacion();                   // recién al GIRAR desaparece la pista, no al tocar
       show(startIdx + Math.round(d/6));
     });
     ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
@@ -2183,7 +2189,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // ── Flechas: mantener presionada gira la banda mientras se sostiene ──
     var holdIv=null;
     function holdStart(dir){
-      marcarInteraccion();
+      marcarRotacion();
       firstTouch=false;
       show(idx+dir);
       clearInterval(holdIv);
