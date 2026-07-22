@@ -15,7 +15,11 @@ const metaCapi = require('./services/meta-capi');
 // precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
 // El front usa esta misma fecha, así el cambio ocurre solo y sincronizado.
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
-const precioBanda = () => 54990; // descuento retirado: precio normal $54.990
+// Precio normal $54.990. Cuando el stock llega a 0, el sitio pasa a MODO RESERVA
+// y el precio baja a $52.990 (con descuento) hasta que llega el restock (~10 días).
+// Este es el precio AUTORITATIVO que se cobra; el front muestra lo mismo mirando
+// /stock. getStock()<=0 es el mismo umbral que usa el front (window.modoReserva).
+const precioBanda = () => (getStock() <= 0 ? 52990 : 54990);
 
 const app = express();
 const PORT = process.env.PORT || 3000;

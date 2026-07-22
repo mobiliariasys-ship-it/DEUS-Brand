@@ -880,6 +880,8 @@ body.sb-on .wa-float{bottom:82px;}
 .co-prod-price{margin-top:4px;display:flex;align-items:baseline;gap:8px;}
 .co-price-old{font-size:.72rem;color:#888;text-decoration:line-through;}
 .co-price-now{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;line-height:1;}
+/* Precio "normal" tachado que acompaña al precio de reserva ($52.990 / $58.990) */
+.pb-old{font-size:.5em;color:#8a8a8a;text-decoration:line-through;margin-left:8px;font-family:'DM Sans',sans-serif;letter-spacing:0;vertical-align:middle;font-weight:400;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
 .stock-note{font-size:.78rem;color:#e8b464;letter-spacing:.5px;margin:0 0 16px;}
@@ -971,7 +973,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar">🔥 Últimas <b>3 unidades</b> · Restock pronto</div>
+<div class="announce-bar" id="offer-bar">🔥 <b>Última unidad</b> disponible</div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -1012,7 +1014,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="rifa-step"><span class="rn">2</span><span>Se te asigna <b>un N° de ticket automático</b> al confirmarse el pago — te llega en el correo de tu compra.</span></div>
       <div class="rifa-step"><span class="rn">3</span><span>Sorteamos <b>1 vez al mes</b>. Deja tu Instagram abajo y <b>te avisamos si ganas</b>.</span></div>
     </div>
-    <button class="rifa-cta" onclick="cerrarRifa();abrirCheckout&&abrirCheckout()">Comprar y participar</button>
+    <button class="rifa-cta" data-buy="Comprar y participar" data-reserve="Reservar y participar" onclick="cerrarRifa();abrirCheckout&&abrirCheckout()">Comprar y participar</button>
     <div class="rifa-or"><span>ya compraste</span></div>
     <div class="rifa-claim">
       <div class="rifa-claim-title">🔔 Avísame si gano</div>
@@ -1146,7 +1148,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="cta-row">
-        <button class="btn-p" onclick="abrirCheckout()">Comprar ahora</button>
+        <button class="btn-p" data-buy="Comprar ahora" data-reserve="Reservar ahora" onclick="abrirCheckout()">Comprar ahora</button>
         <button class="btn-cart" onclick="abrirDialogoCarrito()" title="Agregar al carrito">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         </button>
@@ -1337,7 +1339,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Descuento retirado: precio normal $54.990 (sin oferta). El envío se
         // SIGUE cobrando por región — NO reactivar el modo envío gratis.
         const ofertaActiva = () => false;
-        const precioBanda = () => 54990;
+        // Modo reserva: cuando el stock llega a 0, el sitio sigue vendiendo como
+        // RESERVA con descuento ($52.990, ancla $58.990) y aviso de ~10 días.
+        // window.modoReserva lo fija cargarStock() según /stock (remaining<=0);
+        // el backend cobra el mismo precio (precioBanda mira getStock()<=0).
+        const RESERVA_PRICE = 52990, PRECIO_NORMAL = 54990, RESERVA_ANCLA = 58990;
+        const precioBanda = () => (window.modoReserva ? RESERVA_PRICE : PRECIO_NORMAL);
         const envioGratis = () => false;
         const PRODUCT_PRICE = 54990;
 
@@ -1614,7 +1621,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (document.getElementById('total-display')) {
             document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
           }
-          document.getElementById('co-prod-price').innerHTML = ofertaActiva()
+          document.getElementById('co-prod-price').innerHTML = window.modoReserva
+            ? `<span class="co-price-old">$${(RESERVA_ANCLA * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`
+            : ofertaActiva()
             ? `<span class="co-price-old">$${(54990 * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`
             : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`;
         }
@@ -1946,7 +1955,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="how-head">
       <div class="how-kicker">Cómo funciona</div>
       <h2 class="how-title">Cada detalle, en 360°</h2>
-      <p class="how-sub">Girá la banda y descubrí la ingeniería detrás de cada medición.</p>
+      <p class="how-sub">Girá la banda y descubre la tecnología detrás de cada pulsación.</p>
     </div>
 
       <div class="how-row row-360">
@@ -2628,7 +2637,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="fc-line">Tu cuerpo lleva años hablándote.</div>
     <div class="fc-line strong">Es hora de escucharlo.</div>
     <div class="fc-price">$54.990</div>
-    <button class="btn-p" onclick="abrirCheckout()">Quiero mi DEUS Band</button>
+    <button class="btn-p" data-buy="Quiero mi DEUS Band" data-reserve="Asegura tu DEUS Band" onclick="abrirCheckout()">Quiero mi DEUS Band</button>
   </section>
 
   <!-- TEXTO SEO -->
@@ -2677,6 +2686,7 @@ const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 
 // Sincroniza aviso de stock, foto y color en página y checkout
 function textoStock(color) {
+  if (window.modoReserva) return '📦 Reserva · asegurala hoy con descuento, llega en ~10 días hábiles';
   if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — restock pronto · disponible en gris';
   if (color === 'negra') return '🔥 Pocas unidades disponibles de este color';
   return '';
@@ -2699,8 +2709,34 @@ function updateStockUI() {
 
 function cargarStock() {
   fetch(api('/stock')).then(r => r.json()).then(d => {
-    if (d && typeof d.remaining === 'number') { stockRestante = Math.max(0, d.remaining - 2); updateStockUI(); }
+    if (d && typeof d.remaining === 'number') {
+      stockRestante = Math.max(0, d.remaining);
+      window.modoReserva = d.remaining <= 0;   // 0 unidades → modo reserva (mismo umbral que el backend)
+      aplicarReserva();
+      updateStockUI();
+    }
   }).catch(() => { /* sin backend no se muestra el aviso */ });
+}
+
+// Cambia todo el sitio a "modo reserva" cuando no queda stock: precio con
+// descuento ($52.990 / $58.990 tachado), textos de botones y aviso superior.
+// El backend cobra el mismo precio de reserva (precioBanda mira getStock()<=0),
+// así lo que se muestra y lo que se cobra siempre coinciden.
+function aplicarReserva() {
+  const on = !!window.modoReserva;
+  const pb = document.querySelector('.price-block');
+  if (pb) pb.innerHTML = on ? '<sup>$</sup>52.990 <span class="pb-old">$58.990</span>' : '<sup>$</sup>54.990';
+  const fc = document.querySelector('.fc-price');
+  if (fc) fc.innerHTML = on ? '$52.990 <span class="pb-old">$58.990</span>' : '$54.990';
+  const sb = document.querySelector('.sb-price');
+  if (sb) sb.innerHTML = on ? '<b>$52.990</b> <span class="pb-old">$58.990</span>' : '<b>$54.990</b>';
+  const ab = document.getElementById('offer-bar');
+  if (ab) ab.innerHTML = on ? '📦 Reserva con descuento · Asegura tu DEUS Band' : '🔥 <b>Última unidad</b> disponible';
+  document.querySelectorAll('[data-buy]').forEach(b => {
+    const t = on ? b.getAttribute('data-reserve') : b.getAttribute('data-buy');
+    if (t) b.textContent = t;
+  });
+  if (typeof actualizarTotalCheckout === 'function') { try { actualizarTotalCheckout(); } catch (e) {} }
 }
 
 // Cargar imágenes en los slides
@@ -2871,7 +2907,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span class="cart-total-label">Total:</span>
       <span class="cart-total-price" id="cart-total-price">$0</span>
     </div>
-    <button class="cart-cta" onclick="comprarDesdeCarrito()">Comprar ahora</button>
+    <button class="cart-cta" data-buy="Comprar ahora" data-reserve="Reservar ahora" onclick="comprarDesdeCarrito()">Comprar ahora</button>
   </div>
 </div>
 
@@ -2921,7 +2957,7 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
 <div class="sticky-buy" id="stickyBuy">
   <div class="sb-price"><b>$54.990</b></div>
   <div style="display:flex;gap:8px;">
-    <button class="sb-btn" onclick="abrirCheckout()">Comprar ahora</button>
+    <button class="sb-btn" data-buy="Comprar ahora" data-reserve="Reservar ahora" onclick="abrirCheckout()">Comprar ahora</button>
     <button class="sb-btn" style="background:transparent;border:1px solid var(--border);" onclick="agregarAlCarrito()">🛒</button>
   </div>
 </div>
