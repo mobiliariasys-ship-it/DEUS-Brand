@@ -1509,10 +1509,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 ? `<span style="text-decoration:line-through;color:#777;font-size:.62rem;margin-right:6px;">$${c.precioNormal.toLocaleString('es-CL')}</span>GRATIS`
                 : '$' + c.price.toLocaleString('es-CL');
               const encoded = encodeURIComponent(JSON.stringify(c));
-              const eta = fechaEntrega(c.deliveryTime);
               html += `<label class="carrier-option" onclick="selectCarrier('${encoded}','${encodeURIComponent(commune)}','${encodeURIComponent(region)}','${encodeURIComponent(address)}')">
                 <input type="radio" name="carrier" value="${c.carrier}">
-                <div style="flex:1"><div class="carrier-name">${c.carrier}</div><div class="carrier-time">${c.deliveryTime}</div>${eta ? `<div class="carrier-eta">${eta}</div>` : ''}</div>
+                <div style="flex:1"><div class="carrier-name">${c.carrier}</div></div>
                 <div class="carrier-price" ${c.price === 0 ? 'style="color:#69c46d;"' : ''}>${priceLabel}</div>
               </label>`;
             });
