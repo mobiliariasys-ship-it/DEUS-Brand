@@ -432,6 +432,17 @@ app.get('/stock/ajustar', (req, res) => {
   res.json({ remaining: setStock(n) });
 });
 
+// Pone en cero conducta + conversión-por-acción (deja denominador y numerador
+// contando la misma ventana). Protegido con la misma clave admin STOCK_KEY.
+// NO borra ventas, tickets ni stock. Uso: /metrics/reset-conducta?clave=MICLAVE
+app.get('/metrics/reset-conducta', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).send('No disponible');
+  if ((req.query.clave || '') !== clave) return res.status(403).send('Clave incorrecta');
+  metrics.resetConducta();
+  res.json({ ok: true, mensaje: 'Conducta y conversión-por-acción reseteadas. Ventas y tickets intactos.' });
+});
+
 // Diagnóstico de correo: envía un correo de prueba real al dueño y confirma
 // si Resend está configurado. Protegido con STOCK_KEY (misma clave admin).
 // Uso: /email/diagnostico?clave=MICLAVE

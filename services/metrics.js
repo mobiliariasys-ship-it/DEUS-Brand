@@ -114,6 +114,22 @@ function resetTiempoPromedio() {
   guardar();
 }
 
+// Pone en cero los contadores de conducta Y de conversión-por-acción al mismo
+// tiempo, para que numerador (compradores que hicieron X) y denominador (todos
+// los que hicieron X) cuenten la MISMA ventana desde ahora. Sin esto, el
+// denominador arrastra visitantes viejos que nunca tendrán una compra que los
+// empareje y la sección "Qué lleva a comprar" da ~0% para siempre.
+// NO toca ventas, tickets, stock ni el embudo de dinero.
+function resetConducta() {
+  for (const k of Object.keys(eventos)) delete eventos[k];
+  for (const k of Object.keys(conversiones)) delete conversiones[k];
+  conversionesN = 0;
+  conversionesOrdenes.length = 0;
+  checkoutsTotal = 0; // el embudo de conducta también arranca limpio
+  guardar();
+  console.log('[metrics] conducta y conversión-por-acción reseteadas');
+}
+
 // Registra que una sesión abrió el checkout (el paso del medio del embudo:
 // visitas → abrieron checkout → pagaron). El dueño no cuenta.
 function registrarCheckout(esOwner) {
@@ -314,5 +330,5 @@ function snapshot() {
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
-  resetTiempoPromedio, registrarCheckout, registrarEvento, registrarConversion
+  resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion
 };
