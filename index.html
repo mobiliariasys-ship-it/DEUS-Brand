@@ -645,6 +645,18 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .rot-360 img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
 .rot-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ddd;letter-spacing:1.5px;background:rgba(8,8,8,.75);border:1px solid #3a3a3a;padding:7px 16px;border-radius:16px;white-space:nowrap;z-index:2;animation:hintPulse 2.2s ease-in-out infinite;}
 @keyframes hintPulse{0%,100%{transform:translateX(-50%) scale(1);opacity:.95;}50%{transform:translateX(-50%) scale(1.05);opacity:1;}}
+/* Señal de "agarrame": un dedo que hace el gesto de arrastrar sobre la banda.
+   Aparece cuando la banda se detiene y se esconde en cuanto el visitante la toca. */
+.rot-finger{position:absolute;left:50%;top:50%;z-index:3;font-size:2.4rem;pointer-events:none;opacity:0;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));will-change:transform,opacity;}
+.rot-finger.on{animation:fingerSwipe 1.9s ease-in-out infinite;}
+@keyframes fingerSwipe{
+  0%{transform:translate(-50%,-50%) translateX(-58px) rotate(-8deg);opacity:0;}
+  12%{opacity:1;}
+  50%{transform:translate(-50%,-50%) translateX(58px) rotate(8deg);opacity:1;}
+  88%{opacity:1;}
+  100%{transform:translate(-50%,-50%) translateX(-58px) rotate(-8deg);opacity:0;}
+}
+@media(prefers-reduced-motion:reduce){.rot-finger{display:none;}}
 .rot-badge{position:absolute;top:14px;right:14px;z-index:2;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:#e8e8e8;border:1.5px solid #3a3a3a;background:rgba(8,8,8,.6);border-radius:16px;padding:4px 12px;pointer-events:none;}
 .rot-vignette{position:absolute;inset:0;pointer-events:none;background:none;}
 /* Visor 360 en pantalla completa (al tocar el sensor) */
@@ -1945,7 +1957,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="rot-badge">360°</div>
         <button class="hold-arrow l" id="rot360-arrow-l" type="button" aria-label="Girar a la izquierda">‹</button>
         <button class="hold-arrow r" id="rot360-arrow-r" type="button" aria-label="Girar a la derecha">›</button>
-        <div class="rot-hint" id="rot360-hint">↔ Arrastra para girar la banda</div>
+        <div class="rot-finger" id="rot360-finger" aria-hidden="true">👆</div>
+        <div class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor 👆</div>
       </div>
       <div class="how-txt">
         <h3>Sensor de alta precisión</h3>
@@ -2087,18 +2100,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
     function src(i){ return 'img/rot360/f_'+String(i+1).padStart(3,'0')+'.webp'; }
     var frames=new Array(N), pendientes=N, idx=BLUE, auto=null;
+    var HERO=0;               // ángulo de reposo: frente, con el sensor apagado
+    var interactuado=false;   // el visitante ya tomó la banda al menos una vez
+    var demoHecho=false;      // la vuelta de demostración ya ocurrió (una sola)
+    var elFinger=document.getElementById('rot360-finger');
+    var elHint=document.getElementById('rot360-hint');
+    var reduceMov=!!(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches);
     function draw(){ var f=frames[idx]; if(f&&f.complete) ctx.drawImage(f,0,0,canvas.width,canvas.height); }
     // La vuelta cierra con un fundido suave (f_074-085) entre el final y el
     // inicio del giro real, así rota continuo sin reinicio visible.
     function show(i){ idx=((i%N)+N)%N; draw(); }
+    // Señal de "agarrame": objeto quieto + dedo que hace el gesto de arrastrar.
+    // Un objeto quieto con una pista clara invita a tocarlo mucho más que uno
+    // que gira solo (ese se lee como un video y la gente solo lo mira pasar).
+    function mostrarPista(){ if(interactuado) return; if(elHint) elHint.style.display=''; if(elFinger && !reduceMov) elFinger.classList.add('on'); }
+    function ocultarPista(){ if(elHint) elHint.style.display='none'; if(elFinger) elFinger.classList.remove('on'); }
+    // Una SOLA vuelta de demostración (muestra que es 3D) y frena en el ángulo
+    // hero, dejando la pista visible. NO gira infinito: eso mataba la interacción.
     function startAuto(){
-      if(auto) return;
-      auto=setInterval(function(){ show(idx+1); },60);
+      if(auto || demoHecho || interactuado) return;
+      demoHecho=true;
+      if(reduceMov){ show(HERO); mostrarPista(); return; }
+      var pasos=0;
+      auto=setInterval(function(){
+        show(idx+1); pasos++;
+        if(pasos>=N){ stopAuto(); show(HERO); mostrarPista(); }
+      },60);
     }
     function stopAuto(){ if(auto){ clearInterval(auto); auto=null; } }
-    // Tras interactuar (arrastrar o flechas), la banda retoma el giro sola
-    var reanudarTimer=null;
-    function reanudarPronto(){ clearTimeout(reanudarTimer); reanudarTimer=setTimeout(startAuto,1800); }
+    // Al soltar, la banda se queda donde la dejó el visitante (no vuelve a girar
+    // sola): el control es de él. Solo la vuelta inicial es automática.
+    function reanudarPronto(){ /* sin auto-giro tras interactuar */ }
+    function marcarInteraccion(){ interactuado=true; ocultarPista(); stopAuto(); }
     // Descarga y decodifica TODOS los cuadros antes de girar,
     // así no se pega en los cuadros más pesados (p. ej. el sensor encendido).
     // La descarga (~1MB) parte recién cuando el visitante se acerca a la
@@ -2129,10 +2162,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     } else { cargarCuadros(); }
     var dragging=false, startX=0, startIdx=0, firstTouch=true, movido=0;
     wrap.addEventListener('pointerdown',function(e){
-      dragging=true; movido=0; stopAuto();
-      if(firstTouch){ firstTouch=false; show(BLUE); } // al primer toque parte desde el sensor azul
+      dragging=true; movido=0; marcarInteraccion();
+      if(firstTouch){ firstTouch=false; show(BLUE); } // al primer toque enciende el sensor azul
       startX=e.clientX; startIdx=idx;
-      var h=document.getElementById('rot360-hint'); if(h) h.style.display='none';
       try{ wrap.setPointerCapture(e.pointerId); }catch(_){}
     });
     wrap.addEventListener('pointermove',function(e){
@@ -2151,9 +2183,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // ── Flechas: mantener presionada gira la banda mientras se sostiene ──
     var holdIv=null;
     function holdStart(dir){
-      stopAuto();
+      marcarInteraccion();
       firstTouch=false;
-      var h=document.getElementById('rot360-hint'); if(h) h.style.display='none';
       show(idx+dir);
       clearInterval(holdIv);
       holdIv=setInterval(function(){ show(idx+dir); },70);
