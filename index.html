@@ -891,6 +891,9 @@ body.sb-on .wa-float{bottom:82px;}
 .pb-old{font-size:.5em;color:#8a8a8a;text-decoration:line-through;margin-left:8px;font-family:'DM Sans',sans-serif;letter-spacing:0;vertical-align:middle;font-weight:400;}
 /* Badge de % de descuento junto al precio de reserva */
 .pb-off{display:inline-block;font-size:.46em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#e8b464;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
+/* Regalo por reservar (tapones de oído DEUS): solo visible en modo reserva */
+.reserva-regalo{margin:12px 0 0;padding:9px 13px;border:1px solid rgba(232,180,100,.35);background:rgba(232,180,100,.08);border-radius:9px;font-size:.8rem;color:#e8b464;letter-spacing:.3px;line-height:1.4;}
+.reserva-regalo b{color:#f2d9a8;font-weight:700;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
 .stock-note{font-size:.78rem;color:#e8b464;letter-spacing:.5px;margin:0 0 16px;}
@@ -1152,6 +1155,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <div class="price-block"><sup>$</sup>54.990</div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
+      <div class="reserva-regalo" style="display:none;">🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></div>
       <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas">
         <span class="proof-stars">★★★★★</span> <b>5.0</b> · reseñas de la comunidad <span class="proof-arrow">›</span>
       </div>
@@ -1228,6 +1232,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </div>
             </div>
             <div class="co-stock" id="co-stock" style="display:none;"></div>
+            <div class="reserva-regalo" style="display:none;">🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></div>
             <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
               <span style="font-size:.9rem;color:#aaa;">Cantidad:</span>
               <button class="cart-qty-btn" id="co-qty-minus" onclick="cambiarCantidadCheckout(-1)">−</button>
@@ -2761,6 +2766,7 @@ function aplicarReserva() {
     const t = on ? b.getAttribute('data-reserve') : b.getAttribute('data-buy');
     if (t) b.textContent = t;
   });
+  document.querySelectorAll('.reserva-regalo').forEach(e => { e.style.display = on ? '' : 'none'; });
   if (typeof actualizarTotalCheckout === 'function') { try { actualizarTotalCheckout(); } catch (e) {} }
 }
 
