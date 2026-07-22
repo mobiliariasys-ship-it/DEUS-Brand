@@ -2711,6 +2711,7 @@ function cargarStock() {
     if (d && typeof d.remaining === 'number') {
       stockRestante = Math.max(0, d.remaining);
       window.modoReserva = d.remaining <= 0;   // 0 unidades → modo reserva (mismo umbral que el backend)
+      try { localStorage.setItem('deus-reserva', window.modoReserva ? '1' : '0'); } catch(e){}
       aplicarReserva();
       updateStockUI();
     }
@@ -2911,6 +2912,9 @@ function updateCountdown() {
 
 document.addEventListener('DOMContentLoaded', function() {
   initSlides();
+  // Aplica el estado de reserva CACHEADO antes de consultar /stock, para no
+  // mostrar el modo normal por un segundo mientras llega la respuesta del backend.
+  try { if (localStorage.getItem('deus-reserva') === '1') { window.modoReserva = true; aplicarReserva(); } } catch(e){}
   updateStockUI();
   cargarStock();
   updateCountdown();
