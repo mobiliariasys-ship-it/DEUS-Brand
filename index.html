@@ -892,7 +892,8 @@ body.sb-on .wa-float{bottom:82px;}
 /* Badge de % de descuento junto al precio de reserva */
 .pb-off{display:inline-block;font-size:.46em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#e8b464;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
 /* Regalo por reservar (tapones de oído DEUS): solo visible en modo reserva */
-.reserva-regalo{margin:12px 0 0;padding:9px 13px;border:1px solid rgba(232,180,100,.35);background:rgba(232,180,100,.08);border-radius:9px;font-size:.8rem;color:#e8b464;letter-spacing:.3px;line-height:1.4;}
+.reserva-regalo{display:flex;align-items:center;gap:11px;margin:12px 0 0;padding:9px 13px;border:1px solid rgba(232,180,100,.35);background:rgba(232,180,100,.08);border-radius:9px;font-size:.8rem;color:#e8b464;letter-spacing:.3px;line-height:1.35;}
+.reserva-regalo .regalo-img{width:48px;height:48px;border-radius:7px;object-fit:cover;flex-shrink:0;background:#1e1e1e;}
 .reserva-regalo b{color:#f2d9a8;font-weight:700;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
@@ -1149,7 +1150,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <div class="price-block"><sup>$</sup>54.990</div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
-      <div class="reserva-regalo" style="display:none;">🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></div>
+      <div class="reserva-regalo" style="display:none;"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
       <div class="cta-row">
         <button class="btn-p" data-buy="Comprar ahora" data-reserve="Reservar ahora" onclick="abrirCheckout()">Comprar ahora</button>
         <button class="btn-cart" onclick="abrirDialogoCarrito()" title="Agregar al carrito">
@@ -1226,21 +1227,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </div>
             </div>
             <div class="co-stock" id="co-stock" style="display:none;"></div>
-            <div class="reserva-regalo" style="display:none;">🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></div>
+            <div class="reserva-regalo" style="display:none;"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
             <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
               <span style="font-size:.9rem;color:#aaa;">Cantidad:</span>
               <button class="cart-qty-btn" id="co-qty-minus" onclick="cambiarCantidadCheckout(-1)">−</button>
               <span style="width:32px;text-align:center;font-size:.95rem;font-weight:600;" id="co-qty-display">1</span>
               <button class="cart-qty-btn" id="co-qty-plus" onclick="cambiarCantidadCheckout(1)">+</button>
-            </div>
-            <div class="upsell-card" id="upsell-card">
-              <img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="upsell-img" loading="lazy" decoding="async">
-              <div class="upsell-info">
-                <div class="upsell-name">Tapones de oído DEUS</div>
-                <div class="upsell-desc">Duerme y concéntrate mejor · 3 tamaños incluidos</div>
-                <div class="upsell-price">$12.990</div>
-              </div>
-              <button class="upsell-btn" id="upsell-btn" onclick="toggleUpsell()">+ Agregar</button>
             </div>
           </div>
 
@@ -2760,18 +2752,6 @@ function aplicarReserva() {
     if (t) b.textContent = t;
   });
   document.querySelectorAll('.reserva-regalo').forEach(e => { e.style.display = on ? '' : 'none'; });
-  // En reserva los tapones van de REGALO, así que ocultamos el upsell pagado
-  // de tapones (evita cobrar $12.990 por algo que ya es gratis). Si estaba
-  // agregado, lo quitamos para que no se cobre.
-  const upCard = document.getElementById('upsell-card');
-  if (upCard) {
-    if (on) {
-      if (upCard.classList.contains('added') && typeof toggleUpsell === 'function') toggleUpsell();
-      upCard.style.display = 'none';
-    } else {
-      upCard.style.display = '';
-    }
-  }
   if (typeof actualizarTotalCheckout === 'function') { try { actualizarTotalCheckout(); } catch (e) {} }
 }
 
