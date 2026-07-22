@@ -647,7 +647,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 @keyframes hintPulse{0%,100%{transform:translateX(-50%) scale(1);opacity:.95;}50%{transform:translateX(-50%) scale(1.05);opacity:1;}}
 /* Señal de "agarrame": un dedo que hace el gesto de arrastrar sobre la banda.
    Aparece cuando la banda se detiene y se esconde en cuanto el visitante la toca. */
-.rot-finger{position:absolute;left:50%;top:50%;z-index:3;font-size:2.4rem;pointer-events:none;opacity:0;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));will-change:transform,opacity;}
+.rot-finger{position:absolute;left:50%;top:50%;z-index:3;font-size:2.4rem;pointer-events:none;opacity:0;color:transparent;text-shadow:0 0 0 rgba(125,216,242,.62);filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));will-change:transform,opacity;}
 .rot-finger.on{animation:fingerSwipe 1.9s ease-in-out infinite;}
 @keyframes fingerSwipe{
   0%{transform:translate(-50%,-50%) translateX(-58px) rotate(-8deg);opacity:0;}
@@ -1958,7 +1958,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="hold-arrow l" id="rot360-arrow-l" type="button" aria-label="Girar a la izquierda">‹</button>
         <button class="hold-arrow r" id="rot360-arrow-r" type="button" aria-label="Girar a la derecha">›</button>
         <div class="rot-finger" id="rot360-finger" aria-hidden="true">👆</div>
-        <div class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor 👆</div>
+        <div class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor</div>
       </div>
       <div class="how-txt">
         <h3>Sensor de alta precisión</h3>
@@ -2114,7 +2114,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // Un objeto quieto con una pista clara invita a tocarlo mucho más que uno
     // que gira solo (ese se lee como un video y la gente solo lo mira pasar).
     function mostrarPista(){ if(interactuado) return; if(elHint) elHint.style.display=''; if(elFinger && !reduceMov) elFinger.classList.add('on'); }
-    function ocultarPista(){ if(elHint) elHint.style.display='none'; if(elFinger) elFinger.classList.remove('on'); }
+    function ocultarPista(){ if(elFinger) elFinger.classList.remove('on'); } // solo esconde la mano; el texto queda fijo
     // Una SOLA vuelta de demostración (muestra que es 3D) y frena en el ángulo
     // hero, dejando la pista visible. NO gira infinito: eso mataba la interacción.
     function startAuto(){
