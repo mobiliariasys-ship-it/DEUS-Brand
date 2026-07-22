@@ -2,6 +2,17 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<!-- Estado de reserva cacheado: se marca ANTES de pintar para no mostrar el
+     modo normal ni un instante. El CSS oculta el contenido normal hasta que el
+     JS pone el de reserva (evita el flash de "última unidad"/$54.990). -->
+<script>try{if(localStorage.getItem('deus-reserva')==='1')document.documentElement.classList.add('reserva');}catch(e){}</script>
+<style>
+html.reserva:not(.reserva-ready) #offer-bar,
+html.reserva:not(.reserva-ready) .price-block,
+html.reserva:not(.reserva-ready) .sb-price,
+html.reserva:not(.reserva-ready) .fc-price,
+html.reserva:not(.reserva-ready) .btn-p{visibility:hidden;}
+</style>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -251,6 +262,7 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 .announce-bar b{color:#fff;}
 /* Modo reserva: texto arriba + contador regresivo centrado debajo */
 .announce-bar.reserva{display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.35;padding-top:8px;padding-bottom:8px;}
+.announce-bar .ab-restock{font-size:.68rem;letter-spacing:3px;color:#f2d9a8;font-weight:700;}
 .announce-bar .reserva-cd{display:flex;gap:6px;justify-content:center;text-transform:none;}
 .rcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:4px 9px;min-width:42px;}
 .rcd-box b{font-size:1rem;font-weight:700;line-height:1;color:#fff;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
@@ -1150,7 +1162,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <div class="price-block"><sup>$</sup>54.990</div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
-      <div class="reserva-regalo" style="display:none;"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
+      <div class="reserva-regalo" style="display:none;"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async" onclick="abrirFotoResena('img/img-tapones.webp')" style="cursor:zoom-in;"><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
       <div class="cta-row">
         <button class="btn-p" data-buy="Comprar ahora" data-reserve="Reservar ahora" onclick="abrirCheckout()">Comprar ahora</button>
         <button class="btn-cart" onclick="abrirDialogoCarrito()" title="Agregar al carrito">
@@ -1227,7 +1239,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </div>
             </div>
             <div class="co-stock" id="co-stock" style="display:none;"></div>
-            <div class="reserva-regalo" style="display:none;"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
+            <div class="reserva-regalo" style="display:none;"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async" onclick="abrirFotoResena('img/img-tapones.webp')" style="cursor:zoom-in;"><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
             <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
               <span style="font-size:.9rem;color:#aaa;">Cantidad:</span>
               <button class="cart-qty-btn" id="co-qty-minus" onclick="cambiarCantidadCheckout(-1)">−</button>
@@ -2685,7 +2697,7 @@ const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 
 // Sincroniza aviso de stock, foto y color en página y checkout
 function textoStock(color) {
-  if (window.modoReserva) return '📦 Restock pronto · Reserva la tuya';
+  if (window.modoReserva) return '📦 Pronto restock · Reserva la tuya';
   if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — restock pronto · disponible en gris';
   if (color === 'negra') return '🔥 Pocas unidades disponibles de este color';
   return '';
@@ -2735,6 +2747,7 @@ function aplicarReserva() {
     if (on) {
       ab.classList.add('reserva');
       ab.innerHTML = '<span class="ab-txt">📦 Reserva con descuento · Asegura la tuya</span>'
+                   + '<span class="ab-restock">Pronto restock</span>'
                    + '<span class="reserva-cd" id="reserva-cd">'
                    +   '<span class="rcd-box"><b id="rcd-d">--</b><small>días</small></span>'
                    +   '<span class="rcd-box"><b id="rcd-h">--</b><small>hrs</small></span>'
@@ -2754,6 +2767,10 @@ function aplicarReserva() {
   });
   document.querySelectorAll('.reserva-regalo').forEach(e => { e.style.display = on ? '' : 'none'; });
   if (typeof actualizarTotalCheckout === 'function') { try { actualizarTotalCheckout(); } catch (e) {} }
+  // Sincroniza la clase en <html> (para el CSS anti-flash) y revela el contenido
+  // ya con los valores correctos puestos.
+  document.documentElement.classList.toggle('reserva', on);
+  document.documentElement.classList.add('reserva-ready');
 }
 
 // Contador regresivo del top bar en modo reserva: cuenta hasta que llega el
@@ -2915,6 +2932,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Aplica el estado de reserva CACHEADO antes de consultar /stock, para no
   // mostrar el modo normal por un segundo mientras llega la respuesta del backend.
   try { if (localStorage.getItem('deus-reserva') === '1') { window.modoReserva = true; aplicarReserva(); } } catch(e){}
+  // Resguardo: pase lo que pase, revelar el contenido (nunca dejarlo oculto).
+  document.documentElement.classList.add('reserva-ready');
   updateStockUI();
   cargarStock();
   updateCountdown();
