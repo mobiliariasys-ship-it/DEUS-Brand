@@ -340,7 +340,7 @@
   function pintarConversion(convAcc, conducta, nComp){
     convAcc=convAcc||{}; conducta=conducta||{};
     var cont=document.getElementById('conv-accion'); cont.innerHTML='';
-    var keys=Object.keys(conducta).filter(function(k){ return (k.indexOf('accion:')===0 || k.indexOf('hito:')===0) && k!=='accion:color'; });
+    var keys=Object.keys(conducta).filter(function(k){ return (k.indexOf('accion:')===0 || k.indexOf('hito:')===0) && k!=='accion:color' && k!=='hito:tecnologia'; });
     var items=keys.map(function(k){
       var base=conducta[k]||0, comp=convAcc[k]||0;
       return { lbl: COND_LBL[k]||k, base:base, comp:comp, rate: base? comp/base*100 : 0 };
