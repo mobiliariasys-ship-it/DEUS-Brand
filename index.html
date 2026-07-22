@@ -1058,7 +1058,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       // 4) Interacciones (delegación de clicks, una vez por tipo)
       document.addEventListener('click',function(e){
         var t=e.target;
-        if(t.closest('.cdot,.co-cdot')) ev('accion:color');
         if(t.closest('.hdr-cart-btn,.btn-cart')) ev('accion:carrito');
         if(t.closest('.proof-line,[onclick*="abrirResenas"]')) ev('accion:resenas');
         if(t.closest('#rot360,.hold-arrow')) ev('accion:girar');

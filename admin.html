@@ -243,7 +243,7 @@
     var scroll=ORDEN_HITO.filter(function(k){ return eventos[k]; }).map(function(k){ return {lbl:COND_LBL[k],val:eventos[k]}; });
     barrasCond('cond-scroll', scroll, visitas);
     // Interacciones: por cantidad, sobre las visitas
-    var acc=claves.filter(function(k){ return k.indexOf('accion:')===0; })
+    var acc=claves.filter(function(k){ return k.indexOf('accion:')===0 && k!=='accion:color'; })
       .map(function(k){ return {lbl:COND_LBL[k]||cap(k.slice(7)),val:eventos[k]}; })
       .sort(function(a,b){ return b.val-a.val; });
     barrasCond('cond-accion', acc, visitas);
@@ -266,7 +266,7 @@
   function pintarConversion(convAcc, conducta, nComp){
     convAcc=convAcc||{}; conducta=conducta||{};
     var cont=document.getElementById('conv-accion'); cont.innerHTML='';
-    var keys=Object.keys(conducta).filter(function(k){ return k.indexOf('accion:')===0 || k.indexOf('hito:')===0; });
+    var keys=Object.keys(conducta).filter(function(k){ return (k.indexOf('accion:')===0 || k.indexOf('hito:')===0) && k!=='accion:color'; });
     var items=keys.map(function(k){
       var base=conducta[k]||0, comp=convAcc[k]||0;
       return { lbl: COND_LBL[k]||k, base:base, comp:comp, rate: base? comp/base*100 : 0 };
