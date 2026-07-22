@@ -356,7 +356,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .specs-sec .spec-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0;}
 /* Specs ubicadas dentro de "Cómo funciona", debajo del 360°: sin doble padding
    lateral y con aire arriba para separarlas del texto del sensor. */
-.specs-in-how{padding-left:0;padding-right:0;padding-top:0;margin-top:26px;}
+.specs-in-how{padding-left:0;padding-right:0;padding-top:0;margin-top:28px;margin-bottom:10px;}
 @media(max-width:760px){
   .specs-sec{padding:6px 16px 0;}
   .specs-sec .spec-list{grid-template-columns:1fr 1fr;gap:9px;}
@@ -609,9 +609,11 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 @media(max-width:640px){.app-stage{height:400px;margin-left:-8px;margin-right:-8px;}}
 .app-icon{width:60px;height:60px;border-radius:14px;display:block;margin:14px auto 20px;box-shadow:0 6px 22px rgba(0,0,0,.45);}
 .how{max-width:1100px;margin:0 auto;padding:64px 24px 8px;}
-.how-head{text-align:center;margin-bottom:44px;}
-.how-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
-.how-title{font-family:'Bebas Neue',sans-serif;font-size:2.7rem;letter-spacing:2px;line-height:1.05;}
+.how-head{text-align:center;margin-bottom:40px;}
+.how-kicker{font-size:.62rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:12px;}
+.how-title{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;letter-spacing:2px;line-height:1;}
+.how-sub{max-width:440px;margin:14px auto 0;font-size:.82rem;line-height:1.55;color:var(--silver);}
+@media(max-width:640px){.how-title{font-size:2.5rem;}.how-sub{font-size:.78rem;max-width:340px;}}
 .how-row{display:grid;grid-template-columns:1fr 1fr;gap:42px;align-items:center;margin-bottom:50px;}
 .how-row.reverse .how-img{order:2;}
 .how-img{background:#111;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;}
@@ -625,7 +627,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .how-play{position:absolute;bottom:12px;right:12px;width:38px;height:38px;border-radius:50%;background:rgba(8,8,8,.6);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;padding-left:2px;backdrop-filter:blur(3px);transition:opacity .25s;pointer-events:none;z-index:2;}
 .how-vidwrap.is-playing .how-play{opacity:0;}
 /* Carrusel de características (3 en el espacio de una) */
-.feat-car{position:relative;max-width:680px;margin:6px auto 0;overflow:hidden;transition:height .4s ease;}
+.feat-car{position:relative;max-width:680px;margin:54px auto 0;overflow:hidden;transition:height .4s ease;}
 .feat-track{display:flex;align-items:flex-start;transition:transform .4s cubic-bezier(.22,.61,.36,1);}
 .feat-slide{min-width:100%;box-sizing:border-box;padding:0 6px;}
 /* Apila: imagen cuadrada centrada arriba, texto centrado abajo */
@@ -1943,6 +1945,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <section class="how" id="tecnologia">
     <div class="how-head">
       <div class="how-kicker">Cómo funciona</div>
+      <h2 class="how-title">Cada detalle, en 360°</h2>
+      <p class="how-sub">Girá la banda y descubrí la ingeniería detrás de cada medición.</p>
     </div>
 
       <div class="how-row row-360">
