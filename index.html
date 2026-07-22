@@ -249,6 +249,10 @@ body{background:var(--black);font-family:'DM Sans',sans-serif;color:var(--white)
 html,body{overflow-x:hidden;overflow-x:clip;}
 .announce-bar{position:sticky;top:0;z-index:950;background:#080808;color:#e7cf9c;text-align:center;padding:9px 16px;font-size:.7rem;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;border-bottom:1px solid #1c1c1c;}
 .announce-bar b{color:#fff;}
+/* Modo reserva: texto arriba + contador regresivo centrado debajo */
+.announce-bar.reserva{display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.35;padding-top:8px;padding-bottom:8px;}
+.announce-bar .reserva-cd{text-transform:none;font-size:.86rem;letter-spacing:2px;color:#fff;font-weight:700;font-variant-numeric:tabular-nums;}
+@media(max-width:600px){.announce-bar .reserva-cd{font-size:.74rem;letter-spacing:1px;}}
 .promo-timer{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:7px;}
 .promo-label{font-size:.55rem;letter-spacing:2.5px;color:#1b2b2b;}
 .cd-row{display:flex;gap:6px;}
@@ -2686,7 +2690,7 @@ const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 
 // Sincroniza aviso de stock, foto y color en página y checkout
 function textoStock(color) {
-  if (window.modoReserva) return '📦 Reserva · asegurala hoy con descuento, llega en ~10 días hábiles';
+  if (window.modoReserva) return '📦 Reserva · asegurala hoy con descuento, llega en 10 días';
   if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — restock pronto · disponible en gris';
   if (color === 'negra') return '🔥 Pocas unidades disponibles de este color';
   return '';
@@ -2731,12 +2735,49 @@ function aplicarReserva() {
   const sb = document.querySelector('.sb-price');
   if (sb) sb.innerHTML = on ? '<b>$52.990</b> <span class="pb-old">$58.990</span>' : '<b>$54.990</b>';
   const ab = document.getElementById('offer-bar');
-  if (ab) ab.innerHTML = on ? '📦 Reserva con descuento · Asegura tu DEUS Band' : '🔥 <b>Última unidad</b> disponible';
+  if (ab) {
+    if (on) {
+      ab.classList.add('reserva');
+      ab.innerHTML = '<span class="ab-txt">📦 Reserva con descuento · Asegura la tuya · Llega en 10 días</span>'
+                   + '<span class="reserva-cd" id="reserva-cd">--d --h --m --s</span>';
+      iniciarContadorReserva();
+    } else {
+      ab.classList.remove('reserva');
+      ab.innerHTML = '🔥 <b>Última unidad</b> disponible';
+      pararContadorReserva();
+    }
+  }
   document.querySelectorAll('[data-buy]').forEach(b => {
     const t = on ? b.getAttribute('data-reserve') : b.getAttribute('data-buy');
     if (t) b.textContent = t;
   });
   if (typeof actualizarTotalCheckout === 'function') { try { actualizarTotalCheckout(); } catch (e) {} }
+}
+
+// Contador regresivo del top bar en modo reserva: cuenta hasta que llega el
+// restock. Fecha objetivo FIJA (no se reinicia al recargar). Cambiá esta fecha
+// cuando el proveedor confirme la llegada real.
+const RESERVA_LLEGADA = new Date('2026-08-01T12:00:00-04:00').getTime();
+let reservaCdIv = null;
+function pintarContadorReserva() {
+  const el = document.getElementById('reserva-cd');
+  if (!el) return;
+  let d = RESERVA_LLEGADA - Date.now();
+  if (d < 0) d = 0;
+  const dias = Math.floor(d / 86400000);
+  const hs   = Math.floor(d / 3600000) % 24;
+  const min  = Math.floor(d / 60000) % 60;
+  const seg  = Math.floor(d / 1000) % 60;
+  const z = n => String(n).padStart(2, '0');
+  el.textContent = dias + 'd ' + z(hs) + 'h ' + z(min) + 'm ' + z(seg) + 's';
+}
+function iniciarContadorReserva() {
+  pintarContadorReserva();
+  if (reservaCdIv) return;
+  reservaCdIv = setInterval(pintarContadorReserva, 1000);
+}
+function pararContadorReserva() {
+  if (reservaCdIv) { clearInterval(reservaCdIv); reservaCdIv = null; }
 }
 
 // Cargar imágenes en los slides
