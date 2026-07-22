@@ -68,7 +68,7 @@ const pedidos = [];
 function guardarPedidos() { persist.save('pedidos.json', pedidos).catch(e => console.error('[pedidos] Error guardando:', e.message)); }
 
 app.post('/crear-preferencia', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, acciones } = req.body;
 
   try {
     const preference = new Preference(client);
@@ -124,7 +124,10 @@ app.post('/crear-preferencia', async (req, res) => {
         tapones: !!tapones,
         shipping_carrier: shippingCarrier,
         shipping_cost: shippingCost,
-        shipping_address: shippingAddress
+        shipping_address: shippingAddress,
+        // Acciones de la sesión → para atribuir la compra a la conducta aunque
+        // se confirme por webhook (el cliente no vuelve a success.html).
+        acciones_sesion: Array.isArray(acciones) ? acciones.join(',').slice(0, 500) : ''
       }
     };
 
@@ -233,6 +236,10 @@ app.post('/notificaciones', async (req, res) => {
         };
 
         await enviarPagoConfirmado(info, pedido);
+        // Atribución de conducta: cuenta esta compra con las acciones que hizo
+        // la sesión (viajaron en la metadata). Idempotente por n° de pago, así
+        // que no se duplica si además el cliente cae en success.html.
+        metrics.registrarConversion((meta.acciones_sesion || '').split(',').filter(Boolean), info.id, false);
         decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago
         // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
         const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: pedido.customer.name, orden: info.id, email: emailCliente });
@@ -316,7 +323,7 @@ app.post('/track/event', (req, res) => {
 // Conversión: al pagar, success.html manda las acciones que hizo la sesión,
 // para cruzar qué acción lleva más a comprar (p. ej. girar el 360°).
 app.post('/track/conversion', (req, res) => {
-  metrics.registrarConversion(req.body?.acciones, !!req.body?.esOwner);
+  metrics.registrarConversion(req.body?.acciones, req.body?.orden, !!req.body?.esOwner);
   res.sendStatus(204);
 });
 

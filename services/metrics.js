@@ -24,6 +24,7 @@ const EVENTO_OK = /^(hito|accion|disp|fuente):[a-z0-9_-]{1,24}$/;
 // gente que compró después de hacer X (p. ej. girar el 360°).
 const conversiones = {};
 let conversionesN = 0;     // total de compras rastreadas desde el frontend
+const conversionesOrdenes = []; // n° de orden ya contados (dedup webhook + success.html), capado
 const ventas = [];         // { monto, fecha, metodo, nombre, orden }
 // Tickets del sorteo. Se asigna 1 por compra confirmada (número correlativo),
 // automáticamente. { numero, nombre, orden, email, instagram, verificado, automatico, fecha }
@@ -41,12 +42,13 @@ async function init() {
   Object.assign(eventos, guardado.eventos || {});
   Object.assign(conversiones, guardado.conversiones || {});
   conversionesN = guardado.conversionesN || 0;
+  conversionesOrdenes.push(...(guardado.conversionesOrdenes || []));
   ventas.push(...(guardado.ventas || []));
   tickets.push(...(guardado.tickets || []));
 }
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, conversiones, conversionesN, ventas, tickets })
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, conversiones, conversionesN, conversionesOrdenes, ventas, tickets })
     .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
@@ -135,8 +137,14 @@ function registrarEvento(ev, esOwner) {
 // Registra una compra y qué acciones/hitos había hecho esa sesión (success.html
 // manda los flags de la sesión). Cruzado con `eventos` da el % que compró tras
 // cada acción. El dueño no cuenta.
-function registrarConversion(acciones, esOwner) {
+function registrarConversion(acciones, orden, esOwner) {
   if (esOwner) return;
+  const ord = String(orden || '').trim();
+  if (ord) {
+    if (conversionesOrdenes.includes(ord)) return; // ya contada (webhook + success.html)
+    conversionesOrdenes.push(ord);
+    if (conversionesOrdenes.length > 1000) conversionesOrdenes.shift();
+  }
   conversionesN++;
   if (Array.isArray(acciones)) {
     for (const raw of acciones) {
