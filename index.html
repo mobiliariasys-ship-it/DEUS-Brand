@@ -1150,15 +1150,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="price-block"><sup>$</sup>54.990</div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
       <div class="reserva-regalo" style="display:none;">🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></div>
-      <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas">
-        <span class="proof-stars">★★★★★</span> <b>5.0</b> · reseñas de la comunidad <span class="proof-arrow">›</span>
-      </div>
-
       <div class="cta-row">
         <button class="btn-p" data-buy="Comprar ahora" data-reserve="Reservar ahora" onclick="abrirCheckout()">Comprar ahora</button>
         <button class="btn-cart" onclick="abrirDialogoCarrito()" title="Agregar al carrito">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         </button>
+      </div>
+
+      <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas" style="margin-top:14px;">
+        <span class="proof-stars">★★★★★</span> <b>5.0</b> · reseñas de la comunidad <span class="proof-arrow">›</span>
       </div>
 
       <div class="reassure">
@@ -2760,6 +2760,18 @@ function aplicarReserva() {
     if (t) b.textContent = t;
   });
   document.querySelectorAll('.reserva-regalo').forEach(e => { e.style.display = on ? '' : 'none'; });
+  // En reserva los tapones van de REGALO, así que ocultamos el upsell pagado
+  // de tapones (evita cobrar $12.990 por algo que ya es gratis). Si estaba
+  // agregado, lo quitamos para que no se cobre.
+  const upCard = document.getElementById('upsell-card');
+  if (upCard) {
+    if (on) {
+      if (upCard.classList.contains('added') && typeof toggleUpsell === 'function') toggleUpsell();
+      upCard.style.display = 'none';
+    } else {
+      upCard.style.display = '';
+    }
+  }
   if (typeof actualizarTotalCheckout === 'function') { try { actualizarTotalCheckout(); } catch (e) {} }
 }
 
