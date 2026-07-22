@@ -890,7 +890,7 @@ body.sb-on .wa-float{bottom:82px;}
 /* Precio "normal" tachado que acompaña al precio de reserva ($52.990 / $58.990) */
 .pb-old{font-size:.5em;color:#8a8a8a;text-decoration:line-through;margin-left:8px;font-family:'DM Sans',sans-serif;letter-spacing:0;vertical-align:middle;font-weight:400;}
 /* Badge de % de descuento junto al precio de reserva */
-.pb-off{display:inline-block;font-size:.42em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#0a2e12;background:#69c46d;padding:3px 7px;border-radius:6px;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
+.pb-off{display:inline-block;font-size:.46em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#e8b464;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
 .stock-note{font-size:.78rem;color:#e8b464;letter-spacing:.5px;margin:0 0 16px;}
@@ -2695,7 +2695,7 @@ const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 
 // Sincroniza aviso de stock, foto y color en página y checkout
 function textoStock(color) {
-  if (window.modoReserva) return '📦 Reserva · asegurala hoy con descuento, llega en 10 días';
+  if (window.modoReserva) return '📦 Restock pronto · Reserva la tuya';
   if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — restock pronto · disponible en gris';
   if (color === 'negra') return '🔥 Pocas unidades disponibles de este color';
   return '';
