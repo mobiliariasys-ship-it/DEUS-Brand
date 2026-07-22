@@ -6,6 +6,7 @@ const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = r
 const { decrementStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 const metrics = require('../services/metrics');
+const metaCapi = require('../services/meta-capi');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
@@ -124,6 +125,10 @@ router.post('/flow/confirmacion', async (req, res) => {
       decrementStock(st.commerceOrder);
       // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
       const ticketFlow = metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder, email: (pedido && pedido.customer && pedido.customer.email) || st.payer });
+      // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que
+      // success.html) por si el cliente no llega a disparar el píxel en el navegador.
+      metaCapi.enviarPurchase({ orden: st.commerceOrder, valor: st.amount, email: (pedido && pedido.customer && pedido.customer.email) || st.payer, phone: pedido && pedido.customer && pedido.customer.phone })
+        .catch(e => console.error('[capi]', e.message));
       enviarPagoConfirmado({
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },
         transaction_amount: st.amount,

@@ -5,6 +5,7 @@ const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = r
 const { decrementStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 const metrics = require('../services/metrics');
+const metaCapi = require('../services/meta-capi');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
@@ -95,6 +96,10 @@ async function handleRetorno(req, res) {
       decrementStock(result.buy_order);
       // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
       const ticketWP = metrics.registrarVenta({ monto: result.amount, metodo: 'Webpay', nombre: pedido && pedido.customer && pedido.customer.name, orden: result.buy_order, email: pedido && pedido.customer && pedido.customer.email });
+      // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que
+      // success.html) por si el cliente no llega a disparar el píxel en el navegador.
+      metaCapi.enviarPurchase({ orden: result.buy_order, valor: result.amount, email: pedido && pedido.customer && pedido.customer.email, phone: pedido && pedido.customer && pedido.customer.phone })
+        .catch(e => console.error('[capi]', e.message));
       enviarPagoConfirmado({
         payer: { email: (pedido && pedido.customer && pedido.customer.email) || '(Pago con Webpay)' },
         transaction_amount: result.amount,

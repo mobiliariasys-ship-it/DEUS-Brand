@@ -9,6 +9,7 @@ const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
 const persist = require('./services/persist');
 const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
+const metaCapi = require('./services/meta-capi');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile). Al vencer, el
 // precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
@@ -236,6 +237,11 @@ app.post('/notificaciones', async (req, res) => {
         };
 
         await enviarPagoConfirmado(info, pedido);
+        // Purchase a Meta desde el SERVIDOR (Conversions API): captura el 100%
+        // de las ventas aunque el cliente no vuelva a success.html. Mismo
+        // event_id que el píxel del navegador → Meta deduplica si llegan ambos.
+        metaCapi.enviarPurchase({ orden: info.id, valor: info.transaction_amount, email: emailCliente, phone: pedido.customer.phone })
+          .catch(err => console.error('[capi] Error inesperado:', err.message));
         // Atribución de conducta: cuenta esta compra con las acciones que hizo
         // la sesión (viajaron en la metadata). Idempotente por n° de pago, así
         // que no se duplica si además el cliente cae en success.html.
