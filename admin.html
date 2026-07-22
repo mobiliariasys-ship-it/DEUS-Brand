@@ -290,11 +290,11 @@
 
   // Conducta del visitante: 4 bloques de barras a partir del mapa de eventos.
   var COND_LBL={
-    'hito:precio':'Vio el precio','hito:tecnologia':'Vio la tecnología','hito:app':'Vio la app','hito:reviews':'Vio reseñas','hito:final':'Llegó al final',
+    'hito:precio':'Vio el precio','hito:app':'Vio la app','hito:reviews':'Vio reseñas','hito:final':'Llegó al final',
     'accion:color':'Eligió color','accion:carrito':'Abrió carrito','accion:resenas':'Abrió reseñas','accion:girar':'Giró el 360°',
     'disp:movil':'📱 Móvil','disp:desktop':'💻 Escritorio'
   };
-  var ORDEN_HITO=['hito:precio','hito:tecnologia','hito:app','hito:reviews','hito:final'];
+  var ORDEN_HITO=['hito:precio','hito:app','hito:reviews','hito:final'];
   function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
   function barrasCond(contId, items, base){
     var c=document.getElementById(contId); c.innerHTML='';

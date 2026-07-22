@@ -1051,7 +1051,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         ev('fuente:'+src);
       }catch(e){ ev('fuente:otro'); }
       // 3) Hitos de scroll (cada sección que entra en pantalla, una vez)
-      var hitos=[['.price-block','precio'],['#tecnologia','tecnologia'],['#app','app'],['.reviews','reviews'],['.final-cta','final']];
+      var hitos=[['.price-block','precio'],['#app','app'],['.reviews','reviews'],['.final-cta','final']];
       if('IntersectionObserver' in window){
         var io=new IntersectionObserver(function(ents){
           ents.forEach(function(en){ if(en.isIntersecting){ var n=en.target.getAttribute('data-hito'); if(n){ ev('hito:'+n); io.unobserve(en.target); } } });
