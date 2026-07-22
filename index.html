@@ -251,8 +251,11 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 .announce-bar b{color:#fff;}
 /* Modo reserva: texto arriba + contador regresivo centrado debajo */
 .announce-bar.reserva{display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.35;padding-top:8px;padding-bottom:8px;}
-.announce-bar .reserva-cd{text-transform:none;font-size:.86rem;letter-spacing:2px;color:#fff;font-weight:700;font-variant-numeric:tabular-nums;}
-@media(max-width:600px){.announce-bar .reserva-cd{font-size:.74rem;letter-spacing:1px;}}
+.announce-bar .reserva-cd{display:flex;gap:6px;justify-content:center;text-transform:none;}
+.rcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:4px 9px;min-width:42px;}
+.rcd-box b{font-size:1rem;font-weight:700;line-height:1;color:#fff;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
+.rcd-box small{font-size:.44rem;letter-spacing:1.5px;color:#9a9a9a;margin-top:3px;text-transform:uppercase;}
+@media(max-width:600px){.rcd-box{min-width:34px;padding:3px 7px;}.rcd-box b{font-size:.86rem;}}
 .promo-timer{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:7px;}
 .promo-label{font-size:.55rem;letter-spacing:2.5px;color:#1b2b2b;}
 .cd-row{display:flex;gap:6px;}
@@ -886,6 +889,8 @@ body.sb-on .wa-float{bottom:82px;}
 .co-price-now{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;line-height:1;}
 /* Precio "normal" tachado que acompaña al precio de reserva ($52.990 / $58.990) */
 .pb-old{font-size:.5em;color:#8a8a8a;text-decoration:line-through;margin-left:8px;font-family:'DM Sans',sans-serif;letter-spacing:0;vertical-align:middle;font-weight:400;}
+/* Badge de % de descuento junto al precio de reserva */
+.pb-off{display:inline-block;font-size:.42em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#0a2e12;background:#69c46d;padding:3px 7px;border-radius:6px;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
 .stock-note{font-size:.78rem;color:#e8b464;letter-spacing:.5px;margin:0 0 16px;}
@@ -1626,7 +1631,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
           }
           document.getElementById('co-prod-price').innerHTML = window.modoReserva
-            ? `<span class="co-price-old">$${(RESERVA_ANCLA * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`
+            ? `<span class="co-price-old">$${(RESERVA_ANCLA * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span> <span class="pb-off">-10%</span>`
             : ofertaActiva()
             ? `<span class="co-price-old">$${(54990 * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`
             : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`;
@@ -2729,17 +2734,22 @@ function cargarStock() {
 function aplicarReserva() {
   const on = !!window.modoReserva;
   const pb = document.querySelector('.price-block');
-  if (pb) pb.innerHTML = on ? '<sup>$</sup>52.990 <span class="pb-old">$58.990</span>' : '<sup>$</sup>54.990';
+  if (pb) pb.innerHTML = on ? '<sup>$</sup>52.990 <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>' : '<sup>$</sup>54.990';
   const fc = document.querySelector('.fc-price');
-  if (fc) fc.innerHTML = on ? '$52.990 <span class="pb-old">$58.990</span>' : '$54.990';
+  if (fc) fc.innerHTML = on ? '$52.990 <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>' : '$54.990';
   const sb = document.querySelector('.sb-price');
-  if (sb) sb.innerHTML = on ? '<b>$52.990</b> <span class="pb-old">$58.990</span>' : '<b>$54.990</b>';
+  if (sb) sb.innerHTML = on ? '<b>$52.990</b> <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>' : '<b>$54.990</b>';
   const ab = document.getElementById('offer-bar');
   if (ab) {
     if (on) {
       ab.classList.add('reserva');
-      ab.innerHTML = '<span class="ab-txt">📦 Reserva con descuento · Asegura la tuya · Llega en 10 días</span>'
-                   + '<span class="reserva-cd" id="reserva-cd">--d --h --m --s</span>';
+      ab.innerHTML = '<span class="ab-txt">📦 Reserva con descuento · Asegura la tuya</span>'
+                   + '<span class="reserva-cd" id="reserva-cd">'
+                   +   '<span class="rcd-box"><b id="rcd-d">--</b><small>días</small></span>'
+                   +   '<span class="rcd-box"><b id="rcd-h">--</b><small>hrs</small></span>'
+                   +   '<span class="rcd-box"><b id="rcd-m">--</b><small>min</small></span>'
+                   +   '<span class="rcd-box"><b id="rcd-s">--</b><small>seg</small></span>'
+                   + '</span>';
       iniciarContadorReserva();
     } else {
       ab.classList.remove('reserva');
@@ -2760,16 +2770,15 @@ function aplicarReserva() {
 const RESERVA_LLEGADA = new Date('2026-08-01T12:00:00-04:00').getTime();
 let reservaCdIv = null;
 function pintarContadorReserva() {
-  const el = document.getElementById('reserva-cd');
-  if (!el) return;
+  const eld = document.getElementById('rcd-d');
+  if (!eld) return;
   let d = RESERVA_LLEGADA - Date.now();
   if (d < 0) d = 0;
-  const dias = Math.floor(d / 86400000);
-  const hs   = Math.floor(d / 3600000) % 24;
-  const min  = Math.floor(d / 60000) % 60;
-  const seg  = Math.floor(d / 1000) % 60;
   const z = n => String(n).padStart(2, '0');
-  el.textContent = dias + 'd ' + z(hs) + 'h ' + z(min) + 'm ' + z(seg) + 's';
+  eld.textContent = z(Math.floor(d / 86400000));
+  document.getElementById('rcd-h').textContent = z(Math.floor(d / 3600000) % 24);
+  document.getElementById('rcd-m').textContent = z(Math.floor(d / 60000) % 60);
+  document.getElementById('rcd-s').textContent = z(Math.floor(d / 1000) % 60);
 }
 function iniciarContadorReserva() {
   pintarContadorReserva();
