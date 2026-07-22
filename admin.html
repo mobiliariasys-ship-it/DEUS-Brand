@@ -115,6 +115,16 @@
     </div>
 
     <section>
+      <div class="sec-h"><h2>📊 Vistas · últimos 30 días</h2><span class="pill" id="chart-total"></span></div>
+      <div class="chart-container"><canvas id="chartDias" width="820" height="200"></canvas></div>
+    </section>
+
+    <section>
+      <div class="sec-h"><h2>💰 Ventas · últimos 30 días</h2><span class="pill" id="chart-ventas-total"></span></div>
+      <div class="chart-container"><canvas id="chartVentas" width="820" height="200"></canvas></div>
+    </section>
+
+    <section>
       <div class="sec-h"><h2>🫗 Embudo · dónde se caen</h2><span class="pill" id="funnel-conv"></span></div>
       <div id="funnel">
         <div class="fn-row"><div class="fn-lbl">👀 Visitas</div><div class="fn-track"><div class="fn-bar" id="fn-vis"></div></div><div class="fn-val" id="fn-vis-v">0</div></div>
@@ -151,16 +161,6 @@
       <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que hicieron cada acción, cuántos compraron. Lo de arriba es lo que más convierte → ponlo primero.</p>
       <div id="conv-accion"></div>
       <div class="empty" id="conv-empty" style="display:none">Aún no hay compras rastreadas para cruzar. Se llena con las próximas ventas.</div>
-    </section>
-
-    <section>
-      <div class="sec-h"><h2>📊 Vistas · últimos 30 días</h2><span class="pill" id="chart-total"></span></div>
-      <div class="chart-container"><canvas id="chartDias" width="820" height="200"></canvas></div>
-    </section>
-
-    <section>
-      <div class="sec-h"><h2>💰 Ventas · últimos 30 días</h2><span class="pill" id="chart-ventas-total"></span></div>
-      <div class="chart-container"><canvas id="chartVentas" width="820" height="200"></canvas></div>
     </section>
 
     <section>
