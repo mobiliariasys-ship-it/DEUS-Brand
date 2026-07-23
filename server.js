@@ -420,9 +420,11 @@ app.post('/envio/despachado', async (req, res) => {
   }
 });
 
-// Stock restante (para el contador de unidades en la web)
+// Stock restante (para el contador de unidades en la web). Incluye `precio`
+// (lo que el backend cobraría AHORA) como diagnóstico: si la respuesta trae
+// "precio":52990 con remaining 0, la reserva está activa y cobrando bien.
 app.get('/stock', (req, res) => {
-  res.json({ remaining: getStock() });
+  res.json({ remaining: getStock(), precio: precioBanda() });
 });
 
 // Ajuste manual del stock, protegido con la clave STOCK_KEY de Render.
