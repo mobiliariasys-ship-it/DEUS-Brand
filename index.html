@@ -2702,7 +2702,7 @@ const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 
 // Sincroniza aviso de stock, foto y color en página y checkout
 function textoStock(color) {
-  if (window.modoReserva) return '📦 Pronto restock · Reserva la tuya';
+  if (window.modoReserva) return '';
   if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — restock pronto · disponible en gris';
   if (color === 'negra') return '🔥 Pocas unidades disponibles de este color';
   return '';
