@@ -905,7 +905,10 @@ body.sb-on .wa-float{bottom:82px;}
 .pb-off{display:inline-block;font-size:.46em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#e8b464;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
 /* Regalo por reservar (tapones de oído DEUS): solo visible en modo reserva */
 .reserva-regalo{display:flex;align-items:center;gap:11px;margin:14px 0 16px;padding:9px 13px;border:1px solid rgba(232,180,100,.35);background:rgba(232,180,100,.08);border-radius:9px;font-size:.8rem;color:#e8b464;letter-spacing:.3px;line-height:1.35;}
-.reserva-regalo .regalo-img{width:48px;height:48px;border-radius:7px;object-fit:cover;flex-shrink:0;background:#1e1e1e;}
+.reserva-regalo .regalo-thumb{position:relative;flex-shrink:0;cursor:zoom-in;display:block;line-height:0;transition:transform .15s;}
+.reserva-regalo .regalo-thumb:hover{transform:scale(1.05);}
+.reserva-regalo .regalo-img{width:54px;height:54px;border-radius:8px;object-fit:cover;background:#1e1e1e;border:1px solid rgba(232,180,100,.5);display:block;}
+.reserva-regalo .regalo-zoom{position:absolute;right:-5px;bottom:-5px;background:#e8b464;color:#1a1205;font-size:.6rem;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.55);}
 .reserva-regalo b{color:#f2d9a8;font-weight:700;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
@@ -1162,7 +1165,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <div class="price-block"><sup>$</sup>54.990</div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
-      <div class="reserva-regalo" style="display:none;"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async" onclick="abrirFotoResena('img/img-tapones.webp')" style="cursor:zoom-in;"><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
+      <div class="reserva-regalo" style="display:none;"><span class="regalo-thumb" onclick="abrirFotoResena('img/img-tapones.webp')" title="Toca para ver en grande"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span class="regalo-zoom">🔍</span></span><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
       <div class="cta-row">
         <button class="btn-p" data-buy="Comprar ahora" data-reserve="Reservar ahora" onclick="abrirCheckout()">Comprar ahora</button>
         <button class="btn-cart" onclick="abrirDialogoCarrito()" title="Agregar al carrito">
@@ -1239,7 +1242,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </div>
             </div>
             <div class="co-stock" id="co-stock" style="display:none;"></div>
-            <div class="reserva-regalo" style="display:none;"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async" onclick="abrirFotoResena('img/img-tapones.webp')" style="cursor:zoom-in;"><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
+            <div class="reserva-regalo" style="display:none;"><span class="regalo-thumb" onclick="abrirFotoResena('img/img-tapones.webp')" title="Toca para ver en grande"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span class="regalo-zoom">🔍</span></span><span>🎁 Reserva ahora y te regalamos unos <b>Tapones de oído DEUS</b></span></div>
             <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
               <span style="font-size:.9rem;color:#aaa;">Cantidad:</span>
               <button class="cart-qty-btn" id="co-qty-minus" onclick="cambiarCantidadCheckout(-1)">−</button>
