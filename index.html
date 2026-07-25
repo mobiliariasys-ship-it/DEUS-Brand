@@ -3005,23 +3005,27 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFoto
 <style>
 .tapones-menu{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:2100;align-items:center;justify-content:center;padding:20px;}
 .tapones-menu.show{display:flex;}
-.tapones-card{background:#0f0f0f;border:1px solid rgba(232,180,100,.35);border-radius:16px;max-width:380px;width:100%;padding:20px 20px 22px;position:relative;box-shadow:0 24px 70px rgba(0,0,0,.7);}
-.tapones-card-close{position:absolute;top:10px;right:12px;background:none;border:none;color:#8a7a55;font-size:1.9rem;line-height:1;cursor:pointer;transition:color .15s;}
-.tapones-card-close:hover{color:#e8b464;}
-.tapones-hero{width:100%;aspect-ratio:1/1;border-radius:12px;object-fit:cover;background:#1a1a1a;border:1px solid rgba(232,180,100,.3);cursor:zoom-in;display:block;}
-.tapones-thumbs{display:flex;gap:9px;margin-top:11px;}
-.tapones-thumb{width:56px;height:56px;border-radius:9px;object-fit:cover;background:#1a1a1a;border:1px solid rgba(255,255,255,.12);cursor:pointer;opacity:.6;transition:opacity .15s,border-color .15s;}
-.tapones-thumb.active{opacity:1;border-color:#e8b464;}
-.tapones-title{margin:15px 0 3px;font-size:1.06rem;font-weight:700;color:#f2d9a8;letter-spacing:.3px;}
+.tapones-card{background:#0f0f0f;border:1px solid rgba(255,255,255,.07);border-radius:16px;max-width:380px;width:100%;padding:18px 18px 20px;position:relative;box-shadow:0 24px 70px rgba(0,0,0,.7);}
+.tapones-card-close{position:absolute;top:9px;right:11px;z-index:3;background:none;border:none;color:#888;font-size:1.9rem;line-height:1;cursor:pointer;transition:color .15s;}
+.tapones-card-close:hover{color:#ddd;}
+.tapones-gallery{position:relative;border-radius:12px;overflow:hidden;background:#141414;}
+.tapones-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.tapones-track::-webkit-scrollbar{display:none;}
+.tapones-slide{flex:0 0 100%;width:100%;aspect-ratio:1/1;object-fit:cover;background:#141414;scroll-snap-align:center;cursor:zoom-in;display:block;}
+.tap-arrow{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(10,10,10,.55);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:1.25rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);transition:background .15s;padding:0;}
+.tap-arrow:hover{background:rgba(10,10,10,.8);}
+.tap-prev{left:9px;} .tap-next{right:9px;}
+.tapones-dots{display:flex;justify-content:center;gap:6px;margin-top:11px;}
+.tapones-dots span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.22);transition:background .2s,width .2s;}
+.tapones-dots span.active{background:#e8b464;width:16px;border-radius:3px;}
+.tapones-title{margin:15px 0 3px;font-size:1.06rem;font-weight:700;color:#f0ede6;letter-spacing:.3px;}
 .tapones-price{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;}
 .tapones-price .tp-now{color:#f2d9a8;font-weight:800;font-size:1.15rem;letter-spacing:.3px;}
-.tapones-price .tp-old{color:#8a7a55;text-decoration:line-through;font-size:.92rem;}
-.tapones-price .tp-free{color:#7fc9a0;font-weight:700;font-size:.92rem;letter-spacing:.4px;}
-.tapones-desc{font-size:.82rem;color:#b9b9b9;line-height:1.5;margin-bottom:16px;}
+.tapones-desc{font-size:.82rem;color:#b3b3b3;line-height:1.5;margin-bottom:16px;}
 .tapones-buy{width:100%;background:linear-gradient(135deg,#e8b464,#d69f45);border:none;color:#0a0a0a;font-weight:800;font-size:.95rem;letter-spacing:.4px;padding:14px;border-radius:11px;cursor:pointer;transition:filter .15s,transform .1s;}
 .tapones-buy:hover{filter:brightness(1.06);}
 .tapones-buy:active{transform:scale(.98);}
-.tapones-note{text-align:center;font-size:.68rem;color:#8a7a55;margin-top:9px;letter-spacing:.3px;}
+.tapones-note{text-align:center;font-size:.68rem;color:#8a8a8a;margin-top:9px;letter-spacing:.3px;}
 /* Modo checkout "solo tapones": oculta lo que es exclusivo de la banda */
 #checkout-overlay.tapones #co-prod-color,
 #checkout-overlay.tapones #co-color-pick,
@@ -3032,11 +3036,15 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFoto
 <div class="tapones-menu" id="tapones-menu" onclick="if(event.target===this)cerrarTaponesMenu()">
   <div class="tapones-card">
     <button class="tapones-card-close" onclick="cerrarTaponesMenu()" aria-label="Cerrar">&times;</button>
-    <img id="tapones-hero" class="tapones-hero" src="img/img-tapones.webp" alt="Tapones de oído DEUS" onclick="abrirFotoResena(this.src)" title="Toca para ver en grande">
-    <div class="tapones-thumbs">
-      <img class="tapones-thumb active" src="img/img-tapones.webp" alt="Tapones de oído DEUS abiertos" onclick="taponesSetImg(this,'img/img-tapones.webp')">
-      <img class="tapones-thumb" src="img/img-tapones-2.webp" alt="Estuche DEUS de tapones de oído" onclick="taponesSetImg(this,'img/img-tapones-2.webp')">
+    <div class="tapones-gallery">
+      <div class="tapones-track" id="tapones-track">
+        <img class="tapones-slide" src="img/img-tapones-2.webp" alt="Estuche DEUS de tapones de oído" onclick="abrirFotoResena(this.src)" title="Toca para ver en grande">
+        <img class="tapones-slide" src="img/img-tapones.webp" alt="Tapones de oído DEUS abiertos" onclick="abrirFotoResena(this.src)" title="Toca para ver en grande">
+      </div>
+      <button class="tap-arrow tap-prev" onclick="taponesMover(-1)" aria-label="Foto anterior">‹</button>
+      <button class="tap-arrow tap-next" onclick="taponesMover(1)" aria-label="Foto siguiente">›</button>
     </div>
+    <div class="tapones-dots" id="tapones-dots"><span class="active"></span><span></span></div>
     <div class="tapones-title">Tapones de oído DEUS</div>
     <div class="tapones-price"><span class="tp-now">$14.990</span></div>
     <div class="tapones-desc">Estuche premium con tapones de silicona de alta atenuación. Ideales para dormir, concentrarte o entrenar.</div>
@@ -3049,16 +3057,27 @@ function abrirTaponesMenu(){
   if(event) event.stopPropagation();
   document.getElementById('tapones-menu').classList.add('show');
   document.body.style.overflow='hidden';
+  var track=document.getElementById('tapones-track');
+  if(track){ track.scrollLeft=0; taponesSyncDots(); }
 }
 function cerrarTaponesMenu(){
   document.getElementById('tapones-menu').classList.remove('show');
   if(!document.getElementById('foto-lightbox').classList.contains('show')) document.body.style.overflow='';
 }
-function taponesSetImg(el,src){
-  document.getElementById('tapones-hero').src=src;
-  document.querySelectorAll('.tapones-thumb').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
+function taponesMover(dir){
+  var track=document.getElementById('tapones-track');
+  if(track) track.scrollBy({left:dir*track.clientWidth,behavior:'smooth'});
 }
+function taponesSyncDots(){
+  var track=document.getElementById('tapones-track');
+  if(!track) return;
+  var i=Math.round(track.scrollLeft/track.clientWidth);
+  document.querySelectorAll('#tapones-dots span').forEach(function(d,n){ d.classList.toggle('active',n===i); });
+}
+(function(){
+  var track=document.getElementById('tapones-track');
+  if(track){ var t; track.addEventListener('scroll',function(){ clearTimeout(t); t=setTimeout(taponesSyncDots,60); }); }
+})();
 function abrirCheckoutSoloTapones(){
   cerrarTaponesMenu();
   if(typeof abrirCheckout==='function') abrirCheckout(null, 1, true);
