@@ -1171,7 +1171,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <div class="price-block"><sup>$</sup>54.990</div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
-      <div class="reserva-regalo" style="display:none;" onclick="abrirFotoResena('img/img-tapones.webp')"><span class="regalo-thumb" onclick="abrirFotoResena('img/img-tapones.webp')" title="Toca para ver en grande"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span class="regalo-zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span></span><span><b>Tapones de oído DEUS</b> de regalo con tu reserva 🎁<span class="regalo-val"><s>$14.990</s></span><small class="regalo-fine">Oferta válida solo durante el período de restock</small></span></div>
+      <div class="reserva-regalo" style="display:none;" onclick="abrirTaponesMenu()"><span class="regalo-thumb" onclick="abrirTaponesMenu()" title="Toca para ver los tapones"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span class="regalo-zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span></span><span><b>Tapones de oído DEUS</b> de regalo con tu reserva 🎁<span class="regalo-val"><s>$14.990</s></span><small class="regalo-fine">Oferta válida solo durante el período de restock</small></span></div>
       <div class="cta-row">
         <button class="btn-p" data-buy="Comprar ahora" data-reserve="Reservar ahora" onclick="abrirCheckout()">Comprar ahora</button>
         <button class="btn-cart" onclick="abrirDialogoCarrito()" title="Agregar al carrito">
@@ -1248,7 +1248,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </div>
             </div>
             <div class="co-stock" id="co-stock" style="display:none;"></div>
-            <div class="reserva-regalo" style="display:none;" onclick="abrirFotoResena('img/img-tapones.webp')"><span class="regalo-thumb" onclick="abrirFotoResena('img/img-tapones.webp')" title="Toca para ver en grande"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span class="regalo-zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span></span><span><b>Tapones de oído DEUS</b> de regalo con tu reserva 🎁<span class="regalo-val"><s>$14.990</s></span><small class="regalo-fine">Oferta válida solo durante el período de restock</small></span></div>
+            <div class="reserva-regalo" style="display:none;" onclick="abrirTaponesMenu()"><span class="regalo-thumb" onclick="abrirTaponesMenu()" title="Toca para ver los tapones"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span class="regalo-zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span></span><span><b>Tapones de oído DEUS</b> de regalo con tu reserva 🎁<span class="regalo-val"><s>$14.990</s></span><small class="regalo-fine">Oferta válida solo durante el período de restock</small></span></div>
             <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
               <span style="font-size:.9rem;color:#aaa;">Cantidad:</span>
               <button class="cart-qty-btn" id="co-qty-minus" onclick="cambiarCantidadCheckout(-1)">−</button>
@@ -2984,6 +2984,64 @@ function cerrarFotoResena(){
   if(!document.getElementById('reviews-modal').classList.contains('show')) document.body.style.overflow='';
 }
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFotoResena(); });
+</script>
+
+<!-- Menú de tapones de oído (se abre al pinchar el rectángulo del regalo) -->
+<style>
+.tapones-menu{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:2100;align-items:center;justify-content:center;padding:20px;}
+.tapones-menu.show{display:flex;}
+.tapones-card{background:#0f0f0f;border:1px solid rgba(232,180,100,.35);border-radius:16px;max-width:380px;width:100%;padding:20px 20px 22px;position:relative;box-shadow:0 24px 70px rgba(0,0,0,.7);}
+.tapones-card-close{position:absolute;top:10px;right:12px;background:none;border:none;color:#8a7a55;font-size:1.9rem;line-height:1;cursor:pointer;transition:color .15s;}
+.tapones-card-close:hover{color:#e8b464;}
+.tapones-hero{width:100%;aspect-ratio:1/1;border-radius:12px;object-fit:cover;background:#1a1a1a;border:1px solid rgba(232,180,100,.3);cursor:zoom-in;display:block;}
+.tapones-thumbs{display:flex;gap:9px;margin-top:11px;}
+.tapones-thumb{width:56px;height:56px;border-radius:9px;object-fit:cover;background:#1a1a1a;border:1px solid rgba(255,255,255,.12);cursor:pointer;opacity:.6;transition:opacity .15s,border-color .15s;}
+.tapones-thumb.active{opacity:1;border-color:#e8b464;}
+.tapones-title{margin:15px 0 3px;font-size:1.06rem;font-weight:700;color:#f2d9a8;letter-spacing:.3px;}
+.tapones-price{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;}
+.tapones-price .tp-old{color:#8a7a55;text-decoration:line-through;font-size:.92rem;}
+.tapones-price .tp-free{color:#7fc9a0;font-weight:700;font-size:.92rem;letter-spacing:.4px;}
+.tapones-desc{font-size:.82rem;color:#b9b9b9;line-height:1.5;margin-bottom:16px;}
+.tapones-buy{width:100%;background:linear-gradient(135deg,#e8b464,#d69f45);border:none;color:#0a0a0a;font-weight:800;font-size:.95rem;letter-spacing:.4px;padding:14px;border-radius:11px;cursor:pointer;transition:filter .15s,transform .1s;}
+.tapones-buy:hover{filter:brightness(1.06);}
+.tapones-buy:active{transform:scale(.98);}
+.tapones-note{text-align:center;font-size:.68rem;color:#8a7a55;margin-top:9px;letter-spacing:.3px;}
+</style>
+<div class="tapones-menu" id="tapones-menu" onclick="if(event.target===this)cerrarTaponesMenu()">
+  <div class="tapones-card">
+    <button class="tapones-card-close" onclick="cerrarTaponesMenu()" aria-label="Cerrar">&times;</button>
+    <img id="tapones-hero" class="tapones-hero" src="img/img-tapones.webp" alt="Tapones de oído DEUS" onclick="abrirFotoResena(this.src)" title="Toca para ver en grande">
+    <div class="tapones-thumbs">
+      <img class="tapones-thumb active" src="img/img-tapones.webp" alt="Tapones de oído DEUS abiertos" onclick="taponesSetImg(this,'img/img-tapones.webp')">
+      <img class="tapones-thumb" src="img/img-tapones-2.webp" alt="Estuche DEUS de tapones de oído" onclick="taponesSetImg(this,'img/img-tapones-2.webp')">
+    </div>
+    <div class="tapones-title">Tapones de oído DEUS</div>
+    <div class="tapones-price"><span class="tp-old">$14.990</span><span class="tp-free">Gratis con tu reserva 🎁</span></div>
+    <div class="tapones-desc">Estuche premium con tapones de silicona de alta atenuación. Ideales para dormir, concentrarte o entrenar. Incluidos <b>sin costo</b> al reservar tu DEUS Band durante el período de restock.</div>
+    <button class="tapones-buy" onclick="reservarConTapones()">Reservar ahora y llevarlos gratis</button>
+    <div class="tapones-note">Se incluyen automáticamente con tu reserva</div>
+  </div>
+</div>
+<script>
+function abrirTaponesMenu(){
+  if(event) event.stopPropagation();
+  document.getElementById('tapones-menu').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function cerrarTaponesMenu(){
+  document.getElementById('tapones-menu').classList.remove('show');
+  if(!document.getElementById('foto-lightbox').classList.contains('show')) document.body.style.overflow='';
+}
+function taponesSetImg(el,src){
+  document.getElementById('tapones-hero').src=src;
+  document.querySelectorAll('.tapones-thumb').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+function reservarConTapones(){
+  cerrarTaponesMenu();
+  if(typeof abrirCheckout==='function') abrirCheckout();
+}
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarTaponesMenu(); });
 </script>
 
 <!-- Modal de reseñas (se abre desde las estrellas junto al precio) -->
