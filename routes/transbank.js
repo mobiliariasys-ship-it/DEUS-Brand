@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { WebpayPlus, Options, IntegrationApiKeys, IntegrationCommerceCodes, Environment } = require('transbank-sdk');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
-const { decrementStock } = require('../services/stock');
+const { decrementStock, getStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 const metrics = require('../services/metrics');
 const metaCapi = require('../services/meta-capi');
@@ -10,7 +10,9 @@ const metaCapi = require('../services/meta-capi');
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
 const PRODUCT_PRICE = 54990;
-const precioBanda = () => 54990; // descuento retirado: precio normal $54.990
+// Precio reserva-aware: si no queda stock, modo reserva a $52.990 (igual que
+// server.js/MercadoPago). Antes cobraba fijo $54.990 aunque el sitio mostrara $52.990.
+const precioBanda = () => (getStock() <= 0 ? 52990 : 54990);
 const pedidosWebpay = new Map(); // buyOrder -> pedido
 
 // Producción si hay credenciales reales; si no, integración (pruebas)
