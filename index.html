@@ -2728,7 +2728,7 @@ function updateStockUI() {
 }
 
 function cargarStock() {
-  fetch(api('/stock')).then(r => r.json()).then(d => {
+  fetch(api('/stock?t=' + Date.now()), { cache: 'no-store' }).then(r => r.json()).then(d => {
     if (d && typeof d.remaining === 'number') {
       stockRestante = Math.max(0, d.remaining);
       window.modoReserva = d.remaining <= 0;   // 0 unidades → modo reserva (mismo umbral que el backend)

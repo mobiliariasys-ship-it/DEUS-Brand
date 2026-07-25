@@ -424,6 +424,7 @@ app.post('/envio/despachado', async (req, res) => {
 // (lo que el backend cobraría AHORA) como diagnóstico: si la respuesta trae
 // "precio":52990 con remaining 0, la reserva está activa y cobrando bien.
 app.get('/stock', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.json({ remaining: getStock(), precio: precioBanda() });
 });
 
