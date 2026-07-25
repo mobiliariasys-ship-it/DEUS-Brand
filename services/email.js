@@ -345,4 +345,65 @@ async function enviarTicketSorteo(t) {
   await enviarCorreo(`🎟️ Ticket sorteo — ${t.nombre || 'sin nombre'} (orden ${t.orden || '—'})`, html);
 }
 
-module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, diagnostico };
+// ── Aviso al dueño cuando NO se pudo iniciar un pago ──────────────────────
+// Se dispara cuando la pasarela (Flow, Webpay o MercadoPago) rechaza o no
+// responde al crear el pago: el cliente ve "No pudimos conectar" y se va sin
+// comprar. Antes esto solo se veía en los logs de Render, así que las ventas
+// perdidas pasaban inadvertidas hasta que alguien reclamaba.
+//
+// Antirrepetición: el front reintenta hasta 4 veces seguidas, y sin esto
+// llegarían 4 correos idénticos por un mismo intento. Se manda como máximo
+// uno por combinación medio+cliente cada VENTANA_AVISO.
+const ultimoAvisoFallo = new Map();
+const VENTANA_AVISO = 5 * 60 * 1000; // 5 minutos
+
+async function enviarPagoFallido(datos) {
+  const c = datos.cliente || {};
+  const clave = (datos.metodo || '?') + '|' + (c.email || c.phone || 'anonimo');
+  const ahora = Date.now();
+  const previo = ultimoAvisoFallo.get(clave);
+  if (previo && (ahora - previo) < VENTANA_AVISO) return; // ya avisado recién
+  ultimoAvisoFallo.set(clave, ahora);
+  // Limpieza para que el Map no crezca indefinidamente
+  if (ultimoAvisoFallo.size > 200) {
+    for (const [k, t] of ultimoAvisoFallo) if (ahora - t > VENTANA_AVISO) ultimoAvisoFallo.delete(k);
+  }
+
+  const esc = s => String(s == null ? '—' : s).replace(/</g, '&lt;');
+  const dir = datos.direccion || {};
+  const wa = (c.phone || '').replace(/[^0-9]/g, '');
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee">
+      <div style="background:#4a1010;color:#fff;padding:20px 24px">
+        <h2 style="margin:0;letter-spacing:1px">⚠️ PAGO FALLIDO — venta en riesgo</h2>
+        <p style="margin:6px 0 0;color:#f0b8b8;font-size:13px">El cliente NO pudo pagar con ${esc(datos.metodo)}. No se le cobró nada.</p>
+      </div>
+      <div style="padding:24px">
+        <div style="background:#fff6f6;border-left:3px solid #c0392b;padding:12px 14px;margin-bottom:18px;font-size:13px">
+          <b>Motivo técnico:</b><br><span style="color:#a33">${esc(datos.error)}</span>
+        </div>
+        <h3 style="margin:0 0 12px">Contacta al cliente para rescatar la venta</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <tr><td style="padding:6px 0;color:#888">Nombre</td><td style="text-align:right"><b>${esc(c.name)}</b></td></tr>
+          <tr><td style="padding:6px 0;color:#888">Teléfono</td><td style="text-align:right"><b>${esc(c.phone)}</b></td></tr>
+          <tr><td style="padding:6px 0;color:#888">Correo</td><td style="text-align:right"><b>${esc(c.email)}</b></td></tr>
+          <tr><td style="padding:6px 0;color:#888">RUT</td><td style="text-align:right">${esc(c.rut)}</td></tr>
+        </table>
+        ${wa ? `<p style="margin:16px 0"><a href="https://wa.me/${wa.startsWith('56') ? wa : '56' + wa}" style="background:#25d366;color:#fff;padding:11px 18px;border-radius:7px;text-decoration:none;font-weight:bold;display:inline-block">Escribirle por WhatsApp</a></p>` : ''}
+        <h3 style="margin:20px 0 12px">Pedido que intentó hacer</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <tr><td style="padding:6px 0;color:#888">Producto</td><td style="text-align:right"><b>${esc(datos.producto)}</b></td></tr>
+          <tr><td style="padding:6px 0;color:#888">Monto</td><td style="text-align:right"><b>${money(datos.monto)}</b></td></tr>
+          <tr><td style="padding:6px 0;color:#888">Color</td><td style="text-align:right">${esc(datos.color)}</td></tr>
+          <tr><td style="padding:6px 0;color:#888">Destino</td><td style="text-align:right">${esc(dir.commune)}, ${esc(dir.region)}</td></tr>
+        </table>
+        <p style="margin-top:18px;font-size:12px;color:#999">
+          Fecha: ${new Date().toLocaleString('es-CL')}<br>
+          Si te llegan varios de estos seguidos con el mismo motivo, revisa las credenciales de la pasarela en Render (Environment) — puede estar fallándole a TODOS los clientes.
+        </p>
+      </div>
+    </div>`;
+  await enviarCorreo(`⚠️ Pago fallido (${datos.metodo}) — ${c.name || 'cliente'} · ${money(datos.monto)}`, html);
+}
+
+module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico };

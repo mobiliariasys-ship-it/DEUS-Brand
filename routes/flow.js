@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const https = require('https');
 const crypto = require('crypto');
-const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
+const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarPagoFallido } = require('../services/email');
 const { decrementStock, getStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 const metrics = require('../services/metrics');
@@ -114,6 +114,16 @@ router.post('/flow/crear', async (req, res) => {
     res.json({ url: r.body.url + '?token=' + r.body.token });
   } catch (e) {
     console.error('[flow/crear] Error:', e.message);
+    // Aviso al dueño: el cliente se quedó sin poder pagar (venta rescatable)
+    enviarPagoFallido({
+      metodo: 'Webpay / Flow',
+      error: e.message,
+      cliente: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
+      producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
+      monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (Number(shippingCost) || 0),
+      color: selectedColor,
+      direccion: shippingAddress
+    }).catch(err => console.error('[email] aviso pago fallido:', err.message));
     res.status(500).json({ error: 'No se pudo iniciar el pago con Flow' });
   }
 });

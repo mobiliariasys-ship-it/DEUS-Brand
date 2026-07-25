@@ -4,7 +4,7 @@ const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const shippingRoutes = require('./routes/shipping');
 const transbankRoutes = require('./routes/transbank');
 const flowRoutes = require('./routes/flow');
-const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, diagnostico } = require('./services/email');
+const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico } = require('./services/email');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
 const persist = require('./services/persist');
@@ -205,6 +205,16 @@ app.post('/crear-preferencia', async (req, res) => {
     res.json({ id: result.id, init_point: result.init_point });
   } catch (error) {
     console.error('Error creando preferencia:', error);
+    // Aviso al dueño: el cliente se quedó sin poder pagar (venta rescatable)
+    enviarPagoFallido({
+      metodo: 'Mercado Pago',
+      error: error.message || String(error),
+      cliente: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
+      producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
+      monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (Number(shippingCost) || 0),
+      color: selectedColor,
+      direccion: shippingAddress
+    }).catch(err => console.error('[email] aviso pago fallido:', err.message));
     res.status(500).json({ error: 'Error al crear la preferencia de pago' });
   }
 });
