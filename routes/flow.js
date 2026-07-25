@@ -14,6 +14,7 @@ const PRODUCT_PRICE = 54990;
 // Precio reserva-aware: si no queda stock, modo reserva a $52.990 (igual que
 // server.js/MercadoPago). Antes cobraba fijo $54.990 aunque el sitio mostrara $52.990.
 const precioBanda = () => (getStock() <= 0 ? 52990 : 54990);
+const TAPONES_PRICE = 14990; // compra de solo tapones de oído (sin banda)
 const pedidosFlow = new Map();
 
 // Producción por defecto; sandbox si FLOW_ENV=sandbox
@@ -64,17 +65,21 @@ function flowReq(method, path, params) {
 
 // Iniciar pago con Flow
 router.post('/flow/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones } = req.body;
   try {
     const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
-    const amount = precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+    const amount = soloTapones
+      ? TAPONES_PRICE * qty + (Number(shippingCost) || 0)
+      : precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
     const commerceOrder = 'deus-' + Date.now();
     const base = getBaseUrl(req);
 
     const params = {
       apiKey: (process.env.FLOW_API_KEY || "").trim(),
       commerceOrder: commerceOrder,
-      subject: 'DEUS Band' + (qty > 1 ? ' x' + qty : '') + (tapones ? ' + Tapones' : ''),
+      subject: soloTapones
+        ? 'Tapones de oído DEUS' + (qty > 1 ? ' x' + qty : '')
+        : 'DEUS Band' + (qty > 1 ? ' x' + qty : '') + (tapones ? ' + Tapones' : ''),
       currency: 'CLP',
       amount: String(amount),
       email: customerEmail || 'cliente@deusbrand.cl',
@@ -90,9 +95,11 @@ router.post('/flow/crear', async (req, res) => {
     const pedido = {
       preference_id: commerceOrder,
       created_at: new Date().toISOString(),
-      product: 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
-      product_price: precioBanda() * qty + (tapones ? 12990 : 0),
-      cantidad: qty, tapones: !!tapones,
+      product: soloTapones
+        ? 'Tapones de oído DEUS' + (qty > 1 ? ` x${qty}` : '')
+        : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
+      product_price: soloTapones ? TAPONES_PRICE * qty : precioBanda() * qty + (tapones ? 12990 : 0),
+      cantidad: qty, tapones: !!tapones, soloTapones: !!soloTapones,
       color: selectedColor,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },
@@ -124,7 +131,7 @@ router.post('/flow/confirmacion', async (req, res) => {
     if (st.status === 2) {
       if (pedido) pedido.status = 'paid';
       marcarPagado(st.commerceOrder); // cancela el correo de recuperación
-      decrementStock(st.commerceOrder);
+      if (!(pedido && pedido.soloTapones)) decrementStock(st.commerceOrder); // solo tapones no descuenta stock de banda
       // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
       const ticketFlow = metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder, email: (pedido && pedido.customer && pedido.customer.email) || st.payer });
       // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que

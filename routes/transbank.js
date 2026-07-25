@@ -13,6 +13,7 @@ const PRODUCT_PRICE = 54990;
 // Precio reserva-aware: si no queda stock, modo reserva a $52.990 (igual que
 // server.js/MercadoPago). Antes cobraba fijo $54.990 aunque el sitio mostrara $52.990.
 const precioBanda = () => (getStock() <= 0 ? 52990 : 54990);
+const TAPONES_PRICE = 14990; // compra de solo tapones de oído (sin banda)
 const pedidosWebpay = new Map(); // buyOrder -> pedido
 
 // Producción si hay credenciales reales; si no, integración (pruebas)
@@ -36,10 +37,12 @@ function getBaseUrl(req) {
 
 // Inicia el pago con Webpay
 router.post('/webpay/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones } = req.body;
   try {
     const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
-    const amount = precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+    const amount = soloTapones
+      ? TAPONES_PRICE * qty + (Number(shippingCost) || 0)
+      : precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
     const buyOrder = 'deus-' + Date.now();
     const sessionId = 'sess-' + Date.now();
     const returnUrl = `${getBaseUrl(req)}/webpay/retorno`;
@@ -50,10 +53,13 @@ router.post('/webpay/crear', async (req, res) => {
     const pedido = {
       preference_id: buyOrder,
       created_at: new Date().toISOString(),
-      product: 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
-      product_price: precioBanda() * qty + (tapones ? 12990 : 0),
+      product: soloTapones
+        ? 'Tapones de oído DEUS' + (qty > 1 ? ` x${qty}` : '')
+        : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
+      product_price: soloTapones ? TAPONES_PRICE * qty : precioBanda() * qty + (tapones ? 12990 : 0),
       cantidad: qty,
       tapones: !!tapones,
+      soloTapones: !!soloTapones,
       color: selectedColor,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },
@@ -95,7 +101,7 @@ async function handleRetorno(req, res) {
 
     if (aprobado) {
       marcarPagado(result.buy_order); // cancela el correo de recuperación
-      decrementStock(result.buy_order);
+      if (!(pedido && pedido.soloTapones)) decrementStock(result.buy_order); // solo tapones no descuenta stock de banda
       // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
       const ticketWP = metrics.registrarVenta({ monto: result.amount, metodo: 'Webpay', nombre: pedido && pedido.customer && pedido.customer.name, orden: result.buy_order, email: pedido && pedido.customer && pedido.customer.email });
       // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que

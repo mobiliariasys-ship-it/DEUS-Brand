@@ -20,6 +20,7 @@ const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
 // Este es el precio AUTORITATIVO que se cobra; el front muestra lo mismo mirando
 // /stock. getStock()<=0 es el mismo umbral que usa el front (window.modoReserva).
 const precioBanda = () => (getStock() <= 0 ? 52990 : 54990);
+const TAPONES_PRICE = 14990; // compra de solo tapones de oído (sin banda)
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -73,25 +74,36 @@ const pedidos = [];
 function guardarPedidos() { persist.save('pedidos.json', pedidos).catch(e => console.error('[pedidos] Error guardando:', e.message)); }
 
 app.post('/crear-preferencia', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, acciones } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, acciones } = req.body;
 
   try {
     const preference = new Preference(client);
 
-    // Cantidad de bandas acotada a un rango razonable
+    // Cantidad acotada a un rango razonable
     const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
 
-    const items = [
-      {
-        title: 'DEUS Band',
-        description: 'Smart Band — Monitor de salud y bienestar',
-        unit_price: precioBanda(),
-        quantity: qty,
-        currency_id: 'CLP'
-      }
-    ];
+    // Compra de SOLO tapones (sin banda): el único ítem es el estuche de tapones.
+    const items = soloTapones
+      ? [
+          {
+            title: 'Tapones de oído DEUS',
+            description: 'Tapones de oído — 3 tamaños incluidos',
+            unit_price: TAPONES_PRICE,
+            quantity: qty,
+            currency_id: 'CLP'
+          }
+        ]
+      : [
+          {
+            title: 'DEUS Band',
+            description: 'Smart Band — Monitor de salud y bienestar',
+            unit_price: precioBanda(),
+            quantity: qty,
+            currency_id: 'CLP'
+          }
+        ];
 
-    if (tapones) {
+    if (!soloTapones && tapones) {
       items.push({
         title: 'Tapones de oído DEUS',
         description: 'Tapones de oído — 3 tamaños incluidos',
@@ -114,7 +126,9 @@ app.post('/crear-preferencia', async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const isLocalhost = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
 
-    const totalPedido = precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+    const totalPedido = soloTapones
+      ? TAPONES_PRICE * qty + (Number(shippingCost) || 0)
+      : precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
 
     const prefBody = {
       items,
@@ -127,6 +141,7 @@ app.post('/crear-preferencia', async (req, res) => {
         selected_color: selectedColor,
         cantidad: qty,
         tapones: !!tapones,
+        soloTapones: !!soloTapones,
         shipping_carrier: shippingCarrier,
         shipping_cost: shippingCost,
         shipping_address: shippingAddress,
@@ -156,10 +171,13 @@ app.post('/crear-preferencia', async (req, res) => {
     const pedido = {
       preference_id: result.id,
       created_at: new Date().toISOString(),
-      product: 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
-      product_price: precioBanda() * qty + (tapones ? 12990 : 0),
+      product: soloTapones
+        ? 'Tapones de oído DEUS' + (qty > 1 ? ` x${qty}` : '')
+        : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
+      product_price: soloTapones ? TAPONES_PRICE * qty : precioBanda() * qty + (tapones ? 12990 : 0),
       cantidad: qty,
       tapones: !!tapones,
+      soloTapones: !!soloTapones,
       color: selectedColor,
       customer: {
         name: customerName,
@@ -220,6 +238,7 @@ app.post('/notificaciones', async (req, res) => {
         // que no viaje en la metadata.
         const enMemoria = [...pedidos].reverse().find(p => (p.customer?.email || '').toLowerCase() === (emailCliente || '').toLowerCase()) || {};
         const taponesPago = meta.tapones !== undefined ? (meta.tapones === true || meta.tapones === 'true') : !!enMemoria.tapones;
+        const soloTaponesPago = meta.soloTapones !== undefined ? (meta.soloTapones === true || meta.soloTapones === 'true') : !!enMemoria.soloTapones;
         const costoPago = (meta.shipping_cost !== undefined && meta.shipping_cost !== null && meta.shipping_cost !== '') ? Number(meta.shipping_cost) : enMemoria.shipping?.cost;
         const pedido = {
           product: enMemoria.product || 'DEUS Band',
@@ -250,7 +269,7 @@ app.post('/notificaciones', async (req, res) => {
         // la sesión (viajaron en la metadata). Idempotente por n° de pago, así
         // que no se duplica si además el cliente cae en success.html.
         metrics.registrarConversion((meta.acciones_sesion || '').split(',').filter(Boolean), info.id, false);
-        decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago
+        if (!soloTaponesPago) decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago; solo tapones no descuenta stock de banda
         // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
         const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: pedido.customer.name, orden: info.id, email: emailCliente });
 

@@ -1574,25 +1574,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // colorForzado/qtyForzada: cuando se compra DESDE EL CARRITO, el color y
         // la cantidad vienen del carrito — NO de la posición del carrusel (así un
         // swipe accidental ya no cambia el color que se cobra).
-        function abrirCheckout(colorForzado, qtyForzada) {
-          const colorActual = colorForzado || (typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris');
-          if (typeof AGOTADOS !== 'undefined' && AGOTADOS[colorActual]) {
-            alert('El color negro está agotado. Elige el color gris para comprar.');
-            return;
+        function abrirCheckout(colorForzado, qtyForzada, soloTapones) {
+          checkoutTapones = !!soloTapones;
+          if (!checkoutTapones) {
+            const colorActual = colorForzado || (typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris');
+            if (typeof AGOTADOS !== 'undefined' && AGOTADOS[colorActual]) {
+              alert('El color negro está agotado. Elige el color gris para comprar.');
+              return;
+            }
+            setCheckoutColor(colorActual); // bloquea el color con el que se abrió
           }
-          setCheckoutColor(colorActual); // bloquea el color con el que se abrió
           checkoutQty = (qtyForzada && qtyForzada > 0) ? qtyForzada : 1;
           upsellTapones = false;
-          const upCard = document.getElementById('upsell-card');
-          const upBtn = document.getElementById('upsell-btn');
-          if (upCard) upCard.classList.remove('added');
-          if (upBtn) upBtn.textContent = '+ Agregar';
+          // Modo "solo tapones": el mismo modal pero como producto Tapones $14.990
+          const overlay = document.getElementById('checkout-overlay');
+          overlay.classList.toggle('tapones', checkoutTapones);
+          const nameEl = document.querySelector('#checkout-overlay .co-prod-name');
+          const imgEl = document.getElementById('co-prod-img');
+          if (nameEl) nameEl.textContent = checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band';
+          if (imgEl) imgEl.src = checkoutTapones ? 'img/img-tapones.webp' : 'img/img-afadcb86.webp';
           document.getElementById('co-qty-display').textContent = String(checkoutQty);
           actualizarTotalCheckout();
-          document.getElementById('checkout-overlay').classList.add('show');
+          overlay.classList.add('show');
           document.body.style.overflow = 'hidden';
           if (typeof updateStockUI === 'function') updateStockUI();
-          if (window.fbq) fbq('track', 'InitiateCheckout', { value: precioBanda(), currency: 'CLP', content_name: 'DEUS Band' });
+          if (window.fbq) fbq('track', 'InitiateCheckout', { value: checkoutTapones ? TAPONES_PRICE : precioBanda(), currency: 'CLP', content_name: checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band' });
           if (window.deusTrackCheckout) window.deusTrackCheckout();
         }
         // Rescate: el primer intento de cierre muestra la barra de WhatsApp en vez de cerrar
@@ -1616,7 +1622,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // ── CANTIDAD Y UPSELL EN CHECKOUT ──
         let checkoutQty = 1;
         let upsellTapones = false;
+        let checkoutTapones = false; // true = comprando SOLO tapones (sin banda)
         const UPSELL_PRICE = 12990;
+        const TAPONES_PRICE = 14990;
         function toggleUpsell() {
           upsellTapones = !upsellTapones;
           const card = document.getElementById('upsell-card');
@@ -1626,6 +1634,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           actualizarTotalCheckout();
         }
         function subtotalCheckout() {
+          if (checkoutTapones) return TAPONES_PRICE * checkoutQty;
           return precioBanda() * checkoutQty + (upsellTapones ? UPSELL_PRICE : 0);
         }
         function cambiarCantidadCheckout(delta) {
@@ -1640,6 +1649,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const total = subtotalCheckout() + (selectedShipping?.price || 0);
           if (document.getElementById('total-display')) {
             document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
+          }
+          if (checkoutTapones) {
+            document.getElementById('co-prod-price').innerHTML =
+              `<span class="co-price-now">$${(TAPONES_PRICE * checkoutQty).toLocaleString('es-CL')}</span>`;
+            return;
           }
           document.getElementById('co-prod-price').innerHTML = window.modoReserva
             ? `<span class="co-price-old">$${(RESERVA_ANCLA * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span> <span class="pb-off">-10%</span>`
@@ -1844,6 +1858,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             selectedColor: checkoutColor,
             cantidad: checkoutQty,
             tapones: upsellTapones,
+            soloTapones: checkoutTapones,
             shippingCarrier: selectedShipping?.carrier || null,
             shippingCost: selectedShipping?.price || 0,
             shippingAddress: selectedShipping?.address || null,
@@ -2999,6 +3014,7 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFoto
 .tapones-thumb.active{opacity:1;border-color:#e8b464;}
 .tapones-title{margin:15px 0 3px;font-size:1.06rem;font-weight:700;color:#f2d9a8;letter-spacing:.3px;}
 .tapones-price{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;}
+.tapones-price .tp-now{color:#f2d9a8;font-weight:800;font-size:1.15rem;letter-spacing:.3px;}
 .tapones-price .tp-old{color:#8a7a55;text-decoration:line-through;font-size:.92rem;}
 .tapones-price .tp-free{color:#7fc9a0;font-weight:700;font-size:.92rem;letter-spacing:.4px;}
 .tapones-desc{font-size:.82rem;color:#b9b9b9;line-height:1.5;margin-bottom:16px;}
@@ -3006,6 +3022,12 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFoto
 .tapones-buy:hover{filter:brightness(1.06);}
 .tapones-buy:active{transform:scale(.98);}
 .tapones-note{text-align:center;font-size:.68rem;color:#8a7a55;margin-top:9px;letter-spacing:.3px;}
+/* Modo checkout "solo tapones": oculta lo que es exclusivo de la banda */
+#checkout-overlay.tapones #co-prod-color,
+#checkout-overlay.tapones #co-color-pick,
+#checkout-overlay.tapones .co-cuotas,
+#checkout-overlay.tapones #co-stock,
+#checkout-overlay.tapones .reserva-regalo{display:none !important;}
 </style>
 <div class="tapones-menu" id="tapones-menu" onclick="if(event.target===this)cerrarTaponesMenu()">
   <div class="tapones-card">
@@ -3016,10 +3038,10 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFoto
       <img class="tapones-thumb" src="img/img-tapones-2.webp" alt="Estuche DEUS de tapones de oído" onclick="taponesSetImg(this,'img/img-tapones-2.webp')">
     </div>
     <div class="tapones-title">Tapones de oído DEUS</div>
-    <div class="tapones-price"><span class="tp-old">$14.990</span><span class="tp-free">Gratis con tu reserva 🎁</span></div>
-    <div class="tapones-desc">Estuche premium con tapones de silicona de alta atenuación. Ideales para dormir, concentrarte o entrenar. Incluidos <b>sin costo</b> al reservar tu DEUS Band durante el período de restock.</div>
-    <button class="tapones-buy" onclick="reservarConTapones()">Reservar ahora y llevarlos gratis</button>
-    <div class="tapones-note">Se incluyen automáticamente con tu reserva</div>
+    <div class="tapones-price"><span class="tp-now">$14.990</span></div>
+    <div class="tapones-desc">Estuche premium con tapones de silicona de alta atenuación. Ideales para dormir, concentrarte o entrenar.</div>
+    <button class="tapones-buy" onclick="abrirCheckoutSoloTapones()">Comprar tapones · $14.990</button>
+    <div class="tapones-note">🎁 O llévalos <b>gratis</b> al reservar tu DEUS Band</div>
   </div>
 </div>
 <script>
@@ -3037,9 +3059,9 @@ function taponesSetImg(el,src){
   document.querySelectorAll('.tapones-thumb').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
-function reservarConTapones(){
+function abrirCheckoutSoloTapones(){
   cerrarTaponesMenu();
-  if(typeof abrirCheckout==='function') abrirCheckout();
+  if(typeof abrirCheckout==='function') abrirCheckout(null, 1, true);
 }
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarTaponesMenu(); });
 </script>
