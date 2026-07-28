@@ -2799,7 +2799,7 @@ function aplicarReserva() {
 // Contador regresivo del top bar en modo reserva: cuenta hasta que llega el
 // restock. Fecha objetivo FIJA (no se reinicia al recargar). Cambiá esta fecha
 // cuando el proveedor confirme la llegada real.
-const RESERVA_LLEGADA = new Date('2026-08-02T12:00:00-04:00').getTime();
+const RESERVA_LLEGADA = new Date('2026-08-01T12:00:00-04:00').getTime();
 let reservaCdIv = null;
 function pintarContadorReserva() {
   const eld = document.getElementById('rcd-d');
