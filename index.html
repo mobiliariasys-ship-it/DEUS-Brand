@@ -925,11 +925,13 @@ body.sb-on .wa-float{bottom:82px;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
 .stock-note{font-size:.78rem;color:#e8b464;letter-spacing:.5px;margin:0 0 16px;}
-.proof-line{font-size:.74rem;color:#aaa;letter-spacing:.5px;margin:0 0 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+.proof-line{font-size:.74rem;color:#aaa;letter-spacing:.5px;margin:0 0 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;}
 .proof-line:hover{color:#ddd;}
-.proof-line .proof-stars{color:#e9c46a;font-size:1.08rem;letter-spacing:2.5px;}
-.proof-line b{color:#ddd;}
+.proof-line .proof-stars{color:#e9c46a;font-size:1.45rem;letter-spacing:1px;line-height:1;}
+.proof-line b{color:#ddd;font-size:.92rem;}
 .proof-count{color:#8f8f8f;}
+/* En pantallas angostas se acorta el texto para que la linea no se parta */
+@media(max-width:430px){.proof-long{display:none;}}
 .proof-arrow{color:#777;font-size:.9rem;}
 /* Modal de reseñas: se ven sin salir de la zona de compra */
 .reviews-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1600;align-items:center;justify-content:center;padding:20px;}
@@ -1187,7 +1189,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="reserva-regalo" style="display:none;" onclick="abrirTaponesMenu()"><span class="regalo-thumb" onclick="abrirTaponesMenu()" title="Toca para ver los tapones"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span class="regalo-zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span></span><span><b>Tapones de oído DEUS</b> de regalo con tu reserva 🎁<span class="regalo-val"><s>$14.990</s></span><small class="regalo-fine">Oferta válida solo durante el período de restock</small></span></div>
 
       <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas" style="margin-top:14px;">
-        <span class="proof-stars">★★★★★</span> <b>5.0</b> <span class="proof-count">(<span id="rating-count">7</span>)</span> · reseñas de la comunidad <span class="proof-arrow">›</span>
+        <span class="proof-stars">★★★★★</span> <b>5.0</b> <span class="proof-count">(<span id="rating-count">7</span>)</span> · reseñas<span class="proof-long"> de la comunidad</span> <span class="proof-arrow">›</span>
       </div>
 
       <div class="reassure">
