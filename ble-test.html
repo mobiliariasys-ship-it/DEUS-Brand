@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>DEUS Band — Diagnóstico Bluetooth</title>
+<style>
+:root{--bg:#080808;--card:#121212;--border:#252525;--gold:#d9bf92;--ok:#69c46d;--bad:#e05a5a;--dim:#8f8f8f;}
+*{box-sizing:border-box;}
+body{margin:0;padding:18px 14px 60px;background:var(--bg);color:#e8e8e8;
+     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.45;}
+h1{font-size:1.15rem;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px;color:#fff;}
+.sub{color:var(--dim);font-size:.78rem;margin-bottom:20px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;}
+.card h2{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:0 0 10px;font-weight:600;}
+button{font-family:inherit;font-size:.85rem;font-weight:600;border-radius:8px;border:1px solid var(--border);
+       background:#1c1c1c;color:#e8e8e8;padding:11px 16px;cursor:pointer;transition:background .15s;}
+button:hover:not(:disabled){background:#262626;}
+button:disabled{opacity:.35;cursor:not-allowed;}
+button.primary{background:#fff;color:#000;border-color:#fff;width:100%;padding:15px;font-size:.95rem;
+               letter-spacing:1.5px;text-transform:uppercase;}
+.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #1c1c1c;font-size:.85rem;}
+.row:last-child{border-bottom:none;}
+.row span:first-child{color:var(--dim);}
+.row span:last-child{text-align:right;font-weight:600;word-break:break-all;}
+.verdict{border-radius:8px;padding:13px;margin-bottom:12px;font-size:.85rem;display:none;}
+.verdict.ok{display:block;background:rgba(105,196,109,.1);border:1px solid rgba(105,196,109,.45);color:#a8e0aa;}
+.verdict.bad{display:block;background:rgba(224,90,90,.1);border:1px solid rgba(224,90,90,.45);color:#f0a8a8;}
+.big{display:flex;gap:10px;margin-bottom:12px;}
+.big div{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;}
+.big b{display:block;font-size:1.7rem;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums;}
+.big small{display:block;font-size:.55rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-top:4px;}
+#log{background:#0c0c0c;border:1px solid var(--border);border-radius:8px;padding:10px;height:290px;overflow-y:auto;
+     font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:.68rem;line-height:1.55;white-space:pre-wrap;
+     word-break:break-all;color:#b8b8b8;}
+.log-t{color:#555;}
+.log-rx{color:#7fc9e8;}
+.log-tx{color:var(--gold);}
+.log-ok{color:var(--ok);}
+.log-err{color:var(--bad);}
+.hint{font-size:.72rem;color:var(--dim);margin-top:9px;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<h1>DEUS Band · Diagnóstico</h1>
+<div class="sub">Chrome en Android, Windows, Mac o Linux. No funciona en iPhone.</div>
+
+<div class="verdict" id="verdict"></div>
+
+<button class="primary" id="btn-conectar">Conectar banda</button>
+
+<div class="big" style="margin-top:12px;">
+  <div><b id="m-bpm">--</b><small>bpm</small></div>
+  <div><b id="m-pasos">--</b><small>pasos</small></div>
+  <div><b id="m-bat">--</b><small>% batería</small></div>
+</div>
+
+<div class="card">
+  <h2>Identidad del dispositivo</h2>
+  <div class="row"><span>Nombre</span><span id="d-nombre">—</span></div>
+  <div class="row"><span>Fabricante</span><span id="d-fab">—</span></div>
+  <div class="row"><span>Modelo</span><span id="d-modelo">—</span></div>
+  <div class="row"><span>Firmware</span><span id="d-fw">—</span></div>
+  <div class="row"><span>Protocolo</span><span id="d-proto">—</span></div>
+</div>
+
+<div class="card">
+  <h2>Pruebas</h2>
+  <div class="btn-grid">
+    <button id="btn-hr-on"   disabled>♥ Medir pulso</button>
+    <button id="btn-hr-off"  disabled>■ Parar pulso</button>
+    <button id="btn-pasos"   disabled>👟 Leer pasos</button>
+    <button id="btn-sueno"   disabled>🌙 Sueño de hoy</button>
+    <button id="btn-hr-hist" disabled>📈 Pulso histórico</button>
+    <button id="btn-limpiar">🧹 Limpiar log</button>
+  </div>
+  <div class="hint">El pulso tarda 10–30 s: la banda mide y recién ahí contesta. Mantenela puesta y quieta.</div>
+</div>
+
+<div class="card">
+  <h2>Log crudo</h2>
+  <div id="log"></div>
+  <div class="hint">Todo lo que entra y sale, en hexadecimal. Si algo no se entiende, mandame este texto.</div>
+</div>
+
+<script>
+// ── Protocolo MoYoung / Da Fit ────────────────────────────────────────────
+// Documentado por el proyecto Gadgetbridge (GPLv3). Formato de paquete:
+//   FE EA | tam_hi | tam_lo | cmd | payload
+// En V2 tam_hi = 32 + (largo >> 8); en V1 tam_hi = 16 y tam_lo = largo.
+// El largo incluye los 5 bytes de cabecera.
+const SVC_DEUS   = '0000feea-0000-1000-8000-00805f9b34fb';
+const CHR_PASOS  = '0000fee1-0000-1000-8000-00805f9b34fb'; // read/notify
+const CHR_OUT    = '0000fee2-0000-1000-8000-00805f9b34fb'; // write
+const CHR_IN     = '0000fee3-0000-1000-8000-00805f9b34fb'; // notify
+const SVC_INFO   = 0x180a;
+const SVC_BAT    = 0x180f;
+
+const CMD = {
+  SYNC_SLEEP:       0x32, // 50
+  PAST_SLEEP_STEP:  0x33, // 51
+  PAST_HR_2:        0x36, // 54
+  MOVEMENT_HR:      0x37, // 55
+  MEASURE_HR:       0x6d  // 109 — {0} arranca, {0xFF} para
+};
+
+let dev = null, chrOut = null, esV2 = true;
+
+// ── Utilidades ────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(' ');
+
+function log(msg, clase) {
+  const t = new Date().toTimeString().slice(0, 8);
+  const el = $('log');
+  el.innerHTML += `<span class="log-t">${t}</span> <span class="${clase || ''}">${msg}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function veredicto(texto, ok) {
+  const v = $('verdict');
+  v.className = 'verdict ' + (ok ? 'ok' : 'bad');
+  v.innerHTML = texto;
+}
+
+// uint24 — la doc del protocolo dice little endian, pero mostramos ambos
+// para poder confirmarlo contra los valores reales de la banda.
+const u24le = (dv, o) => dv.getUint8(o) | (dv.getUint8(o + 1) << 8) | (dv.getUint8(o + 2) << 16);
+const u24be = (dv, o) => (dv.getUint8(o) << 16) | (dv.getUint8(o + 1) << 8) | dv.getUint8(o + 2);
+
+function armarPaquete(cmd, payload = []) {
+  const largo = 5 + payload.length;
+  const p = new Uint8Array(largo);
+  p[0] = 0xfe; p[1] = 0xea;
+  if (esV2) { p[2] = 32 + ((largo >> 8) & 0xff); p[3] = largo & 0xff; }
+  else      { p[2] = 16;                          p[3] = largo & 0xff; }
+  p[4] = cmd;
+  p.set(payload, 5);
+  return p;
+}
+
+async function enviar(cmd, payload = [], etiqueta = '') {
+  if (!chrOut) return;
+  const p = armarPaquete(cmd, payload);
+  log(`TX ${etiqueta}  ${hex(p.buffer)}`, 'log-tx');
+  try {
+    if (chrOut.properties.write) await chrOut.writeValueWithResponse(p);
+    else await chrOut.writeValueWithoutResponse(p);
+  } catch (e) {
+    log('TX falló: ' + e.message, 'log-err');
+  }
+}
+
+async function leerTexto(servicio, caracteristica) {
+  try {
+    const s = await dev.gatt.getPrimaryService(servicio);
+    const c = await s.getCharacteristic(caracteristica);
+    return new TextDecoder().decode(await c.readValue()).replace(/\0+$/, '').trim();
+  } catch (e) { return null; }
+}
+
+// ── Interpretación de respuestas ──────────────────────────────────────────
+function interpretar(cmd, payload) {
+  const dv = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
+
+  if (cmd === CMD.MEASURE_HR && payload.length >= 1) {
+    const bpm = payload[0];
+    $('m-bpm').textContent = bpm || '--';
+    return `PULSO = ${bpm} bpm`;
+  }
+
+  if (cmd === CMD.SYNC_SLEEP && payload.length >= 3) {
+    const tipos = ['despierto', 'ligero', 'profundo'];
+    const tramos = [];
+    for (let i = 0; i + 2 < payload.length; i += 3) {
+      const t = payload[i];
+      tramos.push(`${String(payload[i+1]).padStart(2,'0')}:${String(payload[i+2]).padStart(2,'0')} ${tipos[t] || '?' + t}`);
+    }
+    return 'SUEÑO — ' + tramos.join(' · ');
+  }
+
+  if (cmd === CMD.PAST_SLEEP_STEP && payload.length >= 10) {
+    return `PASADO — dist=${u24le(dv,1)} pasos=${u24le(dv,4)} kcal=${u24le(dv,7)} (LE)`;
+  }
+
+  return null;
+}
+
+function onNotificacionIn(ev) {
+  const v = new Uint8Array(ev.target.value.buffer);
+  log('RX ' + hex(v.buffer), 'log-rx');
+
+  if (v.length >= 5 && v[0] === 0xfe && v[1] === 0xea) {
+    const cmd = v[4];
+    const payload = v.slice(5);
+    const leido = interpretar(cmd, payload);
+    if (leido) log('   ↳ ' + leido, 'log-ok');
+    else log(`   ↳ cmd 0x${cmd.toString(16)} (${cmd}) · ${payload.length} bytes de payload`, 'log-t');
+  }
+}
+
+function onNotificacionPasos(ev) {
+  const dv = ev.target.value;
+  if (dv.byteLength < 9) { log('RX pasos (corto) ' + hex(dv.buffer), 'log-rx'); return; }
+  const le = { d: u24le(dv,0), p: u24le(dv,3), k: u24le(dv,6) };
+  const be = { d: u24be(dv,0), p: u24be(dv,3), k: u24be(dv,6) };
+  $('m-pasos').textContent = le.p.toLocaleString('es-CL');
+  log('RX pasos ' + hex(dv.buffer), 'log-rx');
+  log(`   ↳ LE: ${le.p} pasos · ${le.d} m · ${le.k} kcal`, 'log-ok');
+  log(`   ↳ BE: ${be.p} pasos · ${be.d} m · ${be.k} kcal  (comparar con la app)`, 'log-t');
+}
+
+// ── Conexión ──────────────────────────────────────────────────────────────
+async function conectar() {
+  if (!navigator.bluetooth) {
+    veredicto('<b>Este navegador no soporta Web Bluetooth.</b><br>Usá Chrome en Android, Windows, Mac o Linux. En iPhone no existe: Apple no lo permite en ningún navegador.', false);
+    return;
+  }
+
+  try {
+    log('Abriendo el selector de dispositivos…');
+    dev = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [SVC_DEUS, SVC_INFO, SVC_BAT]
+    });
+
+    log(`Conectando a "${dev.name || 'sin nombre'}"…`);
+    dev.addEventListener('gattserverdisconnected', () => {
+      log('Desconectado.', 'log-err');
+      $('btn-conectar').textContent = 'Conectar banda';
+      document.querySelectorAll('.btn-grid button[id^="btn-"]').forEach(b => {
+        if (b.id !== 'btn-limpiar') b.disabled = true;
+      });
+    });
+
+    await dev.gatt.connect();
+    log('GATT conectado.', 'log-ok');
+    $('d-nombre').textContent = dev.name || '(sin nombre)';
+    $('btn-conectar').textContent = 'Reconectar';
+
+    // Identidad
+    const fab    = await leerTexto(SVC_INFO, 0x2a29);
+    const modelo = await leerTexto(SVC_INFO, 0x2a24);
+    const fw     = await leerTexto(SVC_INFO, 0x2a26);
+    $('d-fab').textContent    = fab    || 'no disponible';
+    $('d-modelo').textContent = modelo || 'no disponible';
+    $('d-fw').textContent     = fw     || 'no disponible';
+    log(`Fabricante="${fab}" Modelo="${modelo}" Firmware="${fw}"`);
+
+    // El nombre del fabricante define la versión del protocolo
+    const fabUp = (fab || '').toUpperCase();
+    esV2 = !fabUp.includes('MOYOUNG') || fabUp.includes('V2');
+    $('d-proto').textContent = fabUp.includes('MOYOUNG')
+      ? (fabUp.includes('V2') ? 'MOYOUNG-V2' : 'MOYOUNG (V1)')
+      : 'desconocido — se asume V2';
+
+    // Batería (servicio estándar)
+    try {
+      const sb = await dev.gatt.getPrimaryService(SVC_BAT);
+      const cb = await sb.getCharacteristic(0x2a19);
+      const bat = (await cb.readValue()).getUint8(0);
+      $('m-bat').textContent = bat;
+      log(`Batería ${bat}%`, 'log-ok');
+    } catch (e) { log('Sin servicio de batería estándar: ' + e.message, 'log-err'); }
+
+    // Servicio propietario
+    let svc = null;
+    try {
+      svc = await dev.gatt.getPrimaryService(SVC_DEUS);
+      log('Servicio feea encontrado.', 'log-ok');
+    } catch (e) {
+      veredicto('<b>No expone el servicio <code>feea</code>.</b><br>La banda no habla MoYoung, o no es el dispositivo correcto. Mirá el log: si el fabricante quedó vacío, probá con otro dispositivo de la lista.', false);
+      log('Sin servicio feea: ' + e.message, 'log-err');
+      return;
+    }
+
+    // Pasos en vivo (read + notify, sin comando)
+    try {
+      const cp = await svc.getCharacteristic(CHR_PASOS);
+      if (cp.properties.read) {
+        const v = await cp.readValue();
+        onNotificacionPasos({ target: { value: v } });
+      }
+      if (cp.properties.notify) {
+        await cp.startNotifications();
+        cp.addEventListener('characteristicvaluechanged', onNotificacionPasos);
+        log('Suscrito a pasos en vivo (fee1).', 'log-ok');
+      }
+    } catch (e) { log('fee1 (pasos) no disponible: ' + e.message, 'log-err'); }
+
+    // Canal de respuestas
+    try {
+      const ci = await svc.getCharacteristic(CHR_IN);
+      await ci.startNotifications();
+      ci.addEventListener('characteristicvaluechanged', onNotificacionIn);
+      log('Suscrito a respuestas (fee3).', 'log-ok');
+    } catch (e) { log('fee3 (respuestas) no disponible: ' + e.message, 'log-err'); }
+
+    // Canal de comandos
+    try {
+      chrOut = await svc.getCharacteristic(CHR_OUT);
+      log('Canal de comandos listo (fee2).', 'log-ok');
+      document.querySelectorAll('.btn-grid button').forEach(b => b.disabled = false);
+    } catch (e) { log('fee2 (comandos) no disponible: ' + e.message, 'log-err'); }
+
+    if (fabUp.includes('MOYOUNG')) {
+      veredicto(`<b>Compatible.</b> La banda se identifica como <code>${fab}</code>. El protocolo documentado aplica tal cual — podemos leer pulso, sueño y pasos desde la web.`, true);
+    } else if (chrOut) {
+      veredicto(`<b>Probablemente compatible.</b> El fabricante dice <code>${fab || '(vacío)'}</code>, no "MOYOUNG", pero tiene el servicio <code>feea</code> con los tres canales. Probá los botones de abajo: si el pulso responde, estamos bien.`, true);
+    }
+
+  } catch (e) {
+    if (e.name === 'NotFoundError') log('Selección cancelada.', 'log-t');
+    else { log('Error: ' + e.message, 'log-err'); veredicto('<b>Falló la conexión.</b> ' + e.message, false); }
+  }
+}
+
+// ── Botones ───────────────────────────────────────────────────────────────
+$('btn-conectar').onclick = conectar;
+$('btn-hr-on').onclick    = () => enviar(CMD.MEASURE_HR, [0x00], 'medir pulso');
+$('btn-hr-off').onclick   = () => enviar(CMD.MEASURE_HR, [0xff], 'parar pulso');
+$('btn-sueno').onclick    = () => enviar(CMD.SYNC_SLEEP, [], 'sueño de hoy');
+$('btn-hr-hist').onclick  = () => enviar(CMD.PAST_HR_2, [0x00], 'pulso histórico [0]');
+$('btn-pasos').onclick    = async () => {
+  try {
+    const svc = await dev.gatt.getPrimaryService(SVC_DEUS);
+    const cp = await svc.getCharacteristic(CHR_PASOS);
+    onNotificacionPasos({ target: { value: await cp.readValue() } });
+  } catch (e) { log('Lectura de pasos falló: ' + e.message, 'log-err'); }
+};
+$('btn-limpiar').onclick  = () => { $('log').innerHTML = ''; };
+
+// Aviso temprano si el navegador no sirve
+if (!navigator.bluetooth) {
+  veredicto('<b>Este navegador no soporta Web Bluetooth.</b><br>Abrí esta página con Chrome en Android, Windows, Mac o Linux. En iPhone no funciona con ningún navegador — Apple no lo permite.', false);
+  $('btn-conectar').disabled = true;
+} else {
+  log('Listo. Tocá "Conectar banda" y elegila de la lista.');
+  log('Ojo: si la app Da Halo está abierta, cerrala — puede tener la banda tomada.', 'log-t');
+}
+</script>
+</body>
+</html>
