@@ -104,6 +104,15 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
     <option value="1">Encabezado V1 — fd da 10 …  (confirmado)</option>
     <option value="2">Encabezado V2 — fd da 20 …</option>
   </select>
+  <button id="btn-control" style="width:100%;margin-bottom:9px;">🔇 Control: 3 min sin enviar nada</button>
+  <div class="btn-grid" style="margin-bottom:9px;">
+    <button data-solo="fea2" data-v="2">Solo fea2 · V2</button>
+    <button data-solo="fea2" data-v="1">Solo fea2 · V1</button>
+    <button data-solo="fec7" data-v="1">Solo fec7 · V1</button>
+    <button data-solo="fec7" data-v="2">Solo fec7 · V2</button>
+    <button data-solo="fdd2" data-v="1">Solo fdd2 · V1</button>
+    <button data-solo="fdd5" data-v="1">Solo fdd5 · V1</button>
+  </div>
   <div class="btn-grid" style="margin-bottom:9px;">
     <button id="btn-desempate">🔦 Desempate A/B</button>
     <button id="btn-combos">🔦 Todas las combinaciones</button>
@@ -367,6 +376,39 @@ async function probarCombinaciones() {
   }
   log('── Fin de la prueba ──────────────────────', 'log-ok');
   log('¿En cuál intento se prendió la luz? Ese es el bueno.', 'log-t');
+}
+
+// Control: NO manda absolutamente nada durante 3 minutos.
+//
+// Muchas de estas bandas miden el pulso solas cada cierto rato, y encienden el
+// mismo sensor. Si la luz aparece igual sin que mandemos nada, entonces los
+// "aciertos" anteriores fueron coincidencia y todo lo que dedujimos del canal
+// se cae. Hay que descartarlo antes de seguir probando.
+async function control() {
+  log('── CONTROL: no se envía ningún comando ───', 'log-ok');
+  log('Durante 3 minutos la página queda muda. Mirá el sensor de la banda.', 'log-t');
+  log('Si la luz se prende igual, la banda mide sola y la luz no sirve de señal.', 'log-t');
+  for (let s = 15; s <= 180; s += 15) {
+    await new Promise(r => setTimeout(r, 15000));
+    log(`   … ${s} s sin enviar nada`, 'log-t');
+  }
+  log('── Fin del control ───────────────────────', 'log-ok');
+  log('¿Se prendió la luz alguna vez en estos 3 minutos?', 'log-t');
+}
+
+// Prueba UNA sola combinación, sin ambigüedad posible.
+async function probarUna(uuidCorto, version) {
+  const d = escribibles.find(e => e.car.uuid.slice(4, 8) === uuidCorto);
+  if (!d) { log(`No está ${uuidCorto} entre los escribibles.`, 'log-err'); return; }
+  log(`── Probando SOLO ${d.etiqueta} con V${version} ──`, 'log-ok');
+  log('Mirá el sensor. 20 segundos.', 'log-t');
+  await enviarDeus(109, [0x00], 'iniciar pulso', version, d);
+  for (let s = 5; s <= 20; s += 5) {
+    await new Promise(r => setTimeout(r, 5000));
+    log(`   … ${s} s`, 'log-t');
+  }
+  await enviarDeus(109, [0xff], 'detener', version, d);
+  log(`── Fin. ¿Se prendió con ${d.etiqueta} V${version}? ──`, 'log-ok');
 }
 
 // Desempate entre los dos finalistas. La prueba anterior dejaba solo 8 s entre
@@ -758,6 +800,10 @@ $('btn-barrido').onclick   = barridoComandos;
 $('btn-guiada').onclick    = medicionGuiada;
 $('btn-combos').onclick    = probarCombinaciones;
 $('btn-desempate').onclick = desempate;
+$('btn-control').onclick   = control;
+document.querySelectorAll('#caja-deus [data-solo]').forEach(b => {
+  b.onclick = () => probarUna(b.dataset.solo, parseInt(b.dataset.v));
+});
 document.querySelectorAll('#caja-deus [data-cmd]').forEach(b => {
   b.onclick = () => enviarDeus(
     parseInt(b.dataset.cmd),
