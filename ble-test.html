@@ -99,7 +99,8 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
     encabezado <code>fd da 10 largo comando</code> — se enciende el sensor al pedirle
     el pulso. Las respuestas deberían llegar por <code>fec8</code>.
   </div>
-  <button id="btn-guiada" class="primary" style="width:100%;margin-bottom:9px;">♥ Cosecha completa — pulso y sueño (2 min)</button>
+  <button id="btn-saludo" class="primary" style="width:100%;margin-bottom:9px;">🤝 Saludo: sincronizar hora y contar respuestas</button>
+  <button id="btn-guiada" style="width:100%;margin-bottom:9px;">♥ Cosecha completa — pulso y sueño (2 min)</button>
   <select id="sel-version" style="margin-bottom:9px;">
     <option value="1">Encabezado V1 — fd da 10 …  (confirmado)</option>
     <option value="2">Encabezado V2 — fd da 20 …</option>
@@ -196,6 +197,13 @@ CANDIDATOS.push('6e400001-b5a3-f393-e0a9-e50e24dcca9e'); // Nordic UART, común 
 let dev = null, chrOut = null, esV2 = true;
 let escribibles = [];  // características a las que se les puede mandar algo
 let escuchando = 0;    // cuántas notificaciones quedaron activas
+
+// Contador de respuestas REALES. La luz del sensor resultó no ser una señal
+// confiable —la banda la enciende sola cada tanto—, así que el criterio pasa a
+// ser objetivo: cuántos bytes contesta. Se excluyen los canales que emiten
+// solos (los contadores de pasos), que si no darían falsos positivos.
+let rxRespuestas = 0;
+const EMISORES_SOLOS = ['fdd1', 'fea1'];
 
 // Servicios estándar de Bluetooth: sirven para identificar el aparato, pero
 // el pulso y el sueño nunca viajan por ahí.
@@ -303,6 +311,7 @@ async function escanearServicios() {
           c.addEventListener('characteristicvaluechanged', ev => {
             const v = ev.target.value;
             const txt = new TextDecoder().decode(v).replace(/[^\x20-\x7e]/g, '');
+            if (!EMISORES_SOLOS.includes(ev.target.uuid.slice(4, 8))) rxRespuestas++;
             log(`RX ${corto(ev.target.uuid)}  ${hex(v.buffer)}` + (txt.length >= 3 ? `  "${txt}"` : ''), 'log-rx');
             const leido = descifrar(ev.target.uuid, v);
             if (leido) log('   ↳ ' + leido, 'log-ok');
@@ -376,6 +385,52 @@ async function probarCombinaciones() {
   }
   log('── Fin de la prueba ──────────────────────', 'log-ok');
   log('¿En cuál intento se prendió la luz? Ese es el bueno.', 'log-t');
+}
+
+// Sincronización de hora — el saludo inicial del protocolo.
+//
+// Es lo primero que manda la app oficial al conectarse, y muy probablemente lo
+// que la banda espera antes de contestar cualquier consulta. El ejemplo mismo
+// de la documentación del protocolo es esta trama: fe ea 20 0a 31 68 a3 10 03 08
+//
+// Formato del payload: timestamp Unix en segundos, BIG endian (al revés que
+// todo el resto del protocolo), más un byte 0x08 al final. Y ojo: la hora va
+// en GMT+8, no en UTC — una rareza del fabricante que, si se ignora, deja los
+// datos de sueño corridos medio día.
+function cargaHora() {
+  const gmt8 = Math.floor(Date.now() / 1000) + 8 * 3600;
+  return [(gmt8 >>> 24) & 0xff, (gmt8 >>> 16) & 0xff, (gmt8 >>> 8) & 0xff, gmt8 & 0xff, 0x08];
+}
+
+// Prueba el saludo por cada canal y versión, y cuenta las respuestas SOLA.
+// Ya no depende de que alguien mire una luz: si la banda contesta, se ve acá.
+async function pruebaSaludo() {
+  if (!escribibles.length) { log('No hay canales escribibles.', 'log-err'); return; }
+  log('── Prueba de saludo (sincronizar hora) ───', 'log-ok');
+  log('Ahora el criterio es objetivo: cuántas respuestas llegan por combinación.', 'log-t');
+
+  const resultados = [];
+  for (const d of escribibles) {
+    for (const v of [1, 2]) {
+      const antes = rxRespuestas;
+      await enviarDeus(49, cargaHora(), `saludo ${d.etiqueta} V${v}`, v, d);
+      await new Promise(r => setTimeout(r, 4000));
+      const nuevas = rxRespuestas - antes;
+      resultados.push({ canal: d.etiqueta, v, nuevas });
+      log(`   ${d.etiqueta} V${v} → ${nuevas} respuesta(s)`, nuevas ? 'log-ok' : 'log-t');
+    }
+  }
+
+  const ganadores = resultados.filter(r => r.nuevas > 0);
+  log('── Resultado ─────────────────────────────', 'log-ok');
+  if (ganadores.length) {
+    ganadores.forEach(g => log(`✔ CONTESTA: ${g.canal} con V${g.v} (${g.nuevas} respuestas)`, 'log-ok'));
+    log('Ese es el canal. Ahora sí probá la cosecha completa.', 'log-ok');
+  } else {
+    log('✘ Ninguna combinación obtuvo respuesta.', 'log-err');
+    log('La banda acepta los bytes pero no contesta: probablemente exija un', 'log-t');
+    log('emparejamiento previo que solo hace la app oficial. Mandame el log.', 'log-t');
+  }
 }
 
 // Control: NO manda absolutamente nada durante 3 minutos.
@@ -456,6 +511,11 @@ async function medicionGuiada() {
   const ESPERA = 75; // segundos
   log('── Medición de pulso guiada ──────────────', 'log-ok');
   log('No cierres ni bloquees la pantalla. Quedate quieto con la banda puesta.', 'log-t');
+
+  // Saludo primero: la banda probablemente ignore todo hasta que le sincronicen
+  // la hora, que es lo primero que hace la app oficial al conectarse.
+  await enviarDeus(49, cargaHora(), 'sincronizar hora (saludo)', versionElegida());
+  await new Promise(r => setTimeout(r, 2000));
 
   if (!await enviarDeus(109, [0x00], 'iniciar medición de pulso', versionElegida())) return;
   log('Sensor encendido. Esperando ' + ESPERA + ' s…', 'log-t');
@@ -801,6 +861,7 @@ $('btn-guiada').onclick    = medicionGuiada;
 $('btn-combos').onclick    = probarCombinaciones;
 $('btn-desempate').onclick = desempate;
 $('btn-control').onclick   = control;
+$('btn-saludo').onclick    = pruebaSaludo;
 document.querySelectorAll('#caja-deus [data-solo]').forEach(b => {
   b.onclick = () => probarUna(b.dataset.solo, parseInt(b.dataset.v));
 });
