@@ -125,12 +125,24 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
 //   FE EA | tam_hi | tam_lo | cmd | payload
 // En V2 tam_hi = 32 + (largo >> 8); en V1 tam_hi = 16 y tam_lo = largo.
 // El largo incluye los 5 bytes de cabecera.
-const SVC_DEUS   = '0000feea-0000-1000-8000-00805f9b34fb';
-const CHR_PASOS  = '0000fee1-0000-1000-8000-00805f9b34fb'; // read/notify
-const CHR_OUT    = '0000fee2-0000-1000-8000-00805f9b34fb'; // write
-const CHR_IN     = '0000fee3-0000-1000-8000-00805f9b34fb'; // notify
+// UUIDs REALES de la DEUS Band (B11), confirmados leyendo el dispositivo.
+// La banda se identifica como "MOYOUNG-V2" en el nombre de fabricante, y su
+// mapa de canales es el de MoYoung con el prefijo corrido de 'fee' a 'fdd':
+//
+//   MoYoung          DEUS Band        para qué
+//   feea (servicio)  fdda             servicio de datos
+//   fee1  [RN]       fdd1  [RN]       contadores del día (los manda solo)
+//   fee2  [W]        fdd2  [w]        canal de comandos (le escribimos acá)
+//   fee3  [N]        fdd3  [N]        canal de respuestas (contesta por acá)
+//   fee5  [W]        fdd5  [w]        canal especial
+const SVC_DEUS   = '0000fdda-0000-1000-8000-00805f9b34fb';
+const CHR_PASOS  = '0000fdd1-0000-1000-8000-00805f9b34fb'; // read/notify
+const CHR_OUT    = '0000fdd2-0000-1000-8000-00805f9b34fb'; // write sin respuesta
+const CHR_IN     = '0000fdd3-0000-1000-8000-00805f9b34fb'; // notify
 const SVC_INFO   = 0x180a;
 const SVC_BAT    = 0x180f;
+const SVC_HR     = 0x180d;                                  // pulso estándar
+const CHR_HR     = '00002a37-0000-1000-8000-00805f9b34fb';  // medición de pulso
 
 const CMD = {
   SYNC_SLEEP:       0x32, // 50
@@ -252,7 +264,11 @@ async function escanearServicios() {
       // Escuchar TODO lo que la banda emita: es la forma de descubrir el
       // protocolo sin conocerlo — se mueve la muñeca, se toca el botón de la
       // banda, y lo que aparezca acá dice qué manda y con qué formato.
-      if ((p.notify || p.indicate) && !ES_ESTANDAR(s.uuid)) {
+      //
+      // El pulso estándar (0x2a37) se escucha aunque sea de un servicio
+      // estándar: si esta banda lo implementa de verdad, tenemos el dato sin
+      // necesidad de pelear con el protocolo propietario.
+      if ((p.notify || p.indicate) && (!ES_ESTANDAR(s.uuid) || c.uuid === CHR_HR)) {
         try {
           await c.startNotifications();
           c.addEventListener('characteristicvaluechanged', ev => {
@@ -280,6 +296,13 @@ async function escanearServicios() {
     o.value = i; o.textContent = e.etiqueta;
     sel.appendChild(o);
   });
+  // Preseleccionar el canal de comandos (fdd2): es el equivalente al DATA_OUT
+  // de MoYoung, así no hay que adivinar cuál es.
+  const iOut = escribibles.findIndex(e => e.car.uuid === CHR_OUT);
+  if (iOut >= 0) {
+    sel.value = iOut;
+    log(`Canal de comandos detectado: ${escribibles[iOut].etiqueta} (preseleccionado).`, 'log-ok');
+  }
   $('caja-raw').style.display = escribibles.length ? 'block' : 'none';
   $('caja-deus').style.display = escribibles.length ? 'block' : 'none';
 
@@ -397,6 +420,14 @@ function descifrar(uuid, dv) {
   // El mismo contador de pasos, con un byte de tipo delante
   if (u === '0xfea1' && b.length >= 4 && b[0] === 0x01) {
     return `${u24le(dv, 1)} pasos (canal secundario)`;
+  }
+
+  // Pulso por el perfil estándar de Bluetooth: el bit 0 del primer byte dice
+  // si el valor viene en 1 o en 2 bytes.
+  if (u === '0x2a37' && b.length >= 2) {
+    const bpm = (b[0] & 0x01) ? (b[1] | (b[2] << 8)) : b[1];
+    if (bpm > 0) $('m-bpm').textContent = bpm;
+    return `PULSO ${bpm} bpm (perfil estándar)`;
   }
 
   // Trama con el encabezado propio de la banda
