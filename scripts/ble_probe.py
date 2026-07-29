@@ -30,14 +30,55 @@ desconectada del teléfono (cerrá Da Halo antes).
 
 import argparse
 import asyncio
+import os
 import sys
 import time
+import traceback
 from collections import defaultdict
+from datetime import datetime
+
+# ── Registro a archivo ───────────────────────────────────────────────────
+# Todo lo que se imprime se guarda además en ble_probe_salida.txt, al lado del
+# programa. Es imprescindible en Windows: si alguien abre el archivo con doble
+# clic, la ventana se cierra al terminar y la salida se pierde. Así siempre
+# queda el archivo para revisar o mandar.
+ARCHIVO_SALIDA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "ble_probe_salida.txt")
+
+
+class Duplicador:
+    """Escribe a la consola y al archivo al mismo tiempo."""
+
+    def __init__(self, consola, archivo):
+        self.consola, self.archivo = consola, archivo
+
+    def write(self, texto):
+        try:
+            self.consola.write(texto)
+        except UnicodeEncodeError:
+            # Consolas viejas de Windows no soportan acentos ni símbolos
+            self.consola.write(texto.encode("ascii", "replace").decode("ascii"))
+        self.archivo.write(texto)
+        self.archivo.flush()
+
+    def flush(self):
+        try:
+            self.consola.flush()
+        except Exception:
+            pass
+        self.archivo.flush()
+
+
+_archivo_log = open(ARCHIVO_SALIDA, "w", encoding="utf-8")
+sys.stdout = Duplicador(sys.__stdout__, _archivo_log)
+sys.stderr = Duplicador(sys.__stderr__, _archivo_log)
 
 try:
     from bleak import BleakClient, BleakScanner
 except ImportError:
-    sys.exit("Falta la librería bleak. Instalala con:  pip install bleak")
+    print("Falta la librería bleak. Instalala con:   py -m pip install bleak")
+    input("\nPresioná Enter para cerrar…")
+    sys.exit(1)
 
 # ── UUIDs de la banda ────────────────────────────────────────────────────
 def u16(x: str) -> str:
@@ -329,7 +370,26 @@ if __name__ == "__main__":
                     help="segundos de escucha previa (por defecto 45)")
     ap.add_argument("--solo-escuchar", action="store_true",
                     help="solo caracterizar lo que emite sola, sin enviar nada")
+
+    print(f"Sonda DEUS Band · {datetime.now():%Y-%m-%d %H:%M:%S}")
+    print(f"La salida también se guarda en:\n  {ARCHIVO_SALIDA}\n")
+
+    codigo = 1
     try:
-        sys.exit(asyncio.run(principal(ap.parse_args())))
+        codigo = asyncio.run(principal(ap.parse_args()))
     except KeyboardInterrupt:
-        print("\nInterrumpido.")
+        print("\nInterrumpido por el usuario.")
+    except Exception:
+        # Cualquier error se imprime completo Y queda en el archivo, en vez de
+        # perderse cuando la ventana se cierre.
+        print("\nEl programa falló:\n")
+        traceback.print_exc()
+    finally:
+        print(f"\nSalida guardada en: {ARCHIVO_SALIDA}")
+        _archivo_log.flush()
+        # La pausa evita que la ventana se cierre sola al abrir con doble clic.
+        try:
+            input("\nPresioná Enter para cerrar…")
+        except Exception:
+            pass
+    sys.exit(codigo)
