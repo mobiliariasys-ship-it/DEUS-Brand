@@ -66,10 +66,17 @@ function normalizarDia(d) {
   const pulso  = numeroEnRango(d.pulsoReposo, 25, 220);
   const hrv    = numeroEnRango(d.hrv, 1, 300);
   const carga  = numeroEnRango(d.carga, 0, 2000);
+  // Pasos, distancia y calorías los entrega la banda sola, sin pedírselos.
+  const pasos  = numeroEnRango(d.pasos, 0, 200000);
+  const dist   = numeroEnRango(d.distancia, 0, 300000);
+  const kcal   = numeroEnRango(d.calorias, 0, 20000);
   if (sueno !== undefined) reg.suenoHoras  = sueno;
   if (pulso !== undefined) reg.pulsoReposo = pulso;
   if (hrv   !== undefined) reg.hrv         = hrv;
   if (carga !== undefined) reg.carga       = carga;
+  if (pasos !== undefined) reg.pasos       = pasos;
+  if (dist  !== undefined) reg.distancia   = dist;
+  if (kcal  !== undefined) reg.calorias    = kcal;
   // Un día sin ninguna métrica no aporta nada
   if (Object.keys(reg).length === 1) return null;
   reg.origen = limpiarTexto(d.origen, 20) || 'banda';

@@ -199,3 +199,36 @@ test('borrar un atleta se lleva también sus datos', () => {
   assert.strictEqual(A.atletaPorToken(at.token), null);
   assert.strictEqual(A.borrarAtleta(at.id), false, 'borrar dos veces no rompe');
 });
+
+// ── Contadores que entrega la banda ──────────────────────────────────────
+test('guarda pasos, distancia y calorías que emite la banda', () => {
+  const eq = A.crearEquipo({ nombre: 'X' });
+  const at = A.crearAtleta({ nombre: 'A', idEquipo: eq.id });
+  // Valores reales capturados de la banda: 201 pasos, 136 m, 25 kcal
+  const r = A.guardarDias(at.id, [{ fecha: hoy(), pasos: 201, distancia: 136, calorias: 25, origen: 'banda' }]);
+  assert.strictEqual(r.guardados, 1, 'un día solo con contadores ya vale');
+  const e = A.construirEntrada(at.id);
+  assert.strictEqual(e.hoy.pasos, 201);
+  assert.strictEqual(e.hoy.distancia, 136);
+  assert.strictEqual(e.hoy.calorias, 25);
+});
+
+test('descarta contadores imposibles', () => {
+  const { normalizarDia } = A._internos;
+  const d = normalizarDia({ fecha: hoy(), pasos: 5000, distancia: -20, calorias: 999999 });
+  assert.strictEqual(d.pasos, 5000);
+  assert.strictEqual(d.distancia, undefined, 'distancia negativa fuera');
+  assert.strictEqual(d.calorias, undefined, 'calorías absurdas fuera');
+});
+
+test('los contadores conviven con los datos cargados a mano', () => {
+  const eq = A.crearEquipo({ nombre: 'X' });
+  const at = A.crearAtleta({ nombre: 'A', idEquipo: eq.id });
+  A.guardarDias(at.id, [{ fecha: hoy(), pasos: 8000, calorias: 380, origen: 'banda' }]);
+  A.guardarDias(at.id, [{ fecha: hoy(), suenoHoras: 7.2, pulsoReposo: 54, origen: 'manual' }]);
+  const e = A.construirEntrada(at.id);
+  assert.strictEqual(e.hoy.pasos, 8000, 'lo de la banda sobrevive');
+  assert.strictEqual(e.hoy.suenoHoras, 7.2, 'y lo manual se suma');
+  const ev = A.evaluar(at.id);
+  assert.strictEqual(ev.hoy.pasos, 8000, 'la evaluación expone los contadores para el panel');
+});

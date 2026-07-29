@@ -87,9 +87,30 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
 <div class="card" id="caja-raw" style="display:none;">
   <h2>Envío manual</h2>
   <select id="sel-destino"></select>
-  <input id="inp-hex" placeholder="ej: fe ea 20 05 32" autocapitalize="none" autocomplete="off" spellcheck="false">
+  <input id="inp-hex" placeholder="ej: fd da 10 05 32" autocapitalize="none" autocomplete="off" spellcheck="false">
   <button id="btn-raw" style="width:100%;">Enviar bytes</button>
   <div class="hint">Para probar protocolos a mano. Escribí los bytes en hexadecimal; los espacios y el <code>0x</code> se ignoran.</div>
+</div>
+
+<div class="card" id="caja-deus" style="display:none;">
+  <h2>Protocolo DEUS</h2>
+  <div class="hint" style="margin:0 0 11px;">
+    La banda usa el encabezado <code>fd da 10 largo comando</code>, que es el mismo
+    formato de las MoYoung pero con su propia marca. Estos botones prueban los
+    comandos de esa familia — si alguno contesta, ese dato ya lo tenemos.
+  </div>
+  <div class="btn-grid">
+    <button data-cmd="109" data-arg="00">♥ Medir pulso</button>
+    <button data-cmd="109" data-arg="ff">■ Parar pulso</button>
+    <button data-cmd="50">🌙 Sueño de hoy</button>
+    <button data-cmd="51" data-arg="01">📅 Sueño de ayer</button>
+    <button data-cmd="54" data-arg="00">📈 Pulso histórico</button>
+    <button data-cmd="107" data-arg="00">🫁 Oxígeno</button>
+    <button data-cmd="3">❔ Comando 3</button>
+    <button id="btn-barrido">🔎 Barrido de comandos</button>
+  </div>
+  <div class="hint">El barrido prueba los comandos de consulta uno por uno y anota cuáles contestan.
+    Tarda cerca de un minuto; mirá el log mientras corre.</div>
 </div>
 
 <div class="card">
@@ -238,6 +259,8 @@ async function escanearServicios() {
             const v = ev.target.value;
             const txt = new TextDecoder().decode(v).replace(/[^\x20-\x7e]/g, '');
             log(`RX ${corto(ev.target.uuid)}  ${hex(v.buffer)}` + (txt.length >= 3 ? `  "${txt}"` : ''), 'log-rx');
+            const leido = descifrar(ev.target.uuid, v);
+            if (leido) log('   ↳ ' + leido, 'log-ok');
           });
           escuchando++;
         } catch (e) { log(`      (no se pudo escuchar: ${e.message})`, 'log-err'); }
@@ -258,8 +281,41 @@ async function escanearServicios() {
     sel.appendChild(o);
   });
   $('caja-raw').style.display = escribibles.length ? 'block' : 'none';
+  $('caja-deus').style.display = escribibles.length ? 'block' : 'none';
 
   return servicios;
+}
+
+// Manda una trama con el formato propio de la banda al destino elegido.
+async function enviarDeus(cmd, payload = [], etiqueta = '') {
+  const destino = escribibles[parseInt($('sel-destino').value)];
+  if (!destino) { log('Elegí a qué característica escribir.', 'log-err'); return false; }
+  const bytes = armarDeus(cmd, payload);
+  log(`TX ${destino.etiqueta}  ${hex(bytes.buffer)}   ${etiqueta || 'cmd ' + cmd}`, 'log-tx');
+  try {
+    if (destino.car.properties.write) await destino.car.writeValueWithResponse(bytes);
+    else await destino.car.writeValueWithoutResponse(bytes);
+    return true;
+  } catch (e) { log('   ↳ falló: ' + e.message, 'log-err'); return false; }
+}
+
+// Prueba los comandos de consulta de la familia MoYoung uno por uno. Solo los
+// de lectura: nada que cambie configuración, alarmas ni hora de la banda.
+const COMANDOS_CONSULTA = [
+  3, 33, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+  50, 52, 53, 54, 55, 57, 58, 89
+];
+
+async function barridoComandos() {
+  const destino = escribibles[parseInt($('sel-destino').value)];
+  if (!destino) { log('Elegí a qué característica escribir.', 'log-err'); return; }
+  log(`── Barrido: ${COMANDOS_CONSULTA.length} comandos de consulta ──`, 'log-ok');
+  log('Anotá en qué momento aparece cada respuesta para saber a qué comando corresponde.', 'log-t');
+  for (const cmd of COMANDOS_CONSULTA) {
+    await enviarDeus(cmd, [], `probando 0x${cmd.toString(16)} (${cmd})`);
+    await new Promise(r => setTimeout(r, 2200)); // margen para que conteste
+  }
+  log('── Fin del barrido ──', 'log-ok');
 }
 
 // Envío manual de bytes en hexadecimal, para probar protocolos a mano.
@@ -284,6 +340,75 @@ async function leerTexto(servicio, caracteristica) {
     const c = await s.getCharacteristic(caracteristica);
     return new TextDecoder().decode(await c.readValue()).replace(/\0+$/, '').trim();
   } catch (e) { return null; }
+}
+
+// ── Protocolo DEUS (familia MoYoung, magia propia) ───────────────────────
+// Descubierto leyendo la banda real. El encabezado es idéntico al MoYoung V1
+// salvo por los dos primeros bytes, que en vez de 'fe ea' son 'fd da' — o sea,
+// el UUID de su propio servicio, exactamente el mismo criterio.
+//
+//   fd da | 10 | largo | comando | payload
+//            ^     ^
+//            |     +-- largo TOTAL de la trama, incluidos estos 5 bytes
+//            +-------- 16, marca de trama de tamaño fijo (igual que MoYoung V1)
+//
+// Ejemplo capturado de la banda: fd da 10 08 03 09 03 00
+//   → largo 8, comando 0x03, payload 09 03 00
+const DEUS_MAGIA = [0xfd, 0xda];
+
+function armarDeus(cmd, payload = []) {
+  const largo = 5 + payload.length;
+  const p = new Uint8Array(largo);
+  p[0] = DEUS_MAGIA[0]; p[1] = DEUS_MAGIA[1];
+  p[2] = 0x10;
+  p[3] = largo & 0xff;
+  p[4] = cmd;
+  p.set(payload, 5);
+  return p;
+}
+
+// Contadores del día que la banda emite sola por fdd1, sin pedírselos.
+// Verificado contra la banda: la relación campo2/campo1 se mantiene clavada en
+// 0,68 (largo de zancada fijo) y campo3 sube 1 cada 21 pasos (~0,048 kcal por
+// paso, que es el valor de manual).
+function decodificarContadores(dv) {
+  if (dv.byteLength < 9) return null;
+  return {
+    pasos:     u24le(dv, 0),
+    distancia: u24le(dv, 3),  // metros
+    calorias:  u24le(dv, 6)   // kcal
+  };
+}
+
+// Traduce a lenguaje humano lo que llega por cualquier canal conocido.
+function descifrar(uuid, dv) {
+  const u = corto(uuid);
+  const b = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
+
+  // Contadores del día (se emiten solos mientras caminás)
+  if (u === '0xfdd1') {
+    const c = decodificarContadores(dv);
+    if (c) {
+      $('m-pasos').textContent = c.pasos.toLocaleString('es-CL');
+      return `${c.pasos} pasos · ${c.distancia} m · ${c.calorias} kcal`;
+    }
+  }
+
+  // El mismo contador de pasos, con un byte de tipo delante
+  if (u === '0xfea1' && b.length >= 4 && b[0] === 0x01) {
+    return `${u24le(dv, 1)} pasos (canal secundario)`;
+  }
+
+  // Trama con el encabezado propio de la banda
+  if (b.length >= 5 && b[0] === DEUS_MAGIA[0] && b[1] === DEUS_MAGIA[1]) {
+    const largo = b[3], cmd = b[4];
+    const payload = b.slice(5);
+    const coherente = largo === b.length ? '' : `  (largo declarado ${largo}, recibidos ${b.length})`;
+    const conocido = interpretar(cmd, payload);
+    return `trama DEUS · comando 0x${cmd.toString(16).padStart(2, '0')} · payload ${hex(payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.length))}${coherente}`
+      + (conocido ? `\n   ↳ ${conocido}` : '');
+  }
+  return null;
 }
 
 // ── Interpretación de respuestas ──────────────────────────────────────────
@@ -473,6 +598,14 @@ $('btn-pasos').onclick    = async () => {
 };
 $('btn-escanear').onclick = () => escanearServicios();
 $('btn-raw').onclick      = enviarCrudo;
+$('btn-barrido').onclick  = barridoComandos;
+document.querySelectorAll('#caja-deus [data-cmd]').forEach(b => {
+  b.onclick = () => enviarDeus(
+    parseInt(b.dataset.cmd),
+    b.dataset.arg ? [parseInt(b.dataset.arg, 16)] : [],
+    b.textContent.trim()
+  );
+});
 $('btn-limpiar').onclick  = () => { $('log').innerHTML = ''; };
 
 // Aviso temprano si el navegador no sirve

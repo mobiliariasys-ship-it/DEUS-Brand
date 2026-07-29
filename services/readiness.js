@@ -201,6 +201,7 @@ function evaluarAtleta(atleta) {
 
   return {
     nombre, deporte, puntaje, zona,
+    hoy, // datos crudos del día: el panel los muestra (pasos, kcal) sin recalcular
     mensaje: redactarMensaje(puntaje, zona, sub, hoy, base, carga),
     sesion: elegirSesion(zona, deporte, carga.ratio),
     factores: sub,

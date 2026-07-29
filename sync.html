@@ -142,13 +142,80 @@ async function enviar(dias) {
 })();
 
 // ── Bluetooth ────────────────────────────────────────────────────────────
-// La lectura de la banda queda enganchada acá. El protocolo de la DEUS Band
-// (servicio fdda) todavía se está descifrando: ver ble-test.html, que es la
-// herramienta con la que se está sacando. Cuando esté, esta función devuelve
-// los días leídos y el resto del flujo ya funciona sin tocar nada más.
+// Protocolo de la DEUS Band, sacado leyendo la banda real (ver ble-test.html).
+//
+// La pulsera emite sola por fdd1 los contadores del día: tres enteros de 3
+// bytes en little endian con pasos, metros y calorías. No hay que pedirle
+// nada — apenas se conecta empieza a mandarlos.
+//
+// Sueño y pulso en reposo todavía no: viajan por comandos con el encabezado
+// 'fd da 10 largo comando', que se está terminando de mapear. Cuando estén,
+// se suman acá y el resto del flujo no cambia.
+const SVC_DEUS  = '0000fdda-0000-1000-8000-00805f9b34fb';
+const CHR_CONT  = '0000fdd1-0000-1000-8000-00805f9b34fb';
+const SVC_BAT   = 0x180f;
+
+const u24le = (dv, o) => dv.getUint8(o) | (dv.getUint8(o + 1) << 8) | (dv.getUint8(o + 2) << 16);
+
+// Espera la próxima emisión de contadores. La banda las manda cada pocos
+// segundos mientras hay movimiento; si está totalmente quieta puede tardar,
+// por eso el aviso de que muevas la muñeca.
+function esperarContadores(car, ms = 12000) {
+  return new Promise((resolve, reject) => {
+    const alSonar = ev => {
+      const dv = ev.target.value;
+      if (dv.byteLength < 9) return;
+      car.removeEventListener('characteristicvaluechanged', alSonar);
+      clearTimeout(reloj);
+      resolve({ pasos: u24le(dv, 0), distancia: u24le(dv, 3), calorias: u24le(dv, 6) });
+    };
+    const reloj = setTimeout(() => {
+      car.removeEventListener('characteristicvaluechanged', alSonar);
+      reject(new Error('La banda no envió datos. Movés la muñeca y probá de nuevo.'));
+    }, ms);
+    car.addEventListener('characteristicvaluechanged', alSonar);
+  });
+}
+
 async function leerBanda() {
-  throw new Error('La lectura automática todavía no está lista para este modelo. '
-    + 'Por ahora cargá los datos a mano — se guardan igual y cuentan para tu historial.');
+  const dev = await navigator.bluetooth.requestDevice({
+    acceptAllDevices: true,
+    optionalServices: [SVC_DEUS, SVC_BAT]
+  });
+  aviso('aviso-ble', `Conectando con ${dev.name || 'la banda'}…`, true);
+  await dev.gatt.connect();
+
+  let svc;
+  try {
+    svc = await dev.gatt.getPrimaryService(SVC_DEUS);
+  } catch (e) {
+    dev.gatt.disconnect();
+    throw new Error('Ese dispositivo no es una DEUS Band. Probá de nuevo y elegí la pulsera de la lista.');
+  }
+
+  const car = await svc.getCharacteristic(CHR_CONT);
+  let contadores = null;
+
+  // Primero se intenta leer directo; si no se puede, se espera a que emita.
+  if (car.properties.read) {
+    try {
+      const dv = await car.readValue();
+      if (dv.byteLength >= 9) {
+        contadores = { pasos: u24le(dv, 0), distancia: u24le(dv, 3), calorias: u24le(dv, 6) };
+      }
+    } catch (e) { /* se sigue por notificaciones */ }
+  }
+  if (!contadores && (car.properties.notify || car.properties.indicate)) {
+    aviso('aviso-ble', 'Conectado. Esperando datos — movés un poco la muñeca…', true);
+    await car.startNotifications();
+    contadores = await esperarContadores(car).finally(() => {
+      try { dev.gatt.disconnect(); } catch (e) {}
+    });
+  }
+  try { dev.gatt.disconnect(); } catch (e) {}
+  if (!contadores) throw new Error('No se pudieron leer los contadores de la banda.');
+
+  return [{ fecha: new Date().toISOString().slice(0, 10), origen: 'banda', ...contadores }];
 }
 
 $('btn-ble').onclick = async () => {
@@ -157,7 +224,11 @@ $('btn-ble').onclick = async () => {
   try {
     const dias = await leerBanda();
     const r = await enviar(dias);
-    aviso('aviso-ble', `Listo: ${r.guardados} día(s) sincronizado(s).`, true);
+    const c = dias[0];
+    aviso('aviso-ble', `Listo: ${c.pasos.toLocaleString('es-CL')} pasos · `
+      + `${(c.distancia / 1000).toFixed(2)} km · ${c.calorias} kcal.`
+      + '<br><small>El sueño y el pulso en reposo todavía se cargan a mano — la banda '
+      + 'los guarda, pero falta terminar de mapear cómo pedírselos.</small>', true);
     mostrarResultado(r.hoy);
   } catch (e) {
     aviso('aviso-ble', e.message, false);

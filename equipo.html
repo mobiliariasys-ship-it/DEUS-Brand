@@ -196,7 +196,7 @@ function pintarJugadores(p) {
       <div class="jug-msg">${j.mensaje || ''}</div>
       ${j.sesion ? `<div class="jug-ses">${j.sesion}</div>` : ''}
       <div class="jug-meta">
-        <span>${j.deporte || ''}</span>
+        <span>${j.hoy && j.hoy.pasos ? j.hoy.pasos.toLocaleString('es-CL') + ' pasos' : (j.deporte || '')}</span>
         <span>${j.carga && j.carga.ratio ? 'carga ' + j.carga.ratio + '×' : ''}</span>
       </div>
       <div class="jug-acc"><button data-borrar="${j.id}">Quitar del plantel</button></div>
