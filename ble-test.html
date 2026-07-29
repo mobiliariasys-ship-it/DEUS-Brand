@@ -95,9 +95,9 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
 <div class="card" id="caja-deus" style="display:none;">
   <h2>Protocolo DEUS</h2>
   <div class="hint" style="margin:0 0 11px;">
-    <b>Canal confirmado:</b> la banda acepta comandos por <code>fec7</code> con el
-    encabezado <code>fd da 10 largo comando</code> — se enciende el sensor al pedirle
-    el pulso. Las respuestas deberían llegar por <code>fec8</code>.
+    <b>Canal confirmado:</b> la banda escucha por <code>fdd5</code> y contesta por
+    <code>fdd3</code>, con el encabezado <code>fd da 10 largo comando</code>. Al
+    saludarla también empieza a emitir el pulso por el perfil estándar de Bluetooth.
   </div>
   <button id="btn-saludo" class="primary" style="width:100%;margin-bottom:9px;">🤝 Saludo: sincronizar hora y contar respuestas</button>
   <button id="btn-guiada" style="width:100%;margin-bottom:9px;">♥ Cosecha completa — pulso y sueño (2 min)</button>
@@ -164,14 +164,19 @@ const SVC_HR     = 0x180d;                                  // pulso estándar
 const CHR_HR     = '00002a37-0000-1000-8000-00805f9b34fb';  // medición de pulso
 
 // CANAL DE COMANDOS CONFIRMADO CON LA BANDA REAL.
-// El comando de medir pulso enciende el sensor cuando se escribe en fec7 con
-// encabezado V1 (0x10). Por fdd2 no responde, pese a ser el equivalente
-// posicional del DATA_OUT de MoYoung.
 //
-// Coincide con las jyou BFH16 de Gadgetbridge, que bajo el servicio fee7 usan
-// fec7 para escribir, fec8 para responder y fec9 para leer.
-const CHR_CMD    = '0000fec7-0000-1000-8000-00805f9b34fb';  // acá se escribe
-const CHR_RESP   = '0000fec8-0000-1000-8000-00805f9b34fb';  // por acá contesta
+// Se descubrió mandando el saludo de sincronización de hora por cada canal y
+// contando respuestas: solo fdd5 contestó. Las otras tres candidatas —fea2,
+// fec7 y fdd2— aceptan la escritura sin error pero la banda las ignora.
+//
+// Es contraintuitivo: fdd2 es el equivalente posicional del DATA_OUT de
+// MoYoung y fec7 el de las jyou BFH16, y ninguno de los dos sirve. El canal
+// bueno es fdd5, que en MoYoung figura como "especial".
+//
+// Al saludar, la banda hizo dos cosas: contestó una trama de protocolo por
+// fdd3 y empezó a emitir el pulso por el perfil ESTÁNDAR de Bluetooth (0x2a37).
+const CHR_CMD    = '0000fdd5-0000-1000-8000-00805f9b34fb';  // acá se escribe
+const CHR_RESP   = '0000fdd3-0000-1000-8000-00805f9b34fb';  // por acá contesta
 const VERSION_OK = 1;                                        // encabezado fd da 10 …
 
 const CMD = {
@@ -811,20 +816,16 @@ async function conectar() {
       }
     } catch (e) { log('fee1 (pasos) no disponible: ' + e.message, 'log-err'); }
 
-    // Canal de respuestas
-    try {
-      const ci = await svc.getCharacteristic(CHR_IN);
-      await ci.startNotifications();
-      ci.addEventListener('characteristicvaluechanged', onNotificacionIn);
-      log('Suscrito a respuestas (fee3).', 'log-ok');
-    } catch (e) { log('fee3 (respuestas) no disponible: ' + e.message, 'log-err'); }
+    // El canal de respuestas (fdd3) ya quedó suscrito y decodificado por
+    // escanearServicios(). Volver a engancharlo acá duplicaba cada trama en el
+    // log, que era ruido puro.
 
-    // Canal de comandos
+    // Canal de comandos: fdd5, confirmado con la banda real.
     try {
-      chrOut = await svc.getCharacteristic(CHR_OUT);
-      log('Canal de comandos listo (fee2).', 'log-ok');
+      chrOut = await svc.getCharacteristic(CHR_CMD);
+      log('Canal de comandos listo (fdd5).', 'log-ok');
       document.querySelectorAll('.btn-grid button').forEach(b => b.disabled = false);
-    } catch (e) { log('fee2 (comandos) no disponible: ' + e.message, 'log-err'); }
+    } catch (e) { log('fdd5 (comandos) no disponible: ' + e.message, 'log-err'); }
 
     if (fabUp.includes('MOYOUNG')) {
       veredicto(`<b>Compatible.</b> La banda se identifica como <code>${fab}</code>. El protocolo documentado aplica tal cual — podemos leer pulso, sueño y pasos desde la web.`, true);
