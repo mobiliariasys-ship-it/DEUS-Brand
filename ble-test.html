@@ -95,17 +95,19 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
 <div class="card" id="caja-deus" style="display:none;">
   <h2>Protocolo DEUS</h2>
   <div class="hint" style="margin:0 0 11px;">
-    La banda usa el encabezado <code>fd da 10 largo comando</code>, que es el mismo
-    formato de las MoYoung pero con su propia marca. Estos botones prueban los
-    comandos de esa familia — si alguno contesta, ese dato ya lo tenemos.
+    <b>Canal confirmado:</b> la banda acepta comandos por <code>fec7</code> con el
+    encabezado <code>fd da 10 largo comando</code> — se enciende el sensor al pedirle
+    el pulso. Las respuestas deberían llegar por <code>fec8</code>.
   </div>
-  <button id="btn-desempate" class="primary" style="width:100%;margin-bottom:9px;">🔦 Desempate: A o B (60 s)</button>
-  <button id="btn-combos" style="width:100%;margin-bottom:9px;">🔦 Probar todas las combinaciones</button>
+  <button id="btn-guiada" class="primary" style="width:100%;margin-bottom:9px;">♥ Cosecha completa — pulso y sueño (2 min)</button>
   <select id="sel-version" style="margin-bottom:9px;">
-    <option value="1">Encabezado V1 — fd da 10 …</option>
+    <option value="1">Encabezado V1 — fd da 10 …  (confirmado)</option>
     <option value="2">Encabezado V2 — fd da 20 …</option>
   </select>
-  <button id="btn-guiada" style="width:100%;margin-bottom:9px;">♥ Medición de pulso guiada (75 s)</button>
+  <div class="btn-grid" style="margin-bottom:9px;">
+    <button id="btn-desempate">🔦 Desempate A/B</button>
+    <button id="btn-combos">🔦 Todas las combinaciones</button>
+  </div>
   <div class="btn-grid">
     <button data-cmd="109" data-arg="00">♥ Medir pulso</button>
     <button data-cmd="109" data-arg="ff">■ Parar pulso</button>
@@ -150,6 +152,17 @@ const SVC_INFO   = 0x180a;
 const SVC_BAT    = 0x180f;
 const SVC_HR     = 0x180d;                                  // pulso estándar
 const CHR_HR     = '00002a37-0000-1000-8000-00805f9b34fb';  // medición de pulso
+
+// CANAL DE COMANDOS CONFIRMADO CON LA BANDA REAL.
+// El comando de medir pulso enciende el sensor cuando se escribe en fec7 con
+// encabezado V1 (0x10). Por fdd2 no responde, pese a ser el equivalente
+// posicional del DATA_OUT de MoYoung.
+//
+// Coincide con las jyou BFH16 de Gadgetbridge, que bajo el servicio fee7 usan
+// fec7 para escribir, fec8 para responder y fec9 para leer.
+const CHR_CMD    = '0000fec7-0000-1000-8000-00805f9b34fb';  // acá se escribe
+const CHR_RESP   = '0000fec8-0000-1000-8000-00805f9b34fb';  // por acá contesta
+const VERSION_OK = 1;                                        // encabezado fd da 10 …
 
 const CMD = {
   SYNC_SLEEP:       0x32, // 50
@@ -303,12 +316,13 @@ async function escanearServicios() {
     o.value = i; o.textContent = e.etiqueta;
     sel.appendChild(o);
   });
-  // Preseleccionar el canal de comandos (fdd2): es el equivalente al DATA_OUT
-  // de MoYoung, así no hay que adivinar cuál es.
+  // Preseleccionar fec7, que es el canal que la banda real acepta.
+  const iCmd = escribibles.findIndex(e => e.car.uuid === CHR_CMD);
   const iOut = escribibles.findIndex(e => e.car.uuid === CHR_OUT);
-  if (iOut >= 0) {
-    sel.value = iOut;
-    log(`Canal de comandos detectado: ${escribibles[iOut].etiqueta} (preseleccionado).`, 'log-ok');
+  const elegido = iCmd >= 0 ? iCmd : iOut;
+  if (elegido >= 0) {
+    sel.value = elegido;
+    log(`Canal de comandos: ${escribibles[elegido].etiqueta} (confirmado con la banda).`, 'log-ok');
   }
   $('caja-raw').style.display = escribibles.length ? 'block' : 'none';
   $('caja-deus').style.display = escribibles.length ? 'block' : 'none';
@@ -412,16 +426,25 @@ async function medicionGuiada() {
   await enviarDeus(109, [0xff], 'detener medición', versionElegida());
   await new Promise(r => setTimeout(r, 1500));
 
-  // El historial del día suele traer las muestras aunque la medición puntual
-  // no conteste: es la vía alternativa para el mismo dato.
-  log('Pidiendo el historial de pulso del día…', 'log-t');
-  await enviarDeus(54, [0x00], 'pulso histórico, bloque 0', versionElegida());
-  await new Promise(r => setTimeout(r, 2500));
-  await enviarDeus(55, [], 'resumen de actividad con pulso', versionElegida());
-  await new Promise(r => setTimeout(r, 2500));
+  // Ya con el canal confirmado, se aprovecha el viaje y se pide todo lo que
+  // alimenta al recomendador: sueño de anoche, sueño de ayer e historial de
+  // pulso, que es de donde sale el pulso en reposo.
+  const consultas = [
+    [50, [],     'sueño de hoy'],
+    [51, [0x03], 'sueño de ayer'],
+    [51, [0x01], 'pasos de ayer'],
+    [54, [0x00], 'pulso histórico, bloque 0'],
+    [55, [],     'resumen de actividad con pulso'],
+    [58, [0x00], 'detalle de sueño por hora']
+  ];
+  log('Pidiendo sueño e historial…', 'log-t');
+  for (const [cmd, arg, etiqueta] of consultas) {
+    await enviarDeus(cmd, arg, etiqueta, versionElegida());
+    await new Promise(r => setTimeout(r, 2800));
+  }
 
   log('── Fin de la medición ────────────────────', 'log-ok');
-  log('Si arriba aparecieron líneas RX, ahí está el pulso. Mandame el log.', 'log-t');
+  log('Si arriba aparecieron líneas RX, ahí están los datos. Mandame el log completo.', 'log-t');
 }
 
 async function barridoComandos() {
