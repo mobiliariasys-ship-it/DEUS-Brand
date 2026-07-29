@@ -99,7 +99,12 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
     formato de las MoYoung pero con su propia marca. Estos botones prueban los
     comandos de esa familia — si alguno contesta, ese dato ya lo tenemos.
   </div>
-  <button id="btn-combos" class="primary" style="width:100%;margin-bottom:9px;">🔦 Buscar el canal correcto (mirá la luz)</button>
+  <button id="btn-desempate" class="primary" style="width:100%;margin-bottom:9px;">🔦 Desempate: A o B (60 s)</button>
+  <button id="btn-combos" style="width:100%;margin-bottom:9px;">🔦 Probar todas las combinaciones</button>
+  <select id="sel-version" style="margin-bottom:9px;">
+    <option value="1">Encabezado V1 — fd da 10 …</option>
+    <option value="2">Encabezado V2 — fd da 20 …</option>
+  </select>
   <button id="btn-guiada" style="width:100%;margin-bottom:9px;">♥ Medición de pulso guiada (75 s)</button>
   <div class="btn-grid">
     <button data-cmd="109" data-arg="00">♥ Medir pulso</button>
@@ -350,6 +355,36 @@ async function probarCombinaciones() {
   log('¿En cuál intento se prendió la luz? Ese es el bueno.', 'log-t');
 }
 
+// Desempate entre los dos finalistas. La prueba anterior dejaba solo 8 s entre
+// intento e intento, y la luz del sensor queda encendida bastante más que eso:
+// por eso un único acierto puede aparentar dos. Acá se prueban de a uno con 30
+// segundos de margen y sin mandar el "detener" en el medio.
+async function desempate() {
+  const buscar = uuid => escribibles.find(e => e.car.uuid.slice(4, 8) === uuid);
+  const candidatos = [
+    { nombre: 'A', car: buscar('fea2'), v: 2 },
+    { nombre: 'B', car: buscar('fec7'), v: 1 }
+  ].filter(c => c.car);
+
+  if (!candidatos.length) { log('No están fea2 ni fec7 entre los escribibles.', 'log-err'); return; }
+
+  log('── Desempate ─────────────────────────────', 'log-ok');
+  log('Dejá la banda boca arriba, con el sensor a la vista. 30 s por candidato.', 'log-t');
+
+  for (const c of candidatos) {
+    log(`▶ CANDIDATO ${c.nombre} — ${c.car.etiqueta}, encabezado V${c.v}`, 'log-ok');
+    await enviarDeus(109, [0x00], `candidato ${c.nombre}: iniciar pulso`, c.v, c.car);
+    for (let s = 10; s <= 30; s += 10) {
+      await new Promise(r => setTimeout(r, 10000));
+      log(`   … ${s} s`, 'log-t');
+    }
+    await enviarDeus(109, [0xff], `candidato ${c.nombre}: detener`, c.v, c.car);
+    log(`   ¿Se prendió la luz con el candidato ${c.nombre}?`, 'log-t');
+    await new Promise(r => setTimeout(r, 12000)); // que se apague antes del siguiente
+  }
+  log('── Fin del desempate ─────────────────────', 'log-ok');
+}
+
 // Prueba los comandos de consulta de la familia MoYoung uno por uno. Solo los
 // de lectura: nada que cambie configuración, alarmas ni hora de la banda.
 const COMANDOS_CONSULTA = [
@@ -366,7 +401,7 @@ async function medicionGuiada() {
   log('── Medición de pulso guiada ──────────────', 'log-ok');
   log('No cierres ni bloquees la pantalla. Quedate quieto con la banda puesta.', 'log-t');
 
-  if (!await enviarDeus(109, [0x00], 'iniciar medición de pulso')) return;
+  if (!await enviarDeus(109, [0x00], 'iniciar medición de pulso', versionElegida())) return;
   log('Sensor encendido. Esperando ' + ESPERA + ' s…', 'log-t');
 
   for (let s = 5; s <= ESPERA; s += 5) {
@@ -374,15 +409,15 @@ async function medicionGuiada() {
     if (s % 15 === 0) log(`   … ${s} s de ${ESPERA}`, 'log-t');
   }
 
-  await enviarDeus(109, [0xff], 'detener medición');
+  await enviarDeus(109, [0xff], 'detener medición', versionElegida());
   await new Promise(r => setTimeout(r, 1500));
 
   // El historial del día suele traer las muestras aunque la medición puntual
   // no conteste: es la vía alternativa para el mismo dato.
   log('Pidiendo el historial de pulso del día…', 'log-t');
-  await enviarDeus(54, [0x00], 'pulso histórico, bloque 0');
+  await enviarDeus(54, [0x00], 'pulso histórico, bloque 0', versionElegida());
   await new Promise(r => setTimeout(r, 2500));
-  await enviarDeus(55, [], 'resumen de actividad con pulso');
+  await enviarDeus(55, [], 'resumen de actividad con pulso', versionElegida());
   await new Promise(r => setTimeout(r, 2500));
 
   log('── Fin de la medición ────────────────────', 'log-ok');
@@ -395,7 +430,7 @@ async function barridoComandos() {
   log(`── Barrido: ${COMANDOS_CONSULTA.length} comandos de consulta ──`, 'log-ok');
   log('Anotá en qué momento aparece cada respuesta para saber a qué comando corresponde.', 'log-t');
   for (const cmd of COMANDOS_CONSULTA) {
-    await enviarDeus(cmd, [], `probando 0x${cmd.toString(16)} (${cmd})`);
+    await enviarDeus(cmd, [], `probando 0x${cmd.toString(16)} (${cmd})`, versionElegida());
     await new Promise(r => setTimeout(r, 2200)); // margen para que conteste
   }
   log('── Fin del barrido ──', 'log-ok');
@@ -693,14 +728,19 @@ $('btn-pasos').onclick    = async () => {
 };
 $('btn-escanear').onclick = () => escanearServicios();
 $('btn-raw').onclick      = enviarCrudo;
-$('btn-barrido').onclick  = barridoComandos;
-$('btn-guiada').onclick   = medicionGuiada;
-$('btn-combos').onclick   = probarCombinaciones;
+// Versión de encabezado elegida en el desplegable, para todos los envíos.
+const versionElegida = () => parseInt($('sel-version').value) || 1;
+
+$('btn-barrido').onclick   = barridoComandos;
+$('btn-guiada').onclick    = medicionGuiada;
+$('btn-combos').onclick    = probarCombinaciones;
+$('btn-desempate').onclick = desempate;
 document.querySelectorAll('#caja-deus [data-cmd]').forEach(b => {
   b.onclick = () => enviarDeus(
     parseInt(b.dataset.cmd),
     b.dataset.arg ? [parseInt(b.dataset.arg, 16)] : [],
-    b.textContent.trim()
+    b.textContent.trim(),
+    versionElegida()
   );
 });
 $('btn-limpiar').onclick  = () => { $('log').innerHTML = ''; };
