@@ -99,7 +99,8 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
     <code>fdd3</code>, con el encabezado <code>fd da 10 largo comando</code>. Al
     saludarla también empieza a emitir el pulso por el perfil estándar de Bluetooth.
   </div>
-  <button id="btn-saludo" class="primary" style="width:100%;margin-bottom:9px;">🤝 Saludo: sincronizar hora y contar respuestas</button>
+  <button id="btn-formatos" class="primary" style="width:100%;margin-bottom:9px;">🧨 Barrido de formatos (24 pruebas, 2 min)</button>
+  <button id="btn-saludo" style="width:100%;margin-bottom:9px;">🤝 Saludo: sincronizar hora</button>
   <button id="btn-guiada" style="width:100%;margin-bottom:9px;">♥ Cosecha completa — pulso y sueño (2 min)</button>
   <select id="sel-version" style="margin-bottom:9px;">
     <option value="1">Encabezado V1 — fd da 10 …  (confirmado)</option>
@@ -212,6 +213,7 @@ const EMISORES_SOLOS = ['fdd1', 'fea1'];
 // Cuántas tramas llegó por cada canal, para poder distinguir lo que la banda
 // emite por su cuenta de lo que contesta cuando se le pregunta.
 const rxPorCanal = {};
+let novedades = 0;   // tramas que NO son el tráfico de fondo conocido
 
 // Servicios estándar de Bluetooth: sirven para identificar el aparato, pero
 // el pulso y el sueño nunca viajan por ahí.
@@ -320,8 +322,15 @@ async function escanearServicios() {
             const v = ev.target.value;
             const txt = new TextDecoder().decode(v).replace(/[^\x20-\x7e]/g, '');
             const cu = ev.target.uuid.slice(4, 8);
+            const bytes = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
             rxPorCanal[cu] = (rxPorCanal[cu] || 0) + 1;
             if (!EMISORES_SOLOS.includes(cu)) rxRespuestas++;
+            // Cualquier cosa que no sea el tráfico de fondo ya conocido es un
+            // hallazgo, y como tal se marca fuerte en el log.
+            if (!esRuidoConocido(cu, bytes)) {
+              novedades++;
+              log(`★★ NOVEDAD ${corto(ev.target.uuid)}  ${hex(v.buffer)}`, 'log-ok');
+            }
             log(`RX ${corto(ev.target.uuid)}  ${hex(v.buffer)}` + (txt.length >= 3 ? `  "${txt}"` : ''), 'log-rx');
             const leido = descifrar(ev.target.uuid, v);
             if (leido) log('   ↳ ' + leido, 'log-ok');
@@ -440,6 +449,65 @@ async function pruebaSaludo() {
     log('✘ Ninguna combinación obtuvo respuesta.', 'log-err');
     log('La banda acepta los bytes pero no contesta: probablemente exija un', 'log-t');
     log('emparejamiento previo que solo hace la app oficial. Mandame el log.', 'log-t');
+  }
+}
+
+// ── Barrido de formatos ──────────────────────────────────────────────────
+// Prueba cada canal escribible con cada formato conocido. Solo consultas de
+// lectura: pedir el sueño y el historial, nada que altere la configuración.
+//
+// El criterio de éxito ya no es la luz ni el conteo bruto de tramas, sino que
+// aparezca tráfico distinto del de fondo. Si algo responde, sale marcado como
+// NOVEDAD y ahí está la combinación que sirve.
+async function barridoFormatos() {
+  if (!escribibles.length) { log('No hay canales escribibles.', 'log-err'); return; }
+
+  const formatos = [
+    { nombre: 'MoYoung V1', armar: cmd => armarDeus(cmd, [], 1) },
+    { nombre: 'MoYoung V2', armar: cmd => armarDeus(cmd, [], 2) },
+    { nombre: 'BFH16 +suma', armar: cmd => armarBfh16(cmd, 0, 0) }
+  ];
+  const consultas = [
+    { cmd: 0x32, que: 'sueño' },
+    { cmd: 0x36, que: 'historial de pulso' }
+  ];
+
+  const total = escribibles.length * formatos.length * consultas.length;
+  log(`── Barrido de formatos: ${total} pruebas ──`, 'log-ok');
+  log('No hay que mirar nada: lo que responda sale marcado con estrellas.', 'log-t');
+
+  const hallazgos = [];
+  let n = 0;
+  for (const d of escribibles) {
+    for (const f of formatos) {
+      for (const q of consultas) {
+        n++;
+        const antes = novedades;
+        const bytes = f.armar(q.cmd);
+        log(`▶ ${n}/${total}  ${d.etiqueta} · ${f.nombre} · ${q.que}`, 'log-t');
+        log(`TX ${hex(bytes.buffer)}`, 'log-tx');
+        try {
+          if (d.car.properties.write) await d.car.writeValueWithResponse(bytes);
+          else await d.car.writeValueWithoutResponse(bytes);
+        } catch (e) { log('   ↳ escritura falló: ' + e.message, 'log-err'); continue; }
+        await new Promise(r => setTimeout(r, 3500));
+        if (novedades > antes) {
+          const h = `${d.etiqueta} con ${f.nombre} (${q.que})`;
+          hallazgos.push(h);
+          log(`★★★ RESPONDE: ${h}`, 'log-ok');
+        }
+      }
+    }
+  }
+
+  log('── Resultado del barrido ─────────────────', 'log-ok');
+  if (hallazgos.length) {
+    hallazgos.forEach(h => log('★ ' + h, 'log-ok'));
+    log('Mandame el log: con esas tramas se arma la descarga del historial.', 'log-ok');
+  } else {
+    log('Ninguna combinación produjo tráfico nuevo.', 'log-err');
+    log('La banda exige un emparejamiento previo. Camino: capturar el saludo', 'log-t');
+    log('de Da Halo con el registro Bluetooth y replicarlo.', 'log-t');
   }
 }
 
@@ -640,6 +708,41 @@ function armarDeus(cmd, payload = [], version = 1) {
   p[4] = cmd;
   p.set(payload, 5);
   return p;
+}
+
+// ── Formato alternativo: jyou / BFH16 ────────────────────────────────────
+// Las bandas jyou usan un marco completamente distinto, sin encabezado: diez
+// bytes fijos con el comando adelante, dos argumentos de 32 bits en big endian
+// y un checksum final que es la suma de los nueve anteriores.
+//
+// Vale probarlo porque el servicio fee7 de esta banda replica el trío fec7 /
+// fec8 / fec9 de esa familia. El canal de escritura que usan (33f3) esta banda
+// no lo tiene, así que se prueba el formato sobre los canales que sí están.
+function armarBfh16(cmd, arg1 = 0, arg2 = 0) {
+  const p = new Uint8Array(10);
+  p[0] = cmd & 0xff;
+  const be32 = (v, o) => { p[o] = (v >>> 24) & 0xff; p[o+1] = (v >>> 16) & 0xff;
+                           p[o+2] = (v >>> 8) & 0xff; p[o+3] = v & 0xff; };
+  be32(arg1 >>> 0, 1);
+  be32(arg2 >>> 0, 5);
+  let suma = 0;
+  for (let i = 0; i < 9; i++) suma = (suma + p[i]) & 0xff;
+  p[9] = suma;
+  return p;
+}
+
+// ── Detección de novedades ───────────────────────────────────────────────
+// El error de las pruebas anteriores fue contar como respuesta cualquier trama.
+// La banda emite tráfico de fondo constante: los contadores por fdd1 y un
+// latido con comando 0x03 por fdd3 cada treinta segundos. Todo eso hay que
+// descartarlo para que solo quede lo que de verdad responde a una consulta.
+function esRuidoConocido(uuidCorto, b) {
+  if (uuidCorto === 'fdd1') return true;                       // contadores del día
+  if (uuidCorto === 'fea1' && b[0] === 0x01) return true;      // espejo de pasos
+  if (uuidCorto === '2a37') return true;                       // pulso estándar, va aparte
+  // Latido de estado: trama con encabezado propio y comando 0x03
+  if (b.length >= 5 && b[0] === 0xfd && b[1] === 0xda && b[4] === 0x03) return true;
+  return false;
 }
 
 // Contadores del día que la banda emite sola por fdd1, sin pedírselos.
@@ -889,6 +992,7 @@ $('btn-combos').onclick    = probarCombinaciones;
 $('btn-desempate').onclick = desempate;
 $('btn-control').onclick   = control;
 $('btn-saludo').onclick    = pruebaSaludo;
+$('btn-formatos').onclick  = barridoFormatos;
 document.querySelectorAll('#caja-deus [data-solo]').forEach(b => {
   b.onclick = () => probarUna(b.dataset.solo, parseInt(b.dataset.v));
 });
