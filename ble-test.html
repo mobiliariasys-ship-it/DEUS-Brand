@@ -105,7 +105,7 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
     <option value="1">Encabezado V1 — fd da 10 …  (confirmado)</option>
     <option value="2">Encabezado V2 — fd da 20 …</option>
   </select>
-  <button id="btn-control" style="width:100%;margin-bottom:9px;">🔇 Control: 3 min sin enviar nada</button>
+  <button id="btn-control" style="width:100%;margin-bottom:9px;">🔇 Escuchar 5 min sin enviar nada</button>
   <div class="btn-grid" style="margin-bottom:9px;">
     <button data-solo="fea2" data-v="2">Solo fea2 · V2</button>
     <button data-solo="fea2" data-v="1">Solo fea2 · V1</button>
@@ -209,6 +209,9 @@ let escuchando = 0;    // cuántas notificaciones quedaron activas
 // solos (los contadores de pasos), que si no darían falsos positivos.
 let rxRespuestas = 0;
 const EMISORES_SOLOS = ['fdd1', 'fea1'];
+// Cuántas tramas llegó por cada canal, para poder distinguir lo que la banda
+// emite por su cuenta de lo que contesta cuando se le pregunta.
+const rxPorCanal = {};
 
 // Servicios estándar de Bluetooth: sirven para identificar el aparato, pero
 // el pulso y el sueño nunca viajan por ahí.
@@ -316,7 +319,9 @@ async function escanearServicios() {
           c.addEventListener('characteristicvaluechanged', ev => {
             const v = ev.target.value;
             const txt = new TextDecoder().decode(v).replace(/[^\x20-\x7e]/g, '');
-            if (!EMISORES_SOLOS.includes(ev.target.uuid.slice(4, 8))) rxRespuestas++;
+            const cu = ev.target.uuid.slice(4, 8);
+            rxPorCanal[cu] = (rxPorCanal[cu] || 0) + 1;
+            if (!EMISORES_SOLOS.includes(cu)) rxRespuestas++;
             log(`RX ${corto(ev.target.uuid)}  ${hex(v.buffer)}` + (txt.length >= 3 ? `  "${txt}"` : ''), 'log-rx');
             const leido = descifrar(ev.target.uuid, v);
             if (leido) log('   ↳ ' + leido, 'log-ok');
@@ -445,15 +450,33 @@ async function pruebaSaludo() {
 // "aciertos" anteriores fueron coincidencia y todo lo que dedujimos del canal
 // se cae. Hay que descartarlo antes de seguir probando.
 async function control() {
-  log('── CONTROL: no se envía ningún comando ───', 'log-ok');
-  log('Durante 3 minutos la página queda muda. Mirá el sensor de la banda.', 'log-t');
-  log('Si la luz se prende igual, la banda mide sola y la luz no sirve de señal.', 'log-t');
-  for (let s = 15; s <= 180; s += 15) {
-    await new Promise(r => setTimeout(r, 15000));
-    log(`   … ${s} s sin enviar nada`, 'log-t');
+  const MIN = 5;
+  const antes = JSON.parse(JSON.stringify(rxPorCanal));
+  log(`── ESCUCHA: ${MIN} min sin enviar nada ────`, 'log-ok');
+  log('La página queda muda. Todo lo que aparezca lo emite la banda sola.', 'log-t');
+  log('Podés guardar el teléfono; volvé en 5 minutos. No lo bloquees.', 'log-t');
+
+  for (let s = 30; s <= MIN * 60; s += 30) {
+    await new Promise(r => setTimeout(r, 30000));
+    log(`   … ${s} s`, 'log-t');
   }
-  log('── Fin del control ───────────────────────', 'log-ok');
-  log('¿Se prendió la luz alguna vez en estos 3 minutos?', 'log-t');
+
+  log('── Resumen de lo que emite sola ──────────', 'log-ok');
+  const canales = new Set([...Object.keys(rxPorCanal), ...Object.keys(antes)]);
+  let huboPulso = false;
+  for (const c of [...canales].sort()) {
+    const n = (rxPorCanal[c] || 0) - (antes[c] || 0);
+    if (!n) continue;
+    log(`   0x${c} → ${n} trama(s) en ${MIN} min`, 'log-ok');
+    if (c === '2a37') huboPulso = true;
+  }
+  if (huboPulso) {
+    log('✔ La banda emite el PULSO sola por el perfil estándar.', 'log-ok');
+    log('  Con eso alcanza: no hace falta pedírselo, solo escuchar.', 'log-ok');
+  } else {
+    log('✘ No emitió pulso por su cuenta en esta ventana.', 'log-t');
+  }
+  log('── Fin de la escucha ─────────────────────', 'log-ok');
 }
 
 // Prueba UNA sola combinación, sin ambigüedad posible.
@@ -783,7 +806,7 @@ async function conectar() {
     let svc = null;
     try {
       svc = await dev.gatt.getPrimaryService(SVC_DEUS);
-      log('Servicio feea encontrado.', 'log-ok');
+      log('Servicio fdda encontrado.', 'log-ok');
     } catch (e) {
       log('Sin servicio feea: ' + e.message, 'log-err');
       // ¿Hay algún otro servicio propietario con pinta de canal de datos?
@@ -802,19 +825,22 @@ async function conectar() {
       return;
     }
 
-    // Pasos en vivo (read + notify, sin comando)
+    // Los contadores (fdd1) ya quedaron suscritos y decodificados por
+    // escanearServicios(). Antes se enganchaban acá otra vez con un decodificador
+    // viejo que suponía el orden distancia-pasos, y el log mostraba dos lecturas
+    // contradictorias de la misma trama. El orden correcto quedó verificado
+    // contra la app: pasos, metros, calorías.
     try {
       const cp = await svc.getCharacteristic(CHR_PASOS);
       if (cp.properties.read) {
         const v = await cp.readValue();
-        onNotificacionPasos({ target: { value: v } });
+        const c = decodificarContadores(v);
+        if (c) {
+          $('m-pasos').textContent = c.pasos.toLocaleString('es-CL');
+          log(`Contadores del día: ${c.pasos} pasos · ${c.distancia} m · ${c.calorias} kcal`, 'log-ok');
+        }
       }
-      if (cp.properties.notify) {
-        await cp.startNotifications();
-        cp.addEventListener('characteristicvaluechanged', onNotificacionPasos);
-        log('Suscrito a pasos en vivo (fee1).', 'log-ok');
-      }
-    } catch (e) { log('fee1 (pasos) no disponible: ' + e.message, 'log-err'); }
+    } catch (e) { log('fdd1 (contadores) no disponible: ' + e.message, 'log-err'); }
 
     // El canal de respuestas (fdd3) ya quedó suscrito y decodificado por
     // escanearServicios(). Volver a engancharlo acá duplicaba cada trama en el
