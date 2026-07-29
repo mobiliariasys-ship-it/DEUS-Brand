@@ -171,6 +171,27 @@ def decodificar_contadores(b: bytes):
 
 
 # ── Conexión ─────────────────────────────────────────────────────────────
+def crear_cliente(dispositivo):
+    """Crea el cliente pidiéndole a Windows que NO use su caché de servicios.
+
+    Windows guarda la lista de servicios GATT de cada dispositivo y no la
+    vuelve a pedir. Con la banda sin vincular esa lista queda incompleta: se
+    ven solo los servicios estándar (1800, 1801, 180a, 180f) y faltan los
+    propietarios fdda y fee7, que son justamente los que traen los datos.
+    Desde el teléfono aparecen los siete.
+
+    El parámetro solo existe en el backend de Windows; en Mac y Linux se
+    ignora, y si la versión de bleak no lo acepta se reintenta sin él.
+    """
+    if sys.platform == "win32":
+        try:
+            return BleakClient(dispositivo, timeout=25.0,
+                               winrt={"use_cached_services": False})
+        except TypeError:
+            pass
+    return BleakClient(dispositivo, timeout=25.0)
+
+
 async def buscar_banda(mac):
     """Devuelve el OBJETO del dispositivo, no su dirección.
 
@@ -285,7 +306,7 @@ async def principal(args):
 
     print(f"\nConectando a {dispositivo.address}…")
     try:
-        cliente = BleakClient(dispositivo, timeout=25.0)
+        cliente = crear_cliente(dispositivo)
         await cliente.connect()
     except Exception as e:
         print(f"\nNo se pudo conectar: {e}")
@@ -298,6 +319,16 @@ async def principal(args):
 
     try:
         print("Conectado.\n")
+
+        # Emparejar si se pidió: en Windows, sin vínculo el sistema a veces solo
+        # entrega una lista parcial de servicios.
+        if args.emparejar:
+            try:
+                print("Emparejando…")
+                ok = await cliente.pair()
+                print(f"  Emparejamiento: {'aceptado' if ok else 'rechazado'}\n")
+            except Exception as e:
+                print(f"  No se pudo emparejar: {e}\n")
 
         for nombre, uuid in (("Fabricante", u16("2a29")), ("Modelo", u16("2a28")),
                              ("Nombre", u16("2a00"))):
@@ -314,7 +345,27 @@ async def principal(args):
 
         print("\n── Servicios y canales ──")
         escribibles = await suscribir_todo(cliente)
-        print(f"\nEscuchando {len(recibidas)} canal(es). Escribibles: {len(escribibles)}.")
+        print(f"\nCanales escribibles: {len(escribibles)}.")
+
+        # Sin los servicios propietarios no hay nada que sondear: mejor decirlo
+        # y explicar cómo destrabarlo, que correr sesenta pruebas contra nada.
+        uuids = {s.uuid[4:8].lower() for s in cliente.services}
+        if not ({"fdda", "fee7"} & uuids):
+            print("\n" + "=" * 62)
+            print("FALTAN LOS SERVICIOS DE DATOS")
+            print("=" * 62)
+            print(f"Solo se ven los estándar: {', '.join('0x' + u for u in sorted(uuids))}")
+            print("Desde el teléfono esta misma banda expone además 0xfdda y 0xfee7,")
+            print("que son los que traen pasos, pulso y sueño.")
+            print("\nEs el caché de servicios de Windows, que guarda una lista")
+            print("incompleta de los dispositivos sin vincular. Para arreglarlo:")
+            print("\n  1. Configuración → Bluetooth y dispositivos → Agregar dispositivo")
+            print("     → Bluetooth → elegí B11 y vinculala.")
+            print("  2. Volvé a correr:   py ble_probe.py --emparejar")
+            print("\nSi ya está vinculada y sigue igual, quitala desde esa misma")
+            print("pantalla ('Quitar dispositivo') y volvé a vincularla: eso borra")
+            print("el caché viejo y obliga a Windows a redescubrir los servicios.")
+            return 1
 
         try:
             v = await cliente.read_gatt_char(CHR_CONTADORES)
@@ -370,6 +421,9 @@ if __name__ == "__main__":
                     help="segundos de escucha previa (por defecto 45)")
     ap.add_argument("--solo-escuchar", action="store_true",
                     help="solo caracterizar lo que emite sola, sin enviar nada")
+    ap.add_argument("--emparejar", action="store_true",
+                    help="emparejar antes de leer (Windows suele necesitarlo "
+                         "para ver los servicios propietarios)")
 
     print(f"Sonda DEUS Band · {datetime.now():%Y-%m-%d %H:%M:%S}")
     print(f"La salida también se guarda en:\n  {ARCHIVO_SALIDA}\n")
