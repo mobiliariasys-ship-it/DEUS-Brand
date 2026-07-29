@@ -75,6 +75,7 @@ button.primary{background:#fff;color:#000;border-color:#fff;width:100%;padding:1
     <button id="btn-pasos"   disabled>👟 Leer pasos</button>
     <button id="btn-sueno"   disabled>🌙 Sueño de hoy</button>
     <button id="btn-hr-hist" disabled>📈 Pulso histórico</button>
+    <button id="btn-escanear">🔍 Escanear servicios</button>
     <button id="btn-limpiar">🧹 Limpiar log</button>
   </div>
   <div class="hint">El pulso tarda 10–30 s: la banda mide y recién ahí contesta. Mantenela puesta y quieta.</div>
@@ -106,6 +107,18 @@ const CMD = {
   MOVEMENT_HR:      0x37, // 55
   MEASURE_HR:       0x6d  // 109 — {0} arranca, {0xFF} para
 };
+
+// Chrome esconde TODO servicio que no se declare en optionalServices, incluso
+// al enumerar. Para poder descubrir una banda que no sea MoYoung hay que pedir
+// permiso por adelantado sobre un rango amplio de UUIDs de 16 bits, que es
+// donde viven los servicios propietarios de estas pulseras.
+const UUID16 = n => `0000${n.toString(16).padStart(4, '0')}-0000-1000-8000-00805f9b34fb`;
+const BLOQUEADOS = [0x1812, 0xfffd, 0xfff9, 0xfde2]; // Chrome los prohíbe (HID, FIDO)
+const CANDIDATOS = [];
+for (const [desde, hasta] of [[0x1800, 0x18ff], [0xfd00, 0xfdff], [0xfe00, 0xfeff], [0xff00, 0xffff]]) {
+  for (let n = desde; n <= hasta; n++) if (!BLOQUEADOS.includes(n)) CANDIDATOS.push(UUID16(n));
+}
+CANDIDATOS.push('6e400001-b5a3-f393-e0a9-e50e24dcca9e'); // Nordic UART, común en clones
 
 let dev = null, chrOut = null, esV2 = true;
 
@@ -152,6 +165,52 @@ async function enviar(cmd, payload = [], etiqueta = '') {
   } catch (e) {
     log('TX falló: ' + e.message, 'log-err');
   }
+}
+
+// Enumera todo lo que el dispositivo expone y lo vuelca al log. Es lo que
+// permite identificar una banda cuyo protocolo todavía no conocemos.
+async function escanearServicios() {
+  if (!dev || !dev.gatt.connected) { log('No hay dispositivo conectado.', 'log-err'); return []; }
+  log('── Escaneando servicios ──────────────────');
+  let servicios = [];
+  try {
+    servicios = await dev.gatt.getPrimaryServices();
+  } catch (e) {
+    log('No se pudieron enumerar servicios: ' + e.message, 'log-err');
+    return [];
+  }
+  log(`${servicios.length} servicio(s) visibles:`, 'log-ok');
+
+  for (const s of servicios) {
+    const corto = s.uuid.startsWith('0000') && s.uuid.endsWith('-0000-1000-8000-00805f9b34fb')
+      ? '0x' + s.uuid.slice(4, 8) : s.uuid;
+    log(`  SERVICIO ${corto}`, 'log-ok');
+    let cars = [];
+    try { cars = await s.getCharacteristics(); }
+    catch (e) { log(`    (sin acceso a características: ${e.message})`, 'log-err'); continue; }
+
+    for (const c of cars) {
+      const p = c.properties;
+      const props = ['read', 'write', 'writeWithoutResponse', 'notify', 'indicate']
+        .filter(k => p[k])
+        .map(k => ({ read: 'R', write: 'W', writeWithoutResponse: 'w', notify: 'N', indicate: 'I' })[k])
+        .join('');
+      const cc = c.uuid.startsWith('0000') && c.uuid.endsWith('-0000-1000-8000-00805f9b34fb')
+        ? '0x' + c.uuid.slice(4, 8) : c.uuid;
+      let extra = '';
+      if (p.read) {
+        try {
+          const v = await c.readValue();
+          const bytes = hex(v.buffer);
+          const txt = new TextDecoder().decode(v).replace(/[^\x20-\x7e]/g, '');
+          extra = `  = ${bytes}` + (txt.length >= 3 ? `  "${txt}"` : '');
+        } catch (e) { extra = '  (lectura falló)'; }
+      }
+      log(`    ${cc} [${props}]${extra}`);
+    }
+  }
+  log('── Fin del escaneo ───────────────────────');
+  return servicios;
 }
 
 async function leerTexto(servicio, caracteristica) {
@@ -224,7 +283,7 @@ async function conectar() {
     log('Abriendo el selector de dispositivos…');
     dev = await navigator.bluetooth.requestDevice({
       acceptAllDevices: true,
-      optionalServices: [SVC_DEUS, SVC_INFO, SVC_BAT]
+      optionalServices: CANDIDATOS
     });
 
     log(`Conectando a "${dev.name || 'sin nombre'}"…`);
@@ -266,14 +325,28 @@ async function conectar() {
       log(`Batería ${bat}%`, 'log-ok');
     } catch (e) { log('Sin servicio de batería estándar: ' + e.message, 'log-err'); }
 
+    // Enumerar todo lo que expone, para poder identificarla aunque no sea MoYoung
+    const servicios = await escanearServicios();
+    const uuids = servicios.map(s => s.uuid);
+
     // Servicio propietario
     let svc = null;
     try {
       svc = await dev.gatt.getPrimaryService(SVC_DEUS);
       log('Servicio feea encontrado.', 'log-ok');
     } catch (e) {
-      veredicto('<b>No expone el servicio <code>feea</code>.</b><br>La banda no habla MoYoung, o no es el dispositivo correcto. Mirá el log: si el fabricante quedó vacío, probá con otro dispositivo de la lista.', false);
       log('Sin servicio feea: ' + e.message, 'log-err');
+      // ¿Hay algún otro servicio propietario con pinta de canal de datos?
+      const propios = uuids.filter(u => !/^0000(1800|1801|1802|1803|1804|180a|180f|180d|181c|1811)-/.test(u));
+      if (propios.length) {
+        veredicto(`<b>No habla MoYoung, pero sí expone ${propios.length} servicio(s) propietario(s).</b><br>`
+          + `Se puede trabajar igual: mandame el log completo y saco de ahí qué protocolo usa.<br>`
+          + `<code>${propios.map(u => u.startsWith('0000') ? '0x' + u.slice(4, 8) : u).join('</code> <code>')}</code>`, false);
+      } else if (!servicios.length) {
+        veredicto('<b>El dispositivo no expone ningún servicio visible.</b><br>Casi seguro elegiste otro aparato (auriculares, el auto, el televisor). Tocá "Reconectar" y elegí la banda — suele aparecer con un nombre tipo <code>B11</code>, <code>DEUS</code> o un código de letras y números.', false);
+      } else {
+        veredicto('<b>Solo expone servicios estándar de Bluetooth.</b><br>No hay canal propietario por donde pedirle pulso ni sueño. Revisá el log y mandámelo.', false);
+      }
       return;
     }
 
@@ -331,6 +404,7 @@ $('btn-pasos').onclick    = async () => {
     onNotificacionPasos({ target: { value: await cp.readValue() } });
   } catch (e) { log('Lectura de pasos falló: ' + e.message, 'log-err'); }
 };
+$('btn-escanear').onclick = () => escanearServicios();
 $('btn-limpiar').onclick  = () => { $('log').innerHTML = ''; };
 
 // Aviso temprano si el navegador no sirve
