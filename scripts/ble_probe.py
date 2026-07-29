@@ -130,15 +130,29 @@ def decodificar_contadores(b: bytes):
 
 
 # ── Conexión ─────────────────────────────────────────────────────────────
-async def buscar_banda(mac: str | None):
+async def buscar_banda(mac):
+    """Devuelve el OBJETO del dispositivo, no su dirección.
+
+    En Windows, pasarle a BleakClient una dirección en texto suele fallar con
+    "Device not found" aunque el escaneo lo acabe de encontrar: el backend de
+    WinRT necesita el objeto que devolvió el escáner. Por eso acá siempre se
+    escanea, incluso cuando se pasa --mac.
+    """
     if mac:
-        return mac
+        print(f"Buscando {mac}…")
+        d = await BleakScanner.find_device_by_address(mac, timeout=15.0)
+        if d:
+            print(f"Encontrada: {d.name or '(sin nombre)'}  [{d.address}]")
+            return d
+        print(f"No apareció {mac}. ¿Está encendida y con Da Halo cerrado?")
+        return None
+
     print("Buscando la banda… (que esté cerca y con Da Halo cerrado)")
-    dispositivos = await BleakScanner.discover(timeout=8.0)
+    dispositivos = await BleakScanner.discover(timeout=10.0)
     for d in dispositivos:
         if d.name and ("B11" in d.name.upper() or "DEUS" in d.name.upper()):
             print(f"Encontrada: {d.name}  [{d.address}]")
-            return d.address
+            return d
     print("\nNo apareció ninguna B11. Dispositivos vistos:")
     for d in dispositivos:
         print(f"   {d.name or '(sin nombre)':24} {d.address}")
@@ -224,12 +238,24 @@ async def _props(cliente: BleakClient, uuid: str):
 
 # ── Principal ────────────────────────────────────────────────────────────
 async def principal(args):
-    mac = await buscar_banda(args.mac)
-    if not mac:
+    dispositivo = await buscar_banda(args.mac)
+    if not dispositivo:
         return 1
 
-    print(f"\nConectando a {mac}…")
-    async with BleakClient(mac, timeout=20.0) as cliente:
+    print(f"\nConectando a {dispositivo.address}…")
+    try:
+        cliente = BleakClient(dispositivo, timeout=25.0)
+        await cliente.connect()
+    except Exception as e:
+        print(f"\nNo se pudo conectar: {e}")
+        print("\nCosas que suelen destrabarlo:")
+        print("  · Cerrá Da Halo en el teléfono (si tiene la banda tomada, nadie más entra).")
+        print("  · Acercá la banda al computador, a menos de un metro.")
+        print("  · Vinculá la banda desde Configuración de Windows → Bluetooth.")
+        print("  · Apagá y prendé el Bluetooth del computador.")
+        return 1
+
+    try:
         print("Conectado.\n")
 
         for nombre, uuid in (("Fabricante", u16("2a29")), ("Modelo", u16("2a28")),
@@ -285,6 +311,14 @@ async def principal(args):
                 print(f"   0x{u[4:8]}  {d.hex(' ')}")
         else:
             print("   (ninguna)")
+    finally:
+        # Desconectar siempre, aunque algo falle: si no, la banda queda tomada
+        # y después la app del teléfono no la puede usar.
+        try:
+            await cliente.disconnect()
+            print("\nDesconectado.")
+        except Exception:
+            pass
     return 0
 
 
