@@ -8,6 +8,10 @@ tickets.json
 # además de datos de salud. Nunca al repositorio.
 atletas-data.json
 
+# Python: caché de bytecode de scripts/ble_probe.py
+__pycache__/
+*.pyc
+
 # Graphify: artefactos derivados, se regeneran con scripts/graphify-setup.sh
 graphify-out/
 graphify-src/
