@@ -4,6 +4,9 @@ stock.json
 metrics-data.json
 pedidos.json
 tickets.json
+# Datos de equipos y atletas: incluye claves de acceso y tokens personales,
+# además de datos de salud. Nunca al repositorio.
+atletas-data.json
 
 # Graphify: artefactos derivados, se regeneran con scripts/graphify-setup.sh
 graphify-out/
