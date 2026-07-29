@@ -99,6 +99,8 @@ input{font-family:ui-monospace,Menlo,Consolas,monospace;}
     formato de las MoYoung pero con su propia marca. Estos botones prueban los
     comandos de esa familia — si alguno contesta, ese dato ya lo tenemos.
   </div>
+  <button id="btn-combos" class="primary" style="width:100%;margin-bottom:9px;">🔦 Buscar el canal correcto (mirá la luz)</button>
+  <button id="btn-guiada" style="width:100%;margin-bottom:9px;">♥ Medición de pulso guiada (75 s)</button>
   <div class="btn-grid">
     <button data-cmd="109" data-arg="00">♥ Medir pulso</button>
     <button data-cmd="109" data-arg="ff">■ Parar pulso</button>
@@ -309,17 +311,43 @@ async function escanearServicios() {
   return servicios;
 }
 
-// Manda una trama con el formato propio de la banda al destino elegido.
-async function enviarDeus(cmd, payload = [], etiqueta = '') {
-  const destino = escribibles[parseInt($('sel-destino').value)];
-  if (!destino) { log('Elegí a qué característica escribir.', 'log-err'); return false; }
-  const bytes = armarDeus(cmd, payload);
-  log(`TX ${destino.etiqueta}  ${hex(bytes.buffer)}   ${etiqueta || 'cmd ' + cmd}`, 'log-tx');
+// Manda una trama con el formato propio de la banda. Si no se pasa destino,
+// usa el elegido en el desplegable.
+async function enviarDeus(cmd, payload = [], etiqueta = '', version = 1, destino = null) {
+  const d = destino || escribibles[parseInt($('sel-destino').value)];
+  if (!d) { log('Elegí a qué característica escribir.', 'log-err'); return false; }
+  const bytes = armarDeus(cmd, payload, version);
+  log(`TX ${d.etiqueta}  ${hex(bytes.buffer)}   ${etiqueta || 'cmd ' + cmd}`, 'log-tx');
   try {
-    if (destino.car.properties.write) await destino.car.writeValueWithResponse(bytes);
-    else await destino.car.writeValueWithoutResponse(bytes);
+    if (d.car.properties.write) await d.car.writeValueWithResponse(bytes);
+    else await d.car.writeValueWithoutResponse(bytes);
     return true;
   } catch (e) { log('   ↳ falló: ' + e.message, 'log-err'); return false; }
+}
+
+// Prueba de combinaciones: manda "empezá a medir el pulso" por cada canal
+// escribible y con cada versión de encabezado, dejando 8 segundos entre una y
+// otra. La señal de éxito no son los bytes que vuelven, sino la LUZ VERDE del
+// sensor de la banda: si se prende, esa combinación es la buena.
+async function probarCombinaciones() {
+  if (!escribibles.length) { log('No hay canales escribibles.', 'log-err'); return; }
+  const combos = [];
+  for (const d of escribibles) for (const v of [1, 2]) combos.push({ d, v });
+
+  log('── Prueba de combinaciones ───────────────', 'log-ok');
+  log(`${combos.length} intentos, 8 segundos cada uno. MIRÁ LA BANDA, no la pantalla:`, 'log-t');
+  log('cuando se prenda la luz verde del sensor, anotá el número que va acá abajo.', 'log-t');
+
+  for (let i = 0; i < combos.length; i++) {
+    const { d, v } = combos[i];
+    log(`▶ INTENTO ${i + 1} de ${combos.length} — ${d.etiqueta}, encabezado V${v}`, 'log-ok');
+    await enviarDeus(109, [0x00], `intento ${i + 1}: iniciar pulso`, v, d);
+    await new Promise(r => setTimeout(r, 8000));
+    await enviarDeus(109, [0xff], `intento ${i + 1}: detener`, v, d);
+    await new Promise(r => setTimeout(r, 1200));
+  }
+  log('── Fin de la prueba ──────────────────────', 'log-ok');
+  log('¿En cuál intento se prendió la luz? Ese es el bueno.', 'log-t');
 }
 
 // Prueba los comandos de consulta de la familia MoYoung uno por uno. Solo los
@@ -328,6 +356,38 @@ const COMANDOS_CONSULTA = [
   3, 33, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
   50, 52, 53, 54, 55, 57, 58, 89
 ];
+
+// Medición de pulso completa: la banda tarda entre 30 y 60 segundos en medir
+// de verdad (por eso se prende la luz del sensor). Esta rutina arranca la
+// medición, espera lo necesario sin cortar, la detiene y después pide el
+// historial del día — que es de donde sale el pulso en reposo.
+async function medicionGuiada() {
+  const ESPERA = 75; // segundos
+  log('── Medición de pulso guiada ──────────────', 'log-ok');
+  log('No cierres ni bloquees la pantalla. Quedate quieto con la banda puesta.', 'log-t');
+
+  if (!await enviarDeus(109, [0x00], 'iniciar medición de pulso')) return;
+  log('Sensor encendido. Esperando ' + ESPERA + ' s…', 'log-t');
+
+  for (let s = 5; s <= ESPERA; s += 5) {
+    await new Promise(r => setTimeout(r, 5000));
+    if (s % 15 === 0) log(`   … ${s} s de ${ESPERA}`, 'log-t');
+  }
+
+  await enviarDeus(109, [0xff], 'detener medición');
+  await new Promise(r => setTimeout(r, 1500));
+
+  // El historial del día suele traer las muestras aunque la medición puntual
+  // no conteste: es la vía alternativa para el mismo dato.
+  log('Pidiendo el historial de pulso del día…', 'log-t');
+  await enviarDeus(54, [0x00], 'pulso histórico, bloque 0');
+  await new Promise(r => setTimeout(r, 2500));
+  await enviarDeus(55, [], 'resumen de actividad con pulso');
+  await new Promise(r => setTimeout(r, 2500));
+
+  log('── Fin de la medición ────────────────────', 'log-ok');
+  log('Si arriba aparecieron líneas RX, ahí está el pulso. Mandame el log.', 'log-t');
+}
 
 async function barridoComandos() {
   const destino = escribibles[parseInt($('sel-destino').value)];
@@ -377,13 +437,17 @@ async function leerTexto(servicio, caracteristica) {
 //
 // Ejemplo capturado de la banda: fd da 10 08 03 09 03 00
 //   → largo 8, comando 0x03, payload 09 03 00
+// Hay una contradicción a resolver: el nombre de fabricante dice MOYOUNG-V2,
+// pero la trama que la propia banda emitió lleva 0x10, que es la marca de V1.
+// V1 pone 16 fijo; V2 pone 32 más los bits altos del largo. Como no se puede
+// deducir cuál espera al recibir, se prueban las dos.
 const DEUS_MAGIA = [0xfd, 0xda];
 
-function armarDeus(cmd, payload = []) {
+function armarDeus(cmd, payload = [], version = 1) {
   const largo = 5 + payload.length;
   const p = new Uint8Array(largo);
   p[0] = DEUS_MAGIA[0]; p[1] = DEUS_MAGIA[1];
-  p[2] = 0x10;
+  p[2] = version === 2 ? (0x20 + ((largo >> 8) & 0xff)) : 0x10;
   p[3] = largo & 0xff;
   p[4] = cmd;
   p.set(payload, 5);
@@ -630,6 +694,8 @@ $('btn-pasos').onclick    = async () => {
 $('btn-escanear').onclick = () => escanearServicios();
 $('btn-raw').onclick      = enviarCrudo;
 $('btn-barrido').onclick  = barridoComandos;
+$('btn-guiada').onclick   = medicionGuiada;
+$('btn-combos').onclick   = probarCombinaciones;
 document.querySelectorAll('#caja-deus [data-cmd]').forEach(b => {
   b.onclick = () => enviarDeus(
     parseInt(b.dataset.cmd),
