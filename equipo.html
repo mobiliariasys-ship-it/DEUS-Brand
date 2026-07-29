@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>DEUS · Panel del entrenador</title>
+<style>
+:root{--bg:#080808;--card:#131313;--card2:#0e0e0e;--border:#252525;--gold:#d9bf92;
+      --verde:#69c46d;--amarillo:#e0b64a;--rojo:#e05a5a;--dim:#8f8f8f;}
+*{box-sizing:border-box;}
+body{margin:0;padding:20px 16px 70px;background:var(--bg);color:#e8e8e8;
+     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.45;}
+.wrap{max-width:1100px;margin:0 auto;}
+h1{font-size:1.1rem;letter-spacing:2.5px;text-transform:uppercase;margin:0;color:#fff;}
+.sub{color:var(--dim);font-size:.75rem;margin:4px 0 22px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:16px;margin-bottom:14px;}
+.card h2{font-size:.66rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:0 0 12px;font-weight:600;}
+button{font-family:inherit;font-size:.85rem;font-weight:600;border-radius:8px;border:1px solid var(--border);
+       background:#1d1d1d;color:#e8e8e8;padding:11px 16px;cursor:pointer;transition:background .15s;}
+button:hover:not(:disabled){background:#282828;}
+button:disabled{opacity:.35;cursor:not-allowed;}
+button.primary{background:#fff;color:#000;border-color:#fff;}
+input,select{width:100%;font-family:inherit;font-size:.85rem;background:#0a0a0a;color:#e8e8e8;
+             border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:8px;}
+.fila{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.fila>*{margin-bottom:0;}
+
+/* Resumen */
+.resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:14px 10px;text-align:center;}
+.kpi b{display:block;font-size:2rem;line-height:1.05;color:#fff;font-variant-numeric:tabular-nums;}
+.kpi small{display:block;font-size:.55rem;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim);margin-top:5px;}
+.kpi.v b{color:var(--verde);} .kpi.a b{color:var(--amarillo);} .kpi.r b{color:var(--rojo);}
+
+/* Alertas */
+.alerta{border-radius:9px;padding:12px 14px;margin-bottom:9px;font-size:.83rem;line-height:1.5;}
+.alerta.alta{background:rgba(224,90,90,.11);border:1px solid rgba(224,90,90,.42);color:#f3b3b3;}
+.alerta.media{background:rgba(224,182,74,.1);border:1px solid rgba(224,182,74,.38);color:#ecd39a;}
+.alerta.info{background:rgba(105,196,109,.1);border:1px solid rgba(105,196,109,.38);color:#a9dfab;}
+
+/* Jugadores */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:11px;}
+.jug{background:var(--card2);border:1px solid var(--border);border-left-width:4px;border-radius:10px;padding:13px;}
+.jug.verde{border-left-color:var(--verde);} .jug.amarilla{border-left-color:var(--amarillo);}
+.jug.roja{border-left-color:var(--rojo);}   .jug\.sin-datos,.jug.sindatos{border-left-color:#3a3a3a;}
+.jug-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.jug-nom{font-weight:700;font-size:.95rem;}
+.jug-pts{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;}
+.jug.verde .jug-pts{color:var(--verde);} .jug.amarilla .jug-pts{color:var(--amarillo);}
+.jug.roja .jug-pts{color:var(--rojo);}   .jug.sindatos .jug-pts{color:#555;}
+.jug-msg{font-size:.76rem;color:#b4b4b4;margin:7px 0 9px;line-height:1.45;}
+.jug-ses{font-size:.78rem;color:#e8e8e8;background:#171717;border-radius:7px;padding:8px 10px;line-height:1.4;}
+.jug-meta{font-size:.63rem;color:var(--dim);margin-top:8px;display:flex;justify-content:space-between;gap:8px;}
+.jug-acc{margin-top:9px;display:flex;gap:6px;}
+.jug-acc button{padding:6px 10px;font-size:.7rem;flex:1;}
+.chip{display:inline-block;font-size:.58rem;letter-spacing:1px;text-transform:uppercase;
+      border:1px solid var(--border);border-radius:20px;padding:2px 8px;color:var(--dim);}
+.hint{font-size:.72rem;color:var(--dim);line-height:1.5;margin-top:9px;}
+.oculto{display:none;}
+.msg{font-size:.8rem;padding:10px 12px;border-radius:8px;margin-top:10px;}
+.msg.ok{background:rgba(105,196,109,.1);color:#a9dfab;}
+.msg.err{background:rgba(224,90,90,.11);color:#f3b3b3;}
+.enlace{font-family:ui-monospace,Menlo,monospace;font-size:.7rem;background:#0a0a0a;border:1px solid var(--border);
+        border-radius:6px;padding:8px;word-break:break-all;color:var(--gold);margin-top:6px;}
+table{width:100%;border-collapse:collapse;font-size:.78rem;}
+td,th{padding:7px 6px;border-bottom:1px solid #1c1c1c;text-align:left;}
+th{color:var(--dim);font-size:.6rem;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;}
+.descargo{font-size:.68rem;color:#6e6e6e;line-height:1.5;margin-top:20px;padding-top:14px;border-top:1px solid #1a1a1a;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Panel del entrenador</h1>
+<div class="sub" id="sub">Disposición del plantel para entrenar hoy</div>
+
+<!-- Acceso -->
+<div class="card" id="acceso">
+  <h2>Acceso</h2>
+  <input id="in-equipo" placeholder="ID del equipo" autocapitalize="none" autocomplete="off" spellcheck="false">
+  <input id="in-clave" type="password" placeholder="Clave del equipo" autocomplete="off">
+  <button class="primary" id="btn-entrar" style="width:100%;">Entrar</button>
+  <div id="msg-acceso"></div>
+</div>
+
+<div class="fila oculto" id="barra-salir" style="justify-content:flex-end;margin-bottom:14px;">
+  <button id="btn-salir">Salir</button>
+</div>
+
+<!-- Panel -->
+<div id="panel" class="oculto">
+  <div class="resumen" id="resumen"></div>
+  <div id="alertas"></div>
+
+  <div class="card">
+    <h2>Plantel</h2>
+    <div class="fila" style="margin-bottom:12px;">
+      <input id="in-fecha" type="date" style="max-width:170px;">
+      <button id="btn-recargar">Actualizar</button>
+    </div>
+    <div class="grid" id="jugadores"></div>
+    <div class="hint" id="vacio"></div>
+  </div>
+
+  <div class="card">
+    <h2>Sincronización de bandas</h2>
+    <table id="tabla-sync"><tbody></tbody></table>
+    <div class="hint">Sin sincronizar la banda no hay lectura posible. La pulsera guarda varios días
+      en su memoria, así que conectarla cada 2 o 3 días alcanza para no perder historial.</div>
+  </div>
+
+  <div class="card">
+    <h2>Agregar jugador</h2>
+    <div class="fila">
+      <input id="in-nombre" placeholder="Nombre del jugador" style="flex:1;min-width:180px;">
+      <button id="btn-agregar">Agregar</button>
+    </div>
+    <div id="msg-agregar"></div>
+  </div>
+
+  <!-- Carga manual: sirve mientras la banda no sincroniza sola -->
+  <div class="card">
+    <h2>Cargar día a mano</h2>
+    <select id="sel-jugador"></select>
+    <div class="fila">
+      <input id="man-fecha" type="date" style="flex:1;min-width:140px;">
+      <input id="man-sueno" type="number" step="0.1" min="0" max="24" placeholder="Sueño (h)" style="flex:1;min-width:110px;">
+      <input id="man-pulso" type="number" min="25" max="220" placeholder="Pulso reposo" style="flex:1;min-width:110px;">
+      <input id="man-hrv" type="number" min="1" max="300" placeholder="HRV (ms)" style="flex:1;min-width:100px;">
+      <input id="man-carga" type="number" min="0" max="2000" placeholder="Carga" style="flex:1;min-width:90px;">
+      <button id="btn-manual">Guardar</button>
+    </div>
+    <div class="hint">La carga es una estimación del esfuerzo de la sesión: minutos × intensidad del 1 al 10.
+      Una hora exigente ronda 400-500.</div>
+    <div id="msg-manual"></div>
+  </div>
+
+  <div class="descargo" id="descargo"></div>
+</div>
+
+</div>
+<script>
+const $ = id => document.getElementById(id);
+let equipo = '', clave = '', ultimoPanel = null;
+
+const ZONAS = { verde: 'Puede exigirse', amarilla: 'Bajar un cambio', roja: 'Recuperación', 'sin-datos': 'Sin datos' };
+
+function aviso(el, texto, ok) {
+  $(el).innerHTML = texto ? `<div class="msg ${ok ? 'ok' : 'err'}">${texto}</div>` : '';
+}
+
+async function api(ruta, opciones = {}) {
+  const sep = ruta.includes('?') ? '&' : '?';
+  const r = await fetch(`${ruta}${sep}equipo=${encodeURIComponent(equipo)}&clave=${encodeURIComponent(clave)}`, {
+    headers: { 'Content-Type': 'application/json' }, ...opciones
+  });
+  const cuerpo = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(cuerpo.error || `Error ${r.status}`);
+  return cuerpo;
+}
+
+// ── Pintado ──────────────────────────────────────────────────────────────
+function pintarResumen(p) {
+  const c = p.conteo || {};
+  $('resumen').innerHTML = `
+    <div class="kpi"><b>${p.promedio ?? '--'}</b><small>Promedio</small></div>
+    <div class="kpi v"><b>${c.verde || 0}</b><small>Pueden exigirse</small></div>
+    <div class="kpi a"><b>${c.amarilla || 0}</b><small>Con cuidado</small></div>
+    <div class="kpi r"><b>${c.roja || 0}</b><small>A recuperar</small></div>
+    <div class="kpi"><b>${c['sin-datos'] || 0}</b><small>Sin datos</small></div>`;
+}
+
+function pintarAlertas(p) {
+  const items = [...(p.alertas || [])];
+  // Las alertas individuales de nivel alto también suben al encabezado: es lo
+  // que el entrenador tiene que ver antes de que el jugador salte a la cancha.
+  (p.jugadores || []).forEach(j => {
+    (j.alertas || []).filter(a => a.nivel === 'alta')
+      .forEach(a => items.push({ nivel: 'alta', texto: `<b>${j.nombre}:</b> ${a.texto}` }));
+  });
+  $('alertas').innerHTML = items.map(a => `<div class="alerta ${a.nivel}">${a.texto}</div>`).join('');
+}
+
+function pintarJugadores(p) {
+  const js = p.jugadores || [];
+  const clase = z => (z === 'sin-datos' ? 'sindatos' : z);
+  $('jugadores').innerHTML = js.map(j => `
+    <div class="jug ${clase(j.zona)}">
+      <div class="jug-top">
+        <span class="jug-nom">${j.nombre}</span>
+        <span class="jug-pts">${j.puntaje ?? '--'}</span>
+      </div>
+      <div><span class="chip">${ZONAS[j.zona] || j.zona}</span>
+        ${j.confianza && j.confianza !== 'alta' ? `<span class="chip">confianza ${j.confianza}</span>` : ''}</div>
+      <div class="jug-msg">${j.mensaje || ''}</div>
+      ${j.sesion ? `<div class="jug-ses">${j.sesion}</div>` : ''}
+      <div class="jug-meta">
+        <span>${j.deporte || ''}</span>
+        <span>${j.carga && j.carga.ratio ? 'carga ' + j.carga.ratio + '×' : ''}</span>
+      </div>
+      <div class="jug-acc"><button data-borrar="${j.id}">Quitar del plantel</button></div>
+    </div>`).join('');
+
+  $('vacio').textContent = js.length ? '' :
+    'Todavía no hay jugadores. Agregá el primero abajo y pasale su enlace para que sincronice la banda.';
+
+  $('sel-jugador').innerHTML = js.map(j => `<option value="${j.id}">${j.nombre}</option>`).join('');
+
+  document.querySelectorAll('[data-borrar]').forEach(b => {
+    b.onclick = async () => {
+      if (!confirm('¿Quitar a este jugador y borrar sus datos?')) return;
+      try { await api(`/equipo/atleta/${b.dataset.borrar}`, { method: 'DELETE' }); cargar(); }
+      catch (e) { alert(e.message); }
+    };
+  });
+}
+
+function pintarSync(p) {
+  const filas = (p.sincronizacion || []).map(s => {
+    const d = s.diasSinSincronizar;
+    const estado = s.ultimaFecha === null ? '<span style="color:#e05a5a;">nunca sincronizó</span>'
+      : d === 0 ? '<span style="color:#69c46d;">hoy</span>'
+      : d <= 3  ? `hace ${d} día${d > 1 ? 's' : ''}`
+      : `<span style="color:#e0b64a;">hace ${d} días</span>`;
+    return `<tr><td>${s.nombre}</td><td>${estado}</td><td style="color:#6e6e6e;">${s.ultimaFecha || ''}</td></tr>`;
+  }).join('');
+  $('tabla-sync').innerHTML =
+    '<tr><th>Jugador</th><th>Última sincronización</th><th>Fecha</th></tr>' + filas;
+}
+
+async function cargar() {
+  try {
+    const fecha = $('in-fecha').value;
+    const p = await api('/equipo/panel' + (fecha ? `?fecha=${fecha}` : ''));
+    ultimoPanel = p;
+    $('sub').textContent = `${p.equipo} · ${p.fecha} · ${p.total} jugador${p.total === 1 ? '' : 'es'}`;
+    pintarResumen(p); pintarAlertas(p); pintarJugadores(p); pintarSync(p);
+    $('descargo').textContent = p.descargo || '';
+  } catch (e) { aviso('msg-acceso', e.message, false); }
+}
+
+// ── Acceso ───────────────────────────────────────────────────────────────
+function entrar() {
+  equipo = $('in-equipo').value.trim();
+  clave = $('in-clave').value.trim();
+  if (!equipo || !clave) { aviso('msg-acceso', 'Faltan el ID y la clave del equipo.', false); return; }
+  api('/equipo/panel').then(() => {
+    try { localStorage.setItem('deus-equipo', JSON.stringify({ equipo, clave })); } catch (e) {}
+    $('panel').classList.remove('oculto');
+    // Una vez adentro el formulario estorba y deja la clave a la vista:
+    // se reemplaza por una barra mínima con el botón de salir.
+    $('acceso').classList.add('oculto');
+    $('barra-salir').classList.remove('oculto');
+    aviso('msg-acceso', '', true);
+    cargar();
+  }).catch(e => aviso('msg-acceso', e.message, false));
+}
+
+$('btn-entrar').onclick = entrar;
+$('btn-salir').onclick = () => {
+  try { localStorage.removeItem('deus-equipo'); } catch (e) {}
+  location.reload();
+};
+$('btn-recargar').onclick = cargar;
+
+$('btn-agregar').onclick = async () => {
+  const nombre = $('in-nombre').value.trim();
+  if (!nombre) { aviso('msg-agregar', 'Escribí el nombre.', false); return; }
+  try {
+    const a = await api('/equipo/atleta', { method: 'POST', body: JSON.stringify({ nombre }) });
+    const url = location.origin + a.enlaceSync;
+    aviso('msg-agregar', `<b>${a.nombre}</b> agregado. Pasale este enlace para que sincronice su banda:`
+      + `<div class="enlace">${url}</div>Es personal: con él solo puede subir sus propios datos.`, true);
+    $('in-nombre').value = '';
+    cargar();
+  } catch (e) { aviso('msg-agregar', e.message, false); }
+};
+
+$('btn-manual').onclick = async () => {
+  const atleta = $('sel-jugador').value;
+  const dia = {
+    fecha: $('man-fecha').value,
+    suenoHoras: $('man-sueno').value === '' ? undefined : Number($('man-sueno').value),
+    pulsoReposo: $('man-pulso').value === '' ? undefined : Number($('man-pulso').value),
+    hrv: $('man-hrv').value === '' ? undefined : Number($('man-hrv').value),
+    carga: $('man-carga').value === '' ? undefined : Number($('man-carga').value)
+  };
+  if (!atleta) { aviso('msg-manual', 'Elegí un jugador.', false); return; }
+  if (!dia.fecha) { aviso('msg-manual', 'Elegí la fecha.', false); return; }
+  try {
+    const r = await api('/equipo/dia-manual', { method: 'POST', body: JSON.stringify({ atleta, dia }) });
+    aviso('msg-manual', `Guardado. ${r.evaluacion && r.evaluacion.puntaje !== null
+      ? 'Quedó en ' + r.evaluacion.puntaje + '/100.' : ''}`, true);
+    ['man-sueno', 'man-pulso', 'man-hrv', 'man-carga'].forEach(k => { $(k).value = ''; });
+    cargar();
+  } catch (e) { aviso('msg-manual', e.message, false); }
+};
+
+// Sesión recordada + fecha de hoy por defecto
+(function inicio() {
+  const hoy = new Date().toISOString().slice(0, 10);
+  $('man-fecha').value = hoy;
+  try {
+    const g = JSON.parse(localStorage.getItem('deus-equipo') || 'null');
+    if (g && g.equipo && g.clave) {
+      $('in-equipo').value = g.equipo; $('in-clave').value = g.clave;
+      entrar();
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

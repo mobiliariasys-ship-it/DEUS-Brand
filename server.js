@@ -4,6 +4,8 @@ const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const shippingRoutes = require('./routes/shipping');
 const transbankRoutes = require('./routes/transbank');
 const flowRoutes = require('./routes/flow');
+const equipoRoutes = require('./routes/equipo');
+const atletas = require('./services/atletas');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico } = require('./services/email');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
@@ -61,6 +63,7 @@ app.use(express.static(__dirname, {
 app.use(shippingRoutes);
 app.use(transbankRoutes);
 app.use(flowRoutes);
+app.use(equipoRoutes);
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.ACCESS_TOKEN,
@@ -525,6 +528,7 @@ app.post('/resenas', async (req, res) => {
 // venta/ticket/vista que llegue justo al arrancar se registra sobre datos vacíos.
 async function arrancar() {
   await metrics.init(); // carga ventas, tickets y vistas persistidos
+  await atletas.init(); // carga equipos, atletas y sus días
   const pedidosGuardados = await persist.load('pedidos.json', []);
   pedidos.push(...pedidosGuardados);
 
