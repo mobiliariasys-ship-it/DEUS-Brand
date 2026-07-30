@@ -1601,6 +1601,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           overlay.classList.add('show');
           document.body.style.overflow = 'hidden';
           if (typeof updateStockUI === 'function') updateStockUI();
+          // Si un cliente que ya empezó una compra vuelve, reutilizamos sus
+          // datos del sessionStorage para subir la nota de calidad del evento.
+          try {
+            const prev = JSON.parse(sessionStorage.getItem('deus-fb-match') || 'null');
+            if (prev && window.fbq) fbq('init', '2086346891978245', prev);
+          } catch (e) {}
           if (window.fbq) fbq('track', 'InitiateCheckout', { value: checkoutTapones ? TAPONES_PRICE : precioBanda(), currency: 'CLP', content_name: checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band' });
           if (window.deusTrackCheckout) window.deusTrackCheckout();
         }
@@ -1752,6 +1758,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               cantidad: cantidad
             });
           }
+          // Reportar el AddToCart a Meta con valor real, para que la calidad
+          // del evento suba del 0/10 actual.
+          if (window.fbq) fbq('track', 'AddToCart', {
+            value: precioBanda() * cantidad,
+            currency: 'CLP',
+            content_ids: [color],
+            content_name: 'DEUS Band ' + colorLabel,
+            content_type: 'product',
+            contents: [{ id: color, quantity: cantidad, item_price: precioBanda() }]
+          });
           actualizarCarrito();
           cerrarDialogoCarrito();
           abrirCarrito();
