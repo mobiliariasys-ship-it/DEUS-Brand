@@ -1362,8 +1362,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         let selectedShipping = null;
         // Stock disponible: precio $52.990 con envío GRATIS a todo Chile
-        // en modo compra normal (no reserva).
-        const OFERTA_END = new Date('2026-08-07T00:00:00-04:00').getTime();
+        // en modo compra normal (no reserva). Contador de 5 días completos.
+        const OFERTA_END = new Date('2026-08-05T00:00:00-04:00').getTime();
         const ofertaActiva = () => Date.now() < OFERTA_END;
         // Precio unificado: $52.990 tanto en compra como en reserva. Ancla
         // $58.990 solo se muestra al lado del precio si modo reserva.
