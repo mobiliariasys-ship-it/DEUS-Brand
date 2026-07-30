@@ -1016,7 +1016,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b> a todo Chile · Semana de lanzamiento</div>
+<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b> a todo Chile</div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -1178,7 +1178,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="cdot" style="background:#e8b4bc;" title="Rosado" onclick="setColor('rosada',this)"></div>
       </div>
 
-      <div class="price-block"><sup>$</sup>54.990</div>
+      <div class="price-block"><sup>$</sup>52.990</div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
       <div class="cta-row">
         <button class="btn-p" data-buy="Comprar ahora" data-reserve="Comprar ahora" onclick="abrirCheckout()">Comprar ahora</button>
@@ -1186,7 +1186,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         </button>
       </div>
-      <div class="reserva-regalo" style="display:none;" onclick="abrirTaponesMenu()"><span class="regalo-thumb" onclick="abrirTaponesMenu()" title="Toca para ver los tapones"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span class="regalo-zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span></span><span><b>Tapones de oído DEUS</b> de regalo con tu reserva 🎁<span class="regalo-val"><s>$14.990</s></span><small class="regalo-fine">Oferta válida solo durante el período de restock</small></span></div>
+      <!-- Caja de tapones de regalo — retirada: la oferta era solo para reserva. -->
 
       <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas" style="margin-top:14px;">
         <span class="proof-stars">★★★★★</span> <b>5.0</b> <span class="proof-count">(<span id="rating-count">7</span>)</span> · reseñas<span class="proof-long"> de la comunidad</span> <span class="proof-arrow">›</span>
@@ -1257,7 +1257,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </div>
             </div>
             <div class="co-stock" id="co-stock" style="display:none;"></div>
-            <div class="reserva-regalo" style="display:none;" onclick="abrirTaponesMenu()"><span class="regalo-thumb" onclick="abrirTaponesMenu()" title="Toca para ver los tapones"><img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="regalo-img" loading="lazy" decoding="async"><span class="regalo-zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span></span><span><b>Tapones de oído DEUS</b> de regalo con tu reserva 🎁<span class="regalo-val"><s>$14.990</s></span><small class="regalo-fine">Oferta válida solo durante el período de restock</small></span></div>
+            <!-- Caja de tapones de regalo — retirada: la oferta era solo para reserva. -->
             <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
               <span style="font-size:.9rem;color:#aaa;">Cantidad:</span>
               <button class="cart-qty-btn" id="co-qty-minus" onclick="cambiarCantidadCheckout(-1)">−</button>
@@ -1362,19 +1362,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         let selectedShipping = null;
-        // Semana de lanzamiento del restock (30-jul a 6-ago 2026, Chile).
-        // Precio $54.990 con ENVÍO GRATIS a todo Chile. Al vencer, se
-        // desactiva el envío gratis y sigue cobrándose por región.
+        // Restock disponible: precio $52.990 con envío GRATIS a todo Chile
+        // en modo compra normal (no reserva).
         const OFERTA_END = new Date('2026-08-07T00:00:00-04:00').getTime();
         const ofertaActiva = () => Date.now() < OFERTA_END;
-        // Modo reserva: cuando el stock llega a 0 el sitio sigue vendiendo como
-        // RESERVA con descuento ($52.990, ancla $58.990). Con stock disponible
-        // el precio es $54.990.
-        const RESERVA_PRICE = 52990, PRECIO_NORMAL = 54990, RESERVA_ANCLA = 58990;
+        // Precio unificado: $52.990 tanto en compra como en reserva. Ancla
+        // $58.990 solo se muestra al lado del precio si modo reserva.
+        const RESERVA_PRICE = 52990, PRECIO_NORMAL = 52990, RESERVA_ANCLA = 58990;
         const precioBanda = () => (window.modoReserva ? RESERVA_PRICE : PRECIO_NORMAL);
-        // Envío gratis mientras dure la semana de restock.
         const envioGratis = () => ofertaActiva();
-        const PRODUCT_PRICE = 54990;
+        const PRODUCT_PRICE = 52990;
 
         // ── Regiones y comunas de Chile ──
         const CHILE = {
@@ -2773,26 +2770,26 @@ function cargarStock() {
 // así lo que se muestra y lo que se cobra siempre coinciden.
 function aplicarReserva() {
   const on = !!window.modoReserva;
-  // Semana de lanzamiento con envío gratis: se muestra sello verde junto al precio.
+  // Envío gratis activo: se muestra sello verde junto al precio.
   const oferta = ofertaActiva() && !on;
   const pb = document.querySelector('.price-block');
   if (pb) pb.innerHTML = on
     ? '<sup>$</sup>52.990 <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>'
     : oferta
-    ? '<sup>$</sup>54.990 <span class="price-offer-tag">ENVÍO GRATIS</span>'
-    : '<sup>$</sup>54.990';
+    ? '<sup>$</sup>52.990 <span class="price-offer-tag">ENVÍO GRATIS</span>'
+    : '<sup>$</sup>52.990';
   const fc = document.querySelector('.fc-price');
   if (fc) fc.innerHTML = on
     ? '$52.990 <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>'
     : oferta
-    ? '$54.990 <small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>'
-    : '$54.990';
+    ? '$52.990 <small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>'
+    : '$52.990';
   const sb = document.querySelector('.sb-price');
   if (sb) sb.innerHTML = on
     ? '<b>$52.990</b> <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>'
     : oferta
-    ? '<b>$54.990</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>'
-    : '<b>$54.990</b>';
+    ? '<b>$52.990</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>'
+    : '<b>$52.990</b>';
   const ab = document.getElementById('offer-bar');
   if (ab) {
     if (on) {
@@ -2807,9 +2804,9 @@ function aplicarReserva() {
       iniciarContadorReserva();
     } else {
       ab.classList.remove('reserva');
-      // Semana de lanzamiento: envío gratis. Al vencer, vuelve a "Última unidad".
+      // Envío gratis mientras dure la oferta. Al vencer vuelve a "Última unidad".
       ab.innerHTML = ofertaActiva()
-        ? '🚚 <b>ENVÍO GRATIS</b> a todo Chile · Semana de lanzamiento'
+        ? '🚚 <b>ENVÍO GRATIS</b> a todo Chile'
         : '🔥 <b>Última unidad</b> disponible';
       pararContadorReserva();
     }
@@ -2818,7 +2815,6 @@ function aplicarReserva() {
     const t = on ? b.getAttribute('data-reserve') : b.getAttribute('data-buy');
     if (t) b.textContent = t;
   });
-  document.querySelectorAll('.reserva-regalo').forEach(e => { e.style.display = on ? '' : 'none'; });
   if (typeof actualizarTotalCheckout === 'function') { try { actualizarTotalCheckout(); } catch (e) {} }
   // Sincroniza la clase en <html> (para el CSS anti-flash) y revela el contenido
   // ya con los valores correctos puestos.
