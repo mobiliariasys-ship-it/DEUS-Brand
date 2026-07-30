@@ -1015,7 +1015,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b> a todo Chile</div>
+<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b> 1-3 días hábiles a todo Chile 🇨🇱</div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -2831,6 +2831,7 @@ function aplicarReserva() {
     ? '<sup>$</sup>52.990 <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>'
     : oferta
     ? '<sup>$</sup>52.990 <span class="price-offer-tag">ENVÍO GRATIS</span>'
+      + '<small style="display:block;font-size:.72rem;color:#8f8f8f;letter-spacing:1.5px;margin-top:6px;text-transform:uppercase;font-family:\'DM Sans\',sans-serif;">🚚 Entrega en 1-3 días hábiles</small>'
     : '<sup>$</sup>52.990';
   const fc = document.querySelector('.fc-price');
   if (fc) fc.innerHTML = on
@@ -2858,7 +2859,7 @@ function aplicarReserva() {
       // contador de la oferta si sigue vigente.
       ab.classList.add('reserva');
       ab.innerHTML = ofertaActiva()
-        ? '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> termina en</span>' + cdEnvioHTML
+        ? '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> 1-3 días hábiles a todo Chile 🇨🇱 · termina en</span>' + cdEnvioHTML
         : '<span class="ab-txt">🔥 <b>Última unidad</b> disponible</span>';
       if (ofertaActiva()) iniciarContadorReserva(); else pararContadorReserva();
     } else {
@@ -2866,7 +2867,7 @@ function aplicarReserva() {
       // Con stock: envío gratis con contador hasta que venza.
       if (ofertaActiva()) {
         ab.classList.add('reserva');   // reusar el estilo del contador
-        ab.innerHTML = '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> termina en</span>' + cdEnvioHTML;
+        ab.innerHTML = '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> 1-3 días hábiles a todo Chile 🇨🇱 · termina en</span>' + cdEnvioHTML;
         iniciarContadorReserva();
       } else {
         ab.innerHTML = '🔥 <b>Última unidad</b> disponible';
