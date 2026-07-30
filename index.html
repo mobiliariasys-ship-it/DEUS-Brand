@@ -266,9 +266,8 @@ body{background:var(--black);font-family:'DM Sans',sans-serif;color:var(--white)
 html,body{overflow-x:hidden;overflow-x:clip;}
 .announce-bar{position:sticky;top:0;z-index:950;background:#080808;color:#e7cf9c;text-align:center;padding:9px 16px;font-size:.7rem;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;border-bottom:1px solid #1c1c1c;}
 .announce-bar b{color:#fff;}
-/* Modo reserva: texto arriba + contador regresivo centrado debajo */
+/* Barra con contador: texto arriba + contador regresivo centrado debajo */
 .announce-bar.reserva{display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.35;padding-top:8px;padding-bottom:8px;}
-.announce-bar .ab-restock{font-size:.68rem;letter-spacing:3px;color:#f2d9a8;font-weight:700;}
 .announce-bar .reserva-cd{display:flex;gap:6px;justify-content:center;text-transform:none;}
 .rcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:4px 9px;min-width:42px;}
 .rcd-box b{font-size:1rem;font-weight:700;line-height:1;color:#fff;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
@@ -1362,7 +1361,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         let selectedShipping = null;
-        // Restock disponible: precio $52.990 con envío GRATIS a todo Chile
+        // Stock disponible: precio $52.990 con envío GRATIS a todo Chile
         // en modo compra normal (no reserva).
         const OFERTA_END = new Date('2026-08-07T00:00:00-04:00').getTime();
         const ofertaActiva = () => Date.now() < OFERTA_END;
@@ -2731,8 +2730,8 @@ const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 
 // Sincroniza aviso de stock, foto y color en página y checkout
 function textoStock(color) {
-  if (window.modoReserva) return 'Oferta válida solo durante el período de restock';
-  if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — restock pronto · disponible en gris';
+  if (window.modoReserva) return '';
+  if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — disponible en gris';
   if (color === 'negra') return '🔥 Pocas unidades disponibles de este color';
   return '';
 }
@@ -2791,24 +2790,33 @@ function aplicarReserva() {
     ? '<b>$52.990</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>'
     : '<b>$52.990</b>';
   const ab = document.getElementById('offer-bar');
+  const cdEnvioHTML = ''
+    + '<span class="reserva-cd" id="reserva-cd">'
+    +   '<span class="rcd-box"><b id="rcd-d">--</b><small>días</small></span>'
+    +   '<span class="rcd-box"><b id="rcd-h">--</b><small>hrs</small></span>'
+    +   '<span class="rcd-box"><b id="rcd-m">--</b><small>min</small></span>'
+    +   '<span class="rcd-box"><b id="rcd-s">--</b><small>seg</small></span>'
+    + '</span>';
   if (ab) {
     if (on) {
+      // Sin stock: modo reserva. Se muestra el envío gratis igual, con el
+      // contador de la oferta si sigue vigente.
       ab.classList.add('reserva');
-      ab.innerHTML = '<span class="ab-txt">📦 Restock en</span>'
-                   + '<span class="reserva-cd" id="reserva-cd">'
-                   +   '<span class="rcd-box"><b id="rcd-d">--</b><small>días</small></span>'
-                   +   '<span class="rcd-box"><b id="rcd-h">--</b><small>hrs</small></span>'
-                   +   '<span class="rcd-box"><b id="rcd-m">--</b><small>min</small></span>'
-                   +   '<span class="rcd-box"><b id="rcd-s">--</b><small>seg</small></span>'
-                   + '</span>';
-      iniciarContadorReserva();
+      ab.innerHTML = ofertaActiva()
+        ? '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> termina en</span>' + cdEnvioHTML
+        : '<span class="ab-txt">🔥 <b>Última unidad</b> disponible</span>';
+      if (ofertaActiva()) iniciarContadorReserva(); else pararContadorReserva();
     } else {
       ab.classList.remove('reserva');
-      // Envío gratis mientras dure la oferta. Al vencer vuelve a "Última unidad".
-      ab.innerHTML = ofertaActiva()
-        ? '🚚 <b>ENVÍO GRATIS</b> a todo Chile'
-        : '🔥 <b>Última unidad</b> disponible';
-      pararContadorReserva();
+      // Con stock: envío gratis con contador hasta que venza.
+      if (ofertaActiva()) {
+        ab.classList.add('reserva');   // reusar el estilo del contador
+        ab.innerHTML = '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> termina en</span>' + cdEnvioHTML;
+        iniciarContadorReserva();
+      } else {
+        ab.innerHTML = '🔥 <b>Última unidad</b> disponible';
+        pararContadorReserva();
+      }
     }
   }
   document.querySelectorAll('[data-buy]').forEach(b => {
@@ -2822,15 +2830,12 @@ function aplicarReserva() {
   document.documentElement.classList.add('reserva-ready');
 }
 
-// Contador regresivo del top bar en modo reserva: cuenta hasta que llega el
-// restock. Fecha objetivo FIJA (no se reinicia al recargar). Cambiá esta fecha
-// cuando el proveedor confirme la llegada real.
-const RESERVA_LLEGADA = new Date('2026-08-01T12:00:00-04:00').getTime();
+// Contador regresivo del top bar: apunta al fin del envío gratis (OFERTA_END).
 let reservaCdIv = null;
 function pintarContadorReserva() {
   const eld = document.getElementById('rcd-d');
   if (!eld) return;
-  let d = RESERVA_LLEGADA - Date.now();
+  let d = OFERTA_END - Date.now();
   if (d < 0) d = 0;
   const z = n => String(n).padStart(2, '0');
   eld.textContent = z(Math.floor(d / 86400000));
