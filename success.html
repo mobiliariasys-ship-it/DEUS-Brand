@@ -24,11 +24,18 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '2086346891978245');
+// Advanced matching: recupera los datos del cliente que index.html guardó al
+// iniciar el pago. Con esto el evento Purchase se empareja con la persona real
+// que vio el anuncio, mejorando la tasa de coincidencia con Meta.
+var __match = null;
+try { __match = JSON.parse(sessionStorage.getItem('deus-fb-match') || 'null'); } catch (e) {}
+if (__match) fbq('init', '2086346891978245', __match);
+else fbq('init', '2086346891978245');
 fbq('track', 'PageView');
 // Purchase con el monto real de la transacción (producto + envío), que llega
 // por la URL desde el retorno de cada medio de pago. El eventID (nº de orden
-// o pago) evita que una recarga de esta página cuente la compra dos veces.
+// o pago) evita que una recarga de esta página cuente la compra dos veces,
+// y sirve para deduplicar contra el evento de la Conversions API del servidor.
 (function(){
   var q = new URLSearchParams(location.search);
   var monto = parseInt(q.get('monto'), 10);
@@ -36,6 +43,9 @@ fbq('track', 'PageView');
   var orden = q.get('orden') || q.get('payment_id') || q.get('collection_id');
   if (orden) fbq('track', 'Purchase', datos, { eventID: 'purchase-' + orden });
   else fbq('track', 'Purchase', datos);
+  // Ya no hacen falta los datos, y no queremos que una visita futura reuse
+  // la identidad de otro cliente.
+  try { sessionStorage.removeItem('deus-fb-match'); } catch (e) {}
 })();
 </script>
 <noscript><img height="1" width="1" style="display:none"

@@ -1852,6 +1852,42 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           try { for (var i=0;i<sessionStorage.length;i++){ var k=sessionStorage.key(i); if(k && k.indexOf('deus-ev-')===0) a.push(k.slice(8)); } } catch(e){}
           return a;
         }
+        // Le pasa a Meta los datos del cliente para "advanced matching manual":
+        // hace que las conversiones se emparejen con la persona real que vio el
+        // anuncio, mejorando la tasa de coincidencia y ayudando al algoritmo a
+        // encontrar clientes parecidos. Meta los hashea automáticamente en el
+        // navegador; nunca viajan en texto plano a sus servidores.
+        //
+        // El teléfono chileno se normaliza a formato E.164: quita espacios,
+        // guiones y paréntesis, y le agrega +56 si empieza con 9. Sin esto, el
+        // matching de teléfono no funciona.
+        function actualizarPixelMatching(d) {
+          if (!d) return;
+          const partes = (d.customerName || '').trim().split(/\s+/);
+          const nombre = (partes[0] || '').toLowerCase();
+          const apellido = (partes.slice(1).join(' ') || '').toLowerCase();
+          let tel = (d.customerPhone || '').replace(/[^\d]/g, '');
+          if (tel.length === 9 && tel.startsWith('9')) tel = '56' + tel;
+          else if (tel.length === 8) tel = '569' + tel;
+          // Meta exige ciudad/región sin tildes ni espacios, en minúscula.
+          const limpiar = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '');
+          const ciudad = limpiar(selectedShipping?.address?.commune);
+          const region = limpiar(selectedShipping?.address?.region);
+          const matching = {
+            em: (d.customerEmail || '').toLowerCase(),
+            ph: tel,
+            fn: nombre,
+            ln: apellido,
+            ct: ciudad,
+            st: region,
+            country: 'cl',
+            external_id: (d.customerRut || '').replace(/[^0-9kK]/g, '').toLowerCase()
+          };
+          if (window.fbq) fbq('init', '2086346891978245', matching);
+          // Guardarlo también para que success.html (después del redirect al
+          // gateway) pueda enriquecer el evento Purchase con los mismos datos.
+          try { sessionStorage.setItem('deus-fb-match', JSON.stringify(matching)); } catch (e) {}
+        }
         function datosPedido() {
           return {
             customerName: document.getElementById('co-nombre').value.trim(),
@@ -1891,6 +1927,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           wp.textContent = 'Redirigiendo...';
           msg.style.color = '#666';
           msg.textContent = 'Conectando con Webpay...';
+          actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
           try {
             const res = await fetchBackend('/flow/crear', {
@@ -1921,6 +1958,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           wp.textContent = 'Redirigiendo a Webpay...';
           msg.style.color = '#666';
           msg.textContent = 'Conectando con Webpay...';
+          actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
           try {
             const res = await fetch(api('/webpay/crear'), {
@@ -1962,6 +2000,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           btn.textContent = 'Procesando...';
           msg.style.color = '#666';
           msg.textContent = 'Preparando pago seguro...';
+          actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
           try {
             const res = await fetchBackend('/crear-preferencia', {
