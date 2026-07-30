@@ -1016,7 +1016,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar">🔥 <b>Última unidad</b> disponible</div>
+<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b> a todo Chile · Semana de lanzamiento</div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -1362,20 +1362,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         let selectedShipping = null;
-        // Oferta de julio: válida hasta el 31-jul 23:59 (Chile). Al vencer el
-        // precio sube a $54.990 y el envío pasa a ser gratis en todo Chile.
-        // Todo el sitio y el backend cambian solos usando esta misma fecha.
-        const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
-        // Descuento retirado: precio normal $54.990 (sin oferta). El envío se
-        // SIGUE cobrando por región — NO reactivar el modo envío gratis.
-        const ofertaActiva = () => false;
-        // Modo reserva: cuando el stock llega a 0, el sitio sigue vendiendo como
-        // RESERVA con descuento ($52.990, ancla $58.990) y aviso de ~10 días.
-        // window.modoReserva lo fija cargarStock() según /stock (remaining<=0);
-        // el backend cobra el mismo precio (precioBanda mira getStock()<=0).
+        // Semana de lanzamiento del restock (30-jul a 6-ago 2026, Chile).
+        // Precio $54.990 con ENVÍO GRATIS a todo Chile. Al vencer, se
+        // desactiva el envío gratis y sigue cobrándose por región.
+        const OFERTA_END = new Date('2026-08-07T00:00:00-04:00').getTime();
+        const ofertaActiva = () => Date.now() < OFERTA_END;
+        // Modo reserva: cuando el stock llega a 0 el sitio sigue vendiendo como
+        // RESERVA con descuento ($52.990, ancla $58.990). Con stock disponible
+        // el precio es $54.990.
         const RESERVA_PRICE = 52990, PRECIO_NORMAL = 54990, RESERVA_ANCLA = 58990;
         const precioBanda = () => (window.modoReserva ? RESERVA_PRICE : PRECIO_NORMAL);
-        const envioGratis = () => false;
+        // Envío gratis mientras dure la semana de restock.
+        const envioGratis = () => ofertaActiva();
         const PRODUCT_PRICE = 54990;
 
         // ── Regiones y comunas de Chile ──
@@ -1667,7 +1665,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           document.getElementById('co-prod-price').innerHTML = window.modoReserva
             ? `<span class="co-price-old">$${(RESERVA_ANCLA * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span> <span class="pb-off">-10%</span>`
             : ofertaActiva()
-            ? `<span class="co-price-old">$${(54990 * checkoutQty).toLocaleString('es-CL')}</span><span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`
+            ? `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span> <span class="pb-off" style="background:rgba(105,196,109,.12);border-color:rgba(105,196,109,.5);color:#7fd589;">ENVÍO GRATIS</span>`
             : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`;
         }
 
@@ -2775,12 +2773,26 @@ function cargarStock() {
 // así lo que se muestra y lo que se cobra siempre coinciden.
 function aplicarReserva() {
   const on = !!window.modoReserva;
+  // Semana de lanzamiento con envío gratis: se muestra sello verde junto al precio.
+  const oferta = ofertaActiva() && !on;
   const pb = document.querySelector('.price-block');
-  if (pb) pb.innerHTML = on ? '<sup>$</sup>52.990 <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>' : '<sup>$</sup>54.990';
+  if (pb) pb.innerHTML = on
+    ? '<sup>$</sup>52.990 <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>'
+    : oferta
+    ? '<sup>$</sup>54.990 <span class="price-offer-tag">ENVÍO GRATIS</span>'
+    : '<sup>$</sup>54.990';
   const fc = document.querySelector('.fc-price');
-  if (fc) fc.innerHTML = on ? '$52.990 <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>' : '$54.990';
+  if (fc) fc.innerHTML = on
+    ? '$52.990 <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>'
+    : oferta
+    ? '$54.990 <small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>'
+    : '$54.990';
   const sb = document.querySelector('.sb-price');
-  if (sb) sb.innerHTML = on ? '<b>$52.990</b> <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>' : '<b>$54.990</b>';
+  if (sb) sb.innerHTML = on
+    ? '<b>$52.990</b> <span class="pb-old">$58.990</span> <span class="pb-off">-10%</span>'
+    : oferta
+    ? '<b>$54.990</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>'
+    : '<b>$54.990</b>';
   const ab = document.getElementById('offer-bar');
   if (ab) {
     if (on) {
@@ -2795,7 +2807,10 @@ function aplicarReserva() {
       iniciarContadorReserva();
     } else {
       ab.classList.remove('reserva');
-      ab.innerHTML = '🔥 <b>Última unidad</b> disponible';
+      // Semana de lanzamiento: envío gratis. Al vencer, vuelve a "Última unidad".
+      ab.innerHTML = ofertaActiva()
+        ? '🚚 <b>ENVÍO GRATIS</b> a todo Chile · Semana de lanzamiento'
+        : '🔥 <b>Última unidad</b> disponible';
       pararContadorReserva();
     }
   }
@@ -3202,18 +3217,8 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   },2400);
 })();
 
-// Al vencer la oferta de julio, todos los precios visibles del sitio
-// pasan a $54.990 con envío gratis (mismo interruptor que usa el backend).
-(function(){
-  return; // Descuento retirado manualmente: precios ya fijos en $54.990 SIN envío gratis.
-  var po=document.querySelector('.price-old'); if(po) po.style.display='none';
-  var opill=document.querySelector('.offer-pill'); if(opill) opill.style.display='none';
-  var pb=document.querySelector('.price-block'); if(pb) pb.innerHTML='<sup>$</sup>54.990 <span class="price-offer-tag">ENVÍO GRATIS</span>';
-  var cp=document.getElementById('co-prod-price'); if(cp) cp.innerHTML='<span class="co-price-now">$54.990</span>';
-  var td=document.getElementById('total-display'); if(td) td.textContent='$54.990';
-  var fc=document.querySelector('.fc-price'); if(fc) fc.innerHTML='$54.990 <small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>';
-  var sb=document.querySelector('.sb-price'); if(sb) sb.innerHTML='<b>$54.990</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>';
-})();
+// Los precios y el sello de envío gratis los aplica aplicarReserva() al
+// arrancar, tomando el estado real (modo reserva vs. oferta activa).
 </script>
 
 <!-- Visor con zoom de la foto del producto -->
