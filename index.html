@@ -269,6 +269,9 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 /* Barra con contador: texto arriba + contador regresivo centrado debajo */
 .announce-bar.reserva{display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.35;padding-top:8px;padding-bottom:8px;}
 .announce-bar .reserva-cd{display:flex;gap:6px;justify-content:center;text-transform:none;}
+/* Tercera línea del top bar: el plazo de entrega, bajo el contador */
+.announce-bar .ab-plazo{font-size:.62rem;letter-spacing:1.8px;color:#9a9a9a;font-weight:500;margin-top:2px;}
+@media(max-width:600px){.announce-bar .ab-plazo{font-size:.55rem;letter-spacing:1px;}}
 .rcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:4px 9px;min-width:42px;}
 .rcd-box b{font-size:1rem;font-weight:700;line-height:1;color:#fff;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
 .rcd-box small{font-size:.44rem;letter-spacing:1.5px;color:#9a9a9a;margin-top:3px;text-transform:uppercase;}
@@ -1015,7 +1018,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b> 1-3 días hábiles a todo Chile 🇨🇱</div>
+<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b> a todo Chile</div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -2859,7 +2862,8 @@ function aplicarReserva() {
       // contador de la oferta si sigue vigente.
       ab.classList.add('reserva');
       ab.innerHTML = ofertaActiva()
-        ? '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> 1-3 días hábiles a todo Chile 🇨🇱 · termina en</span>' + cdEnvioHTML
+        ? '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> · termina en</span>' + cdEnvioHTML
+          + '<span class="ab-plazo">Entrega en 1-3 días hábiles a todo Chile</span>'
         : '<span class="ab-txt">🔥 <b>Última unidad</b> disponible</span>';
       if (ofertaActiva()) iniciarContadorReserva(); else pararContadorReserva();
     } else {
@@ -2867,7 +2871,8 @@ function aplicarReserva() {
       // Con stock: envío gratis con contador hasta que venza.
       if (ofertaActiva()) {
         ab.classList.add('reserva');   // reusar el estilo del contador
-        ab.innerHTML = '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> 1-3 días hábiles a todo Chile 🇨🇱 · termina en</span>' + cdEnvioHTML;
+        ab.innerHTML = '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b> · termina en</span>' + cdEnvioHTML
+          + '<span class="ab-plazo">Entrega en 1-3 días hábiles a todo Chile</span>';
         iniciarContadorReserva();
       } else {
         ab.innerHTML = '🔥 <b>Última unidad</b> disponible';
