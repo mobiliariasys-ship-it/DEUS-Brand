@@ -555,6 +555,19 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .rifa-tab .rifa-emoji-tab{writing-mode:horizontal-tb;font-size:1.1rem;}
 @keyframes rifaPulse{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.15) inset;}50%{box-shadow:0 6px 26px rgba(217,191,146,.55),0 0 0 1px rgba(255,255,255,.25) inset;}}
 @media(max-width:600px){.rifa-tab{font-size:.58rem;padding:13px 7px;letter-spacing:1.5px;}}
+/* Aviso del sorteo bajo el precio, con contador hasta la fecha del sorteo */
+.sorteo-inline{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:10px 0 4px;
+  padding:10px 13px;border:1px solid rgba(217,191,146,.35);background:rgba(217,191,146,.07);
+  border-radius:9px;cursor:pointer;transition:background .15s,border-color .15s;}
+.sorteo-inline:hover{background:rgba(217,191,146,.12);border-color:rgba(217,191,146,.55);}
+.sorteo-txt{font-size:.74rem;color:#e7cf9c;letter-spacing:.3px;line-height:1.4;}
+.sorteo-txt b{color:#f2d9a8;}
+.sorteo-cd{display:flex;gap:6px;}
+.scd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;
+  border-radius:6px;padding:4px 9px;min-width:38px;}
+.scd-box b{font-size:.92rem;font-weight:700;line-height:1;color:#fff;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
+.scd-box small{font-size:.42rem;letter-spacing:1.2px;color:#9a9a9a;margin-top:3px;text-transform:uppercase;}
+@media(max-width:420px){.scd-box{min-width:32px;padding:3px 6px;}.scd-box b{font-size:.8rem;}}
 .rifa-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2100;align-items:center;justify-content:center;
   padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));}
 .rifa-overlay.show{display:flex;}
@@ -1181,6 +1194,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="price-block"><sup>$</sup>52.990</div>
+      <div class="sorteo-inline" onclick="abrirRifa()" role="button" tabindex="0" aria-label="Ver sorteo mensual">
+        <span class="sorteo-txt">🎁 <b>Sorteo mensual DEUS</b> · se sortea el 1 de septiembre en</span>
+        <span class="sorteo-cd" id="sorteo-cd">
+          <span class="scd-box"><b id="scd-d">--</b><small>días</small></span>
+          <span class="scd-box"><b id="scd-h">--</b><small>hrs</small></span>
+          <span class="scd-box"><b id="scd-m">--</b><small>min</small></span>
+          <span class="scd-box"><b id="scd-s">--</b><small>seg</small></span>
+        </span>
+      </div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
       <div class="cta-row">
         <button class="btn-p" data-buy="Comprar ahora" data-reserve="Comprar ahora" onclick="abrirCheckout()">Comprar ahora</button>
@@ -2907,6 +2929,23 @@ function iniciarContadorReserva() {
 function pararContadorReserva() {
   if (reservaCdIv) { clearInterval(reservaCdIv); reservaCdIv = null; }
 }
+
+// Contador del sorteo mensual: fecha fija, corre siempre (no depende del
+// stock ni de la oferta de envío). Cuando llegue la fecha, marca 00 en todo.
+const SORTEO_FECHA = new Date('2026-09-01T00:00:00-04:00').getTime();
+function pintarContadorSorteo() {
+  const eld = document.getElementById('scd-d');
+  if (!eld) return;
+  let d = SORTEO_FECHA - Date.now();
+  if (d < 0) d = 0;
+  const z = n => String(n).padStart(2, '0');
+  eld.textContent = z(Math.floor(d / 86400000));
+  document.getElementById('scd-h').textContent = z(Math.floor(d / 3600000) % 24);
+  document.getElementById('scd-m').textContent = z(Math.floor(d / 60000) % 60);
+  document.getElementById('scd-s').textContent = z(Math.floor(d / 1000) % 60);
+}
+pintarContadorSorteo();
+setInterval(pintarContadorSorteo, 1000);
 
 // Cargar imágenes en los slides
 function initSlides() {
