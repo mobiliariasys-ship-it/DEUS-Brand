@@ -555,19 +555,6 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .rifa-tab .rifa-emoji-tab{writing-mode:horizontal-tb;font-size:1.1rem;}
 @keyframes rifaPulse{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.15) inset;}50%{box-shadow:0 6px 26px rgba(217,191,146,.55),0 0 0 1px rgba(255,255,255,.25) inset;}}
 @media(max-width:600px){.rifa-tab{font-size:.58rem;padding:13px 7px;letter-spacing:1.5px;}}
-/* Aviso del sorteo bajo el precio, con contador hasta la fecha del sorteo */
-.sorteo-inline{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:10px 0 4px;
-  padding:10px 13px;border:1px solid rgba(217,191,146,.35);background:rgba(217,191,146,.07);
-  border-radius:9px;cursor:pointer;transition:background .15s,border-color .15s;}
-.sorteo-inline:hover{background:rgba(217,191,146,.12);border-color:rgba(217,191,146,.55);}
-.sorteo-txt{font-size:.74rem;color:#e7cf9c;letter-spacing:.3px;line-height:1.4;}
-.sorteo-txt b{color:#f2d9a8;}
-.sorteo-cd{display:flex;gap:6px;}
-.scd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;
-  border-radius:6px;padding:4px 9px;min-width:38px;}
-.scd-box b{font-size:.92rem;font-weight:700;line-height:1;color:#fff;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
-.scd-box small{font-size:.42rem;letter-spacing:1.2px;color:#9a9a9a;margin-top:3px;text-transform:uppercase;}
-@media(max-width:420px){.scd-box{min-width:32px;padding:3px 6px;}.scd-box b{font-size:.8rem;}}
 .rifa-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2100;align-items:center;justify-content:center;
   padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));}
 .rifa-overlay.show{display:flex;}
@@ -677,6 +664,8 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .feat-slide .how-txt{max-width:520px;margin:16px auto 0;text-align:center;}
 /* Slide del ciclista en modo cine: ancho y grande, sin recortar a cuadrado */
 .feat-cine .how-row .how-img{max-width:680px!important;width:100%;aspect-ratio:960/608!important;border-radius:12px;}
+/* Slide del sueño: la foto es apaisada, se respeta su proporción para no recortarla */
+.feat-slide .how-row .how-img.sleep-fit{aspect-ratio:1200/910!important;}
 .feat-arrow{position:absolute;top:210px;transform:translateY(-50%);z-index:3;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:rgba(255,255,255,.92);font-size:1.5rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding-bottom:3px;transition:background .2s;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
 .feat-arrow:hover{background:rgba(255,255,255,.28);}
 .feat-arrow.prev{left:8px;}
@@ -719,10 +708,6 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .how-row.row-360{grid-template-columns:1fr;gap:6px;}
 .row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
 .row-360 .how-txt{text-align:center;max-width:600px;margin:0 auto;}
-/* Imagen del sueño "en vivo": barrido sobre el gráfico de pulsaciones + latido */
-.sleep-live{position:relative;}
-.sleep-scan{position:absolute;left:4%;bottom:4%;height:27%;width:2px;background:linear-gradient(180deg,transparent,#6fb7dd 30%,#6fb7dd 70%,transparent);box-shadow:0 0 14px rgba(111,183,221,.9);opacity:.85;animation:scanSweep 7s linear infinite;pointer-events:none;}
-@keyframes scanSweep{0%{left:4%;opacity:0;}4%{opacity:.85;}96%{opacity:.85;}100%{left:95%;opacity:0;}}
 .bpm-heart{color:#e05555;display:inline-block;font-size:.9rem;animation:bpmBeat 1.15s ease-in-out infinite;}
 @keyframes bpmBeat{0%,100%{transform:scale(1);}12%{transform:scale(1.4);}24%{transform:scale(1);}36%{transform:scale(1.2);}48%{transform:scale(1);}}
 .how-img.natural{aspect-ratio:auto;min-height:0!important;}
@@ -1190,15 +1175,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="price-block"><sup>$</sup>52.990</div>
-      <div class="sorteo-inline" onclick="abrirRifa()" role="button" tabindex="0" aria-label="Ver sorteo mensual">
-        <span class="sorteo-txt">🎁 <b>Sorteo mensual DEUS</b> · se sortea el 1 de septiembre en</span>
-        <span class="sorteo-cd" id="sorteo-cd">
-          <span class="scd-box"><b id="scd-d">--</b><small>días</small></span>
-          <span class="scd-box"><b id="scd-h">--</b><small>hrs</small></span>
-          <span class="scd-box"><b id="scd-m">--</b><small>min</small></span>
-          <span class="scd-box"><b id="scd-s">--</b><small>seg</small></span>
-        </span>
-      </div>
       <div class="stock-note" id="stock-note" style="display:none;"></div>
       <div class="cta-row">
         <button class="btn-p" data-buy="Comprar ahora" data-reserve="Comprar ahora" onclick="abrirCheckout()">Comprar ahora</button>
@@ -2108,9 +2084,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div class="feat-slide">
           <div class="how-row reverse">
-            <div class="how-img sleep-live">
+            <div class="how-img sleep-fit">
               <img src="img/img-8195c9b9.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async" style="cursor:zoom-in;" onclick="abrirFotoResena(this.src)">
-              <div class="sleep-scan"></div>
             </div>
             <div class="how-txt">
               <h3>Optimiza tu sueño</h3>
@@ -2920,23 +2895,6 @@ function iniciarContadorReserva() {
 function pararContadorReserva() {
   if (reservaCdIv) { clearInterval(reservaCdIv); reservaCdIv = null; }
 }
-
-// Contador del sorteo mensual: fecha fija, corre siempre (no depende del
-// stock ni de la oferta de envío). Cuando llegue la fecha, marca 00 en todo.
-const SORTEO_FECHA = new Date('2026-09-01T00:00:00-04:00').getTime();
-function pintarContadorSorteo() {
-  const eld = document.getElementById('scd-d');
-  if (!eld) return;
-  let d = SORTEO_FECHA - Date.now();
-  if (d < 0) d = 0;
-  const z = n => String(n).padStart(2, '0');
-  eld.textContent = z(Math.floor(d / 86400000));
-  document.getElementById('scd-h').textContent = z(Math.floor(d / 3600000) % 24);
-  document.getElementById('scd-m').textContent = z(Math.floor(d / 60000) % 60);
-  document.getElementById('scd-s').textContent = z(Math.floor(d / 1000) % 60);
-}
-pintarContadorSorteo();
-setInterval(pintarContadorSorteo, 1000);
 
 // Cargar imágenes en los slides
 function initSlides() {
