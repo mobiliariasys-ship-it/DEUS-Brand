@@ -306,7 +306,12 @@ app.post('/notificaciones', async (req, res) => {
   }
 });
 
+// Protegido con STOCK_KEY (misma clave admin). Expone datos de clientes
+// (nombre, RUT, email, teléfono, dirección) — nunca sin autenticar.
 app.get('/pedidos', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
   res.json(pedidos);
 });
 
