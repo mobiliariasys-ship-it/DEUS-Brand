@@ -206,33 +206,13 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
     },
     {
       "@type": "Question",
-      "name": "¿Cuánto dura la batería?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Hasta 20 días por carga, usándola día y noche." }
-    },
-    {
-      "@type": "Question",
       "name": "¿Puedo entrenar y mojarla?",
       "acceptedAnswer": { "@type": "Answer", "text": "Sí. Es resistente al agua 1 ATM: apta para entrenamiento, sudor, lluvia y uso diario." }
     },
     {
       "@type": "Question",
-      "name": "¿De qué material está hecha?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Su estructura está fabricada en aleación de zinc de alta resistencia. Integra un sensor de movimiento que mide velocidad, ritmo, cadencia y toda tu actividad." }
-    },
-    {
-      "@type": "Question",
       "name": "¿Dónde veo mis datos?",
       "acceptedAnswer": { "@type": "Answer", "text": "En la app Da Halo: sueño, ritmo cardíaco, actividad y más. La banda tiene memoria propia y sincroniza automáticamente al abrir la app." }
-    },
-    {
-      "@type": "Question",
-      "name": "¿Cuánto tarda el envío?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Despachamos a todo Chile. El envío tarda de 1 a 3 días hábiles según tu ubicación." }
-    },
-    {
-      "@type": "Question",
-      "name": "¿Cómo puedo pagar?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Con tarjeta de débito o crédito a través de Webpay, Flow o Mercado Pago. Pago 100% seguro." }
     },
     {
       "@type": "Question",
@@ -526,6 +506,10 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .review-author{font-size:.66rem;letter-spacing:1px;color:var(--silver);}
 .review-ig{color:#fff;font-weight:600;}
 @media(max-width:520px){.reviews-grid{grid-template-columns:1fr;}}
+/* Solo 4 reseñas a la vista; el resto aparece al tocar "Ver más reseñas" */
+.reviews-grid .review-extra{display:none;}
+.reviews-grid.show-all .review-extra{display:block;}
+.reviews-more{text-align:center;margin-top:18px;}
 .reviews-cta{text-align:center;margin-top:26px;}
 /* CRO: rating + reaseguros */
 .prod-rating{display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:16px;cursor:pointer;}
@@ -948,6 +932,8 @@ body.sb-on .wa-float{bottom:82px;}
 .reviews-modal-title{font-size:.88rem;font-weight:700;letter-spacing:1px;margin-bottom:16px;color:var(--white);}
 .reviews-modal-title .proof-stars{color:#e9c46a;letter-spacing:2px;}
 .reviews-modal-body .review-card{margin-bottom:12px;}
+/* En el modal se ven todas, incluidas las que la grilla oculta tras "Ver más" */
+.reviews-modal-body .review-extra{display:block;}
 .upsell-card{display:flex;align-items:center;gap:12px;margin-top:16px;background:#131313;border:1px solid var(--border);border-radius:10px;padding:12px;}
 .upsell-card.added{border-color:#7fc9a0;background:#101710;}
 .upsell-img{width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;}
@@ -2096,25 +2082,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <div class="review-card">
         <div class="review-stars">★★★★★</div>
-        <p class="review-text">"La batería me dura muchísimo y lo de medir el sueño es adictivo. Súper cómoda para dormir con ella."</p>
-        <div class="review-author"><span class="review-ig">@marcelo.rojas_</span> · Instagram</div>
-      </div>
-      <div class="review-card">
-        <div class="review-stars">★★★★★</div>
         <p class="review-text">"Llegó rápido y la calidad es mejor de lo que esperaba. La app es simple y clara, la recomiendo 100%."</p>
         <div class="review-author"><span class="review-ig">@andres.fuentesg</span> · Instagram</div>
       </div>
-      <div class="review-card">
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"La batería me dura muchísimo y lo de medir el sueño es adictivo. Súper cómoda para dormir con ella."</p>
+        <div class="review-author"><span class="review-ig">@marcelo.rojas_</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Me encanta que no tenga pantalla, no me distrae y el diseño es elegante. Justo lo que buscaba."</p>
         <div class="review-author"><span class="review-ig">@cristian_vera.cl</span> · Instagram</div>
       </div>
-      <div class="review-card">
+      <div class="review-card review-extra">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Excelente producto, no solo monitorea mi sueño, sino que también me ayuda a registrar mi frecuencia cardíaca y cumplir con mis objetivos en el gimnasio."</p>
         <div class="review-author"><span class="review-ig">@sebastian.revil</span> · Instagram</div>
       </div>
     </div>
+    <div class="reviews-more"><button class="btn-review" id="btn-mas-resenas" onclick="verMasResenas(this)">Ver más reseñas</button></div>
     <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
   </section>
 
@@ -2711,28 +2698,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p>Sí. La app Da Halo es gratis y está disponible en App Store y Google Play. Además se conecta con Strava y Apple Health.</p>
     </details>
     <details>
-      <summary>¿Cuánto dura la batería?</summary>
-      <p>Hasta 20 días por carga, usándola día y noche. Te olvidas del cargador por semanas.</p>
-    </details>
-    <details>
       <summary>¿Puedo entrenar y mojarla?</summary>
       <p>Sí. Es resistente al agua 1 ATM: apta para entrenamiento, sudor, lluvia y uso diario.</p>
     </details>
     <details>
-      <summary>¿De qué material está hecha?</summary>
-      <p>Su estructura está fabricada en aleación de zinc de alta resistencia: resiste golpes, sudor y el uso diario. Además integra un sensor de movimiento que mide velocidad, ritmo, cadencia y toda tu actividad con precisión en cada entrenamiento.</p>
-    </details>
-    <details>
       <summary>¿Dónde veo mis datos?</summary>
       <p>En la app Da Halo: sueño, ritmo cardíaco, actividad y más. La banda tiene memoria propia y registra tus datos aunque no esté conectada al teléfono — cuando abres la app, todo se sincroniza automáticamente.</p>
-    </details>
-    <details>
-      <summary>¿Cuánto tarda el envío?</summary>
-      <p>Despachamos a todo Chile. El envío tarda de 1 a 3 días hábiles según tu ubicación.</p>
-    </details>
-    <details>
-      <summary>¿Cómo puedo pagar?</summary>
-      <p>Con tarjeta de débito o crédito a través de Webpay, Flow o Mercado Pago. Pago 100% seguro.</p>
     </details>
     <details>
       <summary>¿Es una alternativa a Whoop, Oura o Polar?</summary>
@@ -3191,6 +3162,13 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarTapo
   </div>
 </div>
 <script>
+// "Ver más reseñas": muestra las que quedan ocultas y esconde el botón
+function verMasResenas(btn){
+  var grid=document.querySelector('.reviews-grid');
+  if(grid) grid.classList.add('show-all');
+  var cont=document.querySelector('.reviews-more');
+  if(cont) cont.style.display='none';
+}
 function abrirResenasModal(){
   var grid=document.querySelector('.reviews-grid');
   var body=document.getElementById('reviews-modal-body');
