@@ -12,6 +12,7 @@ const metrics = require('./services/metrics');
 const persist = require('./services/persist');
 const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
 const metaCapi = require('./services/meta-capi');
+const metaAds = require('./services/meta-ads');
 
 // Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile). Al vencer, el
 // precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
@@ -394,6 +395,71 @@ app.post('/admin/reset-tiempo', (req, res) => {
   if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
   metrics.resetTiempoPromedio();
   res.json({ ok: true });
+});
+
+// ── Ads Manager (Marketing API de Meta), protegido con STOCK_KEY ──
+function claveAdsOk(req, res) {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) { res.status(404).json({ error: 'No disponible' }); return false; }
+  if ((req.query.clave || '') !== clave) { res.status(403).json({ error: 'Clave incorrecta' }); return false; }
+  return true;
+}
+
+// META_ADS_ACCESS_TOKEN/META_AD_ACCOUNT_ID sin configurar es "no disponible"
+// (503), a diferencia de un error real de la API de Meta (502).
+function errorAds(res, e) {
+  const sinConfig = /no configurad/i.test(e.message);
+  res.status(sinConfig ? 503 : 502).json({ error: e.message });
+}
+
+app.get('/admin/ads/campaigns', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const campañas = await metaAds.listCampaigns();
+    const conInsights = await Promise.all(campañas.map(async c => ({
+      ...c,
+      insights: await metaAds.getInsights(c.id).catch(() => null)
+    })));
+    res.json({ campaigns: conInsights });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+app.post('/admin/ads/status', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const { id, status } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'Falta id' });
+    await metaAds.setStatus(id, status);
+    res.json({ ok: true });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+app.post('/admin/ads/budget', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const { id, dailyBudget } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'Falta id' });
+    await metaAds.updateBudget(id, { dailyBudget });
+    res.json({ ok: true });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+app.post('/admin/ads/duplicate', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const { campaignId, name, dailyBudget } = req.body || {};
+    if (!campaignId) return res.status(400).json({ error: 'Falta campaignId' });
+    const copia = await metaAds.duplicateCampaign(campaignId, { name, dailyBudget });
+    res.json({ ok: true, id: copia.id });
+  } catch (e) {
+    errorAds(res, e);
+  }
 });
 
 // ── Aviso de envío al cliente ──
