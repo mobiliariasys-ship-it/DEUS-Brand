@@ -37,7 +37,15 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '2086346891978245');
+// Coincidencias avanzadas manuales: si este visitante ya inició una compra
+// antes (los datos quedaron en sessionStorage), inicializamos el píxel con
+// ellos desde el primer PageView, no solo en el checkout. Sube la nota de
+// calidad del evento y Meta deja de mostrar el aviso de "configurar
+// coincidencias avanzadas".
+var __deusMatch = null;
+try { __deusMatch = JSON.parse(sessionStorage.getItem('deus-fb-match') || 'null'); } catch (e) {}
+if (__deusMatch) fbq('init', '2086346891978245', __deusMatch);
+else fbq('init', '2086346891978245');
 fbq('track', 'PageView');
 </script>
 <noscript><img height="1" width="1" style="display:none"

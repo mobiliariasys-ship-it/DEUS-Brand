@@ -20,7 +20,13 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '2086346891978245');
+// Coincidencias avanzadas manuales: recupera los datos del cliente que
+// index.html guardó al iniciar el pago, para emparejar mejor este evento
+// con la persona real que vio el anuncio.
+var __match = null;
+try { __match = JSON.parse(sessionStorage.getItem('deus-fb-match') || 'null'); } catch (e) {}
+if (__match) fbq('init', '2086346891978245', __match);
+else fbq('init', '2086346891978245');
 fbq('track', 'PageView');
 </script>
 <noscript><img height="1" width="1" style="display:none"
