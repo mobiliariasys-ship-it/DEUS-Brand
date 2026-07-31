@@ -723,8 +723,6 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .sleep-live{position:relative;}
 .sleep-scan{position:absolute;left:4%;bottom:4%;height:27%;width:2px;background:linear-gradient(180deg,transparent,#6fb7dd 30%,#6fb7dd 70%,transparent);box-shadow:0 0 14px rgba(111,183,221,.9);opacity:.85;animation:scanSweep 7s linear infinite;pointer-events:none;}
 @keyframes scanSweep{0%{left:4%;opacity:0;}4%{opacity:.85;}96%{opacity:.85;}100%{left:95%;opacity:0;}}
-.sleep-bpm{position:absolute;top:12px;right:12px;background:rgba(8,8,8,.68);border:1px solid #2e2e2e;border-radius:16px;padding:6px 13px;font-size:.74rem;color:#eee;display:flex;align-items:center;gap:6px;pointer-events:none;}
-.sleep-bpm b{font-variant-numeric:tabular-nums;}
 .bpm-heart{color:#e05555;display:inline-block;font-size:.9rem;animation:bpmBeat 1.15s ease-in-out infinite;}
 @keyframes bpmBeat{0%,100%{transform:scale(1);}12%{transform:scale(1.4);}24%{transform:scale(1);}36%{transform:scale(1.2);}48%{transform:scale(1);}}
 .how-img.natural{aspect-ratio:auto;min-height:0!important;}
@@ -967,8 +965,6 @@ body.sb-on .wa-float{bottom:82px;}
 .upsell-btn{background:transparent;border:1px solid var(--border);color:var(--white);padding:8px 13px;border-radius:7px;font-size:.68rem;font-weight:700;cursor:pointer;letter-spacing:.5px;white-space:nowrap;transition:all .2s;}
 .upsell-btn:hover{border-color:#7fc9a0;color:#7fc9a0;}
 .upsell-card.added .upsell-btn{background:#7fc9a0;border-color:#7fc9a0;color:#0a0a0a;}
-.co-guarantee{display:flex;align-items:center;gap:10px;font-size:.7rem;color:#cfcfcf;background:#121712;border:1px solid #24402a;border-radius:8px;padding:11px 14px;margin-bottom:6px;line-height:1.45;}
-.co-guarantee svg{flex-shrink:0;}
 .carrier-eta{font-size:.62rem;color:#7fc9a0;margin-top:3px;}
 .rescue-bar{display:none;margin:16px 28px 0;background:#101711;border:1px solid #2a4a32;border-radius:9px;padding:14px 16px;text-align:center;animation:slideUp .2s ease;}
 .rescue-bar.show{display:block;}
@@ -1320,10 +1316,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
 
             <div class="cta-row" style="margin-top:18px;display:block;">
-              <div class="co-guarantee">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.7"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
-                <span><b>Garantía de 30 días</b> — si no te convence, te devolvemos tu dinero.</span>
-              </div>
               <div class="pay-buttons">
               <button class="btn-pay" id="wp-btn" onclick="iniciarPagoFlow()">
                 <img src="img/img-40abd3c4.webp" alt="Webpay" class="l-wp" loading="lazy" decoding="async">
@@ -2119,7 +2111,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="how-img sleep-live">
               <img src="img/img-8195c9b9.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async" style="cursor:zoom-in;" onclick="abrirFotoResena(this.src)">
               <div class="sleep-scan"></div>
-              <div class="sleep-bpm"><span class="bpm-heart">♥</span> <b id="bpm-val">52</b> bpm</div>
             </div>
             <div class="how-txt">
               <h3>Optimiza tu sueño</h3>
