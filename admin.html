@@ -89,6 +89,22 @@
   .btn.ghost:hover{border-color:var(--cyan);color:var(--cyan);}
   .self-tag{font-size:.6rem;padding:2px 8px;border-radius:20px;background:rgba(143,206,74,.15);border:1px solid rgba(143,206,74,.3);color:var(--green);margin-left:8px;}
 
+  /* Ads: tarjetas verticales por campaña (en vez de tabla horizontal como Meta Ads) */
+  .ads-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;}
+  .ads-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+  .ads-card-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+  .ads-name{font-weight:700;font-size:.9rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mtr-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-soft);}
+  .mtr-row:last-of-type{border-bottom:none;}
+  .mtr-lbl{font-size:.76rem;color:var(--muted);}
+  .mtr-val{font-size:.92rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;text-align:right;}
+  .mtr-val.hi{color:var(--cyan);}
+  .mtr-row.total{margin-top:4px;padding-top:11px;border-top:1px solid var(--border);}
+  .mtr-row.total .mtr-lbl{color:#c9c9c9;font-weight:600;}
+  .mtr-row.total .mtr-val{font-size:1.05rem;color:var(--green);}
+  .ads-presu-row{display:flex;align-items:center;gap:8px;margin-top:12px;}
+  .ads-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+
   /* Tables */
   table{width:100%;border-collapse:collapse;font-size:.78rem;}
   th{text-align:left;color:var(--muted);font-weight:600;padding:9px;border-bottom:1px solid var(--border);letter-spacing:.4px;font-size:.68rem;}
@@ -240,15 +256,10 @@
     </section>
 
     <section id="sec-ads">
-      <div class="sec-h"><h2>📣 Ads Manager (Meta)</h2><button class="btn ghost" onclick="cargarAds()">Actualizar</button></div>
+      <div class="sec-h"><h2>📣 Ads Manager (Meta) · últimos 7 días</h2><button class="btn ghost" onclick="cargarAds()">Actualizar</button></div>
       <div class="empty" id="ads-off" style="display:none">Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID).</div>
       <div class="empty" id="ads-empty" style="display:none">Sin campañas.</div>
-      <div class="scroll">
-        <table id="t-ads">
-          <thead><tr><th>Campaña</th><th>Estado</th><th>Presupuesto diario</th><th>Gasto 7d</th><th>Clics 7d</th><th></th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <div class="ads-grid" id="ads-grid"></div>
     </section>
 
     <p style="font-size:.66rem;color:#666;line-height:1.5;margin-top:18px">
@@ -487,26 +498,51 @@
   function money0(n){ return '$'+Math.round(Number(n)||0).toLocaleString('es-CL'); }
   function cargarAds(){
     fetch(BASE+'/admin/ads/campaigns?clave='+encodeURIComponent(clave)).then(function(r){
-      if(r.status===503){ document.getElementById('ads-off').style.display='block'; document.getElementById('t-ads').style.display='none'; throw new Error('off'); }
+      if(r.status===503){ document.getElementById('ads-off').style.display='block'; document.getElementById('ads-grid').style.display='none'; throw new Error('off'); }
       return r.json();
     }).then(function(d){ pintarAds(d.campaigns||[]); }).catch(function(){});
   }
+  // Vertical (una métrica por fila) en vez de la tabla horizontal de Meta Ads
+  // Manager — más fácil de leer de un vistazo para decidir qué ajustar.
+  function pct1(n){ return (Math.round((Number(n)||0)*10)/10).toLocaleString('es-CL')+'%'; }
+  function num0(n){ return Math.round(Number(n)||0).toLocaleString('es-CL'); }
+  function mtr(lbl, val, cls){ return '<div class="mtr-row'+(cls?(' '+cls):'')+'"><div class="mtr-lbl">'+lbl+'</div><div class="mtr-val'+(cls==='total'?' hi':'')+'">'+val+'</div></div>'; }
+
   function pintarAds(campañas){
     document.getElementById('ads-off').style.display='none';
-    rows('#t-ads', campañas, function(c){
+    var cont=document.getElementById('ads-grid');
+    cont.style.display='';
+    document.getElementById('ads-empty').style.display=campañas.length?'none':'block';
+    cont.innerHTML='';
+    campañas.forEach(function(c){
       var activa=c.status==='ACTIVE';
       var presu=c.daily_budget!=null?c.daily_budget:(c.lifetime_budget!=null?c.lifetime_budget:'');
       var ins=c.insights||{};
-      return '<td>'+esc(c.name)+'</td>'+
-        '<td><span class="pill" style="background:'+(activa?'var(--green)':'#555')+';color:'+(activa?'#0c1a06':'#fff')+'">'+esc(c.status)+'</span></td>'+
-        '<td><input type="number" min="1" value="'+esc(presu)+'" data-id="'+esc(c.id)+'" class="ads-presu" style="width:90px;background:#111;border:1px solid var(--border);color:#eee;border-radius:6px;padding:4px 6px"> <button class="btn ghost" onclick="guardarPresupuesto(\''+c.id+'\')">Guardar</button></td>'+
-        '<td>'+money0(ins.spend)+'</td>'+
-        '<td>'+(ins.clicks||0)+'</td>'+
-        '<td>'+
-          '<button class="btn ghost" onclick="toggleEstadoAd(\''+c.id+'\',\''+(activa?'PAUSED':'ACTIVE')+'\')">'+(activa?'Pausar':'Activar')+'</button> '+
+      var card=document.createElement('div'); card.className='ads-card';
+      card.innerHTML=
+        '<div class="ads-card-h">'+
+          '<div class="ads-name" title="'+esc(c.name)+'">'+esc(c.name)+'</div>'+
+          '<span class="pill" style="flex:none;background:'+(activa?'var(--green)':'#555')+';color:'+(activa?'#0c1a06':'#fff')+'">'+esc(c.status)+'</span>'+
+        '</div>'+
+        mtr('🎯 Resultados (compras)', num0(ins.resultados))+
+        mtr('💵 Coste por resultado', ins.costoPorResultado!=null?money0(ins.costoPorResultado):'—')+
+        mtr('👁️ Impresiones', num0(ins.impressions))+
+        mtr('📶 Alcance', num0(ins.reach))+
+        mtr('🔁 Frecuencia', (Number(ins.frequency)||0).toFixed(2))+
+        mtr('🔗 Clics en el enlace', num0(ins.linkClicks))+
+        mtr('📈 CTR (enlace)', pct1(ins.linkCtr))+
+        mtr('💰 CPC (enlace)', money0(ins.cpcLink))+
+        mtr('💸 Gasto', money0(ins.spend), 'total')+
+        '<div class="ads-presu-row">'+
+          '<input type="number" min="1" value="'+esc(presu)+'" data-id="'+esc(c.id)+'" class="ads-presu" style="flex:1;background:#111;border:1px solid var(--border);color:#eee;border-radius:6px;padding:7px 9px;font-size:.8rem">'+
+          '<button class="btn ghost" onclick="guardarPresupuesto(\''+c.id+'\')">Guardar presup.</button>'+
+        '</div>'+
+        '<div class="ads-actions">'+
+          '<button class="btn ghost" onclick="toggleEstadoAd(\''+c.id+'\',\''+(activa?'PAUSED':'ACTIVE')+'\')">'+(activa?'Pausar':'Activar')+'</button>'+
           '<button class="btn ghost" onclick="duplicarCampania(\''+c.id+'\',\''+esc(c.name).replace(/'/g,"\\'")+'\')">Duplicar</button>'+
-        '</td>';
-    }, 'ads-empty');
+        '</div>';
+      cont.appendChild(card);
+    });
   }
   function toggleEstadoAd(id, status){
     fetch(BASE+'/admin/ads/status?clave='+encodeURIComponent(clave),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:status})})

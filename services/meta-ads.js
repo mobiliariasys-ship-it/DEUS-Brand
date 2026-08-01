@@ -74,11 +74,53 @@ async function listCampaigns() {
   return data.data || [];
 }
 
+// Campos extendidos para el panel: además de gasto/clics, trae impresiones,
+// alcance, frecuencia, CTR/CPC de clics en el enlace (no de "todos los clics",
+// que infla con likes/comentarios) y compras + costo por compra vía
+// actions/cost_per_action_type. Mismos campos que usa Ads Manager para
+// "Rendimiento y clics".
+const INSIGHTS_FIELDS = [
+  'spend', 'impressions', 'reach', 'frequency', 'clicks', 'cpc', 'ctr',
+  'inline_link_clicks', 'inline_link_click_ctr', 'cost_per_inline_link_click',
+  'actions', 'cost_per_action_type'
+].join(',');
+
+const PURCHASE_ACTION_TYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+
+function extraerCompras(insights) {
+  const actions = insights.actions || [];
+  const costos = insights.cost_per_action_type || [];
+  for (const tipo of PURCHASE_ACTION_TYPES) {
+    const accion = actions.find(a => a.action_type === tipo);
+    if (accion) {
+      const costo = costos.find(c => c.action_type === tipo);
+      return { resultados: Number(accion.value) || 0, costoPorResultado: costo ? Number(costo.value) : null };
+    }
+  }
+  return { resultados: 0, costoPorResultado: null };
+}
+
 async function getInsights(campaignId, datePreset = 'last_7d') {
   const data = await llamar(`/${campaignId}/insights`, {
-    params: { fields: 'spend,impressions,clicks,cpc,actions', date_preset: datePreset }
+    params: { fields: INSIGHTS_FIELDS, date_preset: datePreset }
   });
-  return data.data?.[0] || { spend: '0', impressions: '0', clicks: '0', cpc: '0', actions: [] };
+  const row = data.data?.[0] || {};
+  const { resultados, costoPorResultado } = extraerCompras(row);
+  return {
+    spend: row.spend || '0',
+    impressions: row.impressions || '0',
+    reach: row.reach || '0',
+    frequency: row.frequency || '0',
+    clicks: row.clicks || '0',
+    cpc: row.cpc || '0',
+    ctr: row.ctr || '0',
+    linkClicks: row.inline_link_clicks || '0',
+    linkCtr: row.inline_link_click_ctr || '0',
+    cpcLink: row.cost_per_inline_link_click || '0',
+    resultados,
+    costoPorResultado,
+    actions: row.actions || []
+  };
 }
 
 async function setStatus(objectId, status) {
