@@ -266,8 +266,10 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 /* Contador de 24h del envío gratis en cajitas — mismo lenguaje visual que el
    contador de reserva (rcd-box), pero un poco más pequeño porque va en la
    barra superior. Cada dígito tiene su recuadro con su etiqueta abajo. */
-.announce-bar .ab-cd{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:5px;text-transform:none;}
-.announce-bar .ab-cd-lbl{font-size:.55rem;letter-spacing:2px;color:#9a9a9a;font-weight:500;text-transform:uppercase;}
+/* "Termina en" arriba, cajitas del contador debajo — dos filas centradas, con
+   la etiqueta como título y los números como el dato principal. */
+.announce-bar .ab-cd{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:5px;text-transform:none;}
+.announce-bar .ab-cd-lbl{font-size:.58rem;letter-spacing:2.5px;color:#9a9a9a;font-weight:600;text-transform:uppercase;}
 .announce-bar .ab-cd-boxes{display:inline-flex;gap:5px;}
 .abcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:3px 8px;min-width:36px;line-height:1;}
 .abcd-box b{font-size:.9rem;font-weight:800;color:#e7cf9c;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
@@ -1124,7 +1126,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <button class="chat-fab" id="chat-fab" onclick="abrirChat()" aria-label="Abrir el asistente de ayuda">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.6-.7L3 21l1.8-5.1A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>
-  <span>Resuelve tu duda</span>
+  <span>Nuestra IA DEUS</span>
 </button>
 
 <!-- Chat de ayuda. Responde el asistente; el botón de abajo pasa a WhatsApp
@@ -1133,7 +1135,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="chat-head">
     <span class="ch-dot"></span>
     <div>
-      <div class="ch-t">Ayuda DEUS</div>
+      <div class="ch-t">IA DEUS</div>
       <div class="ch-s">Respuesta al instante</div>
     </div>
     <button class="chat-close" onclick="cerrarChat()" aria-label="Cerrar chat">&times;</button>
