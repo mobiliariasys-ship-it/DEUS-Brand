@@ -24,3 +24,5 @@ img_*.png
 deus_band_logo_orig*.png
 deus_band_logo_sin_fondo.png
 banda_negra_sola.jpg
+# Conversaciones del chatbot: llevan lo que escriben los clientes.
+chats.json

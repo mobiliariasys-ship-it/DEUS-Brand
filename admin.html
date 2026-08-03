@@ -262,6 +262,12 @@
       <div class="ads-grid" id="ads-grid"></div>
     </section>
 
+    <section id="sec-chat">
+      <div class="sec-h"><h2>💬 Chat · qué le preguntan al bot</h2><span class="pill" id="chat-total"></span></div>
+      <div id="chat-lista"></div>
+      <div class="empty" id="chat-empty" style="display:none">Todavía nadie ha usado el chat.</div>
+    </section>
+
     <p style="font-size:.66rem;color:#666;line-height:1.5;margin-top:18px">
       Las visitas en vivo son en tiempo real. Ventas, pedidos y conducta se guardan en base de datos
       y sobreviven a los reinicios del servidor; además cada venta y cada ticket también te llegan por correo (respaldo permanente).
@@ -480,9 +486,46 @@
     }).then(function(d){
       if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); }
       pintar(d);
+      cargarChats();
     }).catch(function(e){
       if(e.message==='clave'){ document.getElementById('loginErr').textContent='Clave incorrecta.'; localStorage.removeItem('deus-admin-key'); }
     });
+  }
+
+  // Conversaciones del chatbot: se ve la pregunta del cliente y lo que contestó
+  // el bot, para detectar dudas repetidas y respuestas malas.
+  function cargarChats(){
+    fetch(BASE+'/admin/chats?clave='+encodeURIComponent(clave)+'&limite=60')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if(!d) return;
+        var convs = d.conversaciones || [];
+        var cont = document.getElementById('chat-lista');
+        var vacio = document.getElementById('chat-empty');
+        var pill = document.getElementById('chat-total');
+        if(!cont) return;
+        var turnos = convs.reduce(function(n,c){ return n + (c.turnos ? c.turnos.length : 0); }, 0);
+        pill.textContent = convs.length + ' conversaciones · ' + turnos + ' preguntas';
+        if(!convs.length){ cont.innerHTML=''; vacio.style.display=''; return; }
+        vacio.style.display='none';
+        cont.innerHTML = convs.map(function(c){
+          var cuando = new Date(c.ultimo || c.inicio).toLocaleString('es-CL');
+          var msgs = (c.turnos||[]).map(function(t){
+            return '<div style="margin:8px 0 12px">'
+              + '<div style="color:#eee;font-size:.76rem"><b style="color:#8fce4a">Cliente:</b> '+esc(t.q)+'</div>'
+              + '<div style="color:#9a9a9a;font-size:.74rem;margin-top:3px"><b style="color:#777">Bot:</b> '+esc(t.a)+'</div>'
+              + '</div>';
+          }).join('');
+          return '<details style="border:1px solid '+(c.escalado?'#3d6b2a':'#242424')+';border-radius:9px;background:#101010;margin-bottom:8px;padding:10px 13px">'
+            + '<summary style="cursor:pointer;font-size:.74rem;color:#ccc;list-style:none">'
+            + (c.escalado ? '🔔 ' : '💬 ')
+            + '<b>'+esc(((c.turnos||[])[0]||{}).q || 'Conversación')+'</b>'
+            + '<span style="color:#666"> · '+cuando+' · '+((c.turnos||[]).length)+' msj'
+            + (c.escalado ? ' · pidió hablar contigo' : '')+'</span></summary>'
+            + msgs + '</details>';
+        }).join('');
+      })
+      .catch(function(){});
   }
 
   function resetTiempo(){

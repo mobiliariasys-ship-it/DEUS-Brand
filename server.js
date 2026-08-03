@@ -5,6 +5,7 @@ const shippingRoutes = require('./routes/shipping');
 const transbankRoutes = require('./routes/transbank');
 const flowRoutes = require('./routes/flow');
 const equipoRoutes = require('./routes/equipo');
+const chatRoutes = require('./routes/chat');
 const atletas = require('./services/atletas');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico } = require('./services/email');
 const { getStock, decrementStock, setStock } = require('./services/stock');
@@ -64,6 +65,7 @@ app.use(shippingRoutes);
 app.use(transbankRoutes);
 app.use(flowRoutes);
 app.use(equipoRoutes);
+app.use(chatRoutes);
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.ACCESS_TOKEN,
