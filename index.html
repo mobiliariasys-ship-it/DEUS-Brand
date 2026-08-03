@@ -963,14 +963,21 @@ body.sb-on .wa-float{bottom:82px;}
 .checkout-body{padding:22px 28px 28px;}
 .field-label{font-size:.58rem;letter-spacing:3px;text-transform:uppercase;color:#888;margin:18px 0 10px;}
 .field-label:first-child{margin-top:0;}
-.btn-pay{display:flex;align-items:center;justify-content:center;gap:11px;background:#161616;color:#f2f2f2;border:1px solid #333;width:100%;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.78rem;letter-spacing:.3px;margin-top:10px;transition:border-color .2s,transform .12s;}
-.btn-pay:hover{border-color:#e8e8e8;transform:translateY(-1px);}
+/* Botones de pago: ancho completo apilados. El logo va en una casilla de ancho
+   fijo y el texto tiene el mismo min-width en los dos, así el grupo logo+texto
+   mide igual en ambos y los logos quedan alineados en columna. Antes, con dos
+   columnas, "Pagar con Mercado Pago" se partía en dos líneas. */
+.btn-pay{display:flex;align-items:center;justify-content:center;gap:13px;background:#161616;color:#f2f2f2;border:1px solid #333;border-radius:8px;width:100%;min-height:58px;padding:11px 16px;margin-top:0;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;letter-spacing:.3px;transition:border-color .2s,background .2s,transform .12s;}
+.btn-pay:hover:not(:disabled){border-color:#e8e8e8;background:#1c1c1c;transform:translateY(-1px);}
 .btn-pay:disabled{opacity:.55;cursor:default;transform:none;}
-.btn-pay img{flex-shrink:0;width:auto;vertical-align:middle;}
-.btn-pay .l-mp{height:28px;}
-.btn-pay .l-wp{height:19px;}
-.pay-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-@media(max-width:600px){.pay-buttons{grid-template-columns:1fr;}}
+.btn-pay .pay-logo{flex:0 0 54px;display:flex;align-items:center;justify-content:center;}
+.btn-pay .pay-logo img{width:auto;max-width:54px;display:block;}
+.btn-pay .l-mp{height:27px;}
+.btn-pay .l-wp{height:18px;}
+.btn-pay .pay-txt{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:168px;line-height:1.2;white-space:nowrap;}
+.btn-pay .pay-sub{font-size:.6rem;color:#8a8a8a;font-weight:400;letter-spacing:.4px;margin-top:3px;}
+.pay-buttons{display:grid;grid-template-columns:1fr;gap:9px;margin-top:12px;}
+@media(max-width:370px){.btn-pay{font-size:.76rem;padding:11px 10px;gap:10px;}.btn-pay .pay-txt{min-width:150px;}.btn-pay .pay-logo{flex-basis:46px;}}
 .free-opt{border-color:#2e7d32 !important;background:rgba(46,125,50,.08);}
 .free-opt:hover,.free-opt.selected{border-color:#43a047 !important;}
 .free-ship{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border:1px solid #2e7d32;background:rgba(46,125,50,.08);cursor:pointer;margin-bottom:8px;transition:border-color .2s;}
@@ -1288,12 +1295,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="cta-row" style="margin-top:18px;display:block;">
               <div class="pay-buttons">
               <button class="btn-pay" id="wp-btn" onclick="iniciarPagoFlow()">
-                <img src="img/img-40abd3c4.webp" alt="Webpay" class="l-wp" loading="lazy" decoding="async">
-                <span>Pagar con Webpay <small style="display:block;font-size:.58rem;color:#888;font-weight:400;letter-spacing:.5px;margin-top:2px;">(procesado por Flow)</small></span>
+                <span class="pay-logo"><img src="img/img-40abd3c4.webp" alt="Webpay" class="l-wp" loading="lazy" decoding="async"></span>
+                <span class="pay-txt">Pagar con Webpay<small class="pay-sub">Procesado por Flow</small></span>
               </button>
               <button class="btn-pay" id="mp-btn" onclick="iniciarPago()">
-                <img src="img/img-2fe04405.webp" alt="Mercado Pago" class="l-mp" loading="lazy" decoding="async">
-                <span>Pagar con Mercado Pago</span>
+                <span class="pay-logo"><img src="img/img-2fe04405.webp" alt="Mercado Pago" class="l-mp" loading="lazy" decoding="async"></span>
+                <span class="pay-txt">Pagar con Mercado Pago</span>
               </button>
               </div>
               <p id="mp-msg" style="font-size:.6rem;color:#666;letter-spacing:2px;margin-top:10px;display:none;text-align:center;">Preparando pago seguro...</p>
