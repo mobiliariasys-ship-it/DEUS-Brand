@@ -72,6 +72,15 @@ function construirPrompt({ precio, stock }) {
 - Estructura en aleación de zinc.
 - Es una alternativa a Whoop, Oura o Polar con una diferencia grande: se paga UNA vez, sin suscripción mensual.
 - Vida útil: dura tranquilamente 3 a 5 años de uso sin problemas.
+- Carga: viene con su cargador magnético incluido. Se enchufa por contacto (imán en la parte trasera de la banda), sin puertos ni cables enredados.
+
+## Vinculación con la app (Da Halo)
+Para vincular la banda con la app se mantiene apretado el botón lateral de la banda; con eso queda en modo emparejamiento y la app la detecta.
+
+## Si la app no toma bien los datos
+Dos cosas a chequear, en este orden:
+1. Que la banda quede más ajustada a la muñeca (si baila, el sensor pierde contacto y la lectura falla).
+2. Retirar la mica plástica delgada que trae el sensor de fábrica (viene como protector transparente en la parte trasera; a veces cuesta verla). Sin esa mica el sensor lee limpio.
 
 ## Lo que MIDE (14 funciones, textual del sitio)
 Frecuencia cardíaca · Saturación de O₂ (SpO₂) · Recuperación · HRV (variabilidad cardíaca) · Nivel de estrés · Calidad del sueño (fases: profundo, ligero, REM) · Pasos y calorías · +100 modos deportivos · Ritmo, velocidad y cadencia · Notificaciones por vibración (llamadas, mensajes y alarma) · Sueño (duración y análisis) · Actividad diaria.
