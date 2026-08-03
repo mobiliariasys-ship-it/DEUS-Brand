@@ -541,8 +541,10 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .reassure-item{display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-size:.72rem;color:#cfcfcf;letter-spacing:.3px;line-height:1.35;}
 .reassure-item svg{flex-shrink:0;}
 .reassure-item b{color:#fff;font-weight:600;}
-/* Botón flotante WhatsApp */
-.wa-float{position:fixed;bottom:20px;right:20px;display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#2BE070 0%,#25D366 45%,#1DA851 100%);color:#fff;padding:13px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.28);box-shadow:0 8px 24px rgba(0,0,0,.45),0 3px 14px rgba(37,211,102,.35),inset 0 1px 0 rgba(255,255,255,.3);z-index:900;text-decoration:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.4px;transition:transform .15s,box-shadow .2s;}
+/* Botón flotante WhatsApp OCULTADO: el contacto humano ahora vive dentro del
+   chat ("Hablar con una persona"). El elemento sigue en el HTML por si algún
+   día se quiere volver a mostrar, pero no se renderiza. */
+.wa-float{display:none !important;position:fixed;bottom:20px;right:20px;align-items:center;gap:10px;background:linear-gradient(135deg,#2BE070 0%,#25D366 45%,#1DA851 100%);color:#fff;padding:13px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.28);box-shadow:0 8px 24px rgba(0,0,0,.45),0 3px 14px rgba(37,211,102,.35),inset 0 1px 0 rgba(255,255,255,.3);z-index:900;text-decoration:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.4px;transition:transform .15s,box-shadow .2s;}
 .wa-float:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 30px rgba(0,0,0,.4),0 6px 22px rgba(37,211,102,.5),inset 0 1px 0 rgba(255,255,255,.3);}
 .wa-float svg{width:25px;height:25px;flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));}
 .wa-float span{white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.2);}
@@ -551,12 +553,14 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
    se confundan. WhatsApp = hablar con una persona; este = respuesta al toque. */
 /* Botón del asistente: va JUSTO ARRIBA del de WhatsApp, en dorado para que no
    se confundan. WhatsApp = hablar con una persona; este = respuesta al toque. */
-.chat-fab{position:fixed;bottom:81px;right:20px;display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#e7cf9c 0%,#d9bf92 50%,#c2a674 100%);color:#141414;padding:13px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.3);box-shadow:0 8px 24px rgba(0,0,0,.45),0 3px 14px rgba(217,191,146,.3),inset 0 1px 0 rgba(255,255,255,.4);z-index:900;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.4px;transition:transform .15s,box-shadow .2s;}
+/* Botón del asistente. Ocupa la esquina inferior derecha, ya que el WhatsApp
+   flotante está oculto (el contacto humano vive dentro del propio chat). */
+.chat-fab{position:fixed;bottom:20px;right:20px;display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#e7cf9c 0%,#d9bf92 50%,#c2a674 100%);color:#141414;padding:13px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.3);box-shadow:0 8px 24px rgba(0,0,0,.45),0 3px 14px rgba(217,191,146,.3),inset 0 1px 0 rgba(255,255,255,.4);z-index:900;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.4px;transition:transform .15s,box-shadow .2s;}
 .chat-fab:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 30px rgba(0,0,0,.4),0 6px 22px rgba(217,191,146,.45),inset 0 1px 0 rgba(255,255,255,.4);}
 .chat-fab svg{width:23px;height:23px;flex-shrink:0;}
 .chat-fab span{white-space:nowrap;}
-body.sb-on .chat-fab{bottom:143px;}
-@media(max-width:600px){.chat-fab{padding:12px 16px;font-size:.76rem;bottom:75px;right:16px;border-radius:14px;}.chat-fab svg{width:22px;height:22px;}.chat-fab span{display:none;}body.sb-on .chat-fab{bottom:131px;}}
+body.sb-on .chat-fab{bottom:82px;}
+@media(max-width:600px){.chat-fab{padding:12px 16px;font-size:.76rem;bottom:16px;right:16px;border-radius:14px;}.chat-fab svg{width:22px;height:22px;}.chat-fab span{display:none;}body.sb-on .chat-fab{bottom:76px;}}
 /* Panel del chat */
 .chat-panel{position:fixed;bottom:20px;right:20px;width:min(370px,calc(100vw - 32px));height:min(540px,calc(100vh - 90px));background:#0f0f0f;border:1px solid #2a2a2a;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.6);z-index:1200;display:none;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;}
 .chat-panel.show{display:flex;}
