@@ -263,8 +263,16 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 /* Tercera línea del top bar: el plazo de entrega, bajo el contador */
 .announce-bar .ab-plazo{font-size:.62rem;letter-spacing:1.8px;color:#9a9a9a;font-weight:500;margin-top:2px;}
 /* Contador de 24h del envío gratis: reloj rodante, gris para no gritar */
-.announce-bar .ab-cd{font-size:.62rem;letter-spacing:1.8px;color:#9a9a9a;font-weight:500;margin-top:2px;text-transform:uppercase;font-variant-numeric:tabular-nums;}
-.announce-bar .ab-cd b{color:#e7cf9c;font-weight:700;letter-spacing:.5px;}
+/* Contador de 24h del envío gratis en cajitas — mismo lenguaje visual que el
+   contador de reserva (rcd-box), pero un poco más pequeño porque va en la
+   barra superior. Cada dígito tiene su recuadro con su etiqueta abajo. */
+.announce-bar .ab-cd{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:5px;text-transform:none;}
+.announce-bar .ab-cd-lbl{font-size:.55rem;letter-spacing:2px;color:#9a9a9a;font-weight:500;text-transform:uppercase;}
+.announce-bar .ab-cd-boxes{display:inline-flex;gap:5px;}
+.abcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:3px 8px;min-width:36px;line-height:1;}
+.abcd-box b{font-size:.9rem;font-weight:800;color:#e7cf9c;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+.abcd-box small{font-size:.42rem;letter-spacing:1.2px;color:#7a7a7a;margin-top:3px;text-transform:uppercase;font-weight:500;}
+@media(max-width:600px){.abcd-box{min-width:32px;padding:3px 6px;}.abcd-box b{font-size:.82rem;}}
 @media(max-width:600px){.announce-bar .ab-plazo{font-size:.55rem;letter-spacing:1px;}}
 .rcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:4px 9px;min-width:42px;}
 .rcd-box b{font-size:1rem;font-weight:700;line-height:1;color:#fff;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
@@ -610,6 +618,16 @@ body.sb-on .chat-panel{bottom:82px;}
 .rifa-close{position:absolute;top:10px;right:15px;background:none;border:none;color:#999;font-size:1.7rem;line-height:1;cursor:pointer;}
 .rifa-emoji{font-size:44px;margin-bottom:6px;}
 .rifa-badge{display:inline-block;font-size:.56rem;letter-spacing:3px;text-transform:uppercase;color:#e7cf9c;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:5px 12px;margin-bottom:12px;font-weight:700;}
+/* Contador del sorteo: cuenta 30 días desde que se abre la pestaña, rueda sola
+   cuando llega a 0. Cajitas negras con el número dorado, misma línea visual
+   que el contador del top bar. */
+.rifa-cd{display:flex;flex-direction:column;align-items:center;gap:6px;margin:2px 0 16px;}
+.rifa-cd-lbl{font-size:.6rem;letter-spacing:2.5px;color:#9a9a9a;font-weight:600;text-transform:uppercase;}
+.rifa-cd-boxes{display:inline-flex;gap:6px;}
+.rfcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid rgba(217,191,146,.25);border-radius:7px;padding:6px 10px;min-width:44px;line-height:1;}
+.rfcd-box b{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#e7cf9c;font-variant-numeric:tabular-nums;letter-spacing:1px;font-weight:400;}
+.rfcd-box small{font-size:.44rem;letter-spacing:1.3px;color:#7a7a7a;margin-top:4px;text-transform:uppercase;font-weight:500;}
+@media(max-width:420px){.rfcd-box{min-width:40px;padding:5px 7px;}.rfcd-box b{font-size:1.1rem;}}
 .rifa-modal h3{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1.5px;margin:0 0 6px;color:#fff;}
 .rifa-prize{font-size:1rem;color:#f0e4cd;margin:0 0 20px;line-height:1.4;}
 .rifa-prize b{color:#fff;}
@@ -1291,6 +1309,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <button class="rifa-close" onclick="cerrarRifa()" aria-label="Cerrar">&times;</button>
     <div class="rifa-emoji">🎁</div>
     <div class="rifa-badge">Sorteo mensual DEUS</div>
+    <div class="rifa-cd" id="rifa-cd">
+      <span class="rifa-cd-lbl">Finaliza en</span>
+      <span class="rifa-cd-boxes">
+        <span class="rfcd-box"><b id="rfcd-d">--</b><small>días</small></span>
+        <span class="rfcd-box"><b id="rfcd-h">--</b><small>hrs</small></span>
+        <span class="rfcd-box"><b id="rfcd-m">--</b><small>min</small></span>
+        <span class="rfcd-box"><b id="rfcd-s">--</b><small>seg</small></span>
+      </span>
+    </div>
     <h3>Gana 1 DEUS Band + Tapones de oído</h3>
     <p class="rifa-prize">Cada mes sorteamos <b>una DEUS Band</b> y unos <b>Tapones de oído DEUS</b> entre nuestros compradores.</p>
     <div class="rifa-steps">
@@ -1531,6 +1558,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
 
             <div id="shipping-results"></div>
+
+            <!-- Upsell: Tapones de oído DEUS. Se oculta cuando el checkout es
+                 de "solo tapones" (no tiene sentido sumar tapones a un pedido
+                 de tapones). El JS que ya existe gestiona el toggle. -->
+            <div class="upsell-card" id="upsell-card">
+              <img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="upsell-img" loading="lazy" decoding="async">
+              <div class="upsell-info">
+                <div class="upsell-name">Tapones de oído DEUS</div>
+                <div class="upsell-desc">3 tamaños incluidos · reducción de ruido</div>
+                <div class="upsell-price">+ $12.990</div>
+              </div>
+              <button type="button" class="upsell-btn" id="upsell-btn" onclick="toggleUpsell()">+ Agregar</button>
+            </div>
+
             <div class="total-row" id="total-row" style="display:none">
               <span class="total-label">Total a pagar</span>
               <span class="total-price" id="total-display">$54.990</span>
@@ -1841,6 +1882,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
           checkoutQty = (qtyForzada && qtyForzada > 0) ? qtyForzada : 1;
           upsellTapones = false;
+          // Al reabrir el checkout, el upsell parte deseleccionado: si no, el
+          // "✓ Agregado" quedaría del anterior pero upsellTapones ya está en false.
+          const upsellCard = document.getElementById('upsell-card');
+          const upsellBtn = document.getElementById('upsell-btn');
+          if (upsellCard) {
+            upsellCard.classList.remove('added');
+            // Sin sentido ofrecer tapones cuando el checkout ES de tapones.
+            upsellCard.style.display = soloTapones ? 'none' : '';
+          }
+          if (upsellBtn) upsellBtn.textContent = '+ Agregar';
           // Modo "solo tapones": el mismo modal pero como producto Tapones $14.990
           const overlay = document.getElementById('checkout-overlay');
           overlay.classList.toggle('tapones', checkoutTapones);
@@ -3091,14 +3142,28 @@ function aplicarReserva() {
       ab.classList.add('reserva');
       ab.innerHTML = ofertaActiva()
         ? '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b></span>'
-          + '<span class="ab-cd" id="ab-cd">termina en <b id="abcd-h">00</b>:<b id="abcd-m">00</b>:<b id="abcd-s">00</b></span>'
+          + '<span class="ab-cd" id="ab-cd">'
+          +   '<span class="ab-cd-lbl">Termina en</span>'
+          +   '<span class="ab-cd-boxes">'
+          +     '<span class="abcd-box"><b id="abcd-h">00</b><small>hrs</small></span>'
+          +     '<span class="abcd-box"><b id="abcd-m">00</b><small>min</small></span>'
+          +     '<span class="abcd-box"><b id="abcd-s">00</b><small>seg</small></span>'
+          +   '</span>'
+          + '</span>'
         : '<span class="ab-txt">🔥 <b>Última unidad</b> disponible</span>';
     } else {
       ab.classList.remove('reserva');
       if (ofertaActiva()) {
         ab.classList.add('reserva');   // reusar el estilo de dos líneas
         ab.innerHTML = '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b></span>'
-          + '<span class="ab-cd" id="ab-cd">termina en <b id="abcd-h">00</b>:<b id="abcd-m">00</b>:<b id="abcd-s">00</b></span>';
+          + '<span class="ab-cd" id="ab-cd">'
+          +   '<span class="ab-cd-lbl">Termina en</span>'
+          +   '<span class="ab-cd-boxes">'
+          +     '<span class="abcd-box"><b id="abcd-h">00</b><small>hrs</small></span>'
+          +     '<span class="abcd-box"><b id="abcd-m">00</b><small>min</small></span>'
+          +     '<span class="abcd-box"><b id="abcd-s">00</b><small>seg</small></span>'
+          +   '</span>'
+          + '</span>';
       } else {
         ab.innerHTML = '🔥 <b>Última unidad</b> disponible';
       }
@@ -3162,6 +3227,30 @@ function pintarContadorEnvio() {
   document.getElementById('abcd-s').textContent = z(s);
 }
 setInterval(pintarContadorEnvio, 1000);
+
+// ── Contador del sorteo mensual (30 días rodante) ──
+// Misma lógica que el de 24h: ciclo desde la primera visita, rueda a 30 días
+// cuando llega a 0. Se ejecuta solo cuando el modal del sorteo se abre.
+var sorteoCdInicio = null;
+function pintarContadorSorteo() {
+  var eh = document.getElementById('rfcd-d');
+  if (!eh) return;
+  if (sorteoCdInicio === null) sorteoCdInicio = Date.now();
+  var ms30 = 30 * 24 * 60 * 60 * 1000;
+  var trans = (Date.now() - sorteoCdInicio) % ms30;
+  var falta = ms30 - trans;
+  var d = Math.floor(falta / 86400000);
+  var h = Math.floor(falta / 3600000) % 24;
+  var m = Math.floor(falta / 60000) % 60;
+  var s = Math.floor(falta / 1000) % 60;
+  var z = function(n) { return String(n).padStart(2, '0'); };
+  eh.textContent = z(d);
+  document.getElementById('rfcd-h').textContent = z(h);
+  document.getElementById('rfcd-m').textContent = z(m);
+  document.getElementById('rfcd-s').textContent = z(s);
+}
+setInterval(pintarContadorSorteo, 1000);
+pintarContadorSorteo();
 
 // Cargar imágenes en los slides
 function initSlides() {
