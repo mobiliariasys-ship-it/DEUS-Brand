@@ -183,7 +183,8 @@
       <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
       <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
-      <div class="stat"><div class="k">Conversión</div><div class="v" id="s-conv">—</div></div>
+      <div class="stat"><div class="k">Conversión total</div><div class="v" id="s-conv">—</div></div>
+      <div class="stat gold"><div class="k">Conversión hoy</div><div class="v" id="s-conv-hoy">—</div></div>
     </div>
 
     <div class="two-col" id="sec-graficos">
@@ -397,6 +398,7 @@
     document.getElementById('s-vent-tot-m').textContent=money(d.ventas.total.monto);
     document.getElementById('s-tickets').textContent=d.ticketsTotal;
     document.getElementById('s-conv').textContent=(d.conversion!=null?d.conversion:0)+'%';
+    document.getElementById('s-conv-hoy').textContent=(d.conversionHoy!=null?d.conversionHoy:0)+'%';
     pintarEmbudo(d.embudo||{visitas:0,checkouts:0,ventas:0},d.conversion||0);
     pintarConducta(d.conducta||{}, (d.embudo&&d.embudo.visitas)||0);
     pintarConversion(d.conversionAccion||{}, d.conducta||{}, d.conversionesN||0);

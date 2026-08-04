@@ -309,12 +309,18 @@ function ventas30Dias() {
 function snapshot() {
   const comprasN = ventas.length;
   const conversion = vistasTotal ? +((comprasN / vistasTotal) * 100).toFixed(1) : 0;
+  const vistasHoy = vistasPorDia[hoyChile()] || 0;
+  const resVentas = resumenVentas();
+  const ventasHoyN = resVentas.hoy.count;
+  // Conversión del día: compras de hoy ÷ visitas de hoy (ambas hora de Chile).
+  const conversionHoy = vistasHoy ? +((ventasHoyN / vistasHoy) * 100).toFixed(1) : 0;
   return {
     visitantesEnVivo: visitantesEnVivo(),
-    vistasHoy: vistasPorDia[hoyChile()] || 0,
+    vistasHoy,
     vistasTotal,
+    conversionHoy,                                  // % ventas hoy ÷ visitas hoy
     tiempoPromedioSeg: tiempoPromedioSeg(),
-    ventas: resumenVentas(),
+    ventas: resVentas,
     ultimos30: ultimos30Dias(),
     ventas30: ventas30Dias(),
     tickets: tickets.slice().reverse(),

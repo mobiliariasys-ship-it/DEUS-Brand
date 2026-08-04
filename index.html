@@ -1638,14 +1638,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <!-- Upsell: Tapones de oído DEUS. Se oculta cuando el checkout es
                  de "solo tapones" (no tiene sentido sumar tapones a un pedido
                  de tapones). El JS que ya existe gestiona el toggle. -->
-            <div class="upsell-card" id="upsell-card">
+            <div class="upsell-card" id="upsell-card" onclick="toggleUpsell()" style="cursor:pointer;">
               <img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="upsell-img" loading="lazy" decoding="async">
               <div class="upsell-info">
                 <div class="upsell-name">Tapones de oído DEUS</div>
                 <div class="upsell-desc">3 tamaños incluidos · reducción de ruido</div>
                 <div class="upsell-price">+ $12.990</div>
               </div>
-              <button type="button" class="upsell-btn" id="upsell-btn" onclick="toggleUpsell()">+ Agregar</button>
+              <button type="button" class="upsell-btn" id="upsell-btn">+ Agregar</button>
             </div>
 
             <div class="total-row" id="total-row" style="display:none">
@@ -2811,17 +2811,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   })();
   </script>
 
-  <!-- ESPECIFICACIONES CLAVE (bajo el 360°, justo antes de las reseñas) -->
-  <section class="specs-sec specs-in-how">
-    <ul class="spec-list">
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
-    </ul>
-  </section>
-
-  <!-- RESEÑAS (después del bloque 360°) -->
+  <!-- RESEÑAS: subidas para darles más prioridad, justo bajo el sensor/360° -->
   <section class="reviews">
     <div class="reviews-head">
       <div class="reviews-kicker">Lo que dicen</div>
@@ -2907,6 +2897,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="reviews-more"><button class="btn-review" id="btn-mas-resenas" onclick="verMasResenas(this)">Ver más reseñas</button></div>
     <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
   </section>
+
+  <!-- ESPECIFICACIONES CLAVE -->
+  <section class="specs-sec specs-in-how">
+    <ul class="spec-list">
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
+    </ul>
+  </section>
+
   <!-- MONITOREO 24/7 -->
   <section class="monitor">
     <div class="monitor-head">
@@ -3370,35 +3371,41 @@ function pararContadorReserva() {
 // entonces se reinicia solo a 24:00:00. No depende de fechas guardadas: cada
 // visitante ve un contador propio de 24h desde que abre la página, lo que
 // crea urgencia sin obligarte a mantener ninguna fecha en el servidor.
-// El ancla del contador se guarda en localStorage, así sobrevive a las
-// recargas: el ciclo de 24h corre desde la PRIMERA visita del navegador y
-// rueda una sola vez por día. Sin esto, cada carga reiniciaba el contador.
-function anclaEnvioCd() {
+// El contador cuenta hasta las 02:00 de la madrugada de Chile y se reinicia
+// solo todos los días a esa hora. Se calcula sobre la hora REAL de Chile
+// (zona America/Santiago), así respeta el horario de verano sin tocar nada.
+// Todos los visitantes ven el mismo tiempo restante; no depende de la primera
+// visita ni de localStorage.
+function segHasta2amChile() {
+  var seg = 0;
   try {
-    var k = 'deus_envio_cd_inicio';
-    var v = localStorage.getItem(k);
-    if (v && !isNaN(+v)) return +v;
-    var ahora = Date.now();
-    localStorage.setItem(k, String(ahora));
-    return ahora;
+    var p = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Santiago', hour12: false,
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).formatToParts(new Date());
+    var hh = 0, mm = 0, ss = 0;
+    p.forEach(function (x) {
+      if (x.type === 'hour') hh = +x.value % 24;   // en-US puede devolver 24 a medianoche
+      if (x.type === 'minute') mm = +x.value;
+      if (x.type === 'second') ss = +x.value;
+    });
+    var ahoraSeg = hh * 3600 + mm * 60 + ss;
+    var objetivo = 2 * 3600; // 02:00:00
+    seg = objetivo - ahoraSeg;
+    if (seg <= 0) seg += 24 * 3600; // ya pasaron las 2am → apunta a las 2am de mañana
   } catch (e) {
-    // Si localStorage no está disponible, cae al comportamiento por sesión.
-    if (envioCdInicio === null) envioCdInicio = Date.now();
-    return envioCdInicio;
+    seg = 12 * 3600; // sin Intl: valor neutro, no rompe
   }
+  return seg;
 }
-var envioCdInicio = null;
 function pintarContadorEnvio() {
   var eh = document.getElementById('abcd-h');
   if (!eh) return;
-  var inicio = anclaEnvioCd();
-  var ms24 = 24 * 60 * 60 * 1000;
-  var trans = (Date.now() - inicio) % ms24;
-  var falta = ms24 - trans;
-  var h = Math.floor(falta / 3600000);
-  var m = Math.floor(falta / 60000) % 60;
-  var s = Math.floor(falta / 1000) % 60;
-  var z = function(n) { return String(n).padStart(2, '0'); };
+  var falta = segHasta2amChile();
+  var h = Math.floor(falta / 3600);
+  var m = Math.floor(falta / 60) % 60;
+  var s = Math.floor(falta) % 60;
+  var z = function (n) { return String(n).padStart(2, '0'); };
   eh.textContent = z(h);
   document.getElementById('abcd-m').textContent = z(m);
   document.getElementById('abcd-s').textContent = z(s);
