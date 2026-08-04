@@ -997,6 +997,13 @@ body.sb-on .wa-float{bottom:82px;}
   .detail{grid-template-columns:1fr;}
 }
 .shipping-section{margin:24px 0;border:1px solid var(--border);padding:20px;}.shipping-title{font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:#aaa;margin-bottom:16px;}.shipping-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}.shipping-input{background:#111;border:1px solid var(--border);color:var(--white);padding:10px 14px;font-family:"DM Sans",sans-serif;font-size:.78rem;width:100%;}.shipping-input:focus{outline:none;border-color:#555;}.btn-calcular{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;font-size:.6rem;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s;width:100%;grid-column:1/-1;}.btn-calcular:hover{border-color:#e8e8e8;color:#e8e8e8;}.carrier-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}.carrier-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);cursor:pointer;transition:border-color .2s;}.carrier-option:hover,.carrier-option.selected{border-color:#e8e8e8;}.carrier-name{font-weight:600;font-size:.78rem;flex:1;}.carrier-time{font-size:.65rem;color:#666;margin-top:2px;}.carrier-price{font-family:"Bebas Neue",sans-serif;font-size:1.2rem;color:#e8e8e8;}.total-row{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}.total-label{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:#aaa;}.total-price{font-family:"Bebas Neue",sans-serif;font-size:2rem;}.shipping-msg{font-size:.65rem;color:#666;letter-spacing:1px;margin-top:10px;text-align:center;}.shipping-error{color:#c0392b;font-size:.65rem;letter-spacing:1px;margin-top:10px;}.ac-wrap{position:relative;}.ac-list{position:absolute;top:100%;left:0;right:0;background:#111;border:1px solid #555;border-top:none;max-height:200px;overflow-y:auto;z-index:60;display:none;}.ac-list.show{display:block;}.ac-item{padding:9px 14px;font-size:.78rem;color:var(--white);cursor:pointer;border-bottom:1px solid #1a1a1a;}.ac-item:last-child{border-bottom:none;}.ac-item:hover{background:#1e1e1e;}
+/* Aviso de envío gratis dentro del checkout: se ve desde que se abre, sin
+   que el cliente tenga que apretar "Calcular envío". */
+.envio-free{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 16px;border:1px solid rgba(105,196,109,.45);background:rgba(105,196,109,.10);border-radius:8px;}
+.envio-free .ef-ico{font-size:1.25rem;line-height:1;flex-shrink:0;}
+.envio-free .ef-txt{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.envio-free .ef-txt b{color:#7fd589;font-size:.78rem;letter-spacing:.6px;}
+.envio-free .ef-txt small{color:var(--silver);font-size:.66rem;letter-spacing:.3px;line-height:1.45;}
 .checkout-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
 .checkout-overlay.show{display:flex;}
 /* El checkout usa la paleta "pizarra" (gris azulado, un punto más claro que el
@@ -1615,6 +1622,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <button class="btn-calcular" onclick="calcularEnvio()">Calcular envío</button>
             </div>
 
+            <!-- Aviso de envío gratis: visible apenas se abre el checkout, sin
+                 tener que calcular nada. Cuando el cliente escribe su comuna,
+                 el texto de abajo pasa a mostrar cuánto se ahorró de verdad. -->
+            <div class="envio-free" id="envio-free" style="display:none;">
+              <span class="ef-ico">🚚</span>
+              <div class="ef-txt">
+                <b>Envío GRATIS a todo Chile</b>
+                <small id="envio-free-sub">Escribe tu dirección y verás cuánto te ahorras</small>
+              </div>
+            </div>
+
             <div id="shipping-results"></div>
 
             <!-- Upsell: Tapones de oído DEUS. Se oculta cuando el checkout es
@@ -1826,6 +1844,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function calcularTotalCarrito() {
           return cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
         }
+
+        // Aviso de envío gratis del checkout.
+        //   ahorro = null  → mensaje inicial, apenas se abre el checkout
+        //   ahorro = 3890  → ya se cotizó y sabemos cuánto se ahorró de verdad
+        function mostrarAvisoEnvioGratis(ahorro) {
+          const caja = document.getElementById('envio-free');
+          const sub = document.getElementById('envio-free-sub');
+          if (!caja || !sub) return;
+          if (!envioGratis()) { caja.style.display = 'none'; return; }
+          caja.style.display = 'flex';
+          sub.textContent = (ahorro > 0)
+            ? `Te ahorras $${ahorro.toLocaleString('es-CL')} en el despacho a tu comuna`
+            : 'Escribe tu dirección y verás cuánto te ahorras';
+        }
         async function calcularEnvio() {
           const region = document.getElementById('sh-region').value.trim();
           const commune = document.getElementById('sh-commune').value.trim();
@@ -1861,6 +1893,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // Tras la oferta de lanzamiento, el envío es gratis: lo paga la tienda
             if (envioGratis()) {
               data.carriers = data.carriers.map(c => ({ ...c, precioNormal: c.price, price: 0 }));
+              // Ya sabemos la tarifa real de su comuna: el aviso pasa de
+              // "verás cuánto te ahorras" al monto concreto que se ahorró.
+              const normales = data.carriers.map(c => c.precioNormal).filter(p => p > 0);
+              if (normales.length) mostrarAvisoEnvioGratis(Math.min(...normales));
             }
 
             let html = '<div class="carrier-list">';
@@ -1898,6 +1934,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           document.getElementById('total-row').style.display = 'flex';
           document.querySelectorAll('.carrier-option').forEach(el => el.classList.remove('selected'));
           event.currentTarget.closest('.carrier-option')?.classList.add('selected');
+          // Al elegir courier, el aviso muestra el ahorro exacto de ESE courier
+          // (cada uno cobra distinto, así que el monto cambia según cuál elija).
+          if (carrier.precioNormal > 0) mostrarAvisoEnvioGratis(carrier.precioNormal);
         }
 
         // Convierte "3 a 6 días hábiles" en fechas concretas ("Llega entre el jue 9 y el lun 13 de jul")
@@ -1958,6 +1997,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (nameEl) nameEl.textContent = checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band';
           if (imgEl) imgEl.src = checkoutTapones ? 'img/img-tapones.webp' : 'img/img-afadcb86.webp';
           document.getElementById('co-qty-display').textContent = String(checkoutQty);
+          // El aviso de envío gratis se muestra de entrada, antes de calcular
+          // nada, para que el cliente sepa al tiro que no paga despacho.
+          mostrarAvisoEnvioGratis();
           actualizarTotalCheckout();
           overlay.classList.add('show');
           document.body.style.overflow = 'hidden';
