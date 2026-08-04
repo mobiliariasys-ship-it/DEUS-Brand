@@ -160,6 +160,14 @@
   status = 200
   force = true
 
+# Verificación de pago para el píxel de Meta (success.html pregunta si la orden
+# está realmente pagada antes de disparar el Purchase).
+[[redirects]]
+  from = "/orden/*"
+  to = "https://deus-band.onrender.com/orden/:splat"
+  status = 200
+  force = true
+
 # Canje del sorteo.
 [[redirects]]
   from = "/sorteo"

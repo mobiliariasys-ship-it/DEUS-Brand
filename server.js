@@ -469,6 +469,26 @@ app.post('/track/conversion', (req, res) => {
   res.sendStatus(204);
 });
 
+// ── Verificación de pago para el píxel de Meta ─────────────────────────────
+// success.html llama acá ANTES de disparar el Purchase del navegador. Solo
+// confirma un booleano (pagado/no), sin exponer ningún dato del cliente.
+//
+// Por qué existe: antes el píxel disparaba Purchase con solo mirar la URL, así
+// que entrar directo a /success.html —o recargarla, o inventar el parámetro—
+// contaba una compra falsa. Ahora el navegador pregunta al servidor si esa
+// orden corresponde a un pago realmente confirmado. metrics.ordenConfirmada()
+// es la fuente de verdad unificada: los 3 medios (MercadoPago, Webpay, Flow)
+// registran la venta ahí SOLO cuando el pago se aprueba por webhook/retorno.
+// Si el webhook aún no llegó, responde pagado:false y el píxel no dispara; la
+// Conversions API del servidor igual reporta esa venta a Meta con el mismo
+// event_id, así que no se pierde ninguna compra real.
+app.get('/orden/estado', (req, res) => {
+  const ref = (req.query.ref || req.query.orden || '').toString().trim().slice(0, 80);
+  res.set('Cache-Control', 'no-store');
+  if (!ref) return res.json({ pagado: false });
+  res.json({ pagado: metrics.ordenConfirmada(ref) });
+});
+
 // ── Panel de administración (protegido con STOCK_KEY) ──
 // Uso: /admin/stats?clave=MICLAVE
 app.get('/admin/stats', (req, res) => {
