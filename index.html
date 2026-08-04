@@ -3300,13 +3300,30 @@ function pararContadorReserva() {
 // entonces se reinicia solo a 24:00:00. No depende de fechas guardadas: cada
 // visitante ve un contador propio de 24h desde que abre la página, lo que
 // crea urgencia sin obligarte a mantener ninguna fecha en el servidor.
+// El ancla del contador se guarda en localStorage, así sobrevive a las
+// recargas: el ciclo de 24h corre desde la PRIMERA visita del navegador y
+// rueda una sola vez por día. Sin esto, cada carga reiniciaba el contador.
+function anclaEnvioCd() {
+  try {
+    var k = 'deus_envio_cd_inicio';
+    var v = localStorage.getItem(k);
+    if (v && !isNaN(+v)) return +v;
+    var ahora = Date.now();
+    localStorage.setItem(k, String(ahora));
+    return ahora;
+  } catch (e) {
+    // Si localStorage no está disponible, cae al comportamiento por sesión.
+    if (envioCdInicio === null) envioCdInicio = Date.now();
+    return envioCdInicio;
+  }
+}
 var envioCdInicio = null;
 function pintarContadorEnvio() {
   var eh = document.getElementById('abcd-h');
   if (!eh) return;
-  if (envioCdInicio === null) envioCdInicio = Date.now();
+  var inicio = anclaEnvioCd();
   var ms24 = 24 * 60 * 60 * 1000;
-  var trans = (Date.now() - envioCdInicio) % ms24;
+  var trans = (Date.now() - inicio) % ms24;
   var falta = ms24 - trans;
   var h = Math.floor(falta / 3600000);
   var m = Math.floor(falta / 60000) % 60;
