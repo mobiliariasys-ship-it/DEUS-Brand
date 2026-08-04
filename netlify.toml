@@ -7,6 +7,83 @@
   publish = "."
   command = ""
 
+# ══════════════════════════════════════════════════════════════════════
+# BLOQUEO DE CÓDIGO FUENTE  ← va PRIMERO: en Netlify gana la primera regla
+# ══════════════════════════════════════════════════════════════════════
+# publish = "." publica TODA la carpeta del repo, así que sin estas reglas
+# cualquiera podía bajar deusbrand.cl/server.js, /services/chat.js (el prompt
+# completo del chatbot con sus reglas confidenciales), /routes/flow.js (la
+# lógica de pagos), etc. force = true hace que el 404 gane por sobre el
+# archivo real. El sitio no usa ningún .js ni .json local (todo el JS del
+# front va embebido en el HTML), así que bloquearlos no rompe nada.
+
+[[redirects]]
+  from = "/server.js"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/services/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/routes/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/scripts/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/test/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.claude/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# Manifiestos, configuración y documentación interna.
+[[redirects]]
+  from = "/*.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*.yaml"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*.toml"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.env*"
+  to = "/404.html"
+  status = 404
+  force = true
+
 # ── Rutas del backend: se reenvían a Render de forma transparente ──
 # (status 200 = proxy invisible: el navegador nunca sale de deusbrand.cl)
 
@@ -102,3 +179,37 @@
   for = "/img/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"
+
+# ══════════════════════════════════════════════════════════════════════
+# CABECERAS DE SEGURIDAD
+# ══════════════════════════════════════════════════════════════════════
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Nadie puede meter deusbrand.cl dentro de un <iframe> en otro sitio.
+    # Esto corta el "clickjacking": copiar la web dentro de otra página para
+    # que el cliente crea que compra acá y en realidad le roban los datos.
+    X-Frame-Options = "DENY"
+    # El navegador respeta el tipo de archivo declarado y no "adivina".
+    # Evita que un archivo subido se ejecute como script.
+    X-Content-Type-Options = "nosniff"
+    # Obliga HTTPS por 2 años. Impide que alguien intercepte la conexión
+    # en un WiFi público y lea datos del checkout.
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    # No filtra a otros sitios qué página exacta estaba viendo el cliente.
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Apaga cámara, micrófono, ubicación y pagos automáticos: la web no los
+    # usa, y así ningún script inyectado podría pedirlos.
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+    Cross-Origin-Opener-Policy = "same-origin"
+    # Lista blanca de dominios: el navegador SOLO ejecuta scripts y carga
+    # recursos de estos orígenes. Si alguien logra inyectar código que llama
+    # a un servidor extraño, el navegador lo bloquea solo.
+    # Incluye Mercado Pago, Transbank, Flow, Google Fonts y los píxeles.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://sdk.mercadopago.com https://*.mercadopago.com https://*.mercadolibre.com https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' https://*.mercadopago.com https://*.mercadolibre.com https://deus-band.onrender.com https://www.google-analytics.com https://*.analytics.google.com https://www.facebook.com https://connect.facebook.net; frame-src 'self' https://*.mercadopago.com https://*.mercadolibre.com https://*.transbank.cl https://*.flow.cl https://www.facebook.com; form-action 'self' https://*.mercadopago.com https://*.mercadolibre.com https://*.transbank.cl https://*.flow.cl; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+
+# El HTML nunca se cachea: así un cambio en la web se ve al instante.
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"

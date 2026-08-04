@@ -38,20 +38,113 @@ function getBaseUrl(req) {
   return `${proto}://${host}`;
 }
 
-// CORS: permite que un frontend en otro dominio consuma este backend.
-// En producción puedes restringir ALLOWED_ORIGIN a tu dominio real.
+// CORS: solo el dominio propio puede consumir este backend desde el navegador.
+// Antes estaba en '*', o sea que cualquier página de internet podía llamar a
+// estos endpoints con el navegador del cliente. ALLOWED_ORIGIN permite agregar
+// otro origen (separado por comas) sin tocar el código.
+const ORIGENES_OK = (process.env.ALLOWED_ORIGIN || 'https://deusbrand.cl,https://www.deusbrand.cl')
+  .split(',').map(o => o.trim()).filter(Boolean);
+
 app.use((req, res, next) => {
-  const allowed = process.env.ALLOWED_ORIGIN || '*';
-  res.header('Access-Control-Allow-Origin', allowed);
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  const origen = req.headers.origin;
+  // Sin cabecera Origin (navegación normal, Webpay volviendo del pago, curl del
+  // monitor de Render) no hay nada que autorizar: CORS no aplica.
+  if (origen && (ORIGENES_OK.includes(origen) || ORIGENES_OK.includes('*'))) {
+    res.header('Access-Control-Allow-Origin', origen);
+    res.header('Vary', 'Origin');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  }
   if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+// Cabeceras de seguridad también acá: si alguien entra directo al backend de
+// Render (deus-band.onrender.com) en vez de pasar por deusbrand.cl, igual las recibe.
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow'); // el backend no se indexa en Google
+  if (IS_PROD) res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  res.removeHeader('X-Powered-By'); // no anunciar que corre Express
+  next();
+});
+
+// ── Freno a la fuerza bruta sobre la clave de administración ──────────────
+// Los paneles (/admin/*, /pedidos, /stock/ajustar…) se autentican con ?clave=.
+// Sin freno, un bot puede probar millones de combinaciones hasta acertar.
+// Tras 10 intentos fallidos desde la misma IP se bloquea por 15 minutos.
+// Esto NO reemplaza la verificación de cada endpoint: le pone un techo.
+const intentosAdmin = new Map();
+const MAX_INTENTOS_ADMIN = 10;
+const BLOQUEO_ADMIN_MS = 15 * 60 * 1000;
+
+setInterval(() => {
+  const ahora = Date.now();
+  for (const [ip, r] of intentosAdmin) {
+    if (ahora - r.desde > BLOQUEO_ADMIN_MS) intentosAdmin.delete(ip);
+  }
+}, BLOQUEO_ADMIN_MS).unref();
+
+function ipDeLaPeticion(req) {
+  const fwd = req.headers['x-forwarded-for'];
+  return (Array.isArray(fwd) ? fwd[0] : (fwd || '').split(',')[0].trim()) || req.ip || 'desconocida';
+}
+
+app.use((req, res, next) => {
+  const enviada = req.query.clave;
+  if (enviada === undefined) return next(); // no está intentando autenticarse
+  const real = (process.env.STOCK_KEY || '').trim();
+  if (!real) return next();
+
+  const ip = ipDeLaPeticion(req);
+  const ahora = Date.now();
+  const reg = intentosAdmin.get(ip);
+
+  if (reg && reg.n >= MAX_INTENTOS_ADMIN && ahora - reg.desde < BLOQUEO_ADMIN_MS) {
+    console.warn('[seguridad] IP bloqueada por reintentos de clave:', ip);
+    return res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos.' });
+  }
+
+  if (String(enviada) !== real) {
+    if (!reg || ahora - reg.desde > BLOQUEO_ADMIN_MS) intentosAdmin.set(ip, { desde: ahora, n: 1 });
+    else reg.n += 1;
+  } else if (reg) {
+    intentosAdmin.delete(ip); // acertó: se limpia el contador
+  }
   next();
 });
 
 app.use(express.json({ limit: '10mb' })); // límite alto: reseñas con fotos en base64
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Webpay retorna form-urlencoded
+
+// ── Bloqueo de archivos internos ──────────────────────────────────────────
+// express.static(__dirname) sirve TODA la carpeta del proyecto. Sin este filtro
+// cualquiera con la URL del backend podía bajar los archivos que la aplicación
+// va escribiendo en disco mientras funciona:
+//   /pedidos.json       → nombre, RUT, correo, teléfono y dirección de cada compra
+//   /chats.json         → todas las conversaciones del chatbot
+//   /atletas-data.json  → datos de salud, claves de equipo y tokens personales
+//   /tickets.json       → participantes del sorteo
+// más todo el código del backend (/server.js, /services/*, /routes/*).
+// El sitio no carga ningún .js ni .json local — el JavaScript del front va
+// embebido dentro del HTML — así que bloquearlos no afecta a la tienda.
+const RUTA_PRIVADA = /^\/(?:node_modules|services|routes|scripts|test)\//i;
+const ARCHIVO_PRIVADO = /^\/(?:server\.js|package(?:-lock)?\.json|render\.yaml|netlify\.toml)$/i;
+const EXT_PRIVADA = /\.(?:json|env|md|ya?ml|toml|log|db|sqlite3?|pem|key|crt|py|pyc|sh|bak|ini|conf)$/i;
+
+app.use((req, res, next) => {
+  let ruta = req.path;
+  try { ruta = decodeURIComponent(ruta); } catch (e) { /* URL malformada: se evalúa tal cual */ }
+  if (RUTA_PRIVADA.test(ruta) || ARCHIVO_PRIVADO.test(ruta) || EXT_PRIVADA.test(ruta)) {
+    return res.status(404).send('No encontrado');
+  }
+  next();
+});
+
 app.use(express.static(__dirname, {
+  dotfiles: 'deny',  // nada que empiece con punto: .env, .git, .claude…
   setHeaders: (res, filePath) => {
     // El HTML nunca se cachea: siempre la última versión (evita imágenes viejas)
     if (filePath.endsWith('.html')) {
