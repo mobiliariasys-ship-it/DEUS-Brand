@@ -2497,48 +2497,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
     </div>
 
-    <!-- Carrusel: 3 características cambiables (imagen cuadrada arriba, texto abajo) -->
-    <div class="feat-car" id="featCar">
-      <div class="feat-track" id="featTrack">
-        <div class="feat-slide feat-cine">
-          <div class="how-row">
-            <div class="how-img natural"><video muted loop playsinline autoplay preload="metadata" poster="img/diseno-poster.webp" aria-label="DEUS Band ciclista"><source src="img/diseno-video.webm" type="video/webm"><source src="img/diseno-video.mp4" type="video/mp4"></video></div>
-            <div class="how-txt">
-              <h3>Diseño sin distracciones</h3>
-              <p>Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
-            </div>
-          </div>
-        </div>
-        <div class="feat-slide">
-          <div class="how-row reverse">
-            <div class="how-img sleep-fit">
-              <img src="img/img-c0934d38.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async" style="cursor:zoom-in;" onclick="abrirFotoResena(this.src)">
-            </div>
-            <div class="how-txt">
-              <h3>Optimiza tu sueño</h3>
-              <p>Mide tus fases de sueño —profundo, ligero y REM— y la calidad de tu descanso. Despierta recuperado y mejora tus noches con datos reales.</p>
-            </div>
-          </div>
-        </div>
-        <div class="feat-slide">
-          <div class="how-row">
-            <div class="how-img"><img src="img/img-93c330d7.webp" alt="DEUS Band durante el deporte" loading="lazy" decoding="async" style="cursor:zoom-in;" onclick="abrirFotoResena(this.src)"></div>
-            <div class="how-txt">
-              <h3>Úsala 24/7</h3>
-              <p>Pensada para acompañarte siempre — al entrenar, en el trabajo y al dormir. Detecta tu actividad automáticamente: empieza y termina sin que tengas que tocar nada.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <button class="feat-arrow prev" id="featPrev" aria-label="Anterior">‹</button>
-      <button class="feat-arrow next" id="featNext" aria-label="Siguiente">›</button>
-    </div>
-    <div class="feat-dots" id="featDots">
-      <span class="feat-dot active" onclick="featGo(0)"></span>
-      <span class="feat-dot" onclick="featGo(1)"></span>
-      <span class="feat-dot" onclick="featGo(2)"></span>
-    </div>
-
   </section>
   <script>
   (function(){
@@ -2896,6 +2854,51 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
     <div class="reviews-more"><button class="btn-review" id="btn-mas-resenas" onclick="verMasResenas(this)">Ver más reseñas</button></div>
     <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
+  </section>
+
+  <!-- CARACTERÍSTICAS (bajadas: las reseñas van primero) -->
+  <section class="how">
+    <!-- Carrusel: 3 características cambiables (imagen cuadrada arriba, texto abajo) -->
+    <div class="feat-car" id="featCar">
+      <div class="feat-track" id="featTrack">
+        <div class="feat-slide feat-cine">
+          <div class="how-row">
+            <div class="how-img natural"><video muted loop playsinline autoplay preload="metadata" poster="img/diseno-poster.webp" aria-label="DEUS Band ciclista"><source src="img/diseno-video.webm" type="video/webm"><source src="img/diseno-video.mp4" type="video/mp4"></video></div>
+            <div class="how-txt">
+              <h3>Diseño sin distracciones</h3>
+              <p>Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
+            </div>
+          </div>
+        </div>
+        <div class="feat-slide">
+          <div class="how-row reverse">
+            <div class="how-img sleep-fit">
+              <img src="img/img-c0934d38.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async" style="cursor:zoom-in;" onclick="abrirFotoResena(this.src)">
+            </div>
+            <div class="how-txt">
+              <h3>Optimiza tu sueño</h3>
+              <p>Mide tus fases de sueño —profundo, ligero y REM— y la calidad de tu descanso. Despierta recuperado y mejora tus noches con datos reales.</p>
+            </div>
+          </div>
+        </div>
+        <div class="feat-slide">
+          <div class="how-row">
+            <div class="how-img"><img src="img/img-93c330d7.webp" alt="DEUS Band durante el deporte" loading="lazy" decoding="async" style="cursor:zoom-in;" onclick="abrirFotoResena(this.src)"></div>
+            <div class="how-txt">
+              <h3>Úsala 24/7</h3>
+              <p>Pensada para acompañarte siempre — al entrenar, en el trabajo y al dormir. Detecta tu actividad automáticamente: empieza y termina sin que tengas que tocar nada.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="feat-arrow prev" id="featPrev" aria-label="Anterior">‹</button>
+      <button class="feat-arrow next" id="featNext" aria-label="Siguiente">›</button>
+    </div>
+    <div class="feat-dots" id="featDots">
+      <span class="feat-dot active" onclick="featGo(0)"></span>
+      <span class="feat-dot" onclick="featGo(1)"></span>
+      <span class="feat-dot" onclick="featGo(2)"></span>
+    </div>
   </section>
 
   <!-- ESPECIFICACIONES CLAVE -->
