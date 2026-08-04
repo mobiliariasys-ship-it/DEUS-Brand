@@ -3154,11 +3154,26 @@ function aplicarReserva() {
       ab.classList.add('reserva');
       ab.innerHTML = ofertaActiva()
         ? '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b></span>'
+          + '<span class="ab-cd" id="ab-cd">'
+          +   '<span class="ab-cd-boxes">'
+          +     '<span class="abcd-box"><b id="abcd-h">00</b><small>hrs</small></span>'
+          +     '<span class="abcd-box"><b id="abcd-m">00</b><small>min</small></span>'
+          +     '<span class="abcd-box"><b id="abcd-s">00</b><small>seg</small></span>'
+          +   '</span>'
+          + '</span>'
         : '<span class="ab-txt">🔥 <b>Última unidad</b> disponible</span>';
     } else {
       ab.classList.remove('reserva');
       if (ofertaActiva()) {
-        ab.innerHTML = '🚚 <b>ENVÍO GRATIS</b>';
+        ab.classList.add('reserva');   // reusar el estilo de dos líneas
+        ab.innerHTML = '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b></span>'
+          + '<span class="ab-cd" id="ab-cd">'
+          +   '<span class="ab-cd-boxes">'
+          +     '<span class="abcd-box"><b id="abcd-h">00</b><small>hrs</small></span>'
+          +     '<span class="abcd-box"><b id="abcd-m">00</b><small>min</small></span>'
+          +     '<span class="abcd-box"><b id="abcd-s">00</b><small>seg</small></span>'
+          +   '</span>'
+          + '</span>';
       } else {
         ab.innerHTML = '🔥 <b>Última unidad</b> disponible';
       }
