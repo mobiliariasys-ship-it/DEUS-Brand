@@ -1917,25 +1917,51 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               html += `<div class="shipping-msg" style="color:#444;margin-top:8px">${data.errors.join(' · ')}</div>`;
             }
             results.innerHTML = html;
+
+            // Auto-selección: el cliente NO tiene que clickear el courier. Se
+            // elige solo el más barato (el que le cuesta menos a la tienda,
+            // porque el envío es gratis) y así el total y el botón de pago
+            // quedan listos de inmediato. Igual puede cambiarlo si quiere.
+            const opciones = Array.from(results.querySelectorAll('.carrier-option'));
+            let idx = 0, menor = Infinity;
+            data.carriers.forEach((c, i) => {
+              const costo = (c.precioNormal != null ? c.precioNormal : c.price) || 0;
+              if (costo < menor) { menor = costo; idx = i; }
+            });
+            if (data.carriers[idx]) {
+              aplicarCourier(data.carriers[idx], commune, region, address, opciones[idx]);
+            }
           } catch(e) {
             results.innerHTML = `<div class="shipping-error">Error: ${e.message || 'No se pudo conectar con el servidor. ¿Está corriendo npm start?'}</div>`;
             console.error('[calcularEnvio]', e);
           }
         }
 
+        // Clic manual en un courier (el cliente cambió la opción auto-elegida).
         function selectCarrier(encodedCarrier, encodedCommune, encodedRegion, encodedAddress) {
           const carrier = JSON.parse(decodeURIComponent(encodedCarrier));
-          const commune = decodeURIComponent(encodedCommune);
-          const region = decodeURIComponent(encodedRegion);
-          const address = decodeURIComponent(encodedAddress);
+          const el = (typeof event !== 'undefined' && event && event.currentTarget)
+            ? event.currentTarget.closest('.carrier-option') : null;
+          aplicarCourier(carrier, decodeURIComponent(encodedCommune), decodeURIComponent(encodedRegion), decodeURIComponent(encodedAddress), el);
+        }
+
+        // Fija el courier elegido (por clic o por auto-selección). Separado de
+        // selectCarrier para poder elegirlo automáticamente, sin que el cliente
+        // tenga que tocar la opción: así ve la info del envío y puede continuar
+        // directo al pago con Mercado Pago o Webpay.
+        function aplicarCourier(carrier, commune, region, address, el) {
           selectedShipping = { ...carrier, address: { commune, region, address } };
           const total = subtotalCheckout() + (carrier.price || 0);
           document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
           document.getElementById('total-row').style.display = 'flex';
-          document.querySelectorAll('.carrier-option').forEach(el => el.classList.remove('selected'));
-          event.currentTarget.closest('.carrier-option')?.classList.add('selected');
-          // Al elegir courier, el aviso muestra el ahorro exacto de ESE courier
-          // (cada uno cobra distinto, así que el monto cambia según cuál elija).
+          document.querySelectorAll('.carrier-option').forEach(x => x.classList.remove('selected'));
+          if (el) {
+            el.classList.add('selected');
+            const radio = el.querySelector('input[type=radio]');
+            if (radio) radio.checked = true;
+          }
+          // El aviso muestra el ahorro exacto de ESE courier (cada uno cobra
+          // distinto, así que el monto cambia según cuál quede elegido).
           if (carrier.precioNormal > 0) mostrarAvisoEnvioGratis(carrier.precioNormal);
         }
 
@@ -2334,7 +2360,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (!d.customerRut) { msg.textContent = 'Ingresa tu RUT.'; return false; }
           if (!d.customerEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.customerEmail)) { msg.textContent = 'Ingresa un correo válido.'; return false; }
           if (!d.customerPhone) { msg.textContent = 'Ingresa un teléfono de contacto.'; return false; }
-          if (!selectedShipping) { msg.textContent = 'Calcula y elige una opción de envío.'; return false; }
+          if (!selectedShipping) { msg.textContent = 'Ingresa tu dirección para calcular el envío.'; return false; }
           return true;
         }
 
