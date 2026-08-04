@@ -609,8 +609,9 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .chat-fab:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 30px rgba(0,0,0,.4),0 6px 22px rgba(217,191,146,.45),inset 0 1px 0 rgba(255,255,255,.4);}
 .chat-fab svg{width:23px;height:23px;flex-shrink:0;}
 .chat-fab span{white-space:nowrap;}
+.chat-fab .fab-short{display:none;}
 body.sb-on .chat-fab{bottom:82px;}
-@media(max-width:600px){.chat-fab{padding:12px 16px;font-size:.76rem;bottom:16px;right:16px;border-radius:14px;}.chat-fab svg{width:22px;height:22px;}.chat-fab span{display:none;}body.sb-on .chat-fab{bottom:76px;}}
+@media(max-width:600px){.chat-fab{padding:12px 16px;font-size:.76rem;bottom:16px;right:16px;border-radius:14px;}.chat-fab svg{width:22px;height:22px;}.chat-fab .fab-full{display:none;}.chat-fab .fab-short{display:inline;}body.sb-on .chat-fab{bottom:76px;}}
 /* Panel del chat */
 .chat-panel{position:fixed;bottom:20px;right:20px;width:min(370px,calc(100vw - 32px));height:min(540px,calc(100vh - 90px));background:#0f0f0f;border:1px solid #2a2a2a;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.6);z-index:1200;display:none;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;}
 .chat-panel.show{display:flex;}
@@ -1174,7 +1175,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <button class="chat-fab" id="chat-fab" onclick="abrirChat()" aria-label="Abrir el asistente de ayuda">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.6-.7L3 21l1.8-5.1A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>
-  <span>Nuestra IA DEUS</span>
+  <span class="fab-full">Nuestra IA DEUS</span>
+  <span class="fab-short">IA DEUS</span>
 </button>
 
 <!-- Chat de ayuda. Responde el asistente; el botón de abajo pasa a WhatsApp
