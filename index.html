@@ -1716,10 +1716,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         let selectedShipping = null;
-        // Stock disponible: precio $58.990 con envío GRATIS a todo Chile
-        // en modo compra normal (no reserva). Contador de 5 días completos.
-        const OFERTA_END = new Date('2026-08-05T00:00:00-04:00').getTime();
-        const ofertaActiva = () => Date.now() < OFERTA_END;
+        // Stock disponible: precio $58.990 con envío GRATIS a todo Chile.
+        // El envío gratis es PERMANENTE: no vence en ninguna fecha. Antes
+        // OFERTA_END lo apagaba solo al llegar el día, y el sitio dejaba de
+        // mostrar "ENVÍO GRATIS" sin que nadie tocara nada. Ahora está fijo en
+        // activo; el contador del top bar es solo de urgencia (reinicia a las
+        // 2am de Chile) y no controla el envío gratis.
+        const OFERTA_END = new Date('2099-01-01T00:00:00-04:00').getTime();
+        const ofertaActiva = () => true;
         // Precio único $58.990: el mismo con stock y en modo reserva, y el
         // mismo que cobra precioBanda() del backend. Ancla $58.990 tachada.
         const RESERVA_PRICE = 58990, PRECIO_NORMAL = 58990, RESERVA_ANCLA = 64990;
