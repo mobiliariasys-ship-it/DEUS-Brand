@@ -1,4 +1,6 @@
 {
+  "syntaxHighlightingDisabled": true,
+  "verbose": false,
   "hooks": {
     "SessionStart": [
       {
