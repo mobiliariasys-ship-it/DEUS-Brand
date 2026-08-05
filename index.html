@@ -3425,21 +3425,37 @@ function pintarContadorEnvio() {
 }
 setInterval(pintarContadorEnvio, 1000);
 
-// ── Contador del sorteo mensual (30 días rodante) ──
-// Misma lógica que el de 24h: ciclo desde la primera visita, rueda a 30 días
-// cuando llega a 0. Se ejecuta solo cuando el modal del sorteo se abre.
-var sorteoCdInicio = null;
+// ── Contador del sorteo mensual ──
+// Cuenta hasta el FIN DEL MES en curso (00:00 del día 1 del mes siguiente,
+// hora de Chile) y se reinicia solo cada mes. Todos los visitantes ven lo
+// mismo y NO se reinicia al recargar (antes vivía en memoria y cada recarga
+// lo volvía a 30 días).
+function segHastaFinDeMesChile() {
+  try {
+    var p = {};
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Santiago', hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
+    var y = +p.year, mo = +p.month, d = +p.day;
+    var hh = +p.hour % 24, mm = +p.minute, ss = +p.second;
+    var ultimoDia = new Date(y, mo, 0).getDate();        // último día del mes actual
+    var segHoyRestante = (24 * 3600) - (hh * 3600 + mm * 60 + ss); // hasta medianoche
+    var diasEnteros = ultimoDia - d;                      // días completos hasta el 1° del mes que viene
+    return diasEnteros * 86400 + segHoyRestante;
+  } catch (e) {
+    return 15 * 86400; // sin Intl: valor neutro, no rompe
+  }
+}
 function pintarContadorSorteo() {
   var eh = document.getElementById('rfcd-d');
   if (!eh) return;
-  if (sorteoCdInicio === null) sorteoCdInicio = Date.now();
-  var ms30 = 30 * 24 * 60 * 60 * 1000;
-  var trans = (Date.now() - sorteoCdInicio) % ms30;
-  var falta = ms30 - trans;
-  var d = Math.floor(falta / 86400000);
-  var h = Math.floor(falta / 3600000) % 24;
-  var m = Math.floor(falta / 60000) % 60;
-  var s = Math.floor(falta / 1000) % 60;
+  var falta = segHastaFinDeMesChile();
+  var d = Math.floor(falta / 86400);
+  var h = Math.floor(falta / 3600) % 24;
+  var m = Math.floor(falta / 60) % 60;
+  var s = Math.floor(falta) % 60;
   var z = function(n) { return String(n).padStart(2, '0'); };
   eh.textContent = z(d);
   document.getElementById('rfcd-h').textContent = z(h);
