@@ -19,10 +19,10 @@ const metaAds = require('./services/meta-ads');
 // precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
 // El front usa esta misma fecha, así el cambio ocurre solo y sincronizado.
 const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
-// Precio único $54.990, con stock y en modo reserva. Este es el precio
+// Precio único $58.990, con stock y en modo reserva. Este es el precio
 // AUTORITATIVO que se cobra; el front muestra exactamente lo mismo, así no
 // puede volver a pasar que el sitio diga un precio y la pasarela cobre otro.
-const precioBanda = () => 54990;
+const precioBanda = () => 58990;
 const TAPONES_PRICE = 14990; // compra de solo tapones de oído (sin banda)
 
 const app = express();
@@ -639,7 +639,7 @@ app.post('/envio/despachado', async (req, res) => {
 
 // Stock restante (para el contador de unidades en la web). Incluye `precio`
 // (lo que el backend cobraría AHORA) como diagnóstico: siempre debe venir
-// "precio":54990, con o sin stock, igual a lo que muestra el sitio.
+// "precio":58990, con o sin stock, igual a lo que muestra el sitio.
 app.get('/stock', (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.json({ remaining: getStock(), precio: precioBanda() });
