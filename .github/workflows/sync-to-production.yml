@@ -1,0 +1,42 @@
+name: Sync to production
+
+on:
+  push:
+    branches:
+      - 'claude/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout DEUS-Brand (dev)
+        uses: actions/checkout@v4
+        with:
+          path: dev-repo
+
+      - name: Checkout DEUS-BAND (production)
+        uses: actions/checkout@v4
+        with:
+          repository: mobiliariasys-ship-it/DEUS-BAND
+          ref: main
+          token: ${{ secrets.PROD_REPO_TOKEN }}
+          path: prod-repo
+
+      - name: Copy synced files
+        run: |
+          cp dev-repo/services/chat.js prod-repo/services/chat.js
+          cp dev-repo/index.html prod-repo/index.html
+          cp dev-repo/admin.html prod-repo/admin.html
+
+      - name: Commit and push if changed
+        working-directory: prod-repo
+        run: |
+          git config user.name "deus-sync-bot"
+          git config user.email "actions@github.com"
+          git add services/chat.js index.html admin.html
+          if git diff --cached --quiet; then
+            echo "No changes to sync"
+            exit 0
+          fi
+          git commit -m "sync: auto-sync desde DEUS-Brand ${{ github.ref_name }} (${{ github.sha }})"
+          git push origin main
