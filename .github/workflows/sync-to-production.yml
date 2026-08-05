@@ -24,16 +24,22 @@ jobs:
 
       - name: Copy synced files
         run: |
-          cp dev-repo/services/chat.js prod-repo/services/chat.js
-          cp dev-repo/index.html prod-repo/index.html
-          cp dev-repo/admin.html prod-repo/admin.html
+          # Sincroniza TODO el sitio (HTML, JS del backend, imágenes, etc.),
+          # no solo 3 archivos. Sin esto, cada imagen/asset nuevo quedaba fuera
+          # de producción y no cargaba en la web. Se excluye lo que no debe
+          # viajar: git, workflows y dependencias.
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            dev-repo/ prod-repo/
 
       - name: Commit and push if changed
         working-directory: prod-repo
         run: |
           git config user.name "deus-sync-bot"
           git config user.email "actions@github.com"
-          git add services/chat.js index.html admin.html
+          git add -A
           if git diff --cached --quiet; then
             echo "No changes to sync"
             exit 0
