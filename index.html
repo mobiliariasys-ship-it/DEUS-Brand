@@ -2504,86 +2504,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
   <script>
   (function(){
-    var car=document.getElementById('featCar'), track=document.getElementById('featTrack');
-    if(!car||!track) return;
-    var slides=track.children, dots=document.getElementById('featDots').children;
-    var n=slides.length, cur=0;
-    var prev=document.getElementById('featPrev'), next=document.getElementById('featNext');
-    function centrarFlechas(){
-      if(!prev||!next||!slides[cur]) return;
-      var img=slides[cur].querySelector('.how-img'); if(!img) return;
-      var cr=car.getBoundingClientRect(), ir=img.getBoundingClientRect();
-      var c=((ir.top-cr.top)+ir.height/2)+'px'; prev.style.top=c; next.style.top=c;
-    }
-    function setH(){ if(slides[cur]) car.style.height=slides[cur].offsetHeight+'px'; centrarFlechas(); }
-    // Si la slide activa tiene video (el ciclista), lo reinicia y reproduce
-    function reproducirActivo(){
-      var v=slides[cur]&&slides[cur].querySelector('video');
-      if(v){ try{ v.currentTime=0; }catch(e){} var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){}); }
-    }
-    function render(){
-      track.style.transform='translateX('+(-cur*100)+'%)';
-      for(var i=0;i<n;i++){ if(dots[i]) dots[i].classList.toggle('active',i===cur); }
-      setH(); reproducirActivo();
-    }
-    // Auto-rotación (se pausa al pasar el mouse; se reinicia al interactuar)
-    var timer=null, hover=false;
-    function pararAuto(){ if(timer){ clearTimeout(timer); timer=null; } }
-    function iniciarAuto(){ pararAuto(); if(hover) return; timer=setTimeout(function(){ featGo(cur+1); }, 5000); }
-    window.featGo=function(i){ cur=(i+n)%n; render(); iniciarAuto(); };
-    // Recalcular la altura cuando cargan las imágenes/el video o cambia el tamaño
-    window.addEventListener('load',setH);
-    window.addEventListener('resize',setH);
-    track.querySelectorAll('img,video').forEach(function(m){
-      m.addEventListener('load',setH); m.addEventListener('loadeddata',setH);
-    });
-    setTimeout(setH,300);
-    if(prev) prev.onclick=function(){ featGo(cur-1); };
-    if(next) next.onclick=function(){ featGo(cur+1); };
-    // Arrastre orgánico: la slide sigue el dedo/cursor y al soltar decide
-    var x0=null,y0=null,drag=false,horiz=null,w=1;
-    function pos(){ return -cur*100; }
-    function down(x,y){ x0=x; y0=y; drag=true; horiz=null; w=car.clientWidth||1; pararAuto(); }
-    function move(x,y){
-      if(!drag||x0===null) return;
-      var dx=x-x0, dy=y-y0;
-      if(horiz===null && (Math.abs(dx)>6||Math.abs(dy)>6)) horiz=Math.abs(dx)>Math.abs(dy);
-      if(!horiz) return;
-      var off=dx/w*100;
-      // resistencia en los extremos (primera y última slide)
-      if((cur===0&&off>0)||(cur===n-1&&off<0)) off*=0.35;
-      track.style.transition='none';
-      track.style.transform='translateX('+(pos()+off)+'%)';
-    }
-    function up(x){
-      if(!drag||x0===null) return; drag=false;
-      var dx=x-x0;
-      track.style.transition='';
-      if(horiz && Math.abs(dx)>w*0.18) featGo(cur+(dx<0?1:-1));
-      else { render(); iniciarAuto(); }
-      x0=y0=null; horiz=null;
-    }
-    car.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
-    car.addEventListener('touchmove',function(e){ move(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
-    car.addEventListener('touchend',function(e){ up(e.changedTouches[0].clientX); },{passive:true});
-    car.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
-    window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
-    window.addEventListener('mouseup',function(e){ up(e.clientX); });
-    car.addEventListener('mouseenter',function(){ hover=true; pararAuto(); });
-    car.addEventListener('mouseleave',function(){ hover=false; iniciarAuto(); });
-    render();
-    // La auto-rotación parte recién cuando el carrusel entra en pantalla,
-    // así siempre se ve primero la slide del ciclista.
-    if('IntersectionObserver' in window){
-      var io=new IntersectionObserver(function(entradas){
-        entradas.forEach(function(x){ if(x.isIntersecting) iniciarAuto(); else pararAuto(); });
-      },{threshold:0.35});
-      io.observe(car);
-    } else { iniciarAuto(); }
-  })();
-  </script>
-  <script>
-  (function(){
     var N=85, BLUE=72; // f_073: cuadro del sensor azul; f_074-085: fundido que cierra la vuelta
     var wrap=document.getElementById('rot360');
     var canvas=document.getElementById('rot360-canvas');
@@ -2910,6 +2830,87 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="feat-dot" onclick="featGo(2)"></span>
     </div>
   </section>
+
+  <script>
+  (function(){
+    var car=document.getElementById('featCar'), track=document.getElementById('featTrack');
+    if(!car||!track) return;
+    var slides=track.children, dots=document.getElementById('featDots').children;
+    var n=slides.length, cur=0;
+    var prev=document.getElementById('featPrev'), next=document.getElementById('featNext');
+    function centrarFlechas(){
+      if(!prev||!next||!slides[cur]) return;
+      var img=slides[cur].querySelector('.how-img'); if(!img) return;
+      var cr=car.getBoundingClientRect(), ir=img.getBoundingClientRect();
+      var c=((ir.top-cr.top)+ir.height/2)+'px'; prev.style.top=c; next.style.top=c;
+    }
+    function setH(){ if(slides[cur]) car.style.height=slides[cur].offsetHeight+'px'; centrarFlechas(); }
+    // Si la slide activa tiene video (el ciclista), lo reinicia y reproduce
+    function reproducirActivo(){
+      var v=slides[cur]&&slides[cur].querySelector('video');
+      if(v){ try{ v.currentTime=0; }catch(e){} var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+    }
+    function render(){
+      track.style.transform='translateX('+(-cur*100)+'%)';
+      for(var i=0;i<n;i++){ if(dots[i]) dots[i].classList.toggle('active',i===cur); }
+      setH(); reproducirActivo();
+    }
+    // Auto-rotación (se pausa al pasar el mouse; se reinicia al interactuar)
+    var timer=null, hover=false;
+    function pararAuto(){ if(timer){ clearTimeout(timer); timer=null; } }
+    function iniciarAuto(){ pararAuto(); if(hover) return; timer=setTimeout(function(){ featGo(cur+1); }, 5000); }
+    window.featGo=function(i){ cur=(i+n)%n; render(); iniciarAuto(); };
+    // Recalcular la altura cuando cargan las imágenes/el video o cambia el tamaño
+    window.addEventListener('load',setH);
+    window.addEventListener('resize',setH);
+    track.querySelectorAll('img,video').forEach(function(m){
+      m.addEventListener('load',setH); m.addEventListener('loadeddata',setH);
+    });
+    setTimeout(setH,300);
+    if(prev) prev.onclick=function(){ featGo(cur-1); };
+    if(next) next.onclick=function(){ featGo(cur+1); };
+    // Arrastre orgánico: la slide sigue el dedo/cursor y al soltar decide
+    var x0=null,y0=null,drag=false,horiz=null,w=1;
+    function pos(){ return -cur*100; }
+    function down(x,y){ x0=x; y0=y; drag=true; horiz=null; w=car.clientWidth||1; pararAuto(); }
+    function move(x,y){
+      if(!drag||x0===null) return;
+      var dx=x-x0, dy=y-y0;
+      if(horiz===null && (Math.abs(dx)>6||Math.abs(dy)>6)) horiz=Math.abs(dx)>Math.abs(dy);
+      if(!horiz) return;
+      var off=dx/w*100;
+      // resistencia en los extremos (primera y última slide)
+      if((cur===0&&off>0)||(cur===n-1&&off<0)) off*=0.35;
+      track.style.transition='none';
+      track.style.transform='translateX('+(pos()+off)+'%)';
+    }
+    function up(x){
+      if(!drag||x0===null) return; drag=false;
+      var dx=x-x0;
+      track.style.transition='';
+      if(horiz && Math.abs(dx)>w*0.18) featGo(cur+(dx<0?1:-1));
+      else { render(); iniciarAuto(); }
+      x0=y0=null; horiz=null;
+    }
+    car.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+    car.addEventListener('touchmove',function(e){ move(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+    car.addEventListener('touchend',function(e){ up(e.changedTouches[0].clientX); },{passive:true});
+    car.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
+    window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
+    window.addEventListener('mouseup',function(e){ up(e.clientX); });
+    car.addEventListener('mouseenter',function(){ hover=true; pararAuto(); });
+    car.addEventListener('mouseleave',function(){ hover=false; iniciarAuto(); });
+    render();
+    // La auto-rotación parte recién cuando el carrusel entra en pantalla,
+    // así siempre se ve primero la slide del ciclista.
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(entradas){
+        entradas.forEach(function(x){ if(x.isIntersecting) iniciarAuto(); else pararAuto(); });
+      },{threshold:0.35});
+      io.observe(car);
+    } else { iniciarAuto(); }
+  })();
+  </script>
 
   <!-- ESPECIFICACIONES CLAVE -->
   <section class="specs-sec specs-in-how">
