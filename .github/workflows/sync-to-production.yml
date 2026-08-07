@@ -31,6 +31,7 @@ jobs:
           rsync -a \
             --exclude='.git' \
             --exclude='.github' \
+            --exclude='.claude' \
             --exclude='node_modules' \
             dev-repo/ prod-repo/
 
