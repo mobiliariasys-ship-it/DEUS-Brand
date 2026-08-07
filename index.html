@@ -1041,6 +1041,15 @@ body.sb-on .wa-float{bottom:82px;}
 .co-price-now{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;line-height:1;}
 /* Precio "normal" tachado que acompaña al precio de reserva ($54.990 / $54.990) */
 .pb-old{font-size:.5em;color:#8a8a8a;text-decoration:line-through;margin-left:8px;font-family:'DM Sans',sans-serif;letter-spacing:0;vertical-align:middle;font-weight:400;}
+/* Bloque de confianza bajo el botón de compra: prueba social + pago + cuotas */
+.pay-trust{display:flex;flex-direction:column;gap:10px;align-items:center;margin:14px 0 4px;}
+.pay-trust .pt-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;font-size:.74rem;color:var(--silver);letter-spacing:.3px;}
+.pay-trust .pt-line b{color:#e8e8e8;}
+.pay-trust .pt-stars{color:#f5c518;letter-spacing:1px;}
+.pay-trust .pt-dot{opacity:.45;}
+.pay-trust .pt-logos{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:center;}
+.pay-trust .pt-logos img{height:24px;width:auto;background:#fff;border-radius:5px;padding:3px 6px;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.pay-trust .pt-cuotas{font-size:.7rem;color:#7fd589;border:1px solid rgba(127,213,137,.45);border-radius:20px;padding:4px 11px;font-weight:600;letter-spacing:.3px;white-space:nowrap;}
 /* Badge de % de descuento junto al precio de reserva */
 .pb-off{display:inline-block;font-size:.46em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#e8b464;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
 /* Regalo por reservar (tapones de oído DEUS): solo visible en modo reserva */
@@ -1519,6 +1528,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         </button>
       </div>
+      <!-- Confianza bajo el botón: prueba social + pago seguro + cuotas + logos.
+           Es HTML estático, no toca el píxel. -->
+      <div class="pay-trust">
+        <div class="pt-line">
+          <span class="pt-stars">★★★★★</span>
+          <b>+36 vendidas</b><span class="pt-dot">·</span><span>🔒 Pago 100% seguro</span>
+        </div>
+        <div class="pt-logos">
+          <img src="webpay_logo.png" alt="Webpay" loading="lazy" decoding="async">
+          <img src="mp_logo.png" alt="Mercado Pago" loading="lazy" decoding="async">
+          <span class="pt-cuotas">Hasta 3 cuotas sin interés</span>
+        </div>
+      </div>
       <!-- Caja de tapones de regalo — retirada: la oferta era solo para reserva. -->
 
       <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas" style="margin-top:14px;">
@@ -1603,7 +1625,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="field-label">Datos de quien recibe</div>
             <div class="shipping-form">
               <input class="shipping-input" id="co-nombre" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" />
-              <input class="shipping-input" id="co-rut" aria-label="RUT" placeholder="RUT (ej: 12.345.678-9)" style="grid-column:1/-1" />
+              <input class="shipping-input" id="co-rut" aria-label="RUT (opcional)" placeholder="RUT (opcional)" style="grid-column:1/-1" />
               <input class="shipping-input" id="co-email" type="email" aria-label="Correo electrónico" placeholder="Correo electrónico" style="grid-column:1/-1" />
               <input class="shipping-input" id="co-fono" type="tel" aria-label="Teléfono de contacto" placeholder="Teléfono (ej: +56 9 1234 5678)" style="grid-column:1/-1" />
             </div>
@@ -2361,7 +2383,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           msg.style.display = 'block';
           msg.style.color = '#c0392b';
           if (!d.customerName) { msg.textContent = 'Ingresa el nombre de quien recibe.'; return false; }
-          if (!d.customerRut) { msg.textContent = 'Ingresa tu RUT.'; return false; }
+          // RUT opcional: pedirlo como obligatorio antes de pagar frenaba
+          // compras (fricción alta en Chile). Se recibe si lo escriben, pero no
+          // bloquea el pago.
           if (!d.customerEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.customerEmail)) { msg.textContent = 'Ingresa un correo válido.'; return false; }
           if (!d.customerPhone) { msg.textContent = 'Ingresa un teléfono de contacto.'; return false; }
           if (!selectedShipping) { msg.textContent = 'Ingresa tu dirección para calcular el envío.'; return false; }
@@ -3276,8 +3300,12 @@ function cargarStock() {
   fetch(api('/stock?t=' + Date.now()), { cache: 'no-store' }).then(r => r.json()).then(d => {
     if (d && typeof d.remaining === 'number') {
       stockRestante = Math.max(0, d.remaining);
-      window.modoReserva = d.remaining <= 0;   // 0 unidades → modo reserva (mismo umbral que el backend)
-      try { localStorage.setItem('deus-reserva', window.modoReserva ? '1' : '0'); } catch(e){}
+      // El sitio SIEMPRE vende en modo normal ("Comprar ahora" + ENVÍO GRATIS),
+      // aunque el contador de stock llegue a 0. Antes, stock 0 lo pasaba a "modo
+      // reserva" (quitaba el sello de envío gratis y cambiaba los CTA a
+      // "Asegura tu…"), lo que frenaba compras teniendo producto disponible.
+      window.modoReserva = false;
+      try { localStorage.setItem('deus-reserva', '0'); } catch(e){}
       aplicarReserva();
       updateStockUI();
     }
