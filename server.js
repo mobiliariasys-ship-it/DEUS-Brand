@@ -245,7 +245,13 @@ app.post('/crear-preferencia', async (req, res) => {
         shipping_address: shippingAddress,
         // Acciones de la sesión → para atribuir la compra a la conducta aunque
         // se confirme por webhook (el cliente no vuelve a success.html).
-        acciones_sesion: Array.isArray(acciones) ? acciones.join(',').slice(0, 500) : ''
+        acciones_sesion: Array.isArray(acciones) ? acciones.join(',').slice(0, 500) : '',
+        // Datos del navegador del cliente para la Conversions API de Meta.
+        // El webhook los lee de aquí (ahí la IP sería la de MercadoPago, no la del cliente).
+        client_ip: (String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.ip || '',
+        client_ua: (req.headers['user-agent'] || '').slice(0, 400),
+        fbp: (req.body && req.body.fbp) || '',
+        fbc: (req.body && req.body.fbc) || ''
       }
     };
 
@@ -371,7 +377,7 @@ app.post('/notificaciones', async (req, res) => {
         // Purchase a Meta desde el SERVIDOR (Conversions API): captura el 100%
         // de las ventas aunque el cliente no vuelva a success.html. Mismo
         // event_id que el píxel del navegador → Meta deduplica si llegan ambos.
-        metaCapi.enviarPurchase({ orden: info.id, valor: info.transaction_amount, email: emailCliente, phone: pedido.customer.phone })
+        metaCapi.enviarPurchase({ orden: info.id, valor: info.transaction_amount, email: emailCliente, phone: pedido.customer.phone, clientIp: meta.client_ip, clientUa: meta.client_ua, fbp: meta.fbp, fbc: meta.fbc })
           .catch(err => console.error('[capi] Error inesperado:', err.message));
         // Atribución de conducta: cuenta esta compra con las acciones que hizo
         // la sesión (viajaron en la metadata). Idempotente por n° de pago, así

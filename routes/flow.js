@@ -103,6 +103,12 @@ router.post('/flow/crear', async (req, res) => {
       color: selectedColor,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },
+      // Datos del navegador del cliente para la Conversions API de Meta (mejoran
+      // el emparejamiento). Se capturan ACÁ, cuando el cliente inicia el pago,
+      // porque en el webhook la IP sería la de Flow, no la del cliente.
+      clientIp: (String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.ip || '',
+      clientUa: req.headers['user-agent'] || '',
+      fbp: (req.body && req.body.fbp) || '', fbc: (req.body && req.body.fbc) || '',
       total: amount, status: 'pending', method: 'Flow'
     };
     pedidosFlow.set(commerceOrder, pedido);
@@ -146,7 +152,7 @@ router.post('/flow/confirmacion', async (req, res) => {
       const ticketFlow = metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder, email: (pedido && pedido.customer && pedido.customer.email) || st.payer });
       // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que
       // success.html) por si el cliente no llega a disparar el píxel en el navegador.
-      metaCapi.enviarPurchase({ orden: st.commerceOrder, valor: st.amount, email: (pedido && pedido.customer && pedido.customer.email) || st.payer, phone: pedido && pedido.customer && pedido.customer.phone })
+      metaCapi.enviarPurchase({ orden: st.commerceOrder, valor: st.amount, email: (pedido && pedido.customer && pedido.customer.email) || st.payer, phone: pedido && pedido.customer && pedido.customer.phone, clientIp: pedido && pedido.clientIp, clientUa: pedido && pedido.clientUa, fbp: pedido && pedido.fbp, fbc: pedido && pedido.fbc })
         .catch(e => console.error('[capi]', e.message));
       enviarPagoConfirmado({
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },

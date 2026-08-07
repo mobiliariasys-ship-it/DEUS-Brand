@@ -30,7 +30,7 @@ function sha256(v) {
 
 // Envía un evento Purchase a Meta. Nunca lanza: registra el resultado y resuelve
 // un booleano, para no interferir con el flujo del webhook si Meta falla.
-function enviarPurchase({ orden, valor, email, phone, sourceUrl }) {
+function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clientUa, fbp, fbc }) {
   return new Promise(resolve => {
     const token = (process.env.META_CAPI_TOKEN || '').trim();
     if (!token) { console.log('[capi] META_CAPI_TOKEN no configurado — se omite el envío a Meta'); return resolve(false); }
@@ -39,6 +39,14 @@ function enviarPurchase({ orden, valor, email, phone, sourceUrl }) {
     const userData = {};
     if (email) userData.em = [sha256(email)];
     if (phone) { const p = String(phone).replace(/[^0-9]/g, ''); if (p) userData.ph = [sha256(p)]; }
+    // IP y navegador del cliente: van SIN hashear. Mejoran mucho el emparejamiento
+    // (Event Match Quality) y la atribución. Se capturan cuando el cliente inicia
+    // el pago desde su navegador (no en el webhook, donde la IP es la de la pasarela).
+    if (clientIp) userData.client_ip_address = String(clientIp);
+    if (clientUa) userData.client_user_agent = String(clientUa);
+    // Cookies del píxel de Facebook: emparejan la compra con la sesión que vio el ad.
+    if (fbp) userData.fbp = String(fbp);
+    if (fbc) userData.fbc = String(fbc);
 
     const body = JSON.stringify({
       data: [{

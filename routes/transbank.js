@@ -63,6 +63,11 @@ router.post('/webpay/crear', async (req, res) => {
       color: selectedColor,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },
+      // Datos del navegador del cliente para la Conversions API de Meta (mejor
+      // emparejamiento). Se capturan acá, no en el retorno/webhook.
+      clientIp: (String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.ip || '',
+      clientUa: req.headers['user-agent'] || '',
+      fbp: (req.body && req.body.fbp) || '', fbc: (req.body && req.body.fbc) || '',
       total: amount,
       status: 'pending',
       method: 'Webpay'
@@ -116,7 +121,7 @@ async function handleRetorno(req, res) {
       const ticketWP = metrics.registrarVenta({ monto: result.amount, metodo: 'Webpay', nombre: pedido && pedido.customer && pedido.customer.name, orden: result.buy_order, email: pedido && pedido.customer && pedido.customer.email });
       // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que
       // success.html) por si el cliente no llega a disparar el píxel en el navegador.
-      metaCapi.enviarPurchase({ orden: result.buy_order, valor: result.amount, email: pedido && pedido.customer && pedido.customer.email, phone: pedido && pedido.customer && pedido.customer.phone })
+      metaCapi.enviarPurchase({ orden: result.buy_order, valor: result.amount, email: pedido && pedido.customer && pedido.customer.email, phone: pedido && pedido.customer && pedido.customer.phone, clientIp: pedido && pedido.clientIp, clientUa: pedido && pedido.clientUa, fbp: pedido && pedido.fbp, fbc: pedido && pedido.fbc })
         .catch(e => console.error('[capi]', e.message));
       enviarPagoConfirmado({
         payer: { email: (pedido && pedido.customer && pedido.customer.email) || '(Pago con Webpay)' },

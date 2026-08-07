@@ -2361,8 +2361,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             shippingCarrier: selectedShipping?.carrier || null,
             shippingCost: selectedShipping?.price || 0,
             shippingAddress: selectedShipping?.address || null,
-            acciones: accionesSesion()
+            acciones: accionesSesion(),
+            // Cookies del píxel de Facebook (_fbp / _fbc): las manda el backend a
+            // la Conversions API para emparejar la compra con la sesión que vio
+            // el anuncio. Mejora mucho la calidad del evento (EMQ).
+            fbp: cookieDeus('_fbp'),
+            fbc: cookieDeus('_fbc')
           };
+        }
+        // Lee una cookie por nombre (para _fbp / _fbc del píxel).
+        function cookieDeus(nombre) {
+          try {
+            var m = document.cookie.match('(?:^|; )' + nombre + '=([^;]*)');
+            return m ? decodeURIComponent(m[1]) : '';
+          } catch (e) { return ''; }
         }
 
         // Valida nombre, teléfono y envío antes de pagar
