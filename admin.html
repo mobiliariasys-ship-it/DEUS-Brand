@@ -75,6 +75,11 @@
   /* Conducta / conversion bars */
   .cond-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;}
   .cond-h{font-size:.76rem;color:var(--cyan);font-weight:700;margin:0 0 14px;letter-spacing:.3px;}
+  /* Pestañas para alternar cómo se calcula "Qué lleva a comprar" */
+  .conv-tabs{display:inline-flex;gap:4px;background:#15161a;border:1px solid #2a2c33;border-radius:9px;padding:3px;margin:0 0 10px;}
+  .conv-tab{background:transparent;border:none;color:#9a9aa4;font-size:.7rem;font-weight:600;letter-spacing:.3px;padding:6px 13px;border-radius:7px;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;}
+  .conv-tab:hover{color:#e8e8e8;}
+  .conv-tab.active{background:#2b2e37;color:#fff;}
   .cb-row{display:flex;align-items:center;gap:11px;margin:9px 0;}
   .cb-lbl{width:120px;flex:none;font-size:.8rem;color:#c9c9c9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .cb-track{flex:1;background:#0b0b0b;border:1px solid #1e1e1e;border-radius:7px;height:22px;overflow:hidden;}
@@ -232,7 +237,14 @@
 
     <section id="sec-convierte">
       <div class="sec-h"><h2>🎯 Qué lleva a comprar</h2><span class="pill" id="conv-base"></span></div>
-      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que hicieron cada acción, cuántos compraron. Lo de arriba es lo que más convierte → ponlo primero.</p>
+      <!-- Dos formas de leer lo mismo:
+           "Tasa de conversión" = de los que hicieron la acción, cuántos compraron.
+           "% de compradores"   = de los que compraron, cuántos hicieron la acción. -->
+      <div class="conv-tabs">
+        <button class="conv-tab active" id="tab-tasa" onclick="setModoConv('tasa')">Tasa de conversión</button>
+        <button class="conv-tab" id="tab-comp" onclick="setModoConv('compradores')">% de compradores</button>
+      </div>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px" id="conv-desc">De los que hicieron cada acción, cuántos compraron. Lo de arriba es lo que más convierte → ponlo primero.</p>
       <div id="conv-accion"></div>
       <div class="empty" id="conv-empty" style="display:none">Aún no hay compras rastreadas para cruzar. Se llena con las próximas ventas.</div>
     </section>
@@ -366,24 +378,47 @@
     document.getElementById('cond-base').textContent=visitas+' visitas de base';
   }
 
-  // Qué acción lleva a comprar: % de los que hicieron cada acción/hito que
-  // después compraron (conversionAccion ÷ conducta), mayor primero.
+  // Qué acción lleva a comprar. Dos modos:
+  //   'tasa'        → de los que hicieron la acción, cuántos compraron
+  //                   (conversionAccion ÷ conducta). Mide poder de conversión.
+  //   'compradores' → de los que compraron, cuántos hicieron la acción
+  //                   (conversionAccion ÷ total de compradores). Mide qué tan
+  //                   común es esa acción en el recorrido de un comprador.
+  var MODO_CONV = 'tasa';
+  var ULT_CONV = null; // último dato recibido, para repintar al cambiar de modo
+
+  function setModoConv(m){
+    MODO_CONV = m;
+    document.getElementById('tab-tasa').classList.toggle('active', m==='tasa');
+    document.getElementById('tab-comp').classList.toggle('active', m==='compradores');
+    document.getElementById('conv-desc').textContent = (m==='tasa')
+      ? 'De los que hicieron cada acción, cuántos compraron. Lo de arriba es lo que más convierte.'
+      : 'De los que compraron, cuántos hicieron cada acción. Lo de arriba es lo que casi todo comprador hace.';
+    if (ULT_CONV) pintarConversion(ULT_CONV.convAcc, ULT_CONV.conducta, ULT_CONV.nComp);
+  }
+
   function pintarConversion(convAcc, conducta, nComp){
     convAcc=convAcc||{}; conducta=conducta||{};
+    ULT_CONV = { convAcc:convAcc, conducta:conducta, nComp:nComp };
     var cont=document.getElementById('conv-accion'); cont.innerHTML='';
+    var porCompradores = (MODO_CONV==='compradores');
     var keys=Object.keys(conducta).filter(function(k){ return (k.indexOf('accion:')===0 || k.indexOf('hito:')===0) && k!=='accion:color' && k!=='hito:tecnologia'; });
     var items=keys.map(function(k){
       var base=conducta[k]||0, comp=convAcc[k]||0;
-      return { lbl: COND_LBL[k]||k, base:base, comp:comp, rate: base? comp/base*100 : 0 };
-    }).filter(function(x){ return x.base>0; }).sort(function(a,b){ return b.rate-a.rate; });
+      // En modo "compradores" el denominador es el total de compras rastreadas.
+      var den = porCompradores ? (nComp||0) : base;
+      return { lbl: COND_LBL[k]||k, base:base, comp:comp, den:den, rate: den? comp/den*100 : 0 };
+    }).filter(function(x){ return porCompradores ? x.comp>0 : x.base>0; })
+      .sort(function(a,b){ return b.rate-a.rate; });
     document.getElementById('conv-empty').style.display=items.length?'none':'block';
     document.getElementById('conv-base').textContent = nComp ? (nComp+' compras rastreadas') : 'sin compras aún';
     items.forEach(function(it){
       var pct=Math.round(it.rate);
+      var grad = porCompradores ? 'linear-gradient(90deg,#7a5cd0,#a887f5)' : 'linear-gradient(90deg,#0f9fd0,#1ec8f0)';
       var row=document.createElement('div'); row.className='cb-row';
       row.innerHTML='<div class="cb-lbl" title="'+esc(it.lbl)+'">'+esc(it.lbl)+'</div>'+
-        '<div class="cb-track"><div class="cb-bar" style="width:'+Math.min(pct,100)+'%;background:linear-gradient(90deg,#0f9fd0,#1ec8f0)"></div></div>'+
-        '<div class="cb-val">'+pct+'% <small>'+it.comp+'/'+it.base+'</small></div>';
+        '<div class="cb-track"><div class="cb-bar" style="width:'+Math.min(pct,100)+'%;background:'+grad+'"></div></div>'+
+        '<div class="cb-val">'+pct+'% <small>'+it.comp+'/'+it.den+'</small></div>';
       cont.appendChild(row);
     });
   }
