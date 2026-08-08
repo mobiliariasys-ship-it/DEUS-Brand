@@ -80,6 +80,9 @@
   .conv-tab{background:transparent;border:none;color:#9a9aa4;font-size:.7rem;font-weight:600;letter-spacing:.3px;padding:6px 13px;border-radius:7px;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;}
   .conv-tab:hover{color:#e8e8e8;}
   .conv-tab.active{background:#2b2e37;color:#fff;}
+  /* Etiqueta de caída entre pasos del embudo del checkout */
+  .co-drop-tag{font-size:.58rem;color:#c98;background:#2a2320;border:1px solid #4a3a2e;border-radius:20px;padding:1px 7px;margin-left:6px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .co-drop-tag.peor{color:#f0736f;background:#3a1e1d;border-color:#6a2f2d;font-weight:700;}
   .cb-row{display:flex;align-items:center;gap:11px;margin:9px 0;}
   .cb-lbl{width:120px;flex:none;font-size:.8rem;color:#c9c9c9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .cb-track{flex:1;background:#0b0b0b;border:1px solid #1e1e1e;border-radius:7px;height:22px;overflow:hidden;}
@@ -212,6 +215,14 @@
       </div>
     </section>
 
+    <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió -->
+    <section id="sec-checkout">
+      <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
+      <div id="co-funnel"></div>
+      <div class="empty" id="co-empty" style="display:none">Aún sin datos del checkout. Se llena con las próximas visitas al checkout.</div>
+    </section>
+
     <section id="sec-conducta">
       <div class="sec-h"><h2>🧭 Conducta del visitante</h2><span class="pill" id="cond-base"></span></div>
       <div class="cond-grid">
@@ -331,6 +342,52 @@
     document.getElementById('funnel-conv').textContent='Conversión '+conv+'%';
   }
 
+  // Embudo DENTRO del checkout: usa los eventos co:1abrio..co:4pago (conducta)
+  // y las ventas para el paso final. Muestra cada paso como % de los que
+  // abrieron, y marca en rojo el escalón donde se pierde más gente.
+  function pintarCheckout(conducta, nPago){
+    conducta=conducta||{};
+    var pasos=[
+      {k:'co:1abrio',  lbl:'🛒 Abrió el checkout'},
+      {k:'co:2datos',  lbl:'✍️ Empezó a llenar datos'},
+      {k:'co:3envio',  lbl:'📍 Calculó el envío'},
+      {k:'co:4pago',   lbl:'💳 Apretó pagar'},
+      {k:'__pago',     lbl:'✅ Pagó', val:(nPago||0)}
+    ];
+    // Valor de cada paso (el último viene de ventas)
+    pasos.forEach(function(p){ if(p.val===undefined) p.val=conducta[p.k]||0; });
+    var abrio=pasos[0].val||0;
+    var cont=document.getElementById('co-funnel'); cont.innerHTML='';
+    var hayDatos=abrio>0;
+    document.getElementById('co-empty').style.display=hayDatos?'none':'block';
+    if(!hayDatos){ document.getElementById('co-drop').textContent='sin datos'; return; }
+    // Detectar el escalón con mayor caída (para marcarlo)
+    var peorIdx=-1, peorCaida=-1;
+    for(var i=1;i<pasos.length;i++){
+      var prev=pasos[i-1].val||0, cur=pasos[i].val||0;
+      var caida=prev-cur;
+      if(caida>peorCaida){ peorCaida=caida; peorIdx=i; }
+    }
+    var base=Math.max(abrio,1);
+    pasos.forEach(function(p,i){
+      var pct=Math.round((p.val/base)*100);
+      var caidaTxt='';
+      if(i>0){
+        var prev=pasos[i-1].val||0, perdidos=prev-p.val;
+        var pctCaida=prev? Math.round(perdidos/prev*100):0;
+        if(perdidos>0) caidaTxt='<span class="co-drop-tag'+(i===peorIdx?' peor':'')+'">−'+perdidos+' ('+pctCaida+'%)</span>';
+      }
+      var color=(i===peorIdx)?'linear-gradient(90deg,#d0433f,#f0736f)':'linear-gradient(90deg,#0f9fd0,#1ec8f0)';
+      var row=document.createElement('div'); row.className='cb-row';
+      row.innerHTML='<div class="cb-lbl">'+esc(p.lbl)+'</div>'+
+        '<div class="cb-track"><div class="cb-bar" style="width:'+Math.min(pct,100)+'%;background:'+color+'"></div></div>'+
+        '<div class="cb-val">'+p.val+' <small>'+pct+'%</small> '+caidaTxt+'</div>';
+      cont.appendChild(row);
+    });
+    var peorLbl=peorIdx>0? pasos[peorIdx].lbl.replace(/^[^ ]+ /,'') : '';
+    document.getElementById('co-drop').textContent = peorIdx>0 ? ('mayor caída → '+peorLbl) : '';
+  }
+
   // Conducta del visitante: 4 bloques de barras a partir del mapa de eventos.
   var COND_LBL={
     'hito:precio':'Vio el precio','hito:app':'Vio la app','hito:reviews':'Vio reseñas','hito:final':'Llegó al final',
@@ -435,6 +492,7 @@
     document.getElementById('s-conv').textContent=(d.conversion!=null?d.conversion:0)+'%';
     document.getElementById('s-conv-hoy').textContent=(d.conversionHoy!=null?d.conversionHoy:0)+'%';
     pintarEmbudo(d.embudo||{visitas:0,checkouts:0,ventas:0},d.conversion||0);
+    pintarCheckout(d.conducta||{}, (d.ventas&&d.ventas.total&&d.ventas.total.count)||0);
     pintarConducta(d.conducta||{}, (d.embudo&&d.embudo.visitas)||0);
     pintarConversion(d.conversionAccion||{}, d.conducta||{}, d.conversionesN||0);
     tickets=d.tickets||[];

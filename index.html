@@ -1651,7 +1651,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="checkout-body">
             <div class="field-label">Datos de quien recibe</div>
             <div class="shipping-form">
-              <input class="shipping-input" id="co-nombre" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" />
+              <input class="shipping-input" id="co-nombre" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" oninput="window.deusEvento && window.deusEvento('co:2datos')" />
               <input class="shipping-input" id="co-rut" aria-label="RUT (opcional)" placeholder="RUT (opcional)" style="grid-column:1/-1" />
               <input class="shipping-input" id="co-email" type="email" aria-label="Correo electrónico" placeholder="Correo electrónico" style="grid-column:1/-1" />
               <input class="shipping-input" id="co-fono" type="tel" aria-label="Teléfono de contacto" placeholder="Teléfono (ej: +56 9 1234 5678)" style="grid-column:1/-1" />
@@ -1994,6 +1994,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // directo al pago con Mercado Pago o Webpay.
         function aplicarCourier(carrier, commune, region, address, el) {
           selectedShipping = { ...carrier, address: { commune, region, address } };
+          // Embudo del checkout — paso 3: ingresó dirección y se calculó el envío.
+          if (window.deusEvento) window.deusEvento('co:3envio');
           const total = subtotalCheckout() + (carrier.price || 0);
           document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
           document.getElementById('total-row').style.display = 'flex';
@@ -2081,6 +2083,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           } catch (e) {}
           if (window.fbq) fbq('track', 'InitiateCheckout', { value: checkoutTapones ? TAPONES_PRICE : precioBanda(), currency: 'CLP', content_name: checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band' });
           if (window.deusTrackCheckout) window.deusTrackCheckout();
+          // Embudo del checkout — paso 1: abrió el checkout.
+          if (window.deusEvento) window.deusEvento('co:1abrio');
         }
         // Rescate: el primer intento de cierre muestra la barra de WhatsApp en vez de cerrar
         let rescateMostrado = false;
@@ -2418,6 +2422,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (!d.customerEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.customerEmail)) { msg.textContent = 'Ingresa un correo válido.'; return false; }
           if (!d.customerPhone) { msg.textContent = 'Ingresa un teléfono de contacto.'; return false; }
           if (!selectedShipping) { msg.textContent = 'Ingresa tu dirección para calcular el envío.'; return false; }
+          // Embudo del checkout — paso 4: datos completos y apretó pagar.
+          if (window.deusEvento) window.deusEvento('co:4pago');
           return true;
         }
 
