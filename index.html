@@ -3315,7 +3315,6 @@ const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 function textoStock(color) {
   if (window.modoReserva) return '';
   if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — disponible en gris';
-  if (color === 'negra') return '🔥 Pocas unidades disponibles de este color';
   return '';
 }
 function updateStockUI() {
