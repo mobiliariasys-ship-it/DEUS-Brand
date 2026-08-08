@@ -3361,12 +3361,12 @@ function aplicarReserva() {
   const pb = document.querySelector('.price-block');
   // Precio $54.990 con ancla tachada $62.990 (-13%) — SOLO visual: el precio
   // que se cobra y el 'value' que va al píxel/CAPI siguen siendo 54.990.
-  const ancla = ' <span class="price-was">$64.990</span> <span class="price-save">-12%</span>';
+  const ancla = ' <span class="price-was">$64.990</span> <span class="price-save">-15%</span>';
   if (pb) pb.innerHTML = oferta
     ? '<sup>$</sup>54.990' + ancla + ' <span class="price-offer-tag">ENVÍO GRATIS</span>'
     : '<sup>$</sup>54.990' + ancla;
   const fc = document.querySelector('.fc-price');
-  const fcAncla = ' <span class="fold">$64.990</span> <span class="price-save">-12%</span>';
+  const fcAncla = ' <span class="fold">$64.990</span> <span class="price-save">-15%</span>';
   if (fc) fc.innerHTML = oferta
     ? '$54.990' + fcAncla + '<small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>'
     : '$54.990' + fcAncla;
