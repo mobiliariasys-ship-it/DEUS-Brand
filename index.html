@@ -1041,10 +1041,14 @@ body.sb-on .wa-float{bottom:82px;}
 .co-price-now{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;line-height:1;}
 /* Precio "normal" tachado que acompaña al precio de reserva ($54.990 / $54.990) */
 .pb-old{font-size:.5em;color:#8a8a8a;text-decoration:line-through;margin-left:8px;font-family:'DM Sans',sans-serif;letter-spacing:0;vertical-align:middle;font-weight:400;}
-/* Medios de pago bajo el botón de compra: solo los logos, sin recuadro. */
+/* Medios de pago bajo el botón de compra: sin recuadro contenedor.
+   Cada logo va en una caja del MISMO tamaño con object-fit:contain, así se ven
+   parejos aunque las imágenes tengan proporciones distintas (Webpay es 2:1 y
+   Mercado Pago casi cuadrado). */
 .pay-trust{display:flex;justify-content:center;margin:14px auto 4px;}
-.pay-trust .pt-logos{display:flex;align-items:center;gap:8px;justify-content:center;}
-.pay-trust .pt-logos img{height:26px;width:auto;background:#fff;border-radius:5px;padding:4px 8px;}
+.pay-trust .pt-logos{display:flex;align-items:center;gap:10px;justify-content:center;}
+.pay-trust .pt-logos img{width:104px;height:40px;object-fit:contain;background:#fff;border-radius:7px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.28);}
+@media(max-width:600px){.pay-trust .pt-logos img{width:92px;height:36px;padding:5px 9px;}}
 /* Badge de % de descuento junto al precio de reserva */
 .pb-off{display:inline-block;font-size:.46em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#e8b464;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
 /* Regalo por reservar (tapones de oído DEUS): solo visible en modo reserva */
@@ -2524,7 +2528,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p class="review-text">"Entrenando mejor con DEUS Band 🔝"</p>
         <div class="review-author"><span class="review-ig">@_cristobalnanning</span> · Instagram</div>
       </div>
-      <div class="review-card">
+      <!-- Oculta por defecto: aparece al apretar "Ver más reseñas" -->
+      <div class="review-card review-extra">
         <img class="review-photo" src="img/resena-cffs.webp" alt="DEUS Band en la muneca en la cancha — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Las mejores mediciones gracias a DEUS Band 💪🏽"</p>
@@ -2950,6 +2955,45 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   </section>
 
+  <!-- MONITOREO 24/7 + ESPECIFICACIONES (unificadas, bajo los botones de descarga) -->
+  <section class="monitor">
+    <div class="monitor-head">
+      <div class="monitor-kicker">Monitoreo 24/7</div>
+      <h2 class="monitor-title">Lo que DEUS Band mide</h2>
+    </div>
+    <!-- Destacados (antes seccion aparte de Especificaciones) -->
+    <div class="specs-sec specs-in-how">
+      <ul class="spec-list">
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
+    </ul>
+    </div>
+    <div class="monitor-grid">
+      <div class="metric"><span class="num">01</span><span class="lbl">Frecuencia cardíaca</span></div>
+      <div class="metric"><span class="num">02</span><span class="lbl">Saturación de O₂ (SpO₂)</span></div>
+      <div class="metric"><span class="num">03</span><span class="lbl">Recuperación</span></div>
+      <div class="metric"><span class="num">04</span><span class="lbl">HRV · Variabilidad cardíaca</span></div>
+      <div class="metric"><span class="num">05</span><span class="lbl">Nivel de estrés</span></div>
+      <div class="metric"><span class="num">06</span><span class="lbl">Calidad del sueño</span></div>
+      <div class="metric m-extra"><span class="num">07</span><span class="lbl">Pasos y calorías</span></div>
+      <div class="metric m-extra"><span class="num">08</span><span class="lbl">+100 modos deportivos</span></div>
+      <div class="metric m-extra"><span class="num">09</span><span class="lbl">Ritmo, velocidad y cadencia</span></div>
+      <div class="metric m-extra"><span class="num">10</span><span class="lbl">Notificaciones por vibración · llamadas, mensajes y alarma</span></div>
+    </div>
+    <button class="btn-metrics" id="btnMetrics" onclick="toggleMetrics()">Ver todas las métricas (+4)</button>
+  </section>
+  <script>
+  function toggleMetrics(){
+    var sec=document.querySelector('.monitor');
+    var btn=document.getElementById('btnMetrics');
+    sec.classList.toggle('open');
+    btn.textContent=sec.classList.contains('open')?'Ver menos':'Ver todas las métricas (+4)';
+  }
+  </script>
+
+
   <!-- CARACTERÍSTICAS (bajadas: las reseñas van primero) -->
   <section class="how">
     <!-- Carrusel: 3 características cambiables (imagen cuadrada arriba, texto abajo) -->
@@ -3076,44 +3120,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   })();
   </script>
 
-  <!-- ESPECIFICACIONES CLAVE -->
-  <section class="specs-sec specs-in-how">
-    <ul class="spec-list">
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
-    </ul>
-  </section>
 
-  <!-- MONITOREO 24/7 -->
-  <section class="monitor">
-    <div class="monitor-head">
-      <div class="monitor-kicker">Monitoreo 24/7</div>
-      <h2 class="monitor-title">Lo que DEUS Band mide</h2>
-    </div>
-    <div class="monitor-grid">
-      <div class="metric"><span class="num">01</span><span class="lbl">Frecuencia cardíaca</span></div>
-      <div class="metric"><span class="num">02</span><span class="lbl">Saturación de O₂ (SpO₂)</span></div>
-      <div class="metric"><span class="num">03</span><span class="lbl">Recuperación</span></div>
-      <div class="metric"><span class="num">04</span><span class="lbl">HRV · Variabilidad cardíaca</span></div>
-      <div class="metric"><span class="num">05</span><span class="lbl">Nivel de estrés</span></div>
-      <div class="metric"><span class="num">06</span><span class="lbl">Calidad del sueño</span></div>
-      <div class="metric m-extra"><span class="num">07</span><span class="lbl">Pasos y calorías</span></div>
-      <div class="metric m-extra"><span class="num">08</span><span class="lbl">+100 modos deportivos</span></div>
-      <div class="metric m-extra"><span class="num">09</span><span class="lbl">Ritmo, velocidad y cadencia</span></div>
-      <div class="metric m-extra"><span class="num">10</span><span class="lbl">Notificaciones por vibración · llamadas, mensajes y alarma</span></div>
-    </div>
-    <button class="btn-metrics" id="btnMetrics" onclick="toggleMetrics()">Ver todas las métricas (+4)</button>
-  </section>
-  <script>
-  function toggleMetrics(){
-    var sec=document.querySelector('.monitor');
-    var btn=document.getElementById('btnMetrics');
-    sec.classList.toggle('open');
-    btn.textContent=sec.classList.contains('open')?'Ver menos':'Ver todas las métricas (+4)';
-  }
-  </script>
 
 
   <!-- MODAL RESEÑA -->
