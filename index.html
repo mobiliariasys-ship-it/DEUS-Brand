@@ -480,6 +480,8 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .price-block{margin-bottom:6px;}
 .price-old{margin-bottom:18px;}
 .price-block .price-save{vertical-align:middle;margin-left:12px;font-size:.72rem;padding:5px 12px;}
+.price-block .price-was{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#9a9a9a;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.4);text-decoration-thickness:1.5px;margin-left:12px;vertical-align:middle;}
+.fc-price .price-save{margin-left:10px;font-size:.6rem;padding:3px 9px;vertical-align:middle;}
 .reassure-item small{display:block;color:#8f8f8f;font-size:.63rem;font-weight:400;margin-top:3px;line-height:1.45;}
 .app-badge-phones{margin-left:auto;height:82px;width:auto;border-radius:10px;flex-shrink:0;}
 .day-card{margin-top:16px;border:1px solid rgba(105,196,109,.35);border-radius:14px;padding:18px 18px 16px;text-align:center;background:rgba(105,196,109,.03);}
@@ -3357,14 +3359,17 @@ function aplicarReserva() {
   // Envío gratis activo: se muestra sello verde junto al precio.
   const oferta = ofertaActiva() && !on;
   const pb = document.querySelector('.price-block');
-  // Precio $54.990, sin precio tachado.
+  // Precio $54.990 con ancla tachada $62.990 (-13%) — SOLO visual: el precio
+  // que se cobra y el 'value' que va al píxel/CAPI siguen siendo 54.990.
+  const ancla = ' <span class="price-was">$62.990</span> <span class="price-save">-13%</span>';
   if (pb) pb.innerHTML = oferta
-    ? '<sup>$</sup>54.990 <span class="price-offer-tag">ENVÍO GRATIS</span>'
-    : '<sup>$</sup>54.990';
+    ? '<sup>$</sup>54.990' + ancla + ' <span class="price-offer-tag">ENVÍO GRATIS</span>'
+    : '<sup>$</sup>54.990' + ancla;
   const fc = document.querySelector('.fc-price');
+  const fcAncla = ' <span class="fold">$62.990</span> <span class="price-save">-13%</span>';
   if (fc) fc.innerHTML = oferta
-    ? '$54.990 <small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>'
-    : '$54.990';
+    ? '$54.990' + fcAncla + '<small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>'
+    : '$54.990' + fcAncla;
   const sb = document.querySelector('.sb-price');
   if (sb) sb.innerHTML = on
     ? '<b>$54.990</b>'
