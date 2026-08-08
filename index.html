@@ -454,6 +454,23 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .spec-list li:hover{border-color:#3a3a3a;transform:translateX(2px);}
 .spec-icon{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:40px;height:40px;border-radius:10px;background:#1c1c1c;border:1px solid #2d2d2d;}
 .spec-label{display:block;font-weight:700;color:var(--white);font-size:.86rem;margin-bottom:2px;letter-spacing:.2px;}
+/* Especificaciones DENTRO de la sección unificada "Lo que DEUS Band mide":
+   toman el mismo lenguaje visual que las métricas numeradas (mismo radio,
+   padding, grilla y separación) para que las dos listas se lean como un solo
+   bloque y no como dos formatos distintos pegados. */
+.monitor .specs-sec{max-width:none;padding:0;margin:0 0 8px;}
+.monitor .specs-sec .spec-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:0;}
+.monitor .specs-sec .spec-list li{display:flex;flex-direction:row;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:.7rem;line-height:1.45;color:#b8b8b8;transform:none!important;}
+.monitor .specs-sec .spec-list li:hover{border-color:#3a3a3a;}
+.monitor .specs-sec .spec-icon{width:32px;height:32px;border-radius:8px;}
+.monitor .specs-sec .spec-icon svg{width:16px;height:16px;}
+.monitor .specs-sec .spec-label{font-size:.78rem;margin-bottom:3px;}
+/* En móvil las métricas usan padding/gap más apretados: las specs los copian. */
+@media(max-width:600px){
+  .monitor .specs-sec .spec-list li{padding:11px 12px;gap:9px;}
+  .monitor .specs-sec .spec-icon{width:28px;height:28px;border-radius:7px;}
+  .monitor .specs-sec .spec-icon svg{width:15px;height:15px;}
+}
 
 .offer-kicker{font-size:.66rem;letter-spacing:2.5px;text-transform:uppercase;color:#d9bf92;margin-bottom:10px;font-weight:600;}
 .price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;color:#c9c9c9;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);text-decoration-thickness:1.5px;margin-left:8px;vertical-align:middle;}.price-save{display:inline-block;font-family:'DM Sans',sans-serif;font-size:.66rem;letter-spacing:1px;color:#d9bf92;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:3px 10px;margin-left:10px;vertical-align:middle;font-weight:600;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:2px;color:#7fd589;background:rgba(105,196,109,.12);border:1px solid rgba(105,196,109,.5);border-radius:6px;padding:4px 10px;vertical-align:middle;margin-left:8px;font-weight:600;}.offer-cd{display:inline-flex;gap:4px;vertical-align:middle;margin-left:8px;}.offer-cd .cdb{display:inline-flex;flex-direction:column;align-items:center;background:#1c1c1c;border:1px solid #3a3a3a;border-radius:6px;padding:3px 6px 2px;min-width:26px;}.offer-cd .cdb b{font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:#d9bf92;line-height:1;letter-spacing:.5px;}.offer-cd .cdb small{font-family:'DM Sans',sans-serif;font-size:.42rem;letter-spacing:.5px;color:#909090;text-transform:uppercase;margin-top:1px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:22px;}
