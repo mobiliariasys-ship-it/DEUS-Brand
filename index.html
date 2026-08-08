@@ -624,7 +624,10 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
    se confundan. WhatsApp = hablar con una persona; este = respuesta al toque. */
 /* Botón del asistente. Ocupa la esquina inferior derecha, ya que el WhatsApp
    flotante está oculto (el contacto humano vive dentro del propio chat). */
-.chat-fab{position:fixed;bottom:20px;right:20px;display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#e7cf9c 0%,#d9bf92 50%,#c2a674 100%);color:#141414;padding:13px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.3);box-shadow:0 8px 24px rgba(0,0,0,.45),0 3px 14px rgba(217,191,146,.3),inset 0 1px 0 rgba(255,255,255,.4);z-index:900;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.4px;transition:transform .15s,box-shadow .2s;}
+.chat-fab{position:fixed;bottom:20px;right:20px;display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#e7cf9c 0%,#d9bf92 50%,#c2a674 100%);color:#141414;padding:13px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.3);box-shadow:0 8px 24px rgba(0,0,0,.45),0 3px 14px rgba(217,191,146,.3),inset 0 1px 0 rgba(255,255,255,.4);z-index:900;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.4px;transition:transform .15s,box-shadow .2s,opacity .35s ease;}
+/* Entrada suave: en la primera carga NO aparece encima del precio; entra al
+   primer scroll (o a los 1.5s). Evita que tape la fila del precio en móvil. */
+.chat-fab:not(.fab-in){opacity:0;transform:translateY(10px);pointer-events:none;}
 .chat-fab:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 30px rgba(0,0,0,.4),0 6px 22px rgba(217,191,146,.45),inset 0 1px 0 rgba(255,255,255,.4);}
 .chat-fab svg{width:23px;height:23px;flex-shrink:0;}
 .chat-fab span{white-space:nowrap;}
@@ -3819,6 +3822,18 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   }
   window.addEventListener('scroll',onScroll,{passive:true});
   onScroll();
+})();
+
+// Botón "IA DEUS": entra con fade tras el primer scroll (o a los 1.5s) para no
+// quedar encima del precio en la primera carga (viewport corto en móvil).
+(function(){
+  var fab=document.getElementById('chat-fab');
+  if(!fab) return;
+  var listo=false;
+  function mostrar(){ if(listo) return; listo=true; fab.classList.add('fab-in'); window.removeEventListener('scroll',onS); }
+  function onS(){ if(window.scrollY>40) mostrar(); }
+  window.addEventListener('scroll',onS,{passive:true});
+  setTimeout(mostrar,1500);
 })();
 
 // Refuerzo de autoplay: iPhone en ahorro de batería (y algunos Android)
