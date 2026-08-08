@@ -1110,6 +1110,55 @@ body.sb-on .wa-float{bottom:82px;}
 /* En pantallas angostas se acorta el texto para que la linea no se parta */
 @media(max-width:430px){.proof-long{display:none;}}
 .proof-arrow{color:#777;font-size:.9rem;}
+
+/* ══ ZONA DE COMPRA REORGANIZADA ══
+   Va al final de la hoja a propósito: gana a las reglas anteriores de
+   .reassure / .pay-trust sin tener que tocarlas una por una. */
+/* Prueba social arriba del todo, pegada al título */
+.proof-line{margin:9px 0 18px;}
+/* La caja que agrupa color + precio + envío + botón + medios de pago */
+.buybox{border:1px solid rgba(255,255,255,.11);border-radius:18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.008));
+  padding:18px 16px 16px;margin-bottom:16px;}
+.buybox .colors-row{margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.07);}
+/* Dentro de la caja hay 32px menos de ancho: el precio se ajusta para que
+   $54.990 + $64.990 + -15% entren SIEMPRE en una sola línea. */
+.buybox .price-block{white-space:nowrap;margin-bottom:11px;}
+.buybox .price-block .price-was{font-size:1.3rem;margin-left:10px;}
+.buybox .price-block .price-save{font-size:.64rem;padding:4px 9px;margin-left:9px;}
+@media(max-width:430px){
+  .buybox .price-block{font-size:2.3rem;}
+  .buybox .price-block sup{font-size:1rem;margin-top:7px;}
+  .buybox .price-block .price-was{font-size:1.12rem;margin-left:8px;}
+  .buybox .price-block .price-save{font-size:.57rem;padding:3px 8px;margin-left:7px;}
+}
+.color-now{margin-left:auto;font-size:.68rem;color:#9a9a9a;letter-spacing:.5px;}
+/* Envío gratis: línea fina, ya no un recuadro que compite con el botón */
+.ship-line{display:flex;align-items:center;gap:7px;font-size:.7rem;letter-spacing:1.2px;
+  color:#7fd589;font-weight:700;margin:0 0 16px;}
+.ship-line:empty{display:none;}
+.ship-line svg{width:15px;height:15px;stroke:#7fd589;fill:none;stroke-width:1.9;flex-shrink:0;}
+/* Medios de pago: en una línea y pegados al botón */
+.pay-trust{flex-direction:row;justify-content:center;gap:13px;margin:12px auto 0;}
+.pay-trust .pt-lbl{font-size:.56rem;letter-spacing:1.8px;color:#6f6f6f;}
+.pay-trust .pt-logos{gap:15px;}
+.pay-trust .pt-logos img{opacity:.68;}
+.pay-trust .pt-logos img[alt="Webpay"]{height:17px;}
+.pay-trust .pt-logos img[alt="Mercado Pago"]{height:27px;}
+/* Confianza: 3 filas limpias (título izquierda · detalle derecha) */
+.reassure{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.07);
+  border-radius:14px;overflow:hidden;margin:16px 0 0;}
+.reassure-item{display:flex;flex-direction:row;align-items:center;gap:12px;
+  background:#101010;padding:13px 15px;}
+.reassure-item svg{flex-shrink:0;}
+.reassure-item b{color:#fff;font-weight:600;font-size:.76rem;white-space:nowrap;}
+.reassure-item small{display:inline;color:#828282;font-size:.7rem;font-weight:400;
+  margin:0 0 0 auto;padding-left:10px;text-align:right;line-height:1.3;white-space:nowrap;}
+@media(max-width:430px){
+  .reassure-item{padding:12px 13px;gap:10px;}
+  .reassure-item b{font-size:.7rem;}
+  .reassure-item small{font-size:.62rem;padding-left:8px;}
+}
 /* Modal de reseñas: se ven sin salir de la zona de compra */
 .reviews-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1600;align-items:center;justify-content:center;padding:20px;}
 .reviews-modal.show{display:flex;}
@@ -1547,42 +1596,55 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="info">
       <div class="hero-tag">Smartband · Pulsera Inteligente</div>
       <h1 class="hero-name">DEUS Band</h1>
-      <div class="colors-row">
-        <span class="clabel">Color</span>
-        <div class="cdot active" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
-        <div class="cdot" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
-        <div class="cdot" style="background:#e8b4bc;" title="Rosado" onclick="setColor('rosada',this)"></div>
+      <!-- Prueba social ARRIBA: las estrellas convencen antes del precio. -->
+      <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas">
+        <span class="proof-stars">★★★★★</span> <b>5.0</b> <span class="proof-count">(<span id="rating-count">7</span>)</span> · reseñas<span class="proof-long"> de la comunidad</span> <span class="proof-arrow">›</span>
       </div>
 
-      <div class="price-block"><sup>$</sup>54.990</div>
-      <div class="stock-note" id="stock-note" style="display:none;"></div>
-      <div class="cta-row">
-        <button class="btn-p" data-buy="Comprar ahora" data-reserve="Comprar ahora" onclick="abrirCheckout()">Comprar ahora</button>
-        <button class="btn-cart" onclick="abrirDialogoCarrito()" title="Agregar al carrito">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-        </button>
-        <!-- Medios de pago DENTRO de la grilla del CTA, en la columna del botón
-             de comprar: así quedan centrados justo debajo de él (y no del
-             conjunto botón + carrito). Van monocromos y sin caja blanca para
-             que se lean como sellos informativos y NO como botones de pago. -->
-        <div class="pay-trust">
-          <span class="pt-lbl">Pago seguro con</span>
-          <div class="pt-logos">
-            <img src="webpay_mono.png" alt="Webpay" loading="lazy" decoding="async">
-            <img src="mp_mono.png" alt="Mercado Pago" loading="lazy" decoding="async">
+      <!-- CAJA DE COMPRA: color + precio + envío + botón + medios de pago van
+           TODOS dentro del mismo recuadro. Antes eran bloques sueltos con el
+           mismo peso visual y la zona se leía desordenada. -->
+      <div class="buybox">
+        <div class="colors-row">
+          <span class="clabel">Color</span>
+          <div class="cdot active" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
+          <div class="cdot" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
+          <div class="cdot" style="background:#e8b4bc;" title="Rosado" onclick="setColor('rosada',this)"></div>
+          <span class="color-now" id="color-now">Negro</span>
+        </div>
+
+        <!-- Precio y envío ya vienen pintados en el HTML: aplicarReserva() sólo
+             corre después del fetch de /stock, así que si el backend tarda el
+             precio igual se ve completo (ancla + descuento + envío gratis). -->
+        <div class="price-block"><sup>$</sup>54.990 <span class="price-was">$64.990</span> <span class="price-save">-15%</span></div>
+        <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
+        <div class="stock-note" id="stock-note" style="display:none;"></div>
+        <div class="cta-row">
+          <button class="btn-p" data-buy="Comprar ahora" data-reserve="Comprar ahora" onclick="abrirCheckout()">Comprar ahora</button>
+          <button class="btn-cart" onclick="abrirDialogoCarrito()" title="Agregar al carrito">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          </button>
+          <!-- Medios de pago DENTRO de la grilla del CTA, en la columna del botón
+               de comprar: así quedan centrados justo debajo de él (y no del
+               conjunto botón + carrito). Van monocromos y sin caja blanca para
+               que se lean como sellos informativos y NO como botones de pago. -->
+          <div class="pay-trust">
+            <span class="pt-lbl">Pago seguro</span>
+            <div class="pt-logos">
+              <img src="webpay_mono.png" alt="Webpay" loading="lazy" decoding="async">
+              <img src="mp_mono.png" alt="Mercado Pago" loading="lazy" decoding="async">
+            </div>
           </div>
         </div>
       </div>
       <!-- Caja de tapones de regalo — retirada: la oferta era solo para reserva. -->
 
-      <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas" style="margin-top:14px;">
-        <span class="proof-stars">★★★★★</span> <b>5.0</b> <span class="proof-count">(<span id="rating-count">7</span>)</span> · reseñas<span class="proof-long"> de la comunidad</span> <span class="proof-arrow">›</span>
-      </div>
-
+      <!-- Confianza en filas: antes eran 3 columnas apretadas que partían las
+           palabras en dos líneas. Ahora título a la izquierda, detalle a la derecha. -->
       <div class="reassure">
-        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Pago 100% seguro</b><small>Webpay por Flow y Mercado Pago</small></span></div>
-        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg><span><b>Envío a todo Chile</b><small>con seguimiento Starken</small></span></div>
-        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span><b>Garantía de satisfacción 30 días</b><small>Devolución fácil y sin preguntas</small></span></div>
+        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><b>Pago 100% seguro</b><small>Webpay · Mercado Pago</small></div>
+        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg><b>Envío a todo Chile</b><small>Seguimiento Starken</small></div>
+        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><b>Garantía 30 días</b><small>Devolución sin preguntas</small></div>
       </div>
 
       <div class="resist-badge app-badge">
@@ -3327,6 +3389,10 @@ function updateStockUI() {
   const pageColor = colorOrder[currentSlide];
   const stockNote = document.getElementById('stock-note');
   if (stockNote) { const t = textoStock(pageColor); stockNote.textContent = t; stockNote.style.display = t ? '' : 'none'; }
+  // Nombre del color elegido, a la derecha de los círculos: confirma qué
+  // color se está comprando sin tener que adivinar por el punto marcado.
+  const cn = document.getElementById('color-now');
+  if (cn) { const n = COLOR_LABEL[pageColor] || ''; cn.textContent = n ? n.charAt(0).toUpperCase() + n.slice(1) : ''; }
   // Modal de CHECKOUT: refleja el color BLOQUEADO del checkout (checkoutColor),
   // no la posición del carrusel — así lo que se ve al pagar es lo que se cobra.
   const cc = (typeof checkoutColor !== 'undefined' && checkoutColor) ? checkoutColor : pageColor;
@@ -3365,9 +3431,13 @@ function aplicarReserva() {
   // Precio $54.990 con ancla tachada $62.990 (-13%) — SOLO visual: el precio
   // que se cobra y el 'value' que va al píxel/CAPI siguen siendo 54.990.
   const ancla = ' <span class="price-was">$64.990</span> <span class="price-save">-15%</span>';
-  if (pb) pb.innerHTML = oferta
-    ? '<sup>$</sup>54.990' + ancla + ' <span class="price-offer-tag">ENVÍO GRATIS</span>'
-    : '<sup>$</sup>54.990' + ancla;
+  if (pb) pb.innerHTML = '<sup>$</sup>54.990' + ancla;
+  // El envío gratis ya no va pegado al precio: tiene su propia línea fina
+  // debajo, para no competir con el botón de comprar.
+  const sl = document.getElementById('ship-line');
+  if (sl) sl.innerHTML = oferta
+    ? '<svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE'
+    : '';
   const fc = document.querySelector('.fc-price');
   const fcAncla = ' <span class="fold">$64.990</span> <span class="price-save">-15%</span>';
   if (fc) fc.innerHTML = oferta
