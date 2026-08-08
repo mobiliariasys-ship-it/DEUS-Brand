@@ -1062,10 +1062,23 @@ body.sb-on .wa-float{bottom:82px;}
    Cada logo va en una caja del MISMO tamaño con object-fit:contain, así se ven
    parejos aunque las imágenes tengan proporciones distintas (Webpay es 2:1 y
    Mercado Pago casi cuadrado). */
-.pay-trust{grid-column:1;display:flex;justify-content:center;margin:12px auto 2px;}
-.pay-trust .pt-logos{display:flex;align-items:center;gap:10px;justify-content:center;}
-.pay-trust .pt-logos img{width:104px;height:40px;object-fit:contain;background:#fff;border-radius:7px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.28);}
-@media(max-width:600px){.pay-trust .pt-logos img{width:92px;height:36px;padding:5px 9px;}}
+/* Sin caja blanca ni sombra: los logos van monocromos sobre el fondo oscuro,
+   con una etiqueta que aclara que son medios de pago aceptados. Antes, las
+   cajas blancas los hacían parecer botones de pago clickeables. */
+.pay-trust{grid-column:1;display:flex;flex-direction:column;align-items:center;gap:7px;margin:14px auto 2px;}
+.pay-trust .pt-lbl{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:#7c7c85;}
+.pay-trust .pt-logos{display:flex;align-items:center;gap:20px;justify-content:center;}
+.pay-trust .pt-logos img{width:auto;opacity:.85;pointer-events:none;}
+/* Alturas distintas a propósito: el logo de Webpay es horizontal y el de
+   Mercado Pago es apilado (ícono sobre el texto), así que necesita más alto
+   para que ambos se vean del mismo tamaño óptico. */
+.pay-trust .pt-logos img[alt="Webpay"]{height:21px;}
+.pay-trust .pt-logos img[alt="Mercado Pago"]{height:34px;}
+@media(max-width:600px){
+  .pay-trust .pt-logos{gap:16px;}
+  .pay-trust .pt-logos img[alt="Webpay"]{height:19px;}
+  .pay-trust .pt-logos img[alt="Mercado Pago"]{height:31px;}
+}
 /* Badge de % de descuento junto al precio de reserva */
 .pb-off{display:inline-block;font-size:.46em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#e8b464;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
 /* Regalo por reservar (tapones de oído DEUS): solo visible en modo reserva */
@@ -1545,11 +1558,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </button>
         <!-- Medios de pago DENTRO de la grilla del CTA, en la columna del botón
              de comprar: así quedan centrados justo debajo de él (y no del
-             conjunto botón + carrito). -->
+             conjunto botón + carrito). Van monocromos y sin caja blanca para
+             que se lean como sellos informativos y NO como botones de pago. -->
         <div class="pay-trust">
+          <span class="pt-lbl">Pago seguro con</span>
           <div class="pt-logos">
-            <img src="webpay_logo.png" alt="Webpay" loading="lazy" decoding="async">
-            <img src="mp_logo_azul.png" alt="Mercado Pago" loading="lazy" decoding="async">
+            <img src="webpay_mono.png" alt="Webpay" loading="lazy" decoding="async">
+            <img src="mp_mono.png" alt="Mercado Pago" loading="lazy" decoding="async">
           </div>
         </div>
       </div>
