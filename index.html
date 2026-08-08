@@ -1041,15 +1041,9 @@ body.sb-on .wa-float{bottom:82px;}
 .co-price-now{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;line-height:1;}
 /* Precio "normal" tachado que acompaña al precio de reserva ($54.990 / $54.990) */
 .pb-old{font-size:.5em;color:#8a8a8a;text-decoration:line-through;margin-left:8px;font-family:'DM Sans',sans-serif;letter-spacing:0;vertical-align:middle;font-weight:400;}
-/* Bloque de confianza bajo el botón de compra: prueba social + pago + cuotas + logos,
-   agrupados en un mismo recuadro sutil para que se vea integrado, no suelto. */
-.pay-trust{display:flex;flex-direction:column;gap:7px;align-items:center;margin:16px auto 4px;padding:13px 18px;max-width:370px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;}
-.pay-trust .pt-social{font-size:.82rem;color:var(--silver);letter-spacing:.3px;display:flex;align-items:center;gap:7px;}
-.pay-trust .pt-social b{color:#e8e8e8;}
-.pay-trust .pt-stars{color:#f5c518;letter-spacing:1.5px;}
-.pay-trust .pt-secure{font-size:.7rem;color:#9a9a9a;letter-spacing:.3px;text-align:center;}
-.pay-trust .pt-cuotas{color:#7fd589;font-weight:600;}
-.pay-trust .pt-logos{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:3px;}
+/* Medios de pago bajo el botón de compra: solo los logos, sin recuadro. */
+.pay-trust{display:flex;justify-content:center;margin:14px auto 4px;}
+.pay-trust .pt-logos{display:flex;align-items:center;gap:8px;justify-content:center;}
 .pay-trust .pt-logos img{height:26px;width:auto;background:#fff;border-radius:5px;padding:4px 8px;}
 /* Badge de % de descuento junto al precio de reserva */
 .pb-off{display:inline-block;font-size:.46em;font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:.5px;color:#e8b464;vertical-align:middle;margin-left:8px;text-transform:none;line-height:1;}
@@ -1529,11 +1523,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         </button>
       </div>
-      <!-- Confianza bajo el botón: prueba social + pago seguro + cuotas + logos,
-           todo dentro de un mismo bloque. Es HTML estático, no toca el píxel. -->
+      <!-- Solo los medios de pago bajo el botón, sin recuadro. -->
       <div class="pay-trust">
-        <div class="pt-social"><span class="pt-stars">★★★★★</span><b>+200 vendidas</b></div>
-        <div class="pt-secure">🔒 Pago 100% seguro · <span class="pt-cuotas">Hasta 3 cuotas sin interés</span></div>
         <div class="pt-logos">
           <img src="webpay_logo.png" alt="Webpay" loading="lazy" decoding="async">
           <img src="mp_logo_azul.png" alt="Mercado Pago" loading="lazy" decoding="async">
@@ -2501,6 +2492,99 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </div>
 
+  <!-- RESEÑAS: subidas para darles más prioridad, justo bajo el sensor/360° -->
+  <section class="reviews">
+    <div class="reviews-head">
+      <div class="reviews-kicker">Lo que dicen</div>
+      <h2 class="reviews-title">Reseñas de la comunidad</h2>
+      <div class="reviews-sub">★★★★★ · Comentarios de Instagram</div>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <img class="review-photo" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Muy bueno, llegó en el tiempo correspondiente y la atención 10 de 10, y del producto nada que decir, muy bueno."</p>
+        <div class="review-author"><span class="review-ig">@Pdrozzzz</span> · Instagram</div>
+      </div>
+      <div class="review-card">
+        <img class="review-photo" src="img/resena-nicolas.webp" alt="DEUS Band en la muñeca al aire libre — reseña de Nicolas" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Superó mis expectativas por mucho!! Muy cómodo para dormir y salir a trotar!!"</p>
+        <div class="review-author"><span class="review-ig">@Elhayecknico</span> · Instagram</div>
+      </div>
+      <div class="review-card">
+        <img class="review-photo" src="img/resena-auto.webp" alt="DEUS Band en la muñeca al volante del auto — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Súper cómoda, me gusta cómo queda. Es súper estética y precisa 👌🏽"</p>
+        <div class="review-author"><span class="review-ig">@robertogonzGtr34</span> · Instagram</div>
+      </div>
+      <div class="review-card">
+        <img class="review-photo" src="img/resena-cristobal.webp" alt="DEUS Band en la muneca en el gimnasio — reseña de Cristóbal Nanning" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Entrenando mejor con DEUS Band 🔝"</p>
+        <div class="review-author"><span class="review-ig">@_cristobalnanning</span> · Instagram</div>
+      </div>
+      <div class="review-card">
+        <img class="review-photo" src="img/resena-cffs.webp" alt="DEUS Band en la muneca en la cancha — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Las mejores mediciones gracias a DEUS Band 💪🏽"</p>
+        <div class="review-author"><span class="review-ig">@cffs_kvbir</span> · Instagram</div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Llegó rápido y la calidad es mejor de lo que esperaba. La app es simple y clara, la recomiendo 100%."</p>
+        <div class="review-author"><span class="review-ig">@andres.fuentesg</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"La batería me dura muchísimo y lo de medir el sueño es adictivo. Súper cómoda para dormir con ella."</p>
+        <div class="review-author"><span class="review-ig">@marcelo.rojas_</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Me encanta que no tenga pantalla, no me distrae y el diseño es elegante. Justo lo que buscaba."</p>
+        <div class="review-author"><span class="review-ig">@cristian_vera.cl</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Excelente producto, no solo monitorea mi sueño, sino que también me ayuda a registrar mi frecuencia cardíaca y cumplir con mis objetivos en el gimnasio."</p>
+        <div class="review-author"><span class="review-ig">@sebastian.revil</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Una buena compra y muy funcional."</p>
+        <div class="review-author"><span class="review-ig">@william_alejandro_c</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Está brutal, funciona perfecto 👌🏻"</p>
+        <div class="review-author"><span class="review-ig">@clau.ossaf</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Recomendadísimo!!! 🔥"</p>
+        <div class="review-author"><span class="review-ig">@joaquin.pfok</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Espectacular la banda, me ha ayudado mucho con los datos, muy precisos 👌🏽"</p>
+        <div class="review-author"><span class="review-ig">@pedraza_raul</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Funciona perfecto! Soy de región y llegó sin problemas!!! Me gustó que no se sienta!!! La iremos probando, muchas gracias!!! 🔥🔥🔥"</p>
+        <div class="review-author"><span class="review-ig">@e._maya</span> · Instagram</div>
+      </div>
+      <div class="review-card review-extra">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Masacre el producto, recomendado."</p>
+        <div class="review-author"><span class="review-ig">@rodrigo.andres.cg</span> · Instagram</div>
+      </div>
+    </div>
+    <div class="reviews-more"><button class="btn-review" id="btn-mas-resenas" onclick="verMasResenas(this)">Ver más reseñas</button></div>
+    <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
+  </section>
+
   <!-- COMO FUNCIONA -->
   <section class="how" id="tecnologia">
     <div class="how-head">
@@ -2717,97 +2801,153 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   })();
   </script>
 
-  <!-- RESEÑAS: subidas para darles más prioridad, justo bajo el sensor/360° -->
-  <section class="reviews">
-    <div class="reviews-head">
-      <div class="reviews-kicker">Lo que dicen</div>
-      <h2 class="reviews-title">Reseñas de la comunidad</h2>
-      <div class="reviews-sub">★★★★★ · Comentarios de Instagram</div>
+  <!-- APP -->
+  <section class="app-sec" id="app">
+    <!-- Logo Da Halo arriba del título "La App" -->
+    <div style="text-align:center;margin:0 auto 12px;">
+      <img src="img/img-c9eeead6.webp" alt="Da Halo" width="72" height="72" loading="lazy" decoding="async" style="width:72px;height:72px;border-radius:16px;box-shadow:0 6px 22px rgba(0,0,0,.45);object-fit:cover;display:inline-block;">
     </div>
-    <div class="reviews-grid">
-      <div class="review-card">
-        <img class="review-photo" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Muy bueno, llegó en el tiempo correspondiente y la atención 10 de 10, y del producto nada que decir, muy bueno."</p>
-        <div class="review-author"><span class="review-ig">@Pdrozzzz</span> · Instagram</div>
-      </div>
-      <div class="review-card">
-        <img class="review-photo" src="img/resena-nicolas.webp" alt="DEUS Band en la muñeca al aire libre — reseña de Nicolas" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Superó mis expectativas por mucho!! Muy cómodo para dormir y salir a trotar!!"</p>
-        <div class="review-author"><span class="review-ig">@Elhayecknico</span> · Instagram</div>
-      </div>
-      <div class="review-card">
-        <img class="review-photo" src="img/resena-auto.webp" alt="DEUS Band en la muñeca al volante del auto — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Súper cómoda, me gusta cómo queda. Es súper estética y precisa 👌🏽"</p>
-        <div class="review-author"><span class="review-ig">@robertogonzGtr34</span> · Instagram</div>
-      </div>
-      <div class="review-card">
-        <img class="review-photo" src="img/resena-cristobal.webp" alt="DEUS Band en la muneca en el gimnasio — reseña de Cristóbal Nanning" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Entrenando mejor con DEUS Band 🔝"</p>
-        <div class="review-author"><span class="review-ig">@_cristobalnanning</span> · Instagram</div>
-      </div>
-      <div class="review-card">
-        <img class="review-photo" src="img/resena-cffs.webp" alt="DEUS Band en la muneca en la cancha — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Las mejores mediciones gracias a DEUS Band 💪🏽"</p>
-        <div class="review-author"><span class="review-ig">@cffs_kvbir</span> · Instagram</div>
-      </div>
-      <div class="review-card">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Llegó rápido y la calidad es mejor de lo que esperaba. La app es simple y clara, la recomiendo 100%."</p>
-        <div class="review-author"><span class="review-ig">@andres.fuentesg</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"La batería me dura muchísimo y lo de medir el sueño es adictivo. Súper cómoda para dormir con ella."</p>
-        <div class="review-author"><span class="review-ig">@marcelo.rojas_</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Me encanta que no tenga pantalla, no me distrae y el diseño es elegante. Justo lo que buscaba."</p>
-        <div class="review-author"><span class="review-ig">@cristian_vera.cl</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Excelente producto, no solo monitorea mi sueño, sino que también me ayuda a registrar mi frecuencia cardíaca y cumplir con mis objetivos en el gimnasio."</p>
-        <div class="review-author"><span class="review-ig">@sebastian.revil</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Una buena compra y muy funcional."</p>
-        <div class="review-author"><span class="review-ig">@william_alejandro_c</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Está brutal, funciona perfecto 👌🏻"</p>
-        <div class="review-author"><span class="review-ig">@clau.ossaf</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Recomendadísimo!!! 🔥"</p>
-        <div class="review-author"><span class="review-ig">@joaquin.pfok</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Espectacular la banda, me ha ayudado mucho con los datos, muy precisos 👌🏽"</p>
-        <div class="review-author"><span class="review-ig">@pedraza_raul</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Funciona perfecto! Soy de región y llegó sin problemas!!! Me gustó que no se sienta!!! La iremos probando, muchas gracias!!! 🔥🔥🔥"</p>
-        <div class="review-author"><span class="review-ig">@e._maya</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Masacre el producto, recomendado."</p>
-        <div class="review-author"><span class="review-ig">@rodrigo.andres.cg</span> · Instagram</div>
+    <!-- 1. La App + 100% gratis (arriba de la imagen) -->
+    <div class="app-kicker">La App</div>
+    <div class="app-free">✓ 100% gratis · Sin suscripciones</div>
+
+    <!-- 2. Pantallas de la app: carrusel 3D flotante -->
+    <div class="app-stage" id="appStage">
+      <img class="fan-ph" src="img/app-rot-1.webp" alt="App Da Halo — resumen del día" loading="lazy" decoding="async">
+      <img class="fan-ph" src="img/app-rot-2.webp" alt="App Da Halo — análisis del sueño" loading="lazy" decoding="async">
+      <img class="fan-ph" src="img/app-rot-3.webp" alt="App Da Halo — actividad y pasos" loading="lazy" decoding="async">
+      <img class="fan-ph" src="img/app-rot-4.webp" alt="App Da Halo — entrenamiento con GPS" loading="lazy" decoding="async">
+      <button class="hold-arrow l" id="appArrowL" type="button" aria-label="Pantalla anterior">‹</button>
+      <button class="hold-arrow r" id="appArrowR" type="button" aria-label="Pantalla siguiente">›</button>
+    </div>
+    <div class="app-shot-hint">Desliza para rotar las pantallas</div>
+    <script>
+    (function(){
+      var stage=document.getElementById('appStage');
+      if(!stage) return;
+      var phones=[].slice.call(stage.querySelectorAll('.fan-ph'));
+      var n=phones.length, pos=0, target=0, anim=null;
+      function render(){
+        var w=stage.clientWidth;
+        phones.forEach(function(ph,i){
+          var off=i-pos;
+          var x=off*w*0.26;
+          var sc=Math.max(.5,1-Math.abs(off)*.16);
+          var op=Math.max(0,1-Math.abs(off)*.32);
+          ph.style.transform='translate(calc(-50% + '+x+'px),-50%) rotateY('+(-off*24)+'deg) scale('+sc+')';
+          ph.style.zIndex=String(100-Math.round(Math.abs(off)*10));
+          ph.style.opacity=op;
+        });
+      }
+      function animateTo(t){
+        target=Math.max(0,Math.min(n-1,t));
+        cancelAnimationFrame(anim);
+        (function step(){
+          pos+=(target-pos)*0.16;
+          if(Math.abs(target-pos)<0.004){ pos=target; render(); return; }
+          render(); anim=requestAnimationFrame(step);
+        })();
+      }
+      // Auto-rotación: avanza sola, con vuelta al inicio. Se pausa al
+      // interactuar y retoma sola un rato después de soltar.
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var autoIv=null, reanudarTimer=null;
+      function pararAuto(){ if(autoIv){ clearInterval(autoIv); autoIv=null; } }
+      function iniciarAuto(){
+        if(reduceMotion || autoIv) return;
+        autoIv=setInterval(function(){
+          var next=Math.round(target)+1;
+          if(next>n-1) next=0;
+          animateTo(next);
+        },3200);
+      }
+      function reanudarPronto(){ clearTimeout(reanudarTimer); reanudarTimer=setTimeout(iniciarAuto,1800); }
+
+      var x0=null,y0=null,p0=0,drag=false,horiz=null;
+      function down(x,y){ x0=x; y0=y; p0=pos; drag=true; horiz=null; pararAuto(); cancelAnimationFrame(anim); }
+      function move(x,y){
+        if(!drag) return;
+        var dx=x-x0, dy=y-y0;
+        if(horiz===null && (Math.abs(dx)>8||Math.abs(dy)>8)) horiz=Math.abs(dx)>Math.abs(dy);
+        if(!horiz) return;
+        var paso=stage.clientWidth*0.26;
+        pos=Math.max(-0.35,Math.min(n-0.65,p0-dx/paso));
+        render();
+      }
+      function up(){ if(!drag) return; drag=false; if(horiz) animateTo(Math.round(pos)); horiz=null; reanudarPronto(); }
+
+      // Flechas: mantener presionada avanza pantalla por pantalla (con vuelta al inicio)
+      var holdIv=null;
+      function holdStep(dir){
+        var next=Math.round(target)+dir;
+        if(next<0) next=n-1; else if(next>n-1) next=0;
+        animateTo(next);
+      }
+      function holdStart(dir){ pararAuto(); cancelAnimationFrame(anim); holdStep(dir); clearInterval(holdIv); holdIv=setInterval(function(){ holdStep(dir); },520); }
+      function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } reanudarPronto(); }
+      function bindHold(btn,dir){
+        if(!btn) return;
+        var start=function(e){ e.stopPropagation(); e.preventDefault(); holdStart(dir); };
+        btn.addEventListener('mousedown',start);
+        btn.addEventListener('touchstart',start,{passive:false});
+        ['mouseup','mouseleave','touchend','touchcancel'].forEach(function(ev){ btn.addEventListener(ev,function(e){ e.stopPropagation(); holdStop(); }); });
+      }
+      bindHold(document.getElementById('appArrowL'),-1);
+      bindHold(document.getElementById('appArrowR'), 1);
+      window.addEventListener('mouseup',holdStop);
+
+      stage.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+      // passive:false para poder frenar el scroll vertical de la página mientras rotan
+      stage.addEventListener('touchmove',function(e){
+        move(e.touches[0].clientX,e.touches[0].clientY);
+        if(horiz) e.preventDefault();
+      },{passive:false});
+      stage.addEventListener('touchend',up,{passive:true});
+      stage.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
+      window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
+      window.addEventListener('mouseup',up);
+      stage.addEventListener('mouseenter',pararAuto);
+      stage.addEventListener('mouseleave',reanudarPronto);
+      window.addEventListener('resize',render);
+      render();
+
+      // Arranca sola apenas el carrusel entra en pantalla
+      if('IntersectionObserver' in window){
+        var io=new IntersectionObserver(function(entradas){
+          entradas.forEach(function(en){ if(en.isIntersecting) iniciarAuto(); else pararAuto(); });
+        },{threshold:0.35});
+        io.observe(stage);
+      } else { iniciarAuto(); }
+    })();
+    </script>
+
+    <!-- El logo Da Halo subió arriba del título "La App". Acá queda solo
+         "se conecta con" + Strava y Apple Health, debajo del carrusel. -->
+    <div class="app-tri">
+      <div class="tri-connect">se conecta con</div>
+      <div class="tri-base">
+        <div class="compat-pill">
+          <span class="compat-icon" style="background:#FC4C02"><svg width="34" height="34" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0 3.46 13.828h4.169"/></svg></span>
+          <small>Strava</small>
+        </div>
+        <div class="compat-pill">
+          <span class="compat-icon" style="background:#fff"><svg width="36" height="36" viewBox="0 0 24 24" fill="#FA3E5D" aria-hidden="true"><path d="M12 21s-6.55-4.27-9.2-7.4C.83 11.3 1.2 8.2 3.4 6.74c1.94-1.28 4.36-.74 5.62.98L12 11.3l2.98-3.58c1.26-1.72 3.68-2.26 5.62-.98 2.2 1.46 2.57 4.56.6 6.86C18.55 16.73 12 21 12 21z"/></svg></span>
+          <small>Apple Health</small>
+        </div>
       </div>
     </div>
-    <div class="reviews-more"><button class="btn-review" id="btn-mas-resenas" onclick="verMasResenas(this)">Ver más reseñas</button></div>
-    <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
+
+    <div class="app-stores" style="margin-top:24px;">
+      <a class="store-btn" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M17.05 12.04c-.03-2.85 2.33-4.22 2.43-4.29-1.32-1.94-3.38-2.2-4.11-2.23-1.75-.18-3.41 1.03-4.3 1.03-.88 0-2.25-1.01-3.7-.98-1.9.03-3.66 1.11-4.64 2.81-1.98 3.44-.51 8.53 1.42 11.32.94 1.37 2.06 2.9 3.53 2.85 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.4 3.43-2.78 1.08-1.59 1.53-3.13 1.55-3.21-.03-.01-2.98-1.14-3.01-4.52zM14.6 4.2c.78-.95 1.31-2.27 1.16-3.58-1.13.05-2.49.75-3.3 1.7-.72.84-1.36 2.18-1.19 3.46 1.26.1 2.55-.64 3.33-1.58z"/></svg>
+        <span><span class="st-small">Descárgala en</span><span class="st-big">App Store</span></span>
+      </a>
+      <a class="store-btn" href="https://play.google.com/store/apps/details?id=com.moyoung.dahalo&hl=es_CL" target="_blank" rel="noopener noreferrer">
+        <svg width="20" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M4 2.5v19c0 .6.7 1 1.2.6l14.6-9.5c.5-.3.5-1.1 0-1.4L5.2 1.9C4.7 1.6 4 1.9 4 2.5z"/></svg>
+        <span><span class="st-small">Disponible en</span><span class="st-big">Google Play</span></span>
+      </a>
+    </div>
+
   </section>
 
   <!-- CARACTERÍSTICAS (bajadas: las reseñas van primero) -->
@@ -2975,156 +3115,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
   </script>
 
-  <!-- APP -->
-  <section class="app-sec" id="app">
-    <!-- 1. La App + 100% gratis (arriba de la imagen) -->
-    <div class="app-kicker">La App</div>
-    <div class="app-free">✓ 100% gratis · Sin suscripciones</div>
-
-    <!-- 2. Pantallas de la app: carrusel 3D flotante -->
-    <div class="app-stage" id="appStage">
-      <img class="fan-ph" src="img/app-rot-1.webp" alt="App Da Halo — resumen del día" loading="lazy" decoding="async">
-      <img class="fan-ph" src="img/app-rot-2.webp" alt="App Da Halo — análisis del sueño" loading="lazy" decoding="async">
-      <img class="fan-ph" src="img/app-rot-3.webp" alt="App Da Halo — actividad y pasos" loading="lazy" decoding="async">
-      <img class="fan-ph" src="img/app-rot-4.webp" alt="App Da Halo — entrenamiento con GPS" loading="lazy" decoding="async">
-      <button class="hold-arrow l" id="appArrowL" type="button" aria-label="Pantalla anterior">‹</button>
-      <button class="hold-arrow r" id="appArrowR" type="button" aria-label="Pantalla siguiente">›</button>
-    </div>
-    <div class="app-shot-hint">Desliza para rotar las pantallas</div>
-    <script>
-    (function(){
-      var stage=document.getElementById('appStage');
-      if(!stage) return;
-      var phones=[].slice.call(stage.querySelectorAll('.fan-ph'));
-      var n=phones.length, pos=0, target=0, anim=null;
-      function render(){
-        var w=stage.clientWidth;
-        phones.forEach(function(ph,i){
-          var off=i-pos;
-          var x=off*w*0.26;
-          var sc=Math.max(.5,1-Math.abs(off)*.16);
-          var op=Math.max(0,1-Math.abs(off)*.32);
-          ph.style.transform='translate(calc(-50% + '+x+'px),-50%) rotateY('+(-off*24)+'deg) scale('+sc+')';
-          ph.style.zIndex=String(100-Math.round(Math.abs(off)*10));
-          ph.style.opacity=op;
-        });
-      }
-      function animateTo(t){
-        target=Math.max(0,Math.min(n-1,t));
-        cancelAnimationFrame(anim);
-        (function step(){
-          pos+=(target-pos)*0.16;
-          if(Math.abs(target-pos)<0.004){ pos=target; render(); return; }
-          render(); anim=requestAnimationFrame(step);
-        })();
-      }
-      // Auto-rotación: avanza sola, con vuelta al inicio. Se pausa al
-      // interactuar y retoma sola un rato después de soltar.
-      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var autoIv=null, reanudarTimer=null;
-      function pararAuto(){ if(autoIv){ clearInterval(autoIv); autoIv=null; } }
-      function iniciarAuto(){
-        if(reduceMotion || autoIv) return;
-        autoIv=setInterval(function(){
-          var next=Math.round(target)+1;
-          if(next>n-1) next=0;
-          animateTo(next);
-        },3200);
-      }
-      function reanudarPronto(){ clearTimeout(reanudarTimer); reanudarTimer=setTimeout(iniciarAuto,1800); }
-
-      var x0=null,y0=null,p0=0,drag=false,horiz=null;
-      function down(x,y){ x0=x; y0=y; p0=pos; drag=true; horiz=null; pararAuto(); cancelAnimationFrame(anim); }
-      function move(x,y){
-        if(!drag) return;
-        var dx=x-x0, dy=y-y0;
-        if(horiz===null && (Math.abs(dx)>8||Math.abs(dy)>8)) horiz=Math.abs(dx)>Math.abs(dy);
-        if(!horiz) return;
-        var paso=stage.clientWidth*0.26;
-        pos=Math.max(-0.35,Math.min(n-0.65,p0-dx/paso));
-        render();
-      }
-      function up(){ if(!drag) return; drag=false; if(horiz) animateTo(Math.round(pos)); horiz=null; reanudarPronto(); }
-
-      // Flechas: mantener presionada avanza pantalla por pantalla (con vuelta al inicio)
-      var holdIv=null;
-      function holdStep(dir){
-        var next=Math.round(target)+dir;
-        if(next<0) next=n-1; else if(next>n-1) next=0;
-        animateTo(next);
-      }
-      function holdStart(dir){ pararAuto(); cancelAnimationFrame(anim); holdStep(dir); clearInterval(holdIv); holdIv=setInterval(function(){ holdStep(dir); },520); }
-      function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } reanudarPronto(); }
-      function bindHold(btn,dir){
-        if(!btn) return;
-        var start=function(e){ e.stopPropagation(); e.preventDefault(); holdStart(dir); };
-        btn.addEventListener('mousedown',start);
-        btn.addEventListener('touchstart',start,{passive:false});
-        ['mouseup','mouseleave','touchend','touchcancel'].forEach(function(ev){ btn.addEventListener(ev,function(e){ e.stopPropagation(); holdStop(); }); });
-      }
-      bindHold(document.getElementById('appArrowL'),-1);
-      bindHold(document.getElementById('appArrowR'), 1);
-      window.addEventListener('mouseup',holdStop);
-
-      stage.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
-      // passive:false para poder frenar el scroll vertical de la página mientras rotan
-      stage.addEventListener('touchmove',function(e){
-        move(e.touches[0].clientX,e.touches[0].clientY);
-        if(horiz) e.preventDefault();
-      },{passive:false});
-      stage.addEventListener('touchend',up,{passive:true});
-      stage.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
-      window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
-      window.addEventListener('mouseup',up);
-      stage.addEventListener('mouseenter',pararAuto);
-      stage.addEventListener('mouseleave',reanudarPronto);
-      window.addEventListener('resize',render);
-      render();
-
-      // Arranca sola apenas el carrusel entra en pantalla
-      if('IntersectionObserver' in window){
-        var io=new IntersectionObserver(function(entradas){
-          entradas.forEach(function(en){ if(en.isIntersecting) iniciarAuto(); else pararAuto(); });
-        },{threshold:0.35});
-        io.observe(stage);
-      } else { iniciarAuto(); }
-    })();
-    </script>
-
-    <!-- Nuevo orden: primero Da Halo (nombre + logo + texto explicativo),
-         debajo con qué se conecta (Strava y Apple Health), y AL FINAL los
-         botones de descarga. El “ASEGURA TU DEUS BAND” quedó fuera. -->
-    <!-- Logo Da Halo entre el carrusel y el texto (sin título duplicado) -->
-    <div style="text-align:center;margin:6px auto 14px;">
-      <img src="img/img-c9eeead6.webp" alt="Da Halo" width="72" height="72" loading="lazy" decoding="async" style="width:72px;height:72px;border-radius:16px;box-shadow:0 6px 22px rgba(0,0,0,.45);object-fit:cover;display:inline-block;">
-    </div>
-    <div class="app-tri">
-      <div class="app-sub" style="margin-top:0;">Conecta tu DEUS Band con la app <b>Da Halo</b> y mira tu actividad, sueño y ritmo cardíaco en tiempo real.</div>
-      <div class="tri-connect">se conecta con</div>
-      <div class="tri-base">
-        <div class="compat-pill">
-          <span class="compat-icon" style="background:#FC4C02"><svg width="34" height="34" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0 3.46 13.828h4.169"/></svg></span>
-          <small>Strava</small>
-        </div>
-        <div class="compat-pill">
-          <span class="compat-icon" style="background:#fff"><svg width="36" height="36" viewBox="0 0 24 24" fill="#FA3E5D" aria-hidden="true"><path d="M12 21s-6.55-4.27-9.2-7.4C.83 11.3 1.2 8.2 3.4 6.74c1.94-1.28 4.36-.74 5.62.98L12 11.3l2.98-3.58c1.26-1.72 3.68-2.26 5.62-.98 2.2 1.46 2.57 4.56.6 6.86C18.55 16.73 12 21 12 21z"/></svg></span>
-          <small>Apple Health</small>
-        </div>
-      </div>
-    </div>
-
-    <div class="app-stores" style="margin-top:24px;">
-      <a class="store-btn" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M17.05 12.04c-.03-2.85 2.33-4.22 2.43-4.29-1.32-1.94-3.38-2.2-4.11-2.23-1.75-.18-3.41 1.03-4.3 1.03-.88 0-2.25-1.01-3.7-.98-1.9.03-3.66 1.11-4.64 2.81-1.98 3.44-.51 8.53 1.42 11.32.94 1.37 2.06 2.9 3.53 2.85 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.4 3.43-2.78 1.08-1.59 1.53-3.13 1.55-3.21-.03-.01-2.98-1.14-3.01-4.52zM14.6 4.2c.78-.95 1.31-2.27 1.16-3.58-1.13.05-2.49.75-3.3 1.7-.72.84-1.36 2.18-1.19 3.46 1.26.1 2.55-.64 3.33-1.58z"/></svg>
-        <span><span class="st-small">Descárgala en</span><span class="st-big">App Store</span></span>
-      </a>
-      <a class="store-btn" href="https://play.google.com/store/apps/details?id=com.moyoung.dahalo&hl=es_CL" target="_blank" rel="noopener noreferrer">
-        <svg width="20" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M4 2.5v19c0 .6.7 1 1.2.6l14.6-9.5c.5-.3.5-1.1 0-1.4L5.2 1.9C4.7 1.6 4 1.9 4 2.5z"/></svg>
-        <span><span class="st-small">Disponible en</span><span class="st-big">Google Play</span></span>
-      </a>
-    </div>
-
-  </section>
 
   <!-- MODAL RESEÑA -->
   <div class="resena-overlay" id="resenaOverlay">
@@ -3323,7 +3313,6 @@ function aplicarReserva() {
   // Precio $54.990, sin precio tachado.
   if (pb) pb.innerHTML = oferta
     ? '<sup>$</sup>54.990 <span class="price-offer-tag">ENVÍO GRATIS</span>'
-      + '<small style="display:block;font-size:.72rem;color:#8f8f8f;letter-spacing:1.5px;margin-top:6px;text-transform:uppercase;font-family:\'DM Sans\',sans-serif;">🚚 Entrega en 1-3 días hábiles</small>'
     : '<sup>$</sup>54.990';
   const fc = document.querySelector('.fc-price');
   if (fc) fc.innerHTML = oferta
@@ -3336,39 +3325,13 @@ function aplicarReserva() {
     ? '<b>$54.990</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>'
     : '<b>$54.990</b>';
   const ab = document.getElementById('offer-bar');
-  // Top bar: solo "ENVÍO GRATIS" + contador de 24h que se reinicia solo. El
-  // contenido lo pinta pintarContadorEnvio() cada segundo, así que aquí solo
-  // se define la clase visual; el HTML se regenera enseguida.
+  // Top bar: solo "ENVÍO GRATIS", SIN contador (se retiró a pedido).
   pararContadorReserva();
   if (ab) {
-    if (on) {
-      ab.classList.add('reserva');
-      ab.innerHTML = ofertaActiva()
-        ? '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b></span>'
-          + '<span class="ab-cd" id="ab-cd">'
-          +   '<span class="ab-cd-boxes">'
-          +     '<span class="abcd-box"><b id="abcd-h">00</b><small>hrs</small></span>'
-          +     '<span class="abcd-box"><b id="abcd-m">00</b><small>min</small></span>'
-          +     '<span class="abcd-box"><b id="abcd-s">00</b><small>seg</small></span>'
-          +   '</span>'
-          + '</span>'
-        : '<span class="ab-txt">🔥 <b>Última unidad</b> disponible</span>';
-    } else {
-      ab.classList.remove('reserva');
-      if (ofertaActiva()) {
-        ab.classList.add('reserva');   // reusar el estilo de dos líneas
-        ab.innerHTML = '<span class="ab-txt">🚚 <b>ENVÍO GRATIS</b></span>'
-          + '<span class="ab-cd" id="ab-cd">'
-          +   '<span class="ab-cd-boxes">'
-          +     '<span class="abcd-box"><b id="abcd-h">00</b><small>hrs</small></span>'
-          +     '<span class="abcd-box"><b id="abcd-m">00</b><small>min</small></span>'
-          +     '<span class="abcd-box"><b id="abcd-s">00</b><small>seg</small></span>'
-          +   '</span>'
-          + '</span>';
-      } else {
-        ab.innerHTML = '🔥 <b>Última unidad</b> disponible';
-      }
-    }
+    ab.classList.remove('reserva');
+    ab.innerHTML = ofertaActiva()
+      ? '🚚 <b>ENVÍO GRATIS</b>'
+      : '🔥 <b>Última unidad</b> disponible';
     // Pinta el contador de inmediato al cambiar de modo (evita el "00:00:00"
     // que aparecería medio segundo antes del primer tick del setInterval).
     if (typeof pintarContadorEnvio === 'function') pintarContadorEnvio();
