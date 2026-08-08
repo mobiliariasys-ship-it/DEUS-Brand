@@ -552,7 +552,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 /* Barra superior fija (logo siempre visible) */
 .topbar{position:static;background:#0d0d0d;}
 /* Reseñas */
-.reviews{max-width:1100px;margin:0 auto;padding:36px 24px 46px;}
+.reviews{max-width:1100px;margin:0 auto;padding:24px 24px 28px;}
 .reviews-head{text-align:center;margin-bottom:28px;}
 .reviews-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .reviews-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1;}
@@ -730,7 +730,7 @@ body.sb-on .chat-panel{bottom:82px;}
 .banner-claim{font-size:0.82rem;color:#444;letter-spacing:1px;font-style:italic;}
 .ig-link{display:inline-flex;align-items:center;gap:9px;margin-top:20px;color:#888;text-decoration:none;font-size:0.72rem;letter-spacing:2px;transition:color .2s;}
 .ig-link:hover{color:#f2f2f2;}
-.app-sec{max-width:1280px;margin:0 auto;padding:56px 24px 16px;text-align:center;}
+.app-sec{max-width:1280px;margin:0 auto;padding:32px 24px 10px;text-align:center;}
 .app-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .app-title{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:3px;line-height:1;margin-bottom:12px;}
 .app-sub{font-size:.82rem;color:var(--silver);letter-spacing:.5px;line-height:1.7;margin:0 auto 26px;max-width:460px;}
@@ -750,7 +750,7 @@ body.sb-on .chat-panel{bottom:82px;}
 @media(prefers-reduced-motion:reduce){.fan-ph{animation:none;}}
 @media(max-width:640px){.app-stage{height:400px;margin-left:-8px;margin-right:-8px;}}
 .app-icon{width:60px;height:60px;border-radius:14px;display:block;margin:14px auto 20px;box-shadow:0 6px 22px rgba(0,0,0,.45);}
-.how{max-width:1100px;margin:0 auto;padding:64px 24px 8px;}
+.how{max-width:1100px;margin:0 auto;padding:34px 24px 6px;}
 .how-head{text-align:center;margin-bottom:40px;}
 .how-kicker{font-size:.62rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:12px;}
 .how-title{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;letter-spacing:2px;line-height:1;}
@@ -830,7 +830,7 @@ body.sb-on .chat-panel{bottom:82px;}
 .how-img.contain img{object-fit:contain;max-height:360px;padding:16px;width:auto;}
 .how-txt h3{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;margin-bottom:12px;}
 .how-txt p{color:var(--silver);font-size:.9rem;line-height:1.75;letter-spacing:.3px;}
-.monitor{max-width:1100px;margin:0 auto;padding:18px 24px 36px;}
+.monitor{max-width:1100px;margin:0 auto;padding:12px 24px 24px;}
 /* Beneficios */
 .benefits{max-width:1100px;margin:0 auto;padding:36px 24px 20px;}
 .benefits-head{text-align:center;margin-bottom:28px;}
@@ -884,7 +884,7 @@ body.sb-on .chat-panel{bottom:82px;}
 body.sb-on .wa-float{bottom:82px;}
 @media(max-width:600px){body.sb-on .wa-float{bottom:76px;}.sticky-buy{gap:12px;padding:9px 12px;}.sb-btn{padding:11px 18px;font-size:.68rem;}}
 /* Garantía + Preguntas frecuentes */
-.faq{max-width:760px;margin:0 auto;padding:44px 24px 26px;}
+.faq{max-width:760px;margin:0 auto;padding:28px 24px 20px;}
 .faq-head{text-align:center;margin-bottom:24px;}
 .faq-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .faq-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1;}
@@ -899,7 +899,7 @@ body.sb-on .wa-float{bottom:82px;}
 .faq details[open] summary::after{content:'−';}
 .faq details p{padding:0 16px 14px;font-size:.79rem;color:var(--silver);line-height:1.7;}
 /* Cierre final */
-.final-cta{text-align:center;padding:60px 24px 64px;}
+.final-cta{text-align:center;padding:36px 24px 42px;}
 .fc-line{font-family:'Bebas Neue',sans-serif;font-size:2.3rem;letter-spacing:2px;line-height:1.15;color:var(--silver);}
 .fc-line.strong{color:var(--white);font-size:2.6rem;margin-top:2px;}
 .fc-price{margin:22px 0 24px;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;}
@@ -1045,7 +1045,7 @@ body.sb-on .wa-float{bottom:82px;}
    Cada logo va en una caja del MISMO tamaño con object-fit:contain, así se ven
    parejos aunque las imágenes tengan proporciones distintas (Webpay es 2:1 y
    Mercado Pago casi cuadrado). */
-.pay-trust{display:flex;justify-content:center;margin:14px auto 4px;}
+.pay-trust{grid-column:1;display:flex;justify-content:center;margin:12px auto 2px;}
 .pay-trust .pt-logos{display:flex;align-items:center;gap:10px;justify-content:center;}
 .pay-trust .pt-logos img{width:104px;height:40px;object-fit:contain;background:#fff;border-radius:7px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.28);}
 @media(max-width:600px){.pay-trust .pt-logos img{width:92px;height:36px;padding:5px 9px;}}
@@ -1526,12 +1526,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="btn-cart" onclick="abrirDialogoCarrito()" title="Agregar al carrito">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         </button>
-      </div>
-      <!-- Solo los medios de pago bajo el botón, sin recuadro. -->
-      <div class="pay-trust">
-        <div class="pt-logos">
-          <img src="webpay_logo.png" alt="Webpay" loading="lazy" decoding="async">
-          <img src="mp_logo_azul.png" alt="Mercado Pago" loading="lazy" decoding="async">
+        <!-- Medios de pago DENTRO de la grilla del CTA, en la columna del botón
+             de comprar: así quedan centrados justo debajo de él (y no del
+             conjunto botón + carrito). -->
+        <div class="pay-trust">
+          <div class="pt-logos">
+            <img src="webpay_logo.png" alt="Webpay" loading="lazy" decoding="async">
+            <img src="mp_logo_azul.png" alt="Mercado Pago" loading="lazy" decoding="async">
+          </div>
         </div>
       </div>
       <!-- Caja de tapones de regalo — retirada: la oferta era solo para reserva. -->
@@ -2808,13 +2810,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- APP -->
   <section class="app-sec" id="app">
-    <!-- Logo Da Halo arriba del título "La App" -->
-    <div style="text-align:center;margin:0 auto 12px;">
-      <img src="img/img-c9eeead6.webp" alt="Da Halo" width="72" height="72" loading="lazy" decoding="async" style="width:72px;height:72px;border-radius:16px;box-shadow:0 6px 22px rgba(0,0,0,.45);object-fit:cover;display:inline-block;">
-    </div>
     <!-- 1. La App + 100% gratis (arriba de la imagen) -->
     <div class="app-kicker">La App</div>
     <div class="app-free">✓ 100% gratis · Sin suscripciones</div>
+    <!-- Logo Da Halo debajo del texto "La App" -->
+    <div style="text-align:center;margin:14px auto 4px;">
+      <img src="img/img-c9eeead6.webp" alt="Da Halo" width="72" height="72" loading="lazy" decoding="async" style="width:72px;height:72px;border-radius:16px;box-shadow:0 6px 22px rgba(0,0,0,.45);object-fit:cover;display:inline-block;">
+    </div>
 
     <!-- 2. Pantallas de la app: carrusel 3D flotante -->
     <div class="app-stage" id="appStage">
@@ -3189,13 +3191,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="faq-kicker">Compra sin miedo</div>
       <h2 class="faq-title">Preguntas frecuentes</h2>
     </div>
-    <div class="guarantee">
-      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
-      <div>
-        <b>Garantía de satisfacción · 30 días</b>
-        <p>Si la DEUS Band no es para ti, te devolvemos tu dinero. Además cuentas con la garantía legal por fallas de fábrica. Te acompañamos por WhatsApp en todo el proceso.</p>
-      </div>
-    </div>
     <details>
       <summary>¿Funciona con iPhone y con Android?</summary>
       <p>Sí. La app Da Halo es gratis y está disponible en App Store y Google Play. Además se conecta con Strava y Apple Health.</p>
@@ -3224,6 +3219,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="fc-line strong">Es hora de escucharlo.</div>
     <div class="fc-price">$54.990</div>
     <button class="btn-p" data-buy="Quiero mi DEUS Band" data-reserve="Asegura tu DEUS Band" onclick="abrirCheckout()">Quiero mi DEUS Band</button>
+    <!-- Garantía movida aquí: cierra la objeción justo bajo el botón final. -->
+    <div class="guarantee" style="margin-top:26px;text-align:left;">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div>
+        <b>Garantía de satisfacción · 30 días</b>
+        <p>Si la DEUS Band no es para ti, te devolvemos tu dinero. Además cuentas con la garantía legal por fallas de fábrica. Te acompañamos por WhatsApp en todo el proceso.</p>
+      </div>
+    </div>
   </section>
 
   <!-- TEXTO SEO -->
