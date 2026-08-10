@@ -342,20 +342,21 @@
     document.getElementById('funnel-conv').textContent='Conversión '+conv+'%';
   }
 
-  // Embudo DENTRO del checkout: usa los eventos co:1abrio..co:4pago (conducta)
-  // y las ventas para el paso final. Muestra cada paso como % de los que
-  // abrieron, y marca en rojo el escalón donde se pierde más gente.
-  function pintarCheckout(conducta, nPago){
+  // Embudo DENTRO del checkout: los 5 pasos salen de los eventos co: de
+  // conducta. El paso final NO usa el total histórico de ventas — ese total
+  // trae compras de antes de que existiera el embudo y daba 900%. co:5pago se
+  // registra en el backend al confirmarse el pago, así los 5 pasos empiezan a
+  // contar desde el mismo momento.
+  function pintarCheckout(conducta){
     conducta=conducta||{};
     var pasos=[
       {k:'co:1abrio',  lbl:'🛒 Abrió el checkout'},
       {k:'co:2datos',  lbl:'✍️ Empezó a llenar datos'},
       {k:'co:3envio',  lbl:'📍 Calculó el envío'},
       {k:'co:4pago',   lbl:'💳 Apretó pagar'},
-      {k:'__pago',     lbl:'✅ Pagó', val:(nPago||0)}
+      {k:'co:5pago',   lbl:'✅ Pagó'}
     ];
-    // Valor de cada paso (el último viene de ventas)
-    pasos.forEach(function(p){ if(p.val===undefined) p.val=conducta[p.k]||0; });
+    pasos.forEach(function(p){ p.val=conducta[p.k]||0; });
     var abrio=pasos[0].val||0;
     var cont=document.getElementById('co-funnel'); cont.innerHTML='';
     var hayDatos=abrio>0;
@@ -492,7 +493,7 @@
     document.getElementById('s-conv').textContent=(d.conversion!=null?d.conversion:0)+'%';
     document.getElementById('s-conv-hoy').textContent=(d.conversionHoy!=null?d.conversionHoy:0)+'%';
     pintarEmbudo(d.embudo||{visitas:0,checkouts:0,ventas:0},d.conversion||0);
-    pintarCheckout(d.conducta||{}, (d.ventas&&d.ventas.total&&d.ventas.total.count)||0);
+    pintarCheckout(d.conducta||{});
     pintarConducta(d.conducta||{}, (d.embudo&&d.embudo.visitas)||0);
     pintarConversion(d.conversionAccion||{}, d.conducta||{}, d.conversionesN||0);
     tickets=d.tickets||[];

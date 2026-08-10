@@ -180,6 +180,14 @@ function registrarConversion(acciones, orden, esOwner) {
 // sorteo (1 por compra). Devuelve el ticket asignado (con su número) para
 // poder mostrárselo al cliente en el correo de confirmación.
 function registrarVenta(v) {
+  // El paso final del embudo del checkout se cuenta como un evento más
+  // (co:5pago) en vez de leer el total histórico de ventas: ese total incluye
+  // compras anteriores a que existieran los eventos co:, y daba porcentajes
+  // imposibles (45 pagos sobre 5 que abrieron = 900%). Así los 5 pasos
+  // arrancan desde cero en el mismo momento y el embudo cuadra.
+  // Se cuenta solo la primera vez que se ve la orden (el webhook puede
+  // reintentar): si ya tenía ticket, es un reintento y no suma.
+  const yaContada = v.orden ? !!buscarTicketPorOrden(v.orden) : false;
   ventas.push({
     monto: Number(v.monto) || 0,
     fecha: new Date().toISOString(),
@@ -188,6 +196,7 @@ function registrarVenta(v) {
     orden: v.orden ? String(v.orden) : ''
   });
   const ticket = asignarTicket({ nombre: v.nombre, orden: v.orden, email: v.email });
+  if (!yaContada) eventos['co:5pago'] = (eventos['co:5pago'] || 0) + 1;
   guardar();
   return ticket;
 }
