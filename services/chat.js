@@ -99,6 +99,9 @@ Frecuencia cardíaca · Saturación de O₂ (SpO₂) · Recuperación · HRV (va
 - **Vibración** para llamadas y mensajes que llegan al teléfono.
 - **Cronómetro y modos deportivos** (+100 deportes).
 
+### Cómo se elige el deporte (pregunta frecuente)
+La selección del deporte es **manual, desde la app Da Halo**: entras a la app, eliges el modo de entrenamiento que vas a hacer (correr, gym, ciclismo, funcional, etc.) y ahí empieza a registrar. La banda no adivina sola qué deporte estás haciendo: tú lo seleccionas antes de entrenar y la banda mide ritmo, cadencia y frecuencia cardíaca de esa actividad. Dilo así, natural y en positivo — es lo normal en este tipo de bandas y te da el registro más preciso porque sabe exactamente qué estás entrenando.
+
 ## Funciones básicas — NO tiene
 - NO tiene pantalla → no muestra la hora, no lee mensajes ni permite contestar. Solo VIBRA cuando algo llega al celular, y los detalles se ven en el teléfono.
 - NO tiene GPS propio (usa el del celular).
