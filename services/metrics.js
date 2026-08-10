@@ -18,7 +18,10 @@ let checkoutsTotal = 0;    // cuántas veces se abrió el checkout (paso medio d
 // dueño). Clave 'hito:precio', 'accion:color', 'disp:movil', 'fuente:instagram'…
 // No guarda nada personal, solo cuántas sesiones hicieron cada cosa.
 const eventos = {};
-const EVENTO_OK = /^(hito|accion|disp|fuente):[a-z0-9_-]{1,24}$/;
+// 'co:' son los pasos DENTRO del checkout (co:1abrio … co:4pago) que alimentan
+// el embudo del dashboard. Sin este prefijo el validador los descartaba y la
+// sección quedaba siempre "sin datos".
+const EVENTO_OK = /^(hito|accion|disp|fuente|co):[a-z0-9_-]{1,24}$/;
 // Conversión por acción: de las sesiones que COMPRARON, cuántas habían hecho
 // cada acción/hito (llega desde success.html). Cruzado con `eventos` da el % de
 // gente que compró después de hacer X (p. ej. girar el 360°).
