@@ -2152,6 +2152,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (window.deusTrackCheckout) window.deusTrackCheckout();
           // Embudo del checkout — paso 1: abrió el checkout.
           if (window.deusEvento) window.deusEvento('co:1abrio');
+          // El 38% abre el checkout y no escribe NADA. Dejamos el cursor en el
+          // primer campo (tras la animación del modal) para que el siguiente
+          // paso sea obvio y en el celular se abra el teclado solo.
+          // preventScroll evita el salto de layout en iOS. No falsea la
+          // métrica: co:2datos se dispara con oninput, no con el foco.
+          setTimeout(function () {
+            try {
+              var n = document.getElementById('co-nombre');
+              if (n && !n.value) n.focus({ preventScroll: true });
+            } catch (e) {}
+          }, 350);
         }
         // Rescate: el primer intento de cierre muestra la barra de WhatsApp en vez de cerrar
         let rescateMostrado = false;
@@ -2513,11 +2524,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }, s => { msg.style.display = ''; msg.textContent = s; });
             const data = await res.json();
             if (data.url) {
+              // Embudo — paso 4.5: la pasarela YA devolvió la URL y nos vamos
+              // al gateway. Separa "murió en nuestro backend" de "murió allá".
+              if (window.deusEvento) { window.deusEvento('co:45redir'); window.deusEvento('co:m-flow'); }
               window.location.href = data.url;
             } else {
               throw new Error('Sin URL de Flow');
             }
           } catch (e) {
+            if (window.deusEvento) window.deusEvento('co:4xerror');
             wp.disabled = false;
             wp.textContent = 'Pagar con Webpay';
             msg.textContent = 'No pudimos conectar. Espera 30 segundos y vuelve a intentar.';
@@ -2554,11 +2569,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               input.value = data.token;
               form.appendChild(input);
               document.body.appendChild(form);
+              // Embudo — paso 4.5: token listo, saltamos a Webpay.
+              if (window.deusEvento) { window.deusEvento('co:45redir'); window.deusEvento('co:m-webpay'); }
               form.submit();
             } else {
               throw new Error('Sin URL de Webpay');
             }
           } catch (e) {
+            if (window.deusEvento) window.deusEvento('co:4xerror');
             wp.disabled = false;
             wp.textContent = 'Pagar con Webpay (Transbank)';
             msg.textContent = 'Error al conectar con Webpay. Intenta nuevamente.';
@@ -2586,11 +2604,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }, s => { msg.style.display = ''; msg.textContent = s; });
             const data = await res.json();
             if (data.init_point) {
+              // Embudo — paso 4.5: preferencia creada, saltamos a MercadoPago.
+              if (window.deusEvento) { window.deusEvento('co:45redir'); window.deusEvento('co:m-mp'); }
               window.location.href = data.init_point;
             } else {
               throw new Error('Sin init_point');
             }
           } catch(e) {
+            if (window.deusEvento) window.deusEvento('co:4xerror');
             btn.disabled = false;
             btn.textContent = 'Pagar con MercadoPago';
             msg.textContent = 'No pudimos conectar. Espera 30 segundos y vuelve a intentar.';

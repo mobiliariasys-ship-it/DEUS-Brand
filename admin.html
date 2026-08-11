@@ -83,6 +83,8 @@
   /* Etiqueta de caída entre pasos del embudo del checkout */
   .co-drop-tag{font-size:.58rem;color:#c98;background:#2a2320;border:1px solid #4a3a2e;border-radius:20px;padding:1px 7px;margin-left:6px;white-space:nowrap;font-variant-numeric:tabular-nums;}
   .co-drop-tag.peor{color:#f0736f;background:#3a1e1d;border-color:#6a2f2d;font-weight:700;}
+  .co-note{margin-top:12px;padding:11px 13px;background:#141414;border:1px solid #262626;border-radius:10px;font-size:.76rem;color:#c9c9c9;line-height:1.5;}
+  .co-note small{color:#888;font-size:.68rem;}
   .cb-row{display:flex;align-items:center;gap:11px;margin:9px 0;}
   .cb-lbl{width:120px;flex:none;font-size:.8rem;color:#c9c9c9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .cb-track{flex:1;background:#0b0b0b;border:1px solid #1e1e1e;border-radius:7px;height:22px;overflow:hidden;}
@@ -220,6 +222,7 @@
       <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
       <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
       <div id="co-funnel"></div>
+      <div id="co-extra"></div>
       <div class="empty" id="co-empty" style="display:none">Aún sin datos del checkout. Se llena con las próximas visitas al checkout.</div>
     </section>
 
@@ -354,6 +357,7 @@
       {k:'co:2datos',  lbl:'✍️ Empezó a llenar datos'},
       {k:'co:3envio',  lbl:'📍 Calculó el envío'},
       {k:'co:4pago',   lbl:'💳 Apretó pagar'},
+      {k:'co:45redir', lbl:'🚀 Llegó a la pasarela'},
       {k:'co:5pago',   lbl:'✅ Pagó'}
     ];
     pasos.forEach(function(p){ p.val=conducta[p.k]||0; });
@@ -387,6 +391,33 @@
     });
     var peorLbl=peorIdx>0? pasos[peorIdx].lbl.replace(/^[^ ]+ /,'') : '';
     document.getElementById('co-drop').textContent = peorIdx>0 ? ('mayor caída → '+peorLbl) : '';
+
+    // Extra: por dónde intentaron pagar y cuántos ni siquiera llegaron a la
+    // pasarela (error nuestro/del gateway al crear el pago).
+    var ex=document.getElementById('co-extra'); if(!ex) return;
+    var apreto=conducta['co:4pago']||0, llego=conducta['co:45redir']||0;
+    var err=conducta['co:4xerror']||0, nunca=Math.max(apreto-llego,0);
+    var met=[['co:m-flow','Flow (Webpay)'],['co:m-mp','MercadoPago'],['co:m-webpay','Webpay directo']]
+      .map(function(m){ return {lbl:m[1], n:conducta[m[0]]||0}; })
+      .filter(function(m){ return m.n>0; });
+    var h='';
+    if(apreto>0){
+      h+='<div class="co-note">';
+      if(nunca>0){
+        h+='<b style="color:#f0736f">'+nunca+' apretaron pagar y no llegaron a la pasarela</b>'+
+           (err>0? ' · '+err+' con error de conexión':'')+
+           '<br><small>Si este número es alto, el problema es al crear el pago (tu backend o el gateway), no el cliente.</small>';
+      } else {
+        h+='<b style="color:#7fd589">Todos los que apretaron pagar llegaron a la pasarela ✓</b>'+
+           '<br><small>Entonces los que no pagan se pierden dentro de Flow/MercadoPago, no en tu web.</small>';
+      }
+      h+='</div>';
+    }
+    if(met.length){
+      h+='<div class="co-note"><b>Por dónde intentaron pagar</b><br>'+
+         met.map(function(m){ return esc(m.lbl)+': <b>'+m.n+'</b>'; }).join(' · ')+'</div>';
+    }
+    ex.innerHTML=h;
   }
 
   // Conducta del visitante: 4 bloques de barras a partir del mapa de eventos.
