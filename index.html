@@ -1780,11 +1780,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="ac-list" id="comuna-list"></div>
               </div>
               <input class="shipping-input" id="sh-address" aria-label="Dirección de envío" placeholder="Calle, número, depto" style="grid-column:1/-1" />
-              <!-- "Calcular envío" sugería que el despacho se cobra. El envío
-                   ya se calcula solo al escribir región/dirección; este botón
-                   queda de respaldo por si eso falla, así que solo cambia el
-                   texto (sacarlo dejaría sin salida a quien lo necesite). -->
-              <button class="btn-calcular" onclick="calcularEnvio()">Confirmar dirección</button>
+              <!-- Sin botón de calcular: el envío es gratis, así que pedirle al
+                   cliente que "calcule" solo sembraba la duda de si se cobra.
+                   Se cotiza solo (al elegir comuna, al salir de dirección) y
+                   asegurarEnvio() lo cotiza igual al apretar pagar si algo
+                   falló, para que nadie quede sin poder pagar. -->
             </div>
 
             <div id="shipping-results"></div>
@@ -2502,6 +2502,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // gateway) pueda enriquecer el evento Purchase con los mismos datos.
           try { sessionStorage.setItem('deus-fb-match', JSON.stringify(matching)); } catch (e) {}
         }
+        // ¿Están los 3 campos de dirección escritos?
+        function direccionCompleta() {
+          const v = id => (document.getElementById(id)?.value || '').trim();
+          return !!(v('sh-region') && v('sh-commune') && v('sh-address'));
+        }
+
+        // Red de seguridad de la cotización. Al sacar el botón "Calcular envío"
+        // (el despacho es gratis y pedir que lo calculen sembraba la duda de si
+        // se cobra), nadie puede forzar la cotización a mano. Si al apretar
+        // pagar todavía no está cotizada, se cotiza acá mismo — así el cliente
+        // nunca queda trabado sin poder pagar.
+        async function asegurarEnvio(msg) {
+          if (selectedShipping) return true;
+          if (!direccionCompleta()) {
+            msg.textContent = 'Completa tu dirección de envío (región, comuna y calle).';
+            return false;
+          }
+          msg.style.color = '#666';
+          msg.textContent = 'Confirmando tu dirección...';
+          try { await calcularEnvio(); } catch (e) {}
+          if (!selectedShipping) {
+            msg.style.color = '#c0392b';
+            msg.textContent = 'No pudimos validar esa dirección. Revisa la comuna y vuelve a intentar.';
+            return false;
+          }
+          return true;
+        }
+
         function datosPedido() {
           return {
             customerName: document.getElementById('co-nombre').value.trim(),
@@ -2542,7 +2570,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // bloquea el pago.
           if (!d.customerEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.customerEmail)) { msg.textContent = 'Ingresa un correo válido.'; return false; }
           if (!d.customerPhone) { msg.textContent = 'Ingresa un teléfono de contacto.'; return false; }
-          if (!selectedShipping) { msg.textContent = 'Ingresa tu dirección para calcular el envío.'; return false; }
+          // Ya no se exige el envío COTIZADO acá (no hay botón para forzarlo):
+          // solo que la dirección esté completa. De cotizarlo se encarga
+          // asegurarEnvio() justo antes de pagar.
+          if (!direccionCompleta()) {
+            msg.textContent = 'Completa tu dirección de envío (región, comuna y calle).'; return false;
+          }
           // Embudo del checkout — paso 4: datos completos y apretó pagar.
           if (window.deusEvento) window.deusEvento('co:4pago');
           return true;
@@ -2552,6 +2585,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function iniciarPagoFlow() {
           const msg = document.getElementById('mp-msg');
           if (!validarCheckout(msg)) return;
+          // Cotiza el envío si aún no lo estaba (ya no hay botón para forzarlo).
+          if (!await asegurarEnvio(msg)) return;
           const wp = document.getElementById('wp-btn');
           wp.disabled = true;
           wp.textContent = 'Redirigiendo...';
@@ -2587,6 +2622,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function iniciarPagoWebpay() {
           const msg = document.getElementById('mp-msg');
           if (!validarCheckout(msg)) return;
+          // Cotiza el envío si aún no lo estaba (ya no hay botón para forzarlo).
+          if (!await asegurarEnvio(msg)) return;
           const wp = document.getElementById('wp-btn');
           wp.disabled = true;
           wp.textContent = 'Redirigiendo a Webpay...';
@@ -2632,6 +2669,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const msg = document.getElementById('mp-msg');
 
           if (!validarCheckout(msg)) return;
+          // Cotiza el envío si aún no lo estaba (ya no hay botón para forzarlo).
+          if (!await asegurarEnvio(msg)) return;
 
           btn.disabled = true;
           btn.textContent = 'Procesando...';
