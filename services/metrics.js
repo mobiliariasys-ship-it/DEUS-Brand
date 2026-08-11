@@ -32,6 +32,11 @@ const EVENTO_OK = /^(hito|accion|disp|fuente|co):[a-z0-9_-]{1,24}$/;
 // cada acción/hito (llega desde success.html). Cruzado con `eventos` da el % de
 // gente que compró después de hacer X (p. ej. girar el 360°).
 const conversiones = {};
+// Lo mismo partido por día, para que la sección de canales también se pueda
+// filtrar por periodo. Sin esto, filtrar el numerador (compradores) contra un
+// denominador acumulado daría porcentajes falsos.
+// Formato: 'YYYY-MM-DD' -> { 'fuente:ig': N, ..., __n: compras del día }
+const conversionesPorDia = {};
 let conversionesN = 0;     // total de compras rastreadas desde el frontend
 const conversionesOrdenes = []; // n° de orden ya contados (dedup webhook + success.html), capado
 const ventas = [];         // { monto, fecha, metodo, nombre, orden }
@@ -50,6 +55,7 @@ async function init() {
   checkoutsTotal = guardado.checkoutsTotal || 0;
   Object.assign(eventos, guardado.eventos || {});
   Object.assign(eventosPorDia, guardado.eventosPorDia || {});
+  Object.assign(conversionesPorDia, guardado.conversionesPorDia || {});
   Object.assign(conversiones, guardado.conversiones || {});
   conversionesN = guardado.conversionesN || 0;
   conversionesOrdenes.push(...(guardado.conversionesOrdenes || []));
@@ -58,7 +64,7 @@ async function init() {
 }
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, eventosPorDia, conversiones, conversionesN, conversionesOrdenes, ventas, tickets })
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, eventosPorDia, conversiones, conversionesPorDia, conversionesN, conversionesOrdenes, ventas, tickets })
     .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
@@ -134,6 +140,7 @@ function resetConducta() {
   for (const k of Object.keys(eventos)) delete eventos[k];
   for (const k of Object.keys(eventosPorDia)) delete eventosPorDia[k];
   for (const k of Object.keys(conversiones)) delete conversiones[k];
+  for (const k of Object.keys(conversionesPorDia)) delete conversionesPorDia[k];
   conversionesN = 0;
   conversionesOrdenes.length = 0;
   checkoutsTotal = 0; // el embudo de conducta también arranca limpio
@@ -188,12 +195,21 @@ function registrarConversion(acciones, orden, esOwner) {
     if (conversionesOrdenes.length > 1000) conversionesOrdenes.shift();
   }
   conversionesN++;
+  // Espejo del día, para poder filtrar la sección de canales por periodo.
+  const hoy = hoyChile();
+  if (!conversionesPorDia[hoy]) {
+    conversionesPorDia[hoy] = { __n: 0 };
+    const dias = Object.keys(conversionesPorDia).sort();
+    while (dias.length > DIAS_CONDUCTA) delete conversionesPorDia[dias.shift()];
+  }
+  conversionesPorDia[hoy].__n++;
   if (Array.isArray(acciones)) {
     for (const raw of acciones) {
       const k = String(raw || '').trim().toLowerCase();
       if (!EVENTO_OK.test(k)) continue;
       if (conversiones[k] === undefined && Object.keys(conversiones).length >= 120) continue;
       conversiones[k] = (conversiones[k] || 0) + 1;
+      conversionesPorDia[hoy][k] = (conversionesPorDia[hoy][k] || 0) + 1;
     }
   }
   guardar();
@@ -384,6 +400,17 @@ function registrarFalloChat(motivo) {
   fallosChat[hoy].motivo = String(motivo || '').slice(0, 120);
 }
 
+// Ventas de los últimos N días, compactas: f=fecha, m=monto, me=método.
+function ventasUltimosDias(n) {
+  const corte = Date.now() - n * 86400000;
+  const out = [];
+  for (const v of ventas) {
+    const t = new Date(v.fecha).getTime();
+    if (!isNaN(t) && t >= corte) out.push({ f: v.fecha, m: v.monto, me: v.metodo || 'otro' });
+  }
+  return out;
+}
+
 function snapshot() {
   const comprasN = ventas.length;
   const conversion = vistasTotal ? +((comprasN / vistasTotal) * 100).toFixed(1) : 0;
@@ -413,6 +440,12 @@ function snapshot() {
     ticketPromedio: comprasN ? Math.round(resVentas.total.monto / comprasN) : 0,
     ventasPorMomento: ventasPorMomento(),            // cuándo compran (hora y día)
     ventasPorMetodo: ventasPorMetodo(),              // qué pasarela cierra más
+    conversionPorDia: { ...conversionesPorDia },     // canales filtrables por periodo
+    // Ventas de los últimos 45 días en crudo (fecha/monto/método). Con esto el
+    // panel arma por sí solo el ticket promedio, los métodos y los horarios del
+    // periodo elegido, sin necesidad de un agregado por día para cada cosa.
+    // 45 días cubre el filtro más largo (30) con margen.
+    ventasRecientes: ventasUltimosDias(45),
     fallosChat: { ...fallosChat }                    // salud del chatbot
   };
 }

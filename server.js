@@ -510,11 +510,16 @@ app.get('/admin/stats', (req, res) => {
   // Color: qué color pedir al reponer, ahora que elegirlo ya no depende de un
   // swipe accidental. Comuna: dónde concentrar el reparto y la publicidad.
   const porColor = {}, porComuna = {};
+  const corte45 = Date.now() - 45 * 86400000;
+  const pedidosRecientes45 = [];
   for (const p of pedidos) {
     const c = (p.color || '—').toString().trim();
     porColor[c] = (porColor[c] || 0) + 1;
     const cm = (p.shipping?.address?.commune || '—').toString().trim();
     porComuna[cm] = (porComuna[cm] || 0) + 1;
+    // Versión compacta con fecha para que el panel filtre por periodo.
+    const t = new Date(p.created_at).getTime();
+    if (!isNaN(t) && t >= corte45) pedidosRecientes45.push({ f: p.created_at, c, cm });
   }
   res.json({
     ...snap,
@@ -522,6 +527,7 @@ app.get('/admin/stats', (req, res) => {
     pedidosPorColor: porColor,
     pedidosPorComuna: porComuna,
     pedidosTotal: pedidos.length,
+    pedidosRecientes45,
     stock: getStock()
   });
 });

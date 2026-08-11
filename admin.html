@@ -283,7 +283,7 @@
          el panel lo descartaba. Es lo que dice DÓNDE poner la plata. -->
     <section id="sec-canales">
       <div class="sec-h"><h2>💸 Qué canal deja plata</h2><span class="pill" id="canal-base"></span></div>
-      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De cada 100 visitas de ese canal, cuántas compraron. Es el dato para decidir dónde invertir en publicidad.</p>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De cada 100 visitas de ese canal, cuántas compraron. Es el dato para decidir dónde invertir en publicidad. <b style="color:#6fd0f5">Respeta el filtro de periodo</b> — compradores y visitantes se cuentan en la misma ventana.</p>
       <div class="cond-grid">
         <div class="cond-col">
           <h3 class="cond-h">📍 Conversión por fuente</h3>
@@ -637,6 +637,30 @@
     diasChile(n).forEach(function(f){ s+=pv[f]||0; });
     return s;
   }
+  // Compradores por acción/canal en el periodo. Devuelve null si el backend
+  // todavía no manda el desglose por día (cae al acumulado sin romper nada).
+  function conversionRango(d, n){
+    var porDia=d.conversionPorDia;
+    if(!porDia || !Object.keys(porDia).length) return null;
+    var acc={}, total=0;
+    diasChile(n).forEach(function(f){
+      var dia=porDia[f]; if(!dia) return;
+      Object.keys(dia).forEach(function(k){
+        if(k==='__n'){ total+=dia[k]; return; }
+        acc[k]=(acc[k]||0)+dia[k];
+      });
+    });
+    return { acc:acc, n:total };
+  }
+  // Ventas y pedidos del periodo, a partir de las listas crudas con fecha.
+  function enRango(lista, n){
+    if(!Array.isArray(lista)) return null;
+    var set={}; diasChile(n).forEach(function(f){ set[f]=1; });
+    return lista.filter(function(x){
+      var t=new Date(x.f); if(isNaN(t)) return false;
+      return set[t.toLocaleDateString('en-CA',{timeZone:'America/Santiago'})];
+    });
+  }
 
   function setRango(n){
     RANGO_DIAS=n;
@@ -719,17 +743,53 @@
   }
 
   var DIAS_LBL=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  function pintarNegocio(d){
-    var totPed = d.pedidosTotal || 0;
-    listaSimple('neg-color', Object.keys(d.pedidosPorColor||{}).map(function(k){
-      return { lbl:cap(k), val:d.pedidosPorColor[k] }; }), totPed);
-    listaSimple('neg-metodo', Object.keys(d.ventasPorMetodo||{}).map(function(k){
-      return { lbl:k, val:d.ventasPorMetodo[k] }; }), (d.ventas&&d.ventas.total&&d.ventas.total.count)||0);
-    listaSimple('neg-comuna', Object.keys(d.pedidosPorComuna||{}).map(function(k){
-      return { lbl:k, val:d.pedidosPorComuna[k] }; }).sort(function(a,b){ return b.val-a.val; }).slice(0,6), totPed);
+  // n = 0 → histórico completo (agregados del backend).
+  // n > 0 → se recalcula todo desde las listas crudas con fecha.
+  function pintarNegocio(d, n){
+    var porColor=d.pedidosPorColor||{}, porComuna=d.pedidosPorComuna||{};
+    var porMetodo=d.ventasPorMetodo||{}, vm=d.ventasPorMomento||{horas:[],dias:[]};
+    var totPed=d.pedidosTotal||0, totVent=(d.ventas&&d.ventas.total&&d.ventas.total.count)||0;
+    var aov=d.ticketPromedio||0;
 
-    var vm = d.ventasPorMomento || { horas:[], dias:[] };
+    if(n>0){
+      var peds=enRango(d.pedidosRecientes45, n);
+      if(peds){
+        porColor={}; porComuna={}; totPed=peds.length;
+        peds.forEach(function(p){
+          porColor[p.c]=(porColor[p.c]||0)+1;
+          porComuna[p.cm]=(porComuna[p.cm]||0)+1;
+        });
+      }
+      var vts=enRango(d.ventasRecientes, n);
+      if(vts){
+        porMetodo={}; totVent=vts.length;
+        var horas=new Array(24).fill(0), dias=new Array(7).fill(0), suma=0;
+        vts.forEach(function(v){
+          porMetodo[v.me]=(porMetodo[v.me]||0)+1;
+          suma+=Number(v.m)||0;
+          // Hora de Chile, igual que el agregado del backend: si no, el panel
+          // abierto desde otra zona mostraría horarios corridos.
+          var f=new Date(v.f);
+          var h=Number(f.toLocaleString('en-US',{timeZone:'America/Santiago',hour:'numeric',hour12:false}))%24;
+          if(!isNaN(h)) horas[h]++;
+          var dl=f.toLocaleDateString('en-US',{timeZone:'America/Santiago',weekday:'short'});
+          var di={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[dl];
+          if(di!==undefined) dias[di]++;
+        });
+        vm={horas:horas,dias:dias};
+        aov=vts.length?Math.round(suma/vts.length):0;
+      }
+    }
+
+    listaSimple('neg-color', Object.keys(porColor).map(function(k){
+      return { lbl:cap(k), val:porColor[k] }; }), totPed);
+    listaSimple('neg-metodo', Object.keys(porMetodo).map(function(k){
+      return { lbl:k, val:porMetodo[k] }; }), totVent);
+    listaSimple('neg-comuna', Object.keys(porComuna).map(function(k){
+      return { lbl:k, val:porComuna[k] }; }).sort(function(a,b){ return b.val-a.val; }).slice(0,6), totPed);
+
     var totV = (vm.horas||[]).reduce(function(s,x){ return s+x; },0);
+    d.__aovRango = aov;
     // Solo las franjas con ventas: 24 filas en cero no dicen nada.
     listaSimple('neg-horas', (vm.horas||[]).map(function(v,i){
       var hh=String(i).padStart(2,'0');
@@ -739,7 +799,7 @@
       return { lbl:DIAS_LBL[i], val:v }; }).filter(function(x){ return x.val>0; }), totV);
 
     var t=document.getElementById('neg-ticket');
-    if(t) t.textContent = d.ticketPromedio ? ('ticket promedio '+money(d.ticketPromedio)) : '';
+    if(t) t.textContent = aov ? ('ticket promedio '+money(aov)) : 'sin ventas en el periodo';
   }
 
   // Avisos rojos arriba del todo. Hoy solo el chatbot; es donde más duele
@@ -776,15 +836,21 @@
     // "Qué lleva a comprar" cruza con conversionAccion, que es acumulado: se
     // deja siempre en histórico para no comparar ventanas distintas.
     pintarConversion(d.conversionAccion||{}, d.conducta||{}, d.conversionesN||0);
-    // Canales y negocio: siempre en histórico (se cruzan con datos acumulados).
-    pintarCanales(d.conversionAccion||{}, d.conducta||{});
-    pintarNegocio(d);
+    // Canales: numerador (compradores) y denominador (visitantes) del MISMO
+    // periodo. Si se mezclaran ventanas distintas, el % sería falso.
+    var convAcc = d.conversionAccion||{}, nComp = d.conversionesN||0;
+    if(RANGO_DIAS>0){
+      var cr = conversionRango(d, RANGO_DIAS);
+      if(cr){ convAcc = cr.acc; nComp = cr.n; }
+    }
+    pintarCanales(convAcc, conducta);
+    pintarNegocio(d, RANGO_DIAS);
     pintarAlertas(d);
-    document.getElementById('s-aov').textContent = d.ticketPromedio ? money(d.ticketPromedio) : '—';
+    document.getElementById('s-aov').textContent = d.__aovRango ? money(d.__aovRango) : '—';
     var st=document.getElementById('s-stock');
     if(st) st.textContent = (d.stock===undefined||d.stock===null) ? '—' : d.stock;
     var cb=document.getElementById('canal-base');
-    if(cb) cb.textContent=(d.conversionesN||0)+' compras rastreadas';
+    if(cb) cb.textContent=nComp+' compras rastreadas'+(RANGO_DIAS>0?' en el periodo':'');
     tickets=d.tickets||[];
     rows('#t-tickets',tickets,function(t){ return '<td><b>#'+String(t.numero||0).padStart(4,"0")+'</b></td><td>'+esc(t.nombre||'—')+'</td><td>'+esc(t.instagram||'—')+'</td><td>'+esc(t.orden)+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');
     rows('#t-ventas',d.ventas.ultimas||[],function(v){ return '<td>'+fecha(v.fecha)+'</td><td>'+esc(v.nombre||'—')+'</td><td>'+esc(v.metodo)+'</td><td>'+money(v.monto)+'</td>'; },'ventas-empty');
