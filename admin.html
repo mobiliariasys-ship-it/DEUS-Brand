@@ -83,6 +83,12 @@
   /* Etiqueta de caída entre pasos del embudo del checkout */
   .co-drop-tag{font-size:.58rem;color:#c98;background:#2a2320;border:1px solid #4a3a2e;border-radius:20px;padding:1px 7px;margin-left:6px;white-space:nowrap;font-variant-numeric:tabular-nums;}
   .co-drop-tag.peor{color:#f0736f;background:#3a1e1d;border-color:#6a2f2d;font-weight:700;}
+  .rango-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 18px;}
+  .rango-lbl{font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:#777;margin-right:2px;}
+  .rango-btn{background:#161616;border:1px solid #2c2c2c;color:#aaa;border-radius:20px;padding:6px 14px;font-size:.75rem;cursor:pointer;font-family:inherit;}
+  .rango-btn:hover{border-color:#444;color:#ddd;}
+  .rango-btn.active{background:#1e2f3a;border-color:#2b7fa8;color:#6fd0f5;font-weight:600;}
+  .rango-nota{font-size:.7rem;color:#666;margin-left:4px;}
   .co-note{margin-top:12px;padding:11px 13px;background:#141414;border:1px solid #262626;border-radius:10px;font-size:.76rem;color:#c9c9c9;line-height:1.5;}
   .co-note small{color:#888;font-size:.68rem;}
   .cb-row{display:flex;align-items:center;gap:11px;margin:9px 0;}
@@ -195,6 +201,17 @@
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
       <div class="stat"><div class="k">Conversión total</div><div class="v" id="s-conv">—</div></div>
       <div class="stat gold"><div class="k">Conversión hoy</div><div class="v" id="s-conv-hoy">—</div></div>
+    </div>
+
+    <!-- Filtro de periodo: aplica al embudo del checkout y a la conducta.
+         Sirve para medir si un cambio funcionó, comparando con el acumulado. -->
+    <div class="rango-bar">
+      <span class="rango-lbl">Periodo</span>
+      <button class="rango-btn" data-rango="1" onclick="setRango(1)">Hoy</button>
+      <button class="rango-btn" data-rango="7" onclick="setRango(7)">7 días</button>
+      <button class="rango-btn" data-rango="30" onclick="setRango(30)">30 días</button>
+      <button class="rango-btn active" data-rango="0" onclick="setRango(0)">Todo</button>
+      <span class="rango-nota" id="rango-nota"></span>
     </div>
 
     <div class="two-col" id="sec-graficos">
@@ -422,22 +439,44 @@
 
   // Conducta del visitante: 4 bloques de barras a partir del mapa de eventos.
   var COND_LBL={
-    'hito:precio':'Vio el precio','hito:app':'Vio la app','hito:reviews':'Vio reseñas','hito:final':'Llegó al final',
-    'accion:color':'Eligió color','accion:carrito':'Abrió carrito','accion:resenas':'Abrió reseñas','accion:girar':'Giró el 360°',
+    'hito:precio':'1 · Vio el precio','hito:reviews':'2 · Reseñas','hito:sensor':'3 · Cómo funciona (360°)',
+    'hito:app':'4 · La app','hito:mide':'5 · Qué mide + specs','hito:diseno':'6 · Diseño',
+    'hito:faq':'7 · Preguntas frecuentes','hito:final':'8 · Llegó al final',
+    'accion:carrito':'Abrió carrito','accion:resenas':'Abrió reseñas','accion:girar':'Giró el 360°',
     'disp:movil':'📱 Móvil','disp:desktop':'💻 Escritorio'
   };
-  var ORDEN_HITO=['hito:precio','hito:app','hito:reviews','hito:final'];
+  // En ORDEN REAL de la página. Antes 'app' figuraba antes que 'reviews', pero
+  // reseñas va primero: el embudo de scroll se leía al revés.
+  var ORDEN_HITO=['hito:precio','hito:reviews','hito:sensor','hito:app','hito:mide','hito:diseno','hito:faq','hito:final'];
   function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
-  function barrasCond(contId, items, base){
+  // embudo=true → además del %, muestra cuánta gente se pierde en cada
+  // escalón y pinta en rojo el peor. Es lo que convierte la lista de scroll en
+  // un diagnóstico: dice EN QUÉ SECCIÓN abandonan.
+  function barrasCond(contId, items, base, embudo){
     var c=document.getElementById(contId); c.innerHTML='';
     if(!items.length){ c.innerHTML='<div style="color:#666;font-size:.8rem">—</div>'; return; }
     var b=Math.max(base,1);
-    items.forEach(function(it){
+    var peorIdx=-1;
+    if(embudo){
+      var peor=-1;
+      for(var i=1;i<items.length;i++){
+        var caida=(items[i-1].val||0)-(items[i].val||0);
+        if(caida>peor){ peor=caida; peorIdx=i; }
+      }
+    }
+    items.forEach(function(it,i){
       var pct=Math.round(it.val/b*100);
+      var extra='', color='';
+      if(embudo && i>0){
+        var prev=items[i-1].val||0, perd=prev-it.val;
+        var pctC=prev? Math.round(perd/prev*100):0;
+        if(perd>0) extra=' <span class="co-drop-tag'+(i===peorIdx?' peor':'')+'">−'+perd+' ('+pctC+'%)</span>';
+      }
+      if(embudo && i===peorIdx) color=';background:linear-gradient(90deg,#d0433f,#f0736f)';
       var row=document.createElement('div'); row.className='cb-row';
       row.innerHTML='<div class="cb-lbl" title="'+esc(it.lbl)+'">'+esc(it.lbl)+'</div>'+
-        '<div class="cb-track"><div class="cb-bar" style="width:'+pct+'%"></div></div>'+
-        '<div class="cb-val">'+it.val+' <small>'+pct+'%</small></div>';
+        '<div class="cb-track"><div class="cb-bar" style="width:'+pct+'%'+color+'"></div></div>'+
+        '<div class="cb-val">'+it.val+' <small>'+pct+'%</small>'+extra+'</div>';
       c.appendChild(row);
     });
   }
@@ -447,7 +486,7 @@
     document.getElementById('cond-empty').style.display=claves.length?'none':'block';
     // Scroll: en orden fijo de la página, sobre las visitas
     var scroll=ORDEN_HITO.filter(function(k){ return eventos[k]; }).map(function(k){ return {lbl:COND_LBL[k],val:eventos[k]}; });
-    barrasCond('cond-scroll', scroll, visitas);
+    barrasCond('cond-scroll', scroll, visitas, true);
     // Interacciones: por cantidad, sobre las visitas
     var acc=claves.filter(function(k){ return k.indexOf('accion:')===0 && k!=='accion:color'; })
       .map(function(k){ return {lbl:COND_LBL[k]||cap(k.slice(7)),val:eventos[k]}; })
@@ -512,7 +551,69 @@
     });
   }
 
+  // ── Filtro de periodo ──────────────────────────────────────────────────
+  // RANGO_DIAS: 0 = todo (usa el acumulado histórico); 1 = hoy; 7/30 = últimos
+  // N días (suma conductaPorDia). Ojo: los días por evento se guardan desde el
+  // deploy que los agregó, así que "30 días" solo tiene datos desde entonces.
+  var RANGO_DIAS = 0;
+  var ULT_DATA = null;
+
+  function diasChile(n){
+    var out=[], hoy=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Santiago'}));
+    for(var i=0;i<n;i++){
+      var d=new Date(hoy); d.setDate(hoy.getDate()-i);
+      out.push(d.toLocaleDateString('en-CA'));
+    }
+    return out;
+  }
+  // Suma los contadores de los últimos N días. Devuelve null si no hay datos
+  // por día (backend viejo), para caer de vuelta al acumulado sin romper nada.
+  function conductaRango(d, n){
+    var porDia=d.conductaPorDia;
+    if(!porDia || !Object.keys(porDia).length) return null;
+    var acc={};
+    diasChile(n).forEach(function(f){
+      var dia=porDia[f]; if(!dia) return;
+      Object.keys(dia).forEach(function(k){ acc[k]=(acc[k]||0)+dia[k]; });
+    });
+    return acc;
+  }
+  function visitasRango(d, n){
+    var pv=d.vistasPorDia||{}, s=0;
+    diasChile(n).forEach(function(f){ s+=pv[f]||0; });
+    return s;
+  }
+
+  function setRango(n){
+    RANGO_DIAS=n;
+    [].forEach.call(document.querySelectorAll('.rango-btn'), function(b){
+      b.classList.toggle('active', Number(b.getAttribute('data-rango'))===n);
+    });
+    if(ULT_DATA) pintar(ULT_DATA);
+  }
+  window.setRango = setRango;
+
   function pintar(d){
+    ULT_DATA = d;
+    // Conducta y embudo del checkout según el periodo elegido.
+    var conducta = d.conducta||{}, visitasBase = (d.embudo&&d.embudo.visitas)||0, nota='';
+    if(RANGO_DIAS>0){
+      var r = conductaRango(d, RANGO_DIAS);
+      if(r){
+        conducta = r;
+        visitasBase = visitasRango(d, RANGO_DIAS);
+        nota = (RANGO_DIAS===1?'hoy':'últimos '+RANGO_DIAS+' días')+' · '+visitasBase+' visitas';
+      } else {
+        nota = 'sin datos por día todavía — mostrando el acumulado';
+      }
+    } else {
+      nota = 'acumulado histórico';
+    }
+    var nt=document.getElementById('rango-nota'); if(nt) nt.textContent=nota;
+    pintarTodo(d, conducta, visitasBase);
+  }
+
+  function pintarTodo(d, conducta, visitasBase){
     document.getElementById('s-live').textContent=d.visitantesEnVivo;
     document.getElementById('s-vhoy').textContent=d.vistasHoy;
     document.getElementById('s-tprom').textContent=tiempo(d.tiempoPromedioSeg);
@@ -524,8 +625,11 @@
     document.getElementById('s-conv').textContent=(d.conversion!=null?d.conversion:0)+'%';
     document.getElementById('s-conv-hoy').textContent=(d.conversionHoy!=null?d.conversionHoy:0)+'%';
     pintarEmbudo(d.embudo||{visitas:0,checkouts:0,ventas:0},d.conversion||0);
-    pintarCheckout(d.conducta||{});
-    pintarConducta(d.conducta||{}, (d.embudo&&d.embudo.visitas)||0);
+    // Estas tres respetan el periodo elegido arriba.
+    pintarCheckout(conducta);
+    pintarConducta(conducta, visitasBase);
+    // "Qué lleva a comprar" cruza con conversionAccion, que es acumulado: se
+    // deja siempre en histórico para no comparar ventanas distintas.
     pintarConversion(d.conversionAccion||{}, d.conducta||{}, d.conversionesN||0);
     tickets=d.tickets||[];
     rows('#t-tickets',tickets,function(t){ return '<td><b>#'+String(t.numero||0).padStart(4,"0")+'</b></td><td>'+esc(t.nombre||'—')+'</td><td>'+esc(t.instagram||'—')+'</td><td>'+esc(t.orden)+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');

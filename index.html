@@ -1538,11 +1538,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         ev('fuente:'+src);
       }catch(e){ ev('fuente:otro'); }
       // 3) Hitos de scroll (cada sección que entra en pantalla, una vez)
-      var hitos=[['.price-block','precio'],['#app','app'],['.reviews','reviews'],['.final-cta','final']];
+      // En ORDEN de la página. Antes solo había 4 marcas y entre "precio" y
+      // "app" quedaba un hueco de ~2.700px: se veía que el 74% se iba ahí,
+      // pero no en qué sección. Estas 8 marcan cada tramo.
+      var hitos=[
+        ['.price-block','precio'],   // zona de compra
+        ['.reviews','reviews'],      // reseñas
+        ['#tecnologia','sensor'],    // cómo funciona / 360°
+        ['#app','app'],              // la app
+        ['.monitor','mide'],         // qué mide + especificaciones
+        ['#diseno','diseno'],        // diseño sin distracciones
+        ['.faq','faq'],              // preguntas frecuentes
+        ['.final-cta','final']       // CTA final
+      ];
       if('IntersectionObserver' in window){
         var io=new IntersectionObserver(function(ents){
           ents.forEach(function(en){ if(en.isIntersecting){ var n=en.target.getAttribute('data-hito'); if(n){ ev('hito:'+n); io.unobserve(en.target); } } });
-        },{threshold:.4});
+        // threshold 0 = "llegó a la sección". Con .4 el dato quedaba sesgado
+        // por el alto: reseñas mide 1.960px, así que exigía ~784px visibles y
+        // marcaba menos que la app, pese a ir ANTES en la página.
+        },{threshold:0});
         hitos.forEach(function(h){ var el=document.querySelector(h[0]); if(el){ el.setAttribute('data-hito',h[1]); io.observe(el); } });
       }
       // 4) Interacciones (delegación de clicks, una vez por tipo)
@@ -3123,7 +3138,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 
   <!-- CARACTERÍSTICAS (bajadas: las reseñas van primero) -->
-  <section class="how">
+  <section class="how" id="diseno">
     <!-- Carrusel: 3 características cambiables (imagen cuadrada arriba, texto abajo) -->
     <div class="feat-car" id="featCar">
       <div class="feat-track" id="featTrack">

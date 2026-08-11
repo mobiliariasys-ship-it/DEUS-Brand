@@ -18,6 +18,12 @@ let checkoutsTotal = 0;    // cuántas veces se abrió el checkout (paso medio d
 // dueño). Clave 'hito:precio', 'accion:color', 'disp:movil', 'fuente:instagram'…
 // No guarda nada personal, solo cuántas sesiones hicieron cada cosa.
 const eventos = {};
+// Los mismos eventos pero partidos por día ('YYYY-MM-DD' Chile -> { ev: N }).
+// `eventos` es acumulado desde siempre y no se puede filtrar; sin esto el
+// dashboard no puede responder "¿cómo vengo HOY?" ni medir si un cambio
+// funcionó. Se podan los días viejos para que no crezca sin control.
+const eventosPorDia = {};
+const DIAS_CONDUCTA = 45;
 // 'co:' son los pasos DENTRO del checkout (co:1abrio … co:4pago) que alimentan
 // el embudo del dashboard. Sin este prefijo el validador los descartaba y la
 // sección quedaba siempre "sin datos".
@@ -43,6 +49,7 @@ async function init() {
   duracionN = guardado.duracionN || 0;
   checkoutsTotal = guardado.checkoutsTotal || 0;
   Object.assign(eventos, guardado.eventos || {});
+  Object.assign(eventosPorDia, guardado.eventosPorDia || {});
   Object.assign(conversiones, guardado.conversiones || {});
   conversionesN = guardado.conversionesN || 0;
   conversionesOrdenes.push(...(guardado.conversionesOrdenes || []));
@@ -51,7 +58,7 @@ async function init() {
 }
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, conversiones, conversionesN, conversionesOrdenes, ventas, tickets })
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, eventosPorDia, conversiones, conversionesN, conversionesOrdenes, ventas, tickets })
     .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
@@ -125,6 +132,7 @@ function resetTiempoPromedio() {
 // NO toca ventas, tickets, stock ni el embudo de dinero.
 function resetConducta() {
   for (const k of Object.keys(eventos)) delete eventos[k];
+  for (const k of Object.keys(eventosPorDia)) delete eventosPorDia[k];
   for (const k of Object.keys(conversiones)) delete conversiones[k];
   conversionesN = 0;
   conversionesOrdenes.length = 0;
@@ -144,12 +152,27 @@ function registrarCheckout(esOwner) {
 // Registra un evento de conducta (scroll, click, dispositivo, fuente). El
 // frontend ya deduplica 1 vez por sesión, así que acá solo sumamos. Valida el
 // formato para no ensuciar los datos y limita la cantidad de claves distintas.
+// Suma un evento al acumulado histórico Y al contador del día. Sale de acá y
+// no de registrarEvento() porque registrarVenta() también necesita sumar
+// (co:5pago) y las dos vías tienen que quedar en los dos lados.
+function sumarEvento(k) {
+  eventos[k] = (eventos[k] || 0) + 1;
+  const hoy = hoyChile();
+  if (!eventosPorDia[hoy]) {
+    eventosPorDia[hoy] = {};
+    // Poda: deja solo los últimos DIAS_CONDUCTA días.
+    const dias = Object.keys(eventosPorDia).sort();
+    while (dias.length > DIAS_CONDUCTA) delete eventosPorDia[dias.shift()];
+  }
+  eventosPorDia[hoy][k] = (eventosPorDia[hoy][k] || 0) + 1;
+}
+
 function registrarEvento(ev, esOwner) {
   if (esOwner) return;
   const k = String(ev || '').trim().toLowerCase();
   if (!EVENTO_OK.test(k)) return;
   if (eventos[k] === undefined && Object.keys(eventos).length >= 120) return;
-  eventos[k] = (eventos[k] || 0) + 1;
+  sumarEvento(k);
   guardar();
 }
 
@@ -196,7 +219,7 @@ function registrarVenta(v) {
     orden: v.orden ? String(v.orden) : ''
   });
   const ticket = asignarTicket({ nombre: v.nombre, orden: v.orden, email: v.email });
-  if (!yaContada) eventos['co:5pago'] = (eventos['co:5pago'] || 0) + 1;
+  if (!yaContada) sumarEvento('co:5pago');
   guardar();
   return ticket;
 }
@@ -340,6 +363,8 @@ function snapshot() {
     conversion,                                     // % ventas ÷ visitas
     embudo: { visitas: vistasTotal, checkouts: checkoutsTotal, ventas: comprasN },
     conducta: { ...eventos },                        // contadores de conducta del visitante
+    conductaPorDia: { ...eventosPorDia },            // lo mismo partido por día, para filtrar
+    vistasPorDia: { ...vistasPorDia },               // base de visitas por día, para el mismo filtro
     conversionAccion: { ...conversiones },           // compradores que hicieron cada acción
     conversionesN                                    // total de compras rastreadas
   };
