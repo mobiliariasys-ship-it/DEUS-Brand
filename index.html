@@ -1513,7 +1513,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // Embudo: registra 1 sola vez por sesión que el visitante abrió el checkout.
     window.deusTrackCheckout=function(){ try{ if(sessionStorage.getItem('deus-co-tracked'))return; sessionStorage.setItem('deus-co-tracked','1'); fetch(base+'/track/checkout',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({esOwner:esOwner()})}).catch(function(){}); }catch(e){} };
     // Conducta: cada evento se manda 1 sola vez por sesión (dedupe por clave).
-    window.deusEvento=function(ev){ try{ if(!ev)return; var f='deus-ev-'+ev; if(sessionStorage.getItem(f))return; sessionStorage.setItem(f,'1'); fetch(base+'/track/event',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({ev:ev,esOwner:esOwner()})}).catch(function(){}); }catch(e){} };
+    // sendBeacon primero: está hecho para sobrevivir a la navegación. Los
+    // eventos que se disparan justo antes de saltar a la pasarela (co:45redir)
+    // se perdían con fetch+keepalive, porque iOS y el navegador interno de
+    // Instagram cancelan la petición al cambiar de página — y ahí está el 97%
+    // del tráfico. Se veían 3 llegadas a la pasarela con 7 pagos hechos.
+    // Mismo origen (DEUS_API_BASE=''), así que application/json no dispara
+    // preflight y el beacon sale directo.
+    window.deusEvento=function(ev){ try{ if(!ev)return; var f='deus-ev-'+ev; if(sessionStorage.getItem(f))return; sessionStorage.setItem(f,'1');
+      var url=base+'/track/event', cuerpo=JSON.stringify({ev:ev,esOwner:esOwner()});
+      if(navigator.sendBeacon){ try{ if(navigator.sendBeacon(url,new Blob([cuerpo],{type:'application/json'}))) return; }catch(e){} }
+      fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:cuerpo}).catch(function(){}); }catch(e){} };
     ping(nueva);
     setInterval(function(){ if(!document.hidden) ping(false); },15000);
     document.addEventListener('visibilitychange',function(){ if(!document.hidden) ping(false); });

@@ -441,18 +441,22 @@
     // embudo: significa que ese evento todavía no llega (recién desplegado),
     // no que se caiga toda la gente ahí. Se marca como "esperando" y queda
     // fuera del cálculo de la mayor caída, para no dar una alarma falsa.
+    // También cubre el caso de un evento que se PIERDE: si un paso tiene menos
+    // gente que uno posterior (p. ej. 3 llegaron a la pasarela pero pagaron 7)
+    // el dato es imposible y no sirve para calcular caídas.
     var maxPost=0;
     for(var j=pasos.length-1;j>=0;j--){
-      pasos[j].esperando = (pasos[j].val===0 && maxPost>0);
+      pasos[j].esperando  = (pasos[j].val===0 && maxPost>0);
+      pasos[j].incompleto = (pasos[j].val>0 && pasos[j].val<maxPost);
       if(pasos[j].val>maxPost) maxPost=pasos[j].val;
     }
     // Detectar el escalón con mayor caída (para marcarlo)
     var peorIdx=-1, peorCaida=-1;
     for(var i=1;i<pasos.length;i++){
-      if(pasos[i].esperando) continue;
-      // Compara contra el último paso con dato real, salteando los que esperan.
-      var k=i-1; while(k>0 && pasos[k].esperando) k--;
-      if(pasos[k].esperando) continue;
+      if(pasos[i].esperando||pasos[i].incompleto) continue;
+      // Compara contra el último paso con dato confiable.
+      var k=i-1; while(k>0 && (pasos[k].esperando||pasos[k].incompleto)) k--;
+      if(pasos[k].esperando||pasos[k].incompleto) continue;
       var caida=(pasos[k].val||0)-(pasos[i].val||0);
       if(caida>peorCaida){ peorCaida=caida; peorIdx=i; }
     }
@@ -470,7 +474,8 @@
       }
       var pct=Math.round((p.val/base)*100);
       var caidaTxt='';
-      if(i>0 && !pasos[i-1].esperando){
+      if(p.incompleto) caidaTxt=' <span class="co-drop-tag">dato incompleto</span>';
+      else if(i>0 && !pasos[i-1].esperando && !pasos[i-1].incompleto){
         var prev=pasos[i-1].val||0, perdidos=prev-p.val;
         var pctCaida=prev? Math.round(perdidos/prev*100):0;
         if(perdidos>0) caidaTxt='<span class="co-drop-tag'+(i===peorIdx?' peor':'')+'">−'+perdidos+' ('+pctCaida+'%)</span>';
@@ -489,12 +494,20 @@
     // pasarela (error nuestro/del gateway al crear el pago).
     var ex=document.getElementById('co-extra'); if(!ex) return;
     var apreto=conducta['co:4pago']||0, llego=conducta['co:45redir']||0;
-    var err=conducta['co:4xerror']||0, nunca=Math.max(apreto-llego,0);
+    var err=conducta['co:4xerror']||0, pagaron=conducta['co:5pago']||0;
+    var nunca=Math.max(apreto-llego,0);
+    // Si pagaron más de los que "llegaron a la pasarela", el evento se está
+    // perdiendo y el número de abajo sería una alarma falsa.
+    var datoRoto = llego < pagaron;
     var met=[['co:m-flow','Flow (Webpay)'],['co:m-mp','MercadoPago'],['co:m-webpay','Webpay directo']]
       .map(function(m){ return {lbl:m[1], n:conducta[m[0]]||0}; })
       .filter(function(m){ return m.n>0; });
     var h='';
-    if(apreto>0){
+    if(datoRoto){
+      h+='<div class="co-note"><b style="color:#e7cf9c">Midiendo la llegada a la pasarela…</b>'+
+         '<br><small>Pagaron '+pagaron+' pero solo se registraron '+llego+' llegadas: faltan eventos. '+
+         'Se corrigió el envío (sendBeacon) — el dato queda fiable con las próximas compras.</small></div>';
+    } else if(apreto>0){
       h+='<div class="co-note">';
       if(nunca>0){
         h+='<b style="color:#f0736f">'+nunca+' apretaron pagar y no llegaron a la pasarela</b>'+
