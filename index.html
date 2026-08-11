@@ -107,7 +107,7 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
     "url": "https://deusbrand.cl/",
     "shippingDetails": {
       "@type": "OfferShippingDetails",
-      "shippingRate": { "@type": "MonetaryAmount", "value": "3890", "currency": "CLP" },
+      "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "CLP" },
       "shippingDestination": { "@type": "DefinedRegion", "addressCountry": "CL" },
       "deliveryTime": {
         "@type": "ShippingDeliveryTime",
@@ -127,7 +127,7 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
   "aggregateRating": {
     "@type": "AggregateRating",
     "ratingValue": "5.0",
-    "reviewCount": "14",
+    "reviewCount": "15",
     "bestRating": "5"
   },
   "review": [
@@ -228,7 +228,7 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
   "alternateName": ["DEUSBAND", "DEUS Brand", "Deus Band Chile"],
   "url": "https://deusbrand.cl/",
   "logo": "https://deusbrand.cl/og-image.jpg",
-  "sameAs": ["https://www.instagram.com/deusbrand.cl/"]
+  "sameAs": ["https://www.instagram.com/deusbrand.cl/", "https://www.mercadolibre.cl/perfil/DEUSBRAND"]
 }
 </script>
 <script type="application/ld+json">
@@ -277,16 +277,11 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
 </script>
 
 <!-- Datos estructurados: la marca -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "DEUS",
-  "url": "https://deusbrand.cl/",
-  "logo": "https://deusbrand.cl/img/logo-a686e69b.svg",
-  "sameAs": ["https://www.instagram.com/deusbrand.cl/"]
-}
-</script>
+<!-- Habia un segundo bloque Organization aqui ("DEUS", logo SVG) que chocaba
+     con el de arriba ("DEUS Band", logo JPG) sobre la MISMA url: Google veia
+     dos organizaciones distintas reclamando el sitio y no sabia cual mostrar.
+     Se deja solo el de arriba, que ademas trae alternateName y logo raster
+     (Google no acepta SVG como logo en datos estructurados). -->
 <style>
 /* Paleta "grafito suave": el negro puro (#080808) hacía que las tarjetas se
    confundieran con el fondo y el sitio se viera hueco. Subir el fondo unos
