@@ -1749,6 +1749,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
 
           <div class="checkout-body">
+            <!-- Envío gratis ARRIBA DEL TODO, antes de pedir ningún dato.
+                 Estaba debajo del botón de calcular (y=644) y con el teclado
+                 abierto no se veía nunca: el cliente solo alcanzaba a leer
+                 "Calcular envío" y se iba pensando que le iban a cobrar. -->
+            <div class="envio-free" id="envio-free" style="display:none;">
+              <span class="ef-ico">🚚</span>
+              <div class="ef-txt">
+                <b>Envío GRATIS a todo Chile</b>
+                <small id="envio-free-sub">Ya está incluido — no pagas despacho</small>
+              </div>
+            </div>
+
             <div class="field-label">Datos de quien recibe</div>
             <div class="shipping-form">
               <input class="shipping-input" id="co-nombre" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" oninput="window.deusEvento && window.deusEvento('co:2datos')" />
@@ -1768,18 +1780,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="ac-list" id="comuna-list"></div>
               </div>
               <input class="shipping-input" id="sh-address" aria-label="Dirección de envío" placeholder="Calle, número, depto" style="grid-column:1/-1" />
-              <button class="btn-calcular" onclick="calcularEnvio()">Calcular envío</button>
-            </div>
-
-            <!-- Aviso de envío gratis: visible apenas se abre el checkout, sin
-                 tener que calcular nada. Cuando el cliente escribe su comuna,
-                 el texto de abajo pasa a mostrar cuánto se ahorró de verdad. -->
-            <div class="envio-free" id="envio-free" style="display:none;">
-              <span class="ef-ico">🚚</span>
-              <div class="ef-txt">
-                <b>Envío GRATIS a todo Chile</b>
-                <small id="envio-free-sub">Escribe tu dirección y verás cuánto te ahorras</small>
-              </div>
+              <!-- "Calcular envío" sugería que el despacho se cobra. El envío
+                   ya se calcula solo al escribir región/dirección; este botón
+                   queda de respaldo por si eso falla, así que solo cambia el
+                   texto (sacarlo dejaría sin salida a quien lo necesite). -->
+              <button class="btn-calcular" onclick="calcularEnvio()">Confirmar dirección</button>
             </div>
 
             <div id="shipping-results"></div>
@@ -1999,7 +2004,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           caja.style.display = 'flex';
           sub.textContent = (ahorro > 0)
             ? `Te ahorras $${ahorro.toLocaleString('es-CL')} en el despacho a tu comuna`
-            : 'Escribe tu dirección y verás cuánto te ahorras';
+            // Afirmación, no promesa condicional: el mensaje anterior ("escribe
+            // tu dirección y verás cuánto te ahorras") dejaba la duda de si al
+            // final iban a cobrar algo.
+            : 'Ya está incluido — no pagas despacho';
         }
         async function calcularEnvio() {
           const region = document.getElementById('sh-region').value.trim();
