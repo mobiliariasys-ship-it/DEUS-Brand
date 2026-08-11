@@ -1133,6 +1133,12 @@ body.sb-on .wa-float{bottom:82px;}
   .buybox .price-block .price-save{font-size:.57rem;padding:3px 8px;margin-left:7px;}
 }
 .color-now{margin-left:auto;font-size:.68rem;color:#9a9a9a;letter-spacing:.5px;}
+/* Aviso: la foto visible no es el color elegido */
+.color-mismatch{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:-6px 0 14px;
+  font-size:.72rem;color:#9a9a9a;}
+.pick-color{background:rgba(217,191,146,.12);border:1px solid rgba(217,191,146,.45);color:#e7cf9c;
+  border-radius:20px;padding:4px 12px;font-size:.7rem;font-weight:700;font-family:inherit;cursor:pointer;}
+.pick-color:hover{background:rgba(217,191,146,.2);}
 /* Envío gratis: línea fina, ya no un recuadro que compite con el botón */
 .ship-line{display:flex;align-items:center;gap:7px;font-size:.7rem;letter-spacing:1.2px;
   color:#7fd589;font-weight:700;margin:0 0 16px;}
@@ -1627,6 +1633,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="cdot" style="background:#e8b4bc;" title="Rosado" onclick="setColor('rosada',this)"></div>
           <span class="color-now" id="color-now">Negro</span>
         </div>
+        <!-- Aparece solo si la foto que se está viendo no es el color elegido -->
+        <div class="color-mismatch" id="color-mismatch" style="display:none"></div>
 
         <!-- Precio y envío ya vienen pintados en el HTML: aplicarReserva() sólo
              corre después del fetch de /stock, así que si el backend tarda el
@@ -2123,7 +2131,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function abrirCheckout(colorForzado, qtyForzada, soloTapones) {
           checkoutTapones = !!soloTapones;
           if (!checkoutTapones) {
-            const colorActual = colorForzado || (typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris');
+            // selectedColor, NO la posición del carrusel: deslizar fotos ya no
+            // decide qué color se cobra.
+            const colorActual = colorForzado || (typeof selectedColor !== 'undefined' ? selectedColor : 'negra');
             if (typeof AGOTADOS !== 'undefined' && AGOTADOS[colorActual]) {
               alert('El color negro está agotado. Elige el color gris para comprar.');
               return;
@@ -2216,7 +2226,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           return precioBanda() * checkoutQty + (upsellTapones ? UPSELL_PRICE : 0);
         }
         function cambiarCantidadCheckout(delta) {
-          const color = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'negra';
+          const color = (typeof checkoutColor !== 'undefined' && checkoutColor) ? checkoutColor : 'negra';
           const maxQty = getMaxQty(color);
           checkoutQty = Math.max(1, Math.min(maxQty, checkoutQty + delta));
           document.getElementById('co-qty-display').textContent = checkoutQty;
@@ -2279,7 +2289,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         document.addEventListener('DOMContentLoaded', actualizarCarrito);
         let qtyDialogColor = null;
         function abrirDialogoCarrito() {
-          qtyDialogColor = typeof colorOrder !== 'undefined' ? colorOrder[currentSlide] : 'gris';
+          qtyDialogColor = typeof selectedColor !== 'undefined' ? selectedColor : 'negra';
           if (typeof AGOTADOS !== 'undefined' && AGOTADOS[qtyDialogColor]) {
             alert('El color negro está agotado. Elige el color gris.');
             qtyDialogColor = null;
@@ -3405,6 +3415,11 @@ const bandImages = {
 };
 const colorOrder = ['negra','gris','rosada'];
 let currentSlide = 0;
+// COLOR QUE SE COMPRA. Separado a propósito de currentSlide (la foto que se
+// está mirando): antes eran lo mismo, así que deslizar la galería para ver
+// las otras bandas cambiaba el color del pedido y llegaban compras de un
+// color que el cliente no quiso. Ahora SOLO cambia al tocar un círculo.
+let selectedColor = 'negra';
 
 // Colores sin stock: no se pueden comprar ni agregar al carrito
 const AGOTADOS = {};
@@ -3425,10 +3440,11 @@ function updateStockUI() {
   const pageColor = colorOrder[currentSlide];
   const stockNote = document.getElementById('stock-note');
   if (stockNote) { const t = textoStock(pageColor); stockNote.textContent = t; stockNote.style.display = t ? '' : 'none'; }
-  // Nombre del color elegido, a la derecha de los círculos: confirma qué
-  // color se está comprando sin tener que adivinar por el punto marcado.
+  // Nombre del color ELEGIDO (no el de la foto visible): confirma qué se
+  // está por comprar.
   const cn = document.getElementById('color-now');
-  if (cn) { const n = COLOR_LABEL[pageColor] || ''; cn.textContent = n ? n.charAt(0).toUpperCase() + n.slice(1) : ''; }
+  if (cn) { const n = COLOR_LABEL[selectedColor] || ''; cn.textContent = n ? n.charAt(0).toUpperCase() + n.slice(1) : ''; }
+  actualizarAvisoColor();
   // Modal de CHECKOUT: refleja el color BLOQUEADO del checkout (checkoutColor),
   // no la posición del carrusel — así lo que se ve al pagar es lo que se cobra.
   const cc = (typeof checkoutColor !== 'undefined' && checkoutColor) ? checkoutColor : pageColor;
@@ -3624,18 +3640,38 @@ function initSlides() {
   });
 }
 
+// Mueve SOLO la galería. No toca selectedColor: mirar fotos no es comprar.
 function goSlide(i) {
   currentSlide = (i + colorOrder.length) % colorOrder.length;
   const slides = document.getElementById('slides');
   if (slides) slides.style.transform = `translateX(-${currentSlide*100}%)`;
   document.querySelectorAll('.sdot').forEach((d,idx) => d.classList.toggle('active', idx===currentSlide));
-  document.querySelectorAll('.cdot').forEach((d,idx) => d.classList.toggle('active', idx===currentSlide));
+  // Los círculos marcan el color ELEGIDO, no la foto visible.
+  document.querySelectorAll('.cdot').forEach((d,idx) => d.classList.toggle('active', colorOrder[idx]===selectedColor));
   updateStockUI();
 }
 
+// Única vía para cambiar el color del pedido: tocar un círculo.
 function setColor(color, el) {
   const idx = colorOrder.indexOf(color);
-  if (idx >= 0) goSlide(idx);
+  if (idx < 0) return;
+  selectedColor = color;
+  goSlide(idx);
+}
+
+// Si el cliente deslizó hasta una foto de otro color, se lo decimos y le
+// damos un botón para elegirlo. Así no compra por error el que estaba
+// mirando, pero tampoco tiene que buscar dónde cambiarlo.
+function actualizarAvisoColor() {
+  const av = document.getElementById('color-mismatch');
+  if (!av) return;
+  const viendo = colorOrder[currentSlide];
+  if (viendo === selectedColor) { av.style.display = 'none'; av.innerHTML = ''; return; }
+  const n = COLOR_LABEL[viendo] || viendo;
+  const nCap = n.charAt(0).toUpperCase() + n.slice(1);
+  av.style.display = '';
+  av.innerHTML = 'Estás viendo el ' + nCap +
+    ' <button type="button" class="pick-color" onclick="setColor(\'' + viendo + '\')">Elegir ' + n + '</button>';
 }
 
 // Swipe con el dedo
