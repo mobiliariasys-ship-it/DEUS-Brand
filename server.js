@@ -506,9 +506,22 @@ app.get('/admin/stats', (req, res) => {
     fecha: p.created_at, nombre: p.customer?.name, comuna: p.shipping?.address?.commune,
     color: p.color, total: p.total, estado: p.status, id: p.preference_id
   }));
+  // Agregados sobre TODOS los pedidos (la tabla solo muestra los últimos 15).
+  // Color: qué color pedir al reponer, ahora que elegirlo ya no depende de un
+  // swipe accidental. Comuna: dónde concentrar el reparto y la publicidad.
+  const porColor = {}, porComuna = {};
+  for (const p of pedidos) {
+    const c = (p.color || '—').toString().trim();
+    porColor[c] = (porColor[c] || 0) + 1;
+    const cm = (p.shipping?.address?.commune || '—').toString().trim();
+    porComuna[cm] = (porComuna[cm] || 0) + 1;
+  }
   res.json({
     ...snap,
     pedidos: pedidosRecientes,
+    pedidosPorColor: porColor,
+    pedidosPorComuna: porComuna,
+    pedidosTotal: pedidos.length,
     stock: getStock()
   });
 });

@@ -83,6 +83,10 @@
   /* Etiqueta de caída entre pasos del embudo del checkout */
   .co-drop-tag{font-size:.58rem;color:#c98;background:#2a2320;border:1px solid #4a3a2e;border-radius:20px;padding:1px 7px;margin-left:6px;white-space:nowrap;font-variant-numeric:tabular-nums;}
   .co-drop-tag.peor{color:#f0736f;background:#3a1e1d;border-color:#6a2f2d;font-weight:700;}
+  .alerta{background:#2a1615;border:1px solid #6a2f2d;border-left:3px solid #f0736f;border-radius:10px;
+    padding:13px 16px;margin:0 0 18px;font-size:.82rem;color:#f0c0be;line-height:1.55;}
+  .alerta b{color:#ff9d99;}
+  .alerta small{color:#c99;font-size:.72rem;}
   .rango-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 18px;}
   .rango-lbl{font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:#777;margin-right:2px;}
   .rango-btn{background:#161616;border:1px solid #2c2c2c;color:#aaa;border-radius:20px;padding:6px 14px;font-size:.75rem;cursor:pointer;font-family:inherit;}
@@ -180,6 +184,8 @@
       <button class="nav-i" onclick="irA('sec-convierte',this)"><span class="ico">🎯</span> Convierte</button>
       <button class="nav-i" onclick="irA('sec-sorteo',this)"><span class="ico">🎟️</span> Sorteo</button>
       <button class="nav-i" onclick="irA('sec-ventas',this)"><span class="ico">💳</span> Ventas</button>
+      <button class="nav-i" onclick="irA('sec-canales',this)"><span class="ico">💸</span> Canales</button>
+      <button class="nav-i" onclick="irA('sec-negocio',this)"><span class="ico">📦</span> Negocio</button>
       <button class="nav-i" onclick="irA('sec-pedidos',this)"><span class="ico">📦</span> Pedidos</button>
       <button class="nav-i" onclick="irA('sec-ads',this)"><span class="ico">📣</span> Ads</button>
       <div class="nav-sep"></div>
@@ -192,6 +198,10 @@
       <div class="h-actions"><div class="updated" id="updated">—</div></div>
     </header>
 
+    <!-- Avisos: solo aparecen si hay algo roto. El chat se cayó una vez y el
+         error únicamente se veía en los logs de Render. -->
+    <div id="alertas"></div>
+
     <div class="grid">
       <div class="stat live"><div class="k"><span class="dot on"></span>Viendo ahora</div><div class="v" id="s-live">0</div></div>
       <div class="stat"><div class="k">Visitas hoy</div><div class="v" id="s-vhoy">0</div></div>
@@ -201,6 +211,8 @@
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
       <div class="stat"><div class="k">Conversión total</div><div class="v" id="s-conv">—</div></div>
       <div class="stat gold"><div class="k">Conversión hoy</div><div class="v" id="s-conv-hoy">—</div></div>
+      <div class="stat"><div class="k">Ticket promedio</div><div class="v" id="s-aov">—</div></div>
+      <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
     </div>
 
     <!-- Filtro de periodo: aplica al embudo del checkout y a la conducta.
@@ -264,6 +276,48 @@
         </div>
       </div>
       <div class="empty" id="cond-empty" style="display:none">Aún no hay datos de conducta. Se llenan con las próximas visitas.</div>
+    </section>
+
+    <!-- Conversión por fuente y dispositivo. El dato ya se guardaba (cuando
+         alguien compra viaja su sesión entera, incluido fuente: y disp:) pero
+         el panel lo descartaba. Es lo que dice DÓNDE poner la plata. -->
+    <section id="sec-canales">
+      <div class="sec-h"><h2>💸 Qué canal deja plata</h2><span class="pill" id="canal-base"></span></div>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De cada 100 visitas de ese canal, cuántas compraron. Es el dato para decidir dónde invertir en publicidad.</p>
+      <div class="cond-grid">
+        <div class="cond-col">
+          <h3 class="cond-h">📍 Conversión por fuente</h3>
+          <div id="conv-fuente"></div>
+        </div>
+        <div class="cond-col">
+          <h3 class="cond-h">📱 Conversión por dispositivo</h3>
+          <div id="conv-disp"></div>
+        </div>
+      </div>
+      <div class="empty" id="canal-empty" style="display:none">Aún sin compras rastreadas por canal.</div>
+    </section>
+
+    <!-- Negocio: ticket promedio, stock, medios de pago y cuándo compran -->
+    <section id="sec-negocio">
+      <div class="sec-h"><h2>📦 Negocio · stock, pagos y horarios</h2><span class="pill" id="neg-ticket"></span></div>
+      <div class="cond-grid">
+        <div class="cond-col">
+          <h3 class="cond-h">🎨 Pedidos por color</h3>
+          <div id="neg-color"></div>
+        </div>
+        <div class="cond-col">
+          <h3 class="cond-h">💳 Ventas por medio de pago</h3>
+          <div id="neg-metodo"></div>
+        </div>
+        <div class="cond-col">
+          <h3 class="cond-h">📍 Top comunas</h3>
+          <div id="neg-comuna"></div>
+        </div>
+      </div>
+      <h3 class="cond-h" style="margin-top:20px">🕐 A qué hora compran</h3>
+      <div id="neg-horas"></div>
+      <h3 class="cond-h" style="margin-top:18px">📅 Qué día compran</h3>
+      <div id="neg-dias"></div>
     </section>
 
     <section id="sec-convierte">
@@ -613,6 +667,97 @@
     pintarTodo(d, conducta, visitasBase);
   }
 
+  // Lista simple ordenada de mayor a menor, con % sobre un total.
+  function listaSimple(contId, items, total, sufijo){
+    var c=document.getElementById(contId); if(!c) return;
+    c.innerHTML='';
+    if(!items.length){ c.innerHTML='<div style="color:#666;font-size:.8rem">—</div>'; return; }
+    var t=Math.max(total,1);
+    items.sort(function(a,b){ return b.val-a.val; }).forEach(function(it){
+      var pct=Math.round(it.val/t*100);
+      var row=document.createElement('div'); row.className='cb-row';
+      row.innerHTML='<div class="cb-lbl" title="'+esc(it.lbl)+'">'+esc(it.lbl)+'</div>'+
+        '<div class="cb-track"><div class="cb-bar" style="width:'+Math.min(pct,100)+'%"></div></div>'+
+        '<div class="cb-val">'+it.val+' <small>'+pct+'%'+(sufijo||'')+'</small></div>';
+      c.appendChild(row);
+    });
+  }
+
+  // Conversión por canal: compradores que venían de X ÷ visitantes de X.
+  // Los dos números ya se guardaban (conversionAccion y conducta) pero el
+  // panel filtraba las claves fuente:/disp: y no las mostraba nunca.
+  function pintarCanales(convAcc, conducta){
+    convAcc=convAcc||{}; conducta=conducta||{};
+    function armar(prefijo, contId){
+      var items=Object.keys(conducta)
+        .filter(function(k){ return k.indexOf(prefijo)===0; })
+        .map(function(k){
+          var base=conducta[k]||0, comp=convAcc[k]||0;
+          return { lbl:(COND_LBL[k]||cap(k.slice(prefijo.length))), base:base, comp:comp,
+                   rate: base? comp/base*100 : 0 };
+        })
+        .filter(function(x){ return x.base>0; })
+        .sort(function(a,b){ return b.rate-a.rate; });
+      var c=document.getElementById(contId); if(!c) return 0;
+      c.innerHTML='';
+      if(!items.length){ c.innerHTML='<div style="color:#666;font-size:.8rem">—</div>'; return 0; }
+      // Escala relativa al mejor canal, si no las barras serían invisibles (0-3%)
+      var max=Math.max.apply(null, items.map(function(x){ return x.rate; })) || 1;
+      items.forEach(function(it){
+        var pct=it.rate.toFixed(2);
+        var ancho=Math.round(it.rate/max*100);
+        var row=document.createElement('div'); row.className='cb-row';
+        row.innerHTML='<div class="cb-lbl" title="'+esc(it.lbl)+'">'+esc(it.lbl)+'</div>'+
+          '<div class="cb-track"><div class="cb-bar" style="width:'+ancho+'%;background:linear-gradient(90deg,#2e8b57,#6fd08c)"></div></div>'+
+          '<div class="cb-val">'+pct+'% <small>'+it.comp+'/'+it.base+'</small></div>';
+        c.appendChild(row);
+      });
+      return items.length;
+    }
+    var n = armar('fuente:','conv-fuente') + armar('disp:','conv-disp');
+    document.getElementById('canal-empty').style.display = n ? 'none' : 'block';
+  }
+
+  var DIAS_LBL=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  function pintarNegocio(d){
+    var totPed = d.pedidosTotal || 0;
+    listaSimple('neg-color', Object.keys(d.pedidosPorColor||{}).map(function(k){
+      return { lbl:cap(k), val:d.pedidosPorColor[k] }; }), totPed);
+    listaSimple('neg-metodo', Object.keys(d.ventasPorMetodo||{}).map(function(k){
+      return { lbl:k, val:d.ventasPorMetodo[k] }; }), (d.ventas&&d.ventas.total&&d.ventas.total.count)||0);
+    listaSimple('neg-comuna', Object.keys(d.pedidosPorComuna||{}).map(function(k){
+      return { lbl:k, val:d.pedidosPorComuna[k] }; }).sort(function(a,b){ return b.val-a.val; }).slice(0,6), totPed);
+
+    var vm = d.ventasPorMomento || { horas:[], dias:[] };
+    var totV = (vm.horas||[]).reduce(function(s,x){ return s+x; },0);
+    // Solo las franjas con ventas: 24 filas en cero no dicen nada.
+    listaSimple('neg-horas', (vm.horas||[]).map(function(v,i){
+      var hh=String(i).padStart(2,'0');
+      return { lbl:hh+':00 – '+hh+':59', val:v };
+    }).filter(function(x){ return x.val>0; }), totV);
+    listaSimple('neg-dias', (vm.dias||[]).map(function(v,i){
+      return { lbl:DIAS_LBL[i], val:v }; }).filter(function(x){ return x.val>0; }), totV);
+
+    var t=document.getElementById('neg-ticket');
+    if(t) t.textContent = d.ticketPromedio ? ('ticket promedio '+money(d.ticketPromedio)) : '';
+  }
+
+  // Avisos rojos arriba del todo. Hoy solo el chatbot; es donde más duele
+  // enterarse tarde (cada fallo es un cliente sin respuesta).
+  function pintarAlertas(d){
+    var cont=document.getElementById('alertas'); if(!cont) return;
+    var hoy=new Date().toLocaleDateString('en-CA',{timeZone:'America/Santiago'});
+    var f=(d.fallosChat||{})[hoy];
+    var html='';
+    if(f && f.n>0){
+      html+='<div class="alerta"><b>⚠️ El chatbot está fallando</b> — '+f.n+
+            ' intento'+(f.n===1?'':'s')+' sin respuesta hoy.'+
+            (f.motivo? '<br><small>Motivo: '+esc(f.motivo)+'</small>':'')+
+            '<br><small>Revisá ANTHROPIC_API_KEY y el saldo en Render.</small></div>';
+    }
+    cont.innerHTML=html;
+  }
+
   function pintarTodo(d, conducta, visitasBase){
     document.getElementById('s-live').textContent=d.visitantesEnVivo;
     document.getElementById('s-vhoy').textContent=d.vistasHoy;
@@ -631,6 +776,15 @@
     // "Qué lleva a comprar" cruza con conversionAccion, que es acumulado: se
     // deja siempre en histórico para no comparar ventanas distintas.
     pintarConversion(d.conversionAccion||{}, d.conducta||{}, d.conversionesN||0);
+    // Canales y negocio: siempre en histórico (se cruzan con datos acumulados).
+    pintarCanales(d.conversionAccion||{}, d.conducta||{});
+    pintarNegocio(d);
+    pintarAlertas(d);
+    document.getElementById('s-aov').textContent = d.ticketPromedio ? money(d.ticketPromedio) : '—';
+    var st=document.getElementById('s-stock');
+    if(st) st.textContent = (d.stock===undefined||d.stock===null) ? '—' : d.stock;
+    var cb=document.getElementById('canal-base');
+    if(cb) cb.textContent=(d.conversionesN||0)+' compras rastreadas';
     tickets=d.tickets||[];
     rows('#t-tickets',tickets,function(t){ return '<td><b>#'+String(t.numero||0).padStart(4,"0")+'</b></td><td>'+esc(t.nombre||'—')+'</td><td>'+esc(t.instagram||'—')+'</td><td>'+esc(t.orden)+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');
     rows('#t-ventas',d.ventas.ultimas||[],function(v){ return '<td>'+fecha(v.fecha)+'</td><td>'+esc(v.nombre||'—')+'</td><td>'+esc(v.metodo)+'</td><td>'+money(v.monto)+'</td>'; },'ventas-empty');

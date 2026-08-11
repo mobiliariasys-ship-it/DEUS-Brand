@@ -233,7 +233,9 @@ async function responder({ historial, precio, stock, ip }) {
     return { texto };
   } catch (e) {
     console.error('[chat] Error:', e.message);
-    return { error: 'falla' };
+    // `motivo` es para el panel del dueño (dice POR QUÉ falló). No se manda al
+    // cliente: la ruta solo devuelve `error`.
+    return { error: 'falla', motivo: e.message };
   }
 }
 

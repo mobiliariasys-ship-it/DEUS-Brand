@@ -341,6 +341,49 @@ function ventas30Dias() {
   return dias;
 }
 
+// Ventas por hora del día y por día de semana (hora de Chile). Responde
+// "¿cuándo compra la gente?" para programar los anuncios en esas franjas en
+// vez de repartir el presupuesto parejo las 24 horas.
+function ventasPorMomento() {
+  const horas = new Array(24).fill(0);
+  const dias = new Array(7).fill(0);   // 0 = domingo
+  const MAPA = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  for (const v of ventas) {
+    const f = new Date(v.fecha);
+    if (isNaN(f)) continue;
+    const h = Number(f.toLocaleString('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false })) % 24;
+    if (!isNaN(h)) horas[h]++;
+    const d = MAPA[f.toLocaleDateString('en-US', { timeZone: 'America/Santiago', weekday: 'short' })];
+    if (d !== undefined) dias[d]++;
+  }
+  return { horas, dias };
+}
+
+// Cuántas ventas cerró cada medio de pago. Cruzado con los co:m-* (por dónde
+// INTENTARON pagar) muestra qué pasarela se cae más.
+function ventasPorMetodo() {
+  const out = {};
+  for (const v of ventas) {
+    const m = (v.metodo || 'otro').trim();
+    out[m] = (out[m] || 0) + 1;
+  }
+  return out;
+}
+
+// Fallos del chatbot por día. Sin esto, si el chat se cae solo se ve en los
+// logs de Render y uno se entera cuando un cliente reclama.
+const fallosChat = {};
+function registrarFalloChat(motivo) {
+  const hoy = hoyChile();
+  if (!fallosChat[hoy]) {
+    fallosChat[hoy] = { n: 0, motivo: '' };
+    const dias = Object.keys(fallosChat).sort();
+    while (dias.length > 14) delete fallosChat[dias.shift()];
+  }
+  fallosChat[hoy].n++;
+  fallosChat[hoy].motivo = String(motivo || '').slice(0, 120);
+}
+
 function snapshot() {
   const comprasN = ventas.length;
   const conversion = vistasTotal ? +((comprasN / vistasTotal) * 100).toFixed(1) : 0;
@@ -366,12 +409,17 @@ function snapshot() {
     conductaPorDia: { ...eventosPorDia },            // lo mismo partido por día, para filtrar
     vistasPorDia: { ...vistasPorDia },               // base de visitas por día, para el mismo filtro
     conversionAccion: { ...conversiones },           // compradores que hicieron cada acción
-    conversionesN                                    // total de compras rastreadas
+    conversionesN,                                   // total de compras rastreadas
+    ticketPromedio: comprasN ? Math.round(resVentas.total.monto / comprasN) : 0,
+    ventasPorMomento: ventasPorMomento(),            // cuándo compran (hora y día)
+    ventasPorMetodo: ventasPorMetodo(),              // qué pasarela cierra más
+    fallosChat: { ...fallosChat }                    // salud del chatbot
   };
 }
 
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
-  resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion
+  resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
+  registrarFalloChat
 };

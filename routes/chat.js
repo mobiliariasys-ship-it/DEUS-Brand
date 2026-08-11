@@ -3,6 +3,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const chat = require('../services/chat');
 const chatLog = require('../services/chat-log');
+const metrics = require('../services/metrics');
 const { getStock } = require('../services/stock');
 
 // Precio único: el MISMO que cobran server.js, flow.js y transbank.js. Si algún
@@ -37,6 +38,11 @@ router.post('/chat', async (req, res) => {
     // Cualquier problema (sin clave, límite, falla de red) devuelve 200 con el
     // motivo: el widget muestra un mensaje amable y ofrece WhatsApp. Nunca se
     // deja al cliente con un error crudo.
+    // 'limite' es el tope de mensajes por conversación (funcionamiento normal);
+    // el resto SÍ es una falla y se cuenta para el aviso del dashboard.
+    if (resultado.error !== 'limite') {
+      try { metrics.registrarFalloChat(resultado.motivo || resultado.error); } catch (e) {}
+    }
     return res.json({ error: resultado.error, whatsapp: chat.WHATSAPP, id: convId });
   }
 
