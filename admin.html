@@ -437,18 +437,40 @@
     var hayDatos=abrio>0;
     document.getElementById('co-empty').style.display=hayDatos?'none':'block';
     if(!hayDatos){ document.getElementById('co-drop').textContent='sin datos'; return; }
+    // Un paso en 0 mientras uno POSTERIOR tiene datos es imposible en un
+    // embudo: significa que ese evento todavía no llega (recién desplegado),
+    // no que se caiga toda la gente ahí. Se marca como "esperando" y queda
+    // fuera del cálculo de la mayor caída, para no dar una alarma falsa.
+    var maxPost=0;
+    for(var j=pasos.length-1;j>=0;j--){
+      pasos[j].esperando = (pasos[j].val===0 && maxPost>0);
+      if(pasos[j].val>maxPost) maxPost=pasos[j].val;
+    }
     // Detectar el escalón con mayor caída (para marcarlo)
     var peorIdx=-1, peorCaida=-1;
     for(var i=1;i<pasos.length;i++){
-      var prev=pasos[i-1].val||0, cur=pasos[i].val||0;
-      var caida=prev-cur;
+      if(pasos[i].esperando) continue;
+      // Compara contra el último paso con dato real, salteando los que esperan.
+      var k=i-1; while(k>0 && pasos[k].esperando) k--;
+      if(pasos[k].esperando) continue;
+      var caida=(pasos[k].val||0)-(pasos[i].val||0);
       if(caida>peorCaida){ peorCaida=caida; peorIdx=i; }
     }
     var base=Math.max(abrio,1);
     pasos.forEach(function(p,i){
+      // Paso todavía sin datos: se muestra en gris y sin porcentaje, para que
+      // no parezca que ahí se cae todo el mundo.
+      if(p.esperando){
+        var rowE=document.createElement('div'); rowE.className='cb-row';
+        rowE.innerHTML='<div class="cb-lbl" style="color:#666">'+esc(p.lbl)+'</div>'+
+          '<div class="cb-track"></div>'+
+          '<div class="cb-val" style="color:#666"><small>esperando datos</small></div>';
+        cont.appendChild(rowE);
+        return;
+      }
       var pct=Math.round((p.val/base)*100);
       var caidaTxt='';
-      if(i>0){
+      if(i>0 && !pasos[i-1].esperando){
         var prev=pasos[i-1].val||0, perdidos=prev-p.val;
         var pctCaida=prev? Math.round(perdidos/prev*100):0;
         if(perdidos>0) caidaTxt='<span class="co-drop-tag'+(i===peorIdx?' peor':'')+'">−'+perdidos+' ('+pctCaida+'%)</span>';
