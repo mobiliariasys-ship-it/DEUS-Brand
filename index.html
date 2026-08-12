@@ -1980,10 +1980,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // y aún no se calculó el envío (p. ej. tipeó la comuna exacta sin usar
         // el listado), lo calculamos igual al salir del campo dirección.
         document.getElementById('sh-address').addEventListener('blur', () => {
-          const calculado = document.getElementById('total-row').style.display !== 'none';
           const region = document.getElementById('sh-region').value.trim();
           const commune = document.getElementById('sh-commune').value.trim();
-          if (!calculado && region && commune) calcularEnvio();
+          const calle = document.getElementById('sh-address').value.trim();
+          if (!region || !commune) return;
+          // Antes esto se saltaba si YA se había cotizado (al elegir la comuna),
+          // así que la calle escrita después nunca se recogía. Ahora se
+          // recotiza cuando la calle cambió respecto a la que quedó guardada.
+          const guardada = (selectedShipping?.address?.address || '').trim();
+          if (!selectedShipping || guardada !== calle) calcularEnvio();
         });
 
         // Cerrar las listas al hacer clic fuera
@@ -2119,7 +2124,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // tenga que tocar la opción: así ve la info del envío y puede continuar
         // directo al pago con Mercado Pago o Webpay.
         function aplicarCourier(carrier, commune, region, address, el) {
-          selectedShipping = { ...carrier, address: { commune, region, address } };
+          // La calle se lee del campo EN ESTE MOMENTO, no del valor que venía
+          // congelado desde la cotización: al elegir la comuna se cotiza
+          // automáticamente, y en ese instante la calle todavía está vacía. Si
+          // se guardaba ese vacío, el pedido quedaba sin dirección (pasó con
+          // los últimos compradores: solo llegaba comuna y región).
+          const calleAhora = (document.getElementById('sh-address')?.value || '').trim();
+          selectedShipping = { ...carrier, address: { commune, region, address: calleAhora || address } };
           // Embudo del checkout — paso 3: ingresó dirección y se calculó el envío.
           if (window.deusEvento) window.deusEvento('co:3envio');
           const total = subtotalCheckout() + (carrier.price || 0);
@@ -2520,10 +2531,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // gateway) pueda enriquecer el evento Purchase con los mismos datos.
           try { sessionStorage.setItem('deus-fb-match', JSON.stringify(matching)); } catch (e) {}
         }
+        // Lee la dirección tal como está escrita AHORA en el formulario.
+        function direccionActual() {
+          const v = id => (document.getElementById(id)?.value || '').trim();
+          return { region: v('sh-region'), commune: v('sh-commune'), address: v('sh-address') };
+        }
         // ¿Están los 3 campos de dirección escritos?
         function direccionCompleta() {
-          const v = id => (document.getElementById(id)?.value || '').trim();
-          return !!(v('sh-region') && v('sh-commune') && v('sh-address'));
+          const d = direccionActual();
+          return !!(d.region && d.commune && d.address);
         }
 
         // Red de seguridad de la cotización. Al sacar el botón "Calcular envío"
@@ -2560,7 +2576,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             soloTapones: checkoutTapones,
             shippingCarrier: selectedShipping?.carrier || null,
             shippingCost: selectedShipping?.price || 0,
-            shippingAddress: selectedShipping?.address || null,
+            // La dirección se arma SIEMPRE con lo que hay escrito en pantalla,
+            // no con lo que quedó guardado al cotizar. La cotización se dispara
+            // al elegir la comuna (calle aún vacía) y no se repetía después, así
+            // que el pedido viajaba sin calle. Esta es la fuente de verdad.
+            shippingAddress: direccionActual(),
             acciones: accionesSesion(),
             // Cookies del píxel de Facebook (_fbp / _fbc): las manda el backend a
             // la Conversions API para emparejar la compra con la sesión que vio
