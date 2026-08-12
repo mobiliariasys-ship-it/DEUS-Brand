@@ -188,6 +188,14 @@
   [headers.values]
     Cache-Control = "public, max-age=604800"
 
+# ── Fuentes propias: nunca cambian (el nombre lleva peso y subconjunto), así
+#    que se cachean un año. Antes venían de Google y costaban dos conexiones
+#    nuevas en el navegador interno de Instagram. ──
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 # ══════════════════════════════════════════════════════════════════════
 # CABECERAS DE SEGURIDAD
 # ══════════════════════════════════════════════════════════════════════

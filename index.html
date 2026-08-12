@@ -79,10 +79,23 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
 <meta name="twitter:description" content="Monitor de sueño, ritmo cardíaco y 20 días de batería. $54.990 con envío a todo Chile.">
 <meta name="twitter:image" content="https://deusbrand.cl/og-image.jpg">
 
-<!-- Fuentes (con preconnect para carga más rápida) -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<!-- Fuentes servidas desde el propio dominio (antes: fonts.googleapis.com).
+     Se precargan las dos que se usan arriba de todo, para que el título y el
+     precio no bailen al terminar de cargar. -->
+<link rel="preload" href="/fonts/bebas-neue-400-lat.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/dm-sans-400-lat.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Fuentes propias: antes venían de fonts.googleapis.com, que en el navegador
+   interno de Instagram (sin caché) cuesta DOS conexiones nuevas (DNS+TLS)
+   ANTES de poder dibujar texto. Servidas desde el mismo dominio se evita
+   ese salto. Mismos pesos y estilos que antes: no cambia nada visual. */
+@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/bebas-neue-400-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/bebas-neue-400-lat.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/dm-sans-400-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/dm-sans-400-lat.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/dm-sans-600-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/dm-sans-600-lat.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+</style>
 
 <!-- Datos estructurados para Google (producto con precio, stock, reseñas y valoración) -->
 <script type="application/ld+json">
@@ -1609,9 +1622,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="detail">
     <div class="gal-slider" id="galSlider">
       <div class="slides" id="slides">
-        <img class="slide" loading="eager" fetchpriority="high" width="600" height="600" src="img/img-0a2d5dc7.webp" data-color="negra" alt="DEUS Band negra — smartband de salud color negro">
-        <img class="slide" loading="lazy" width="600" height="600" src="img/img-56798e1b.webp" data-color="gris" alt="DEUS Band gris">
-        <img class="slide" loading="lazy" width="600" height="600" src="img/img-rosada.webp" data-color="rosada" alt="DEUS Band rosada">
+        <!-- srcset: el celular (galería ~390px) baja la versión de 800px y solo
+             el escritorio pide la de 1200px. Antes el HTML traía una foto y
+             initSlides() la reemplazaba por otra más pesada: se descargaban
+             las DOS, ~130 KB tirados en cada visita. Ahora el src ya es el
+             definitivo y initSlides quedó sin nada que corregir. -->
+        <img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/slide-negra-800.webp 800w, img/img-afadcb86.webp 1200w" src="img/slide-negra-800.webp" data-color="negra" alt="DEUS Band negra — smartband de salud color negro">
+        <img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/slide-gris-800.webp 800w, img/img-80cd4240.webp 1200w" src="img/slide-gris-800.webp" data-color="gris" alt="DEUS Band gris">
+        <img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/slide-rosada-800.webp 800w, img/img-rosada.webp 1178w" src="img/slide-rosada-800.webp" data-color="rosada" alt="DEUS Band rosada">
       </div>
       <div class="slider-dots">
         <span class="sdot active" onclick="goSlide(0)"></span>
@@ -1719,7 +1737,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="checkout-head">
             <div class="checkout-title">Finalizar compra</div>
             <div class="co-prod">
-              <img id="co-prod-img" src="img/img-afadcb86.webp" alt="DEUS Band" width="64" height="64">
+              <img id="co-prod-img" src="img/thumb-negra.webp" alt="DEUS Band" width="64" height="64" decoding="async">
               <div>
                 <div class="co-prod-name">DEUS Band</div>
                 <div class="co-prod-color" id="co-prod-color">Color negro</div>
@@ -1826,7 +1844,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         window.DEUS_API_BASE = '';
       </script>
 
-      <script src="https://sdk.mercadopago.com/js/v2"></script>
+      <!-- Se quitó <script src="https://sdk.mercadopago.com/js/v2">: era un
+           script de TERCEROS, sincrónico (frena el parseo del HTML) y cargaba
+           en TODAS las visitas... sin usarse nunca. El pago con MercadoPago se
+           hace redirigiendo al init_point que crea el backend (Checkout Pro),
+           que no necesita el SDK en el navegador. No queda ninguna referencia
+           a MercadoPago() ni window.MercadoPago en la página. -->
       <script>
         // ── Detección automática de entorno ──
         // En localhost usa el backend local; en producción usa la URL de Render de arriba.
@@ -2135,7 +2158,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const coColor = document.getElementById('co-prod-color');
           if (coColor) coColor.textContent = 'Color ' + (COLOR_LABEL[color] || color);
           const coImg = document.getElementById('co-prod-img');
-          if (coImg && bandImages[color]) coImg.src = bandImages[color];
+          if (coImg && bandThumbs[color]) coImg.src = bandThumbs[color];
           document.querySelectorAll('.co-cdot').forEach(d => d.classList.toggle('active', d.dataset.color === color));
         }
         // colorForzado/qtyForzada: cuando se compra DESDE EL CARRITO, el color y
@@ -2171,7 +2194,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const nameEl = document.querySelector('#checkout-overlay .co-prod-name');
           const imgEl = document.getElementById('co-prod-img');
           if (nameEl) nameEl.textContent = checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band';
-          if (imgEl) imgEl.src = checkoutTapones ? 'img/img-tapones.webp' : 'img/img-afadcb86.webp';
+          if (imgEl) imgEl.src = checkoutTapones ? 'img/img-tapones.webp' : bandThumbs[checkoutColor] || bandThumbs.negra;
           document.getElementById('co-qty-display').textContent = String(checkoutQty);
           // El aviso de envío gratis se muestra de entrada, antes de calcular
           // nada, para que el cliente sepa al tiro que no paga despacho.
@@ -3206,7 +3229,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="feat-track" id="featTrack">
         <div class="feat-slide feat-cine">
           <div class="how-row">
-            <div class="how-img natural"><video muted loop playsinline autoplay preload="metadata" poster="img/diseno-poster.webp" aria-label="DEUS Band ciclista"><source src="img/diseno-video.webm" type="video/webm"><source src="img/diseno-video.mp4" type="video/mp4"></video></div>
+            <!-- El .webm declarado acá NO existe en el repo: el navegador lo pedía, se
+     comía un 404 y recién después bajaba el .mp4. Se deja solo el mp4.
+     Y el video (1,2 MB) ya no se descarga en cada visita: solo ~1 de cada 8
+     visitantes baja hasta esta sección, así que se carga cuando se acerca
+     (data-lazy-src). Se conserva el poster para que el hueco no quede vacío. -->
+<div class="how-img natural"><video muted loop playsinline autoplay preload="none" poster="img/diseno-poster.webp" data-lazy-src="img/diseno-video.mp4" aria-label="DEUS Band ciclista"></video></div>
             <div class="how-txt">
               <h3>Diseño sin distracciones</h3>
               <p>Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
@@ -3465,6 +3493,14 @@ const bandImages = {
   gris: "img/img-80cd4240.webp",
   rosada: "img/img-rosada.webp",
 };
+// Miniaturas para el recuadro de 64x64 del checkout. Antes ahí se usaba la
+// imagen grande (1200x1306, 95 KB) encogida por CSS: se descargaba entera en
+// CADA visita para mostrarse del tamaño de una uña. 95 KB → 4 KB.
+const bandThumbs = {
+  negra: "img/thumb-negra.webp",
+  gris: "img/thumb-gris.webp",
+  rosada: "img/thumb-rosada.webp",
+};
 const colorOrder = ['negra','gris','rosada'];
 let currentSlide = 0;
 // COLOR QUE SE COMPRA. Separado a propósito de currentSlide (la foto que se
@@ -3501,7 +3537,7 @@ function updateStockUI() {
   // no la posición del carrusel — así lo que se ve al pagar es lo que se cobra.
   const cc = (typeof checkoutColor !== 'undefined' && checkoutColor) ? checkoutColor : pageColor;
   const coImg = document.getElementById('co-prod-img');
-  if (coImg && bandImages[cc]) coImg.src = bandImages[cc];
+  if (coImg && bandThumbs[cc]) coImg.src = bandThumbs[cc];
   const coColor = document.getElementById('co-prod-color');
   if (coColor) coColor.textContent = 'Color ' + COLOR_LABEL[cc];
   const coStock = document.getElementById('co-stock');
@@ -3684,13 +3720,11 @@ function pintarContadorSorteo() {
 setInterval(pintarContadorSorteo, 1000);
 pintarContadorSorteo();
 
-// Cargar imágenes en los slides
-function initSlides() {
-  document.querySelectorAll('.slide').forEach(s => {
-    const c = s.getAttribute('data-color');
-    if (bandImages[c]) s.src = bandImages[c];
-  });
-}
+// Los slides ya traen su imagen final y su srcset desde el HTML. Antes esta
+// función les pisaba el src con la versión de 1200px, lo que provocaba una
+// SEGUNDA descarga (y anulaba el srcset). Se deja vacía porque se la llama
+// desde varios lados.
+function initSlides() { /* nada que hacer: el HTML ya trae src + srcset */ }
 
 // Mueve SOLO la galería. No toca selectedColor: mirar fotos no es comprar.
 function goSlide(i) {
@@ -4028,6 +4062,30 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   function onS(){ if(window.scrollY>40) mostrar(); }
   window.addEventListener('scroll',onS,{passive:true});
   setTimeout(mostrar,1500);
+})();
+
+// Carga diferida del video: el archivo (1,2 MB) solo se descarga cuando el
+// visitante se acerca a esa sección. Antes bajaba en toda visita, aunque los
+// datos muestran que apenas ~1 de cada 8 llega hasta ahí.
+(function(){
+  var vids=document.querySelectorAll('video[data-lazy-src]');
+  if(!vids.length) return;
+  function cargar(v){
+    if(v.dataset.cargado) return;
+    v.dataset.cargado='1';
+    v.src=v.dataset.lazySrc;
+    v.load();
+    v.muted=true;
+    v.play().catch(function(){});
+  }
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ cargar(e.target); io.unobserve(e.target); } });
+    },{rootMargin:'600px'});
+    vids.forEach(function(v){ io.observe(v); });
+  } else {
+    vids.forEach(cargar);
+  }
 })();
 
 // Refuerzo de autoplay: iPhone en ahorro de batería (y algunos Android)
