@@ -211,6 +211,8 @@
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
       <div class="stat"><div class="k">Conversión total</div><div class="v" id="s-conv">—</div></div>
       <div class="stat gold"><div class="k">Conversión hoy</div><div class="v" id="s-conv-hoy">—</div></div>
+      <!-- Ventas del periodo elegido arriba en la barra (semana, mes, etc.) -->
+      <div class="stat gold"><div class="k" id="s-perv-k">Ventas del periodo</div><div class="v" id="s-perv">— <small id="s-perv-m"></small></div></div>
       <div class="stat"><div class="k">Ticket promedio</div><div class="v" id="s-aov">—</div></div>
       <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
     </div>
@@ -220,6 +222,11 @@
     <div class="rango-bar">
       <span class="rango-lbl">Periodo</span>
       <button class="rango-btn" data-rango="1" onclick="setRango(1)">Hoy</button>
+      <!-- Semana y mes son de CALENDARIO (desde el lunes / desde el día 1),
+           que es lo que sirve para "cómo voy este mes". Los de 7 y 30 días son
+           ventanas móviles, útiles para comparar contra el periodo anterior. -->
+      <button class="rango-btn" data-rango="semana" onclick="setRango('semana')">Esta semana</button>
+      <button class="rango-btn" data-rango="mes" onclick="setRango('mes')">Este mes</button>
       <button class="rango-btn" data-rango="7" onclick="setRango(7)">7 días</button>
       <button class="rango-btn" data-rango="30" onclick="setRango(30)">30 días</button>
       <button class="rango-btn active" data-rango="0" onclick="setRango(0)">Todo</button>
@@ -646,10 +653,23 @@
   // deploy que los agregó, así que "30 días" solo tiene datos desde entonces.
   var RANGO_DIAS = 0;
   var ULT_DATA = null;
+  // ¿Hay algún periodo elegido? (0 = "Todo"). Se usa en vez de RANGO_DIAS>0
+  // porque ahora el rango también puede ser 'semana' o 'mes'.
+  function hayFiltro(){ return RANGO_DIAS !== 0 && RANGO_DIAS !== '0'; }
+  var RANGO_LBL = { 1:'hoy', 7:'últimos 7 días', 30:'últimos 30 días',
+                    semana:'esta semana (desde el lunes)', mes:'este mes' };
 
+  // n = cantidad de días, o 'semana' / 'mes'.
+  // 'semana' y 'mes' son de CALENDARIO (desde el lunes / desde el día 1), no
+  // ventanas móviles: es lo que sirve para saber "cómo voy este mes".
   function diasChile(n){
-    var out=[], hoy=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Santiago'}));
-    for(var i=0;i<n;i++){
+    var hoy=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Santiago'}));
+    var cant;
+    if(n==='semana'){ cant=((hoy.getDay()+6)%7)+1; }   // lunes = primer día
+    else if(n==='mes'){ cant=hoy.getDate(); }
+    else { cant=Number(n)||0; }
+    var out=[];
+    for(var i=0;i<cant;i++){
       var d=new Date(hoy); d.setDate(hoy.getDate()-i);
       out.push(d.toLocaleDateString('en-CA'));
     }
@@ -697,10 +717,35 @@
     });
   }
 
+  // Ventas del periodo elegido (cuenta + facturación). Con 'Todo' muestra el
+  // total histórico; con un periodo, lo recalcula desde ventasRecientes, que
+  // trae los últimos 45 días con fecha y monto.
+  function pintarVentasPeriodo(d){
+    var el=document.getElementById('s-perv'); if(!el) return;
+    var lbl=document.getElementById('s-perv-k'), monto=document.getElementById('s-perv-m');
+    var n, m;
+    if(!hayFiltro()){
+      n=(d.ventas&&d.ventas.total&&d.ventas.total.count)||0;
+      m=(d.ventas&&d.ventas.total&&d.ventas.total.monto)||0;
+      if(lbl) lbl.textContent='Ventas · histórico';
+    } else {
+      var vts=enRango(d.ventasRecientes, RANGO_DIAS);
+      if(vts){
+        n=vts.length; m=vts.reduce(function(s,v){ return s+(Number(v.m)||0); },0);
+      } else { // backend viejo: cae a lo de hoy para no mostrar un dato falso
+        n=(d.ventas&&d.ventas.hoy&&d.ventas.hoy.count)||0;
+        m=(d.ventas&&d.ventas.hoy&&d.ventas.hoy.monto)||0;
+      }
+      if(lbl) lbl.textContent='Ventas · '+(RANGO_LBL[RANGO_DIAS]||RANGO_DIAS+' días');
+    }
+    el.childNodes[0].nodeValue=n+' ';
+    if(monto) monto.textContent=money(m);
+  }
+
   function setRango(n){
     RANGO_DIAS=n;
     [].forEach.call(document.querySelectorAll('.rango-btn'), function(b){
-      b.classList.toggle('active', Number(b.getAttribute('data-rango'))===n);
+      b.classList.toggle('active', b.getAttribute('data-rango')===String(n));
     });
     if(ULT_DATA) pintar(ULT_DATA);
   }
@@ -708,14 +753,17 @@
 
   function pintar(d){
     ULT_DATA = d;
+    // Ventas del periodo elegido: cuenta y facturación. Sale de ventasRecientes
+    // (últimos 45 días con fecha), así que semana y mes salen exactos.
+    pintarVentasPeriodo(d);
     // Conducta y embudo del checkout según el periodo elegido.
     var conducta = d.conducta||{}, visitasBase = (d.embudo&&d.embudo.visitas)||0, nota='';
-    if(RANGO_DIAS>0){
+    if(hayFiltro()){
       var r = conductaRango(d, RANGO_DIAS);
       if(r){
         conducta = r;
         visitasBase = visitasRango(d, RANGO_DIAS);
-        nota = (RANGO_DIAS===1?'hoy':'últimos '+RANGO_DIAS+' días')+' · '+visitasBase+' visitas';
+        nota = (RANGO_LBL[RANGO_DIAS]||('últimos '+RANGO_DIAS+' días'))+' · '+visitasBase+' visitas';
       } else {
         nota = 'sin datos por día todavía — mostrando el acumulado';
       }
@@ -781,12 +829,13 @@
   // n = 0 → histórico completo (agregados del backend).
   // n > 0 → se recalcula todo desde las listas crudas con fecha.
   function pintarNegocio(d, n){
+    var filtrando = (n!==0 && n!=='0');
     var porColor=d.pedidosPorColor||{}, porComuna=d.pedidosPorComuna||{};
     var porMetodo=d.ventasPorMetodo||{}, vm=d.ventasPorMomento||{horas:[],dias:[]};
     var totPed=d.pedidosTotal||0, totVent=(d.ventas&&d.ventas.total&&d.ventas.total.count)||0;
     var aov=d.ticketPromedio||0;
 
-    if(n>0){
+    if(filtrando){
       var peds=enRango(d.pedidosRecientes45, n);
       if(peds){
         porColor={}; porComuna={}; totPed=peds.length;
@@ -874,7 +923,7 @@
     // Canales: numerador (compradores) y denominador (visitantes) del MISMO
     // periodo. Si se mezclaran ventanas distintas, el % sería falso.
     var convAcc = d.conversionAccion||{}, nComp = d.conversionesN||0;
-    if(RANGO_DIAS>0){
+    if(hayFiltro()){
       var cr = conversionRango(d, RANGO_DIAS);
       if(cr){ convAcc = cr.acc; nComp = cr.n; }
     }
@@ -885,7 +934,7 @@
     var st=document.getElementById('s-stock');
     if(st) st.textContent = (d.stock===undefined||d.stock===null) ? '—' : d.stock;
     var cb=document.getElementById('canal-base');
-    if(cb) cb.textContent=nComp+' compras rastreadas'+(RANGO_DIAS>0?' en el periodo':'');
+    if(cb) cb.textContent=nComp+' compras rastreadas'+(hayFiltro()?' en el periodo':'');
     tickets=d.tickets||[];
     rows('#t-tickets',tickets,function(t){ return '<td><b>#'+String(t.numero||0).padStart(4,"0")+'</b></td><td>'+esc(t.nombre||'—')+'</td><td>'+esc(t.instagram||'—')+'</td><td>'+esc(t.orden)+'</td><td>'+fecha(t.fecha)+'</td>'; },'tickets-empty');
     rows('#t-ventas',d.ventas.ultimas||[],function(v){ return '<td>'+fecha(v.fecha)+'</td><td>'+esc(v.nombre||'—')+'</td><td>'+esc(v.metodo)+'</td><td>'+money(v.monto)+'</td>'; },'ventas-empty');
