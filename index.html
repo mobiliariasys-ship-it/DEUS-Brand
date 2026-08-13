@@ -1055,7 +1055,6 @@ body.sb-on .wa-float{bottom:82px;}
 .checkout-modal .btn-pay{background:#20252d;border-color:#3d4552;}
 .checkout-modal .btn-pay:hover:not(:disabled){background:#262c36;border-color:#556072;}
 .checkout-modal .co-prod img{background:#20252d;border-color:#343c48;}
-.checkout-modal .co-cdot{border-color:#4a4f5b;}
 .checkout-modal .rescue-bar{background:#18251b;border-color:#2f5137;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 .checkout-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#888;font-size:1.6rem;line-height:1;cursor:pointer;font-family:'DM Sans',sans-serif;}
@@ -1068,10 +1067,6 @@ body.sb-on .wa-float{bottom:82px;}
 .co-prod img{width:64px;height:64px;border-radius:8px;object-fit:cover;background:#1e1e1e;border:1px solid var(--border);flex-shrink:0;}
 .co-prod-name{font-size:.82rem;font-weight:700;color:#f2f2f2;}
 .co-prod-color{font-size:.82rem;letter-spacing:1px;text-transform:uppercase;color:#fff;font-weight:700;margin-top:3px;}
-.co-color-pick{display:flex;align-items:center;gap:9px;margin-top:8px;background:rgba(231,207,156,.07);border:1px solid rgba(231,207,156,.25);border-radius:9px;padding:7px 10px;}
-.co-color-label{font-size:.62rem;color:#c9b78e;letter-spacing:.5px;margin-right:2px;text-transform:uppercase;font-weight:600;}
-.co-cdot{width:24px;height:24px;border-radius:50%;border:2px solid #3a3a3a;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;}
-.co-cdot.active{border-color:#e7cf9c;transform:scale(1.18);box-shadow:0 0 0 2px rgba(231,207,156,.35);}
 .co-prod-price{margin-top:4px;display:flex;align-items:baseline;gap:8px;}
 .co-price-old{font-size:.72rem;color:#888;text-decoration:line-through;}
 .co-price-now{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;line-height:1;}
@@ -1746,13 +1741,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <img id="co-prod-img" src="img/thumb-negra.webp" alt="DEUS Band" width="64" height="64" decoding="async">
               <div>
                 <div class="co-prod-name">DEUS Band</div>
+                <!-- Se quitó el selector "Confirma tu color" (los 3 círculos).
+                     Pedir que confirmen otra vez sembraba la duda y era otra
+                     forma de terminar con el color equivocado. El color se
+                     elige en la página (tocando un círculo o deslizando) y acá
+                     solo se MUESTRA, para que igual quede a la vista qué se
+                     está comprando. -->
                 <div class="co-prod-color" id="co-prod-color">Color negro</div>
-                <div class="co-color-pick" id="co-color-pick">
-                  <span class="co-color-label">Confirma tu color:</span>
-                  <span class="co-cdot" data-color="negra" style="background:#111;" title="Negro" onclick="setCheckoutColor('negra')"></span>
-                  <span class="co-cdot" data-color="gris" style="background:#888;" title="Gris" onclick="setCheckoutColor('gris')"></span>
-                  <span class="co-cdot" data-color="rosada" style="background:#e8b4bc;" title="Rosado" onclick="setCheckoutColor('rosada')"></span>
-                </div>
                 <div class="co-prod-price" id="co-prod-price"><span class="co-price-now">$54.990</span></div>
                 <div class="co-cuotas">Hasta 3 cuotas sin interés con tarjeta de crédito</div>
               </div>
@@ -2176,7 +2171,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (coColor) coColor.textContent = 'Color ' + (COLOR_LABEL[color] || color);
           const coImg = document.getElementById('co-prod-img');
           if (coImg && bandThumbs[color]) coImg.src = bandThumbs[color];
-          document.querySelectorAll('.co-cdot').forEach(d => d.classList.toggle('active', d.dataset.color === color));
         }
         // colorForzado/qtyForzada: cuando se compra DESDE EL CARRITO, el color y
         // la cantidad vienen del carrito — NO de la posición del carrusel (así un
@@ -3988,7 +3982,6 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFoto
 .tapones-note{text-align:center;font-size:.68rem;color:#8a8a8a;margin:0 0 11px;letter-spacing:.3px;}
 /* Modo checkout "solo tapones": oculta lo que es exclusivo de la banda */
 #checkout-overlay.tapones #co-prod-color,
-#checkout-overlay.tapones #co-color-pick,
 #checkout-overlay.tapones .co-cuotas,
 #checkout-overlay.tapones #co-stock,
 #checkout-overlay.tapones .reserva-regalo{display:none !important;}
