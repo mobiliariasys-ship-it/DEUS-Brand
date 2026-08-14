@@ -209,8 +209,13 @@
       <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
       <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
       <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
-      <div class="stat"><div class="k">Conversión total</div><div class="v" id="s-conv">—</div></div>
-      <div class="stat gold"><div class="k">Conversión hoy</div><div class="v" id="s-conv-hoy">—</div></div>
+      <!-- Conversión en las 4 ventanas, juntas y comparables: es la forma de
+           ver si un cambio movió la aguja (hoy vs. semana vs. mes vs. siempre)
+           sin tener que ir cambiando el filtro. -->
+      <div class="stat gold"><div class="k">Conversión hoy</div><div class="v" id="s-conv-hoy">— <small id="s-conv-hoy-d"></small></div></div>
+      <div class="stat gold"><div class="k">Conversión semana</div><div class="v" id="s-conv-sem">— <small id="s-conv-sem-d"></small></div></div>
+      <div class="stat gold"><div class="k">Conversión mes</div><div class="v" id="s-conv-mes">— <small id="s-conv-mes-d"></small></div></div>
+      <div class="stat"><div class="k">Conversión histórica</div><div class="v" id="s-conv">— <small id="s-conv-d"></small></div></div>
       <!-- Ventas del periodo elegido arriba en la barra (semana, mes, etc.) -->
       <div class="stat gold"><div class="k" id="s-perv-k">Ventas del periodo</div><div class="v" id="s-perv">— <small id="s-perv-m"></small></div></div>
       <div class="stat"><div class="k">Ticket promedio</div><div class="v" id="s-aov">—</div></div>
@@ -717,6 +722,40 @@
     });
   }
 
+  // Conversión de las 4 ventanas a la vez: hoy, esta semana, este mes e
+  // histórico. Es ventas ÷ visitas de ESE mismo periodo — si se mezclaran
+  // ventanas (ventas de hoy sobre visitas totales) el número no diría nada.
+  // Las 3 primeras se calculan acá con ventasRecientes y vistasPorDia; la
+  // histórica la manda el backend.
+  function pintarConversiones(d){
+    function poner(idPct, idDet, rango){
+      var pct=document.getElementById(idPct), det=document.getElementById(idDet);
+      if(!pct) return;
+      var vts=enRango(d.ventasRecientes, rango);
+      var vis=visitasRango(d, rango);
+      if(vts===null || !vis){
+        // Sin datos por día todavía (backend viejo) o sin visitas en el periodo
+        pct.childNodes[0].nodeValue = (vts===null ? '—' : '0%') + ' ';
+        if(det) det.textContent = vts===null ? '' : ('0/'+vis);
+        return;
+      }
+      var n=vts.length;
+      pct.childNodes[0].nodeValue = (vis ? +((n/vis)*100).toFixed(2) : 0) + '% ';
+      if(det) det.textContent = n+' de '+vis;
+    }
+    poner('s-conv-hoy','s-conv-hoy-d', 1);
+    poner('s-conv-sem','s-conv-sem-d', 'semana');
+    poner('s-conv-mes','s-conv-mes-d', 'mes');
+    // Histórica: la calcula el backend sobre todo el historial.
+    var h=document.getElementById('s-conv'), hd=document.getElementById('s-conv-d');
+    if(h){
+      h.childNodes[0].nodeValue = (d.conversion!=null?d.conversion:0)+'% ';
+      var nv=(d.ventas&&d.ventas.total&&d.ventas.total.count)||0;
+      var vv=(d.embudo&&d.embudo.visitas)||0;
+      if(hd) hd.textContent = vv ? (nv+' de '+vv) : '';
+    }
+  }
+
   // Ventas del periodo elegido (cuenta + facturación). Con 'Todo' muestra el
   // total histórico; con un periodo, lo recalcula desde ventasRecientes, que
   // trae los últimos 45 días con fecha y monto.
@@ -911,8 +950,9 @@
     document.getElementById('s-vent-tot').childNodes[0].nodeValue=d.ventas.total.count+' ';
     document.getElementById('s-vent-tot-m').textContent=money(d.ventas.total.monto);
     document.getElementById('s-tickets').textContent=d.ticketsTotal;
-    document.getElementById('s-conv').textContent=(d.conversion!=null?d.conversion:0)+'%';
-    document.getElementById('s-conv-hoy').textContent=(d.conversionHoy!=null?d.conversionHoy:0)+'%';
+    // Las 4 conversiones (hoy / semana / mes / histórica). Antes esto era un
+    // textContent que habría borrado el detalle "n de N" de cada tarjeta.
+    pintarConversiones(d);
     pintarEmbudo(d.embudo||{visitas:0,checkouts:0,ventas:0},d.conversion||0);
     // Estas tres respetan el periodo elegido arriba.
     pintarCheckout(conducta);
