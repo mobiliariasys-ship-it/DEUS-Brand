@@ -528,15 +528,6 @@ app.get('/orden/estado', (req, res) => {
   res.json(venta ? { pagado: true, monto: venta.monto } : { pagado: false });
 });
 
-// Instrumentación TEMPORAL para diagnosticar el value corrupto que reporta
-// Meta: success.html manda esto cuando el monto crudo de la URL no coincide
-// con el monto verificado de /orden/estado. Solo loguea; no hace nada más.
-// Sacar este endpoint (y el sendBeacon en success.html) una vez resuelto.
-app.post('/pixel/monto-anomalo', (req, res) => {
-  console.log('[pixel] monto anomalo — crudo="' + (req.query.crudo || '') + '" srv=' + (req.query.srv || '') + ' orden=' + (req.query.orden || ''));
-  res.sendStatus(204);
-});
-
 // ── Panel de administración (protegido con STOCK_KEY) ──
 // Uso: /admin/stats?clave=MICLAVE
 app.get('/admin/stats', (req, res) => {

@@ -46,8 +46,8 @@ fbq('track', 'PageView');
 // del navegador), deduplicado contra la CAPI por el event_id compartido.
 (function(){
   var q = new URLSearchParams(location.search);
-  var crudo = q.get('monto'); // string tal cual llega en la URL, sin parsear
-  var monto = parseInt(crudo, 10);
+  // El ?monto= de la URL ya no se lee: el value del Purchase sale de
+  // /orden/estado, que es el mismo dato que alimenta el ledger y la CAPI.
   // Referencia del pago según el medio: Flow/Webpay mandan 'orden';
   // Mercado Pago manda 'payment_id' o 'collection_id'.
   var ref = q.get('orden') || q.get('payment_id') || q.get('collection_id');
@@ -74,16 +74,6 @@ fbq('track', 'PageView');
     // construcción. Si por algún motivo no vino, no mandamos value — mejor un
     // evento incompleto que uno inventado; la CAPI aporta el valor igual.
     if (montoServidor > 0) datos.value = montoServidor;
-
-    // Instrumentación TEMPORAL para diagnosticar el value corrupto que reporta
-    // Meta: si el string crudo de la URL no coincide con el monto verificado,
-    // lo mandamos al backend con su forma original. Sacar una vez resuelto.
-    if (montoServidor > 0 && monto !== montoServidor) {
-      try {
-        navigator.sendBeacon(API + '/pixel/monto-anomalo?crudo=' + encodeURIComponent(crudo || '') +
-          '&srv=' + montoServidor + '&orden=' + encodeURIComponent(ref));
-      } catch (e) {}
-    }
 
     fbq('track', 'Purchase', datos, { eventID: 'purchase-' + ref });
     limpiar();
