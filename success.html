@@ -27,8 +27,13 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 // Advanced matching: recupera los datos del cliente que index.html guardó al
 // iniciar el pago. Con esto el evento Purchase se empareja con la persona real
 // que vio el anuncio, mejorando la tasa de coincidencia con Meta.
+// Vive en localStorage (index.html lo guarda envuelto en {d, ts}) para que
+// sobreviva al redirect a la pasarela y a un cierre de pestaña.
 var __match = null;
-try { __match = JSON.parse(sessionStorage.getItem('deus-fb-match') || 'null'); } catch (e) {}
+try {
+  var __g = JSON.parse(localStorage.getItem('deus-fb-match') || 'null');
+  if (__g && __g.d) __match = __g.d;
+} catch (e) {}
 if (__match) fbq('init', '2086346891978245', __match);
 else fbq('init', '2086346891978245');
 fbq('track', 'PageView');
@@ -54,9 +59,12 @@ fbq('track', 'PageView');
   var API = (window.DEUS_API_BASE || '').replace(/\/$/, '');
 
   function limpiar(){
-    // Ya no hacen falta los datos de emparejamiento, y no queremos que una
-    // visita futura reuse la identidad de otro cliente.
-    try { sessionStorage.removeItem('deus-fb-match'); } catch (e) {}
+    // La compra ya se concretó, así que los datos de emparejamiento cumplieron
+    // su función. Se borran para no dejar la identidad de un cliente guardada
+    // en un equipo compartido: quien vuelva después arranca como visitante
+    // nuevo. Al que abandonó el checkout NO le pasa por acá, y es justamente el
+    // que queremos reconocer cuando vuelva.
+    try { localStorage.removeItem('deus-fb-match'); } catch (e) {}
   }
 
   // Sin referencia de pago no hay nada que verificar → nunca disparamos.

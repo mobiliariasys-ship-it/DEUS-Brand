@@ -38,12 +38,33 @@ t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 // Coincidencias avanzadas manuales: si este visitante ya inició una compra
-// antes (los datos quedaron en sessionStorage), inicializamos el píxel con
-// ellos desde el primer PageView, no solo en el checkout. Sube la nota de
-// calidad del evento y Meta deja de mostrar el aviso de "configurar
-// coincidencias avanzadas".
-var __deusMatch = null;
-try { __deusMatch = JSON.parse(sessionStorage.getItem('deus-fb-match') || 'null'); } catch (e) {}
+// antes, inicializamos el píxel con sus datos desde el primer PageView, no
+// solo en el checkout. Sube la nota de calidad del evento y Meta deja de
+// mostrar el aviso de "configurar coincidencias avanzadas".
+//
+// Se guarda en localStorage y no en sessionStorage: con sessionStorage el dato
+// moría al cerrar la pestaña, así que quien volvía otro día llegaba como
+// desconocido y su InitiateCheckout viajaba sin ningún dato de persona —
+// apenas IP y user agent, 6.1 de 10 de Event Match Quality, contra 9.3 del
+// AddPaymentInfo, que sí los lleva. Justamente el visitante que abandona y
+// vuelve es el que más importa recuperar.
+//
+// Caduca a los 30 días: pasado ese punto el dato ya no aporta al emparejamiento
+// y no hay razón para seguir guardándolo. success.html lo borra al concretarse
+// la compra, para no dejar la identidad de un cliente en un equipo compartido.
+var DEUS_MATCH_TTL = 30 * 24 * 60 * 60 * 1000;
+window.deusGuardarMatch = function (m) {
+  try { localStorage.setItem('deus-fb-match', JSON.stringify({ d: m, ts: Date.now() })); } catch (e) {}
+};
+window.deusLeerMatch = function () {
+  try {
+    var g = JSON.parse(localStorage.getItem('deus-fb-match') || 'null');
+    if (!g || !g.d || !g.ts) return null;
+    if (Date.now() - g.ts > DEUS_MATCH_TTL) { localStorage.removeItem('deus-fb-match'); return null; }
+    return g.d;
+  } catch (e) { return null; }
+};
+var __deusMatch = window.deusLeerMatch();
 if (__deusMatch) fbq('init', '2086346891978245', __deusMatch);
 else fbq('init', '2086346891978245');
 fbq('track', 'PageView');
@@ -2175,6 +2196,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // colorForzado/qtyForzada: cuando se compra DESDE EL CARRITO, el color y
         // la cantidad vienen del carrito — NO de la posición del carrusel (así un
         // swipe accidental ya no cambia el color que se cobra).
+        // AddToCart a Meta. El flujo principal del sitio NO pasa por el carrito
+        // — todos los CTA ("Comprar ahora", "Quiero mi DEUS Band", la barra
+        // fija, la rifa, los tapones) van directo a abrirCheckout() — así que
+        // el evento solo se emitía por el diálogo de carrito, una ruta
+        // secundaria: Meta recibía ~4 AddToCart por semana contra ~83 compras y
+        // se quedaba sin el evento de mitad de embudo ni audiencia para
+        // retargeting. Acá el equivalente a "agregó el producto" es abrir el
+        // checkout con un color y una cantidad ya elegidos.
+        //
+        // La clave evita contar dos veces al cliente que SÍ usó el carrito: ese
+        // camino ya reportó esta misma selección y después llama a
+        // abrirCheckout(). Cambiar de color o de cantidad sí es un evento nuevo.
+        let ultimoAddToCart = '';
+        function reportarAddToCart(id, nombre, cantidad, precio) {
+          const clave = [id, cantidad, precio].join('|');
+          if (clave === ultimoAddToCart) return;
+          ultimoAddToCart = clave;
+          if (!window.fbq) return;
+          fbq('track', 'AddToCart', {
+            value: precio * cantidad,
+            currency: 'CLP',
+            content_ids: [id],
+            content_name: nombre,
+            content_type: 'product',
+            contents: [{ id: id, quantity: cantidad, item_price: precio }]
+          });
+        }
         function abrirCheckout(colorForzado, qtyForzada, soloTapones) {
           checkoutTapones = !!soloTapones;
           if (!checkoutTapones) {
@@ -2214,12 +2262,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           overlay.classList.add('show');
           document.body.style.overflow = 'hidden';
           if (typeof updateStockUI === 'function') updateStockUI();
-          // Si un cliente que ya empezó una compra vuelve, reutilizamos sus
-          // datos del sessionStorage para subir la nota de calidad del evento.
-          try {
-            const prev = JSON.parse(sessionStorage.getItem('deus-fb-match') || 'null');
-            if (prev && window.fbq) fbq('init', '2086346891978245', prev);
-          } catch (e) {}
+          // Si este visitante ya dejó sus datos antes (incluso en otra visita:
+          // viven en localStorage por 30 días), reinicializamos el píxel con
+          // ellos para que el InitiateCheckout de acá abajo viaje identificado
+          // en vez de salir solo con IP y user agent.
+          const prev = window.deusLeerMatch();
+          if (prev && window.fbq) fbq('init', '2086346891978245', prev);
+          // AddToCart antes del InitiateCheckout: en este sitio abrir el
+          // checkout ES el momento en que el cliente elige el producto (ver
+          // reportarAddToCart).
+          reportarAddToCart(
+            checkoutTapones ? 'tapones' : checkoutColor,
+            checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
+            checkoutQty,
+            checkoutTapones ? TAPONES_PRICE : precioBanda()
+          );
           if (window.fbq) fbq('track', 'InitiateCheckout', { value: checkoutTapones ? TAPONES_PRICE : precioBanda(), currency: 'CLP', content_name: checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band' });
           if (window.deusTrackCheckout) window.deusTrackCheckout();
           // Embudo del checkout — paso 1: abrió el checkout.
@@ -2385,16 +2442,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               cantidad: cantidad
             });
           }
-          // Reportar el AddToCart a Meta con valor real, para que la calidad
-          // del evento suba del 0/10 actual.
-          if (window.fbq) fbq('track', 'AddToCart', {
-            value: precioBanda() * cantidad,
-            currency: 'CLP',
-            content_ids: [color],
-            content_name: 'DEUS Band ' + colorLabel,
-            content_type: 'product',
-            contents: [{ id: color, quantity: cantidad, item_price: precioBanda() }]
-          });
+          reportarAddToCart(color, 'DEUS Band ' + colorLabel, cantidad, precioBanda());
           actualizarCarrito();
           cerrarDialogoCarrito();
           abrirCarrito();
@@ -2528,8 +2576,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           };
           if (window.fbq) fbq('init', '2086346891978245', matching);
           // Guardarlo también para que success.html (después del redirect al
-          // gateway) pueda enriquecer el evento Purchase con los mismos datos.
-          try { sessionStorage.setItem('deus-fb-match', JSON.stringify(matching)); } catch (e) {}
+          // gateway) pueda enriquecer el evento Purchase con los mismos datos,
+          // y para que este visitante ya llegue identificado si vuelve otro día.
+          window.deusGuardarMatch(matching);
         }
         // Lee la dirección tal como está escrita AHORA en el formulario.
         function direccionActual() {
