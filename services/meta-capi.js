@@ -28,12 +28,24 @@ function sha256(v) {
   return crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
 }
 
-// Para nombre/comuna/región: Meta normaliza sin tildes antes de emparejar, así
-// que si mandamos "Ñuñoa" o "José" con acento tal cual, el hash no calza con
-// el de Meta y el dato no suma nada al Event Match Quality.
-function sha256Normalizado(v) {
-  const sinTildes = String(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  return sha256(sinTildes);
+// Comuna y región (ct/st): Meta las normaliza distinto que el resto de los
+// campos — borra dígitos, ESPACIOS, paréntesis, puntos y guiones, pero CONSERVA
+// las tildes y la ñ. Es la regla que implementan sus propios SDKs oficiales
+// (city.replace(/[0-9\s().-]/g, '') en el de Node, idéntico en el de Python) y
+// la misma que aplica el fbevents.js del píxel del navegador — por eso estos
+// mismos campos rinden 100% de cobertura en AddPaymentInfo y solo 26,7% en
+// Purchase.
+//
+// Importa mucho acá: la mitad de las comunas de la Región Metropolitana lleva
+// espacio ("Puente Alto", "Las Condes", "Estación Central"), así que mandarlas
+// con el espacio adentro produce un hash que no calza con nada. Y borrarles la
+// tilde rompe las otras ("Ñuñoa", "Peñalolén", "Maipú"): entre los dos motivos
+// se caía el 47% de las comunas del país y el 63% de las de la RM.
+//
+// Los nombres (fn/ln) NO pasan por acá: Meta solo les hace trim + minúsculas,
+// conservando la tilde, así que "José" viaja como "josé" con sha256() a secas.
+function sha256Ubicacion(v) {
+  return sha256(String(v).replace(/[0-9\s().-]/g, ''));
 }
 
 // Envía un evento Purchase a Meta. Nunca lanza: registra el resultado y resuelve
@@ -51,14 +63,17 @@ function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clien
     // a diferencia del event_id que es por COMPRA.
     if (rut) { const r = String(rut).replace(/[^0-9kK]/g, ''); if (r) userData.external_id = [sha256(r)]; }
     // Nombre, comuna y región: los mismos datos que ya hacen que AddPaymentInfo
-    // llegue a 9.3/10 de Event Match Quality, y que hoy le faltan al Purchase.
+    // llegue a 9.3/10 de Event Match Quality. El Purchase ya los recibe del
+    // píxel del navegador, pero solo en el 26,7% de las compras (cuando el
+    // cliente vuelve a success.html); mandándolos también por la CAPI, que
+    // corre en el webhook, la cobertura no depende de que el cliente vuelva.
     if (nombre) {
       const partes = String(nombre).trim().split(/\s+/).filter(Boolean);
-      if (partes[0]) userData.fn = [sha256Normalizado(partes[0])];
-      if (partes.length > 1) userData.ln = [sha256Normalizado(partes.slice(1).join(' '))];
+      if (partes[0]) userData.fn = [sha256(partes[0])];
+      if (partes.length > 1) userData.ln = [sha256(partes.slice(1).join(' '))];
     }
-    if (comuna) userData.ct = [sha256Normalizado(comuna)];
-    if (region) userData.st = [sha256Normalizado(region)];
+    if (comuna) userData.ct = [sha256Ubicacion(comuna)];
+    if (region) userData.st = [sha256Ubicacion(region)];
     userData.country = [sha256('cl')]; // la tienda solo vende en Chile
     // IP y navegador del cliente: van SIN hashear. Mejoran mucho el emparejamiento
     // (Event Match Quality) y la atribución. Se capturan cuando el cliente inicia
