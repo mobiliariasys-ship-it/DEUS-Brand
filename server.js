@@ -298,6 +298,20 @@ app.post('/crear-preferencia', async (req, res) => {
       status: 'pending'
     };
     pedidos.push(pedido);
+    // AddPaymentInfo a Meta desde el SERVIDOR, con el mismo event_id que acaba
+    // de emitir el píxel de index.html → Meta deduplica y cuenta uno solo.
+    // Acá el evento viaja con el emparejamiento completo (nombre, comuna,
+    // región, RUT), no solo con la IP y el user agent como el del navegador.
+    metaCapi.enviarAddPaymentInfo({
+      eventId: req.body && req.body.apiEventId,
+      valor: totalPedido,
+      email: customerEmail, phone: customerPhone,
+      nombre: customerName, rut: customerRut,
+      comuna: shippingAddress && shippingAddress.commune,
+      region: shippingAddress && shippingAddress.region,
+      clientIp: prefBody.metadata.client_ip, clientUa: prefBody.metadata.client_ua,
+      fbp: prefBody.metadata.fbp, fbc: prefBody.metadata.fbc
+    }).catch(e => console.error('[capi]', e.message));
     guardarPedidos();
 
     // Enviar correo con los datos del pedido (no bloquea la respuesta)

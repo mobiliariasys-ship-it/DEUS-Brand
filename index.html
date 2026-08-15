@@ -2564,6 +2564,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           return true;
         }
 
+        // Id del AddPaymentInfo de este intento de pago. Lo genera el navegador
+        // al apretar "pagar" y viaja al backend dentro del pedido, para que el
+        // evento del píxel y el de la Conversions API lleguen a Meta con el
+        // MISMO event_id. Sin esto Meta no los deduplica y cada pago contaría
+        // dos veces. Se regenera en cada intento (si el cliente reintenta con
+        // otro medio de pago, es un evento nuevo, no el mismo repetido).
+        let apiEventId = '';
+        function nuevoApiEventId() {
+          apiEventId = 'apinfo-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+          return apiEventId;
+        }
         function datosPedido() {
           return {
             customerName: document.getElementById('co-nombre').value.trim(),
@@ -2586,7 +2597,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // la Conversions API para emparejar la compra con la sesión que vio
             // el anuncio. Mejora mucho la calidad del evento (EMQ).
             fbp: cookieDeus('_fbp'),
-            fbc: cookieDeus('_fbc')
+            fbc: cookieDeus('_fbc'),
+            // Ver nuevoApiEventId(): el backend lo usa como event_id del
+            // AddPaymentInfo que manda por la Conversions API, para deduplicar
+            // contra el que acaba de emitir el píxel de esta misma página.
+            apiEventId: apiEventId
           };
         }
         // Lee una cookie por nombre (para _fbp / _fbc del píxel).
@@ -2630,8 +2645,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           wp.textContent = 'Redirigiendo...';
           msg.style.color = '#666';
           msg.textContent = 'Conectando con Webpay...';
+          nuevoApiEventId();
           actualizarPixelMatching(datosPedido());
-          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
+          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
           try {
             const res = await fetchBackend('/flow/crear', {
               method: 'POST',
@@ -2667,8 +2683,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           wp.textContent = 'Redirigiendo a Webpay...';
           msg.style.color = '#666';
           msg.textContent = 'Conectando con Webpay...';
+          nuevoApiEventId();
           actualizarPixelMatching(datosPedido());
-          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
+          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
           try {
             const res = await fetch(api('/webpay/crear'), {
               method: 'POST',
@@ -2714,8 +2731,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           btn.textContent = 'Procesando...';
           msg.style.color = '#666';
           msg.textContent = 'Preparando pago seguro...';
+          nuevoApiEventId();
           actualizarPixelMatching(datosPedido());
-          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' });
+          if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
           try {
             const res = await fetchBackend('/crear-preferencia', {
               method: 'POST',

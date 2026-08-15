@@ -48,13 +48,18 @@ function sha256Ubicacion(v) {
   return sha256(String(v).replace(/[0-9\s().-]/g, ''));
 }
 
-// Envía un evento Purchase a Meta. Nunca lanza: registra el resultado y resuelve
-// un booleano, para no interferir con el flujo del webhook si Meta falla.
-function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clientUa, fbp, fbc, nombre, rut, comuna, region }) {
+// Envía un evento a Meta por la Conversions API. Nunca lanza: registra el
+// resultado y resuelve un booleano, para no interferir con el flujo que lo
+// llamó (el webhook del pago, o la creación de la orden) si Meta falla.
+//
+// eventId tiene que ser EL MISMO que usa el píxel del navegador para ese mismo
+// hecho. Meta deduplica por (event_name, event_id): si no calzan, el evento se
+// cuenta dos veces y el embudo queda inflado.
+function enviarEvento(nombreEvento, { eventId, valor, email, phone, sourceUrl, clientIp, clientUa, fbp, fbc, nombre, rut, comuna, region, contentName }) {
   return new Promise(resolve => {
     const token = (process.env.META_CAPI_TOKEN || '').trim();
     if (!token) { console.log('[capi] META_CAPI_TOKEN no configurado — se omite el envío a Meta'); return resolve(false); }
-    if (!orden) { console.log('[capi] sin id de orden — se omite'); return resolve(false); }
+    if (!eventId) { console.log('[capi] ' + nombreEvento + ' sin event_id — se omite'); return resolve(false); }
 
     const userData = {};
     if (email) userData.em = [sha256(email)];
@@ -62,11 +67,10 @@ function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clien
     // Identificador estable por CLIENTE (el RUT, que ya se pide para la boleta),
     // a diferencia del event_id que es por COMPRA.
     if (rut) { const r = String(rut).replace(/[^0-9kK]/g, ''); if (r) userData.external_id = [sha256(r)]; }
-    // Nombre, comuna y región: los mismos datos que ya hacen que AddPaymentInfo
-    // llegue a 9.3/10 de Event Match Quality. El Purchase ya los recibe del
-    // píxel del navegador, pero solo en el 26,7% de las compras (cuando el
-    // cliente vuelve a success.html); mandándolos también por la CAPI, que
-    // corre en el webhook, la cobertura no depende de que el cliente vuelva.
+    // Nombre, comuna y región: son los datos que llevan a AddPaymentInfo a
+    // 9.3/10 de Event Match Quality. El píxel del navegador ya los manda, pero
+    // solo cuando el cliente completa el flujo en su navegador; mandándolos
+    // también desde el servidor la cobertura deja de depender de eso.
     if (nombre) {
       const partes = String(nombre).trim().split(/\s+/).filter(Boolean);
       if (partes[0]) userData.fn = [sha256(partes[0])];
@@ -86,13 +90,13 @@ function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clien
 
     const body = JSON.stringify({
       data: [{
-        event_name: 'Purchase',
+        event_name: nombreEvento,
         event_time: Math.floor(Date.now() / 1000),
-        event_id: 'purchase-' + orden,   // mismo id que el píxel del navegador → dedup
+        event_id: eventId,               // mismo id que el píxel del navegador → dedup
         action_source: 'website',
         event_source_url: sourceUrl || 'https://deusbrand.cl/',
         user_data: userData,
-        custom_data: { value: Number(valor) || 0, currency: 'CLP', content_name: 'DEUS Band' }
+        custom_data: { value: Number(valor) || 0, currency: 'CLP', content_name: contentName || 'DEUS Band' }
       }]
     });
 
@@ -106,7 +110,7 @@ function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clien
       let raw = '';
       res.on('data', c => raw += c);
       res.on('end', () => {
-        if (res.statusCode === 200) console.log('[capi] Purchase enviado a Meta — orden', orden, '· valor', valor);
+        if (res.statusCode === 200) console.log('[capi]', nombreEvento, 'enviado a Meta — event_id', eventId, '· valor', valor);
         else console.error('[capi] Meta respondió', res.statusCode, raw.substring(0, 250));
         resolve(res.statusCode === 200);
       });
@@ -118,4 +122,27 @@ function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clien
   });
 }
 
-module.exports = { enviarPurchase };
+// Purchase: se dispara desde el webhook del medio de pago, cuando la venta ya
+// está confirmada. El id lo arma el n° de orden, igual que el píxel en
+// success.html ('purchase-<orden>').
+function enviarPurchase(datos) {
+  if (!datos || !datos.orden) { console.log('[capi] sin id de orden — se omite'); return Promise.resolve(false); }
+  return enviarEvento('Purchase', Object.assign({}, datos, { eventId: 'purchase-' + datos.orden }));
+}
+
+// AddPaymentInfo: se dispara al crear la orden en la pasarela, que es el mismo
+// momento en que el cliente aprieta "pagar" y el navegador emite su propio
+// AddPaymentInfo. El id lo genera el navegador y viaja en el cuerpo del pedido
+// (campo apiEventId) justamente para que ambos lados coincidan y Meta deduplique.
+//
+// Por qué existe: el navegador registraba ~36 de estos por semana contra ~83
+// Purchase, cuando por definición no puede haber más compras que pagos
+// iniciados. Desde el servidor la cobertura no depende del navegador del
+// cliente, y el evento viaja con el mismo emparejamiento que el Purchase
+// (nombre, comuna, región, RUT), no solo con IP y user agent.
+function enviarAddPaymentInfo(datos) {
+  if (!datos || !datos.eventId) { console.log('[capi] AddPaymentInfo sin event_id del navegador — se omite'); return Promise.resolve(false); }
+  return enviarEvento('AddPaymentInfo', datos);
+}
+
+module.exports = { enviarPurchase, enviarAddPaymentInfo };

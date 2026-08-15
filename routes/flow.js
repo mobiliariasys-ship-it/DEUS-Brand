@@ -112,6 +112,20 @@ router.post('/flow/crear', async (req, res) => {
       total: amount, status: 'pending', method: 'Flow'
     };
     pedidosFlow.set(commerceOrder, pedido);
+    // AddPaymentInfo a Meta desde el SERVIDOR, con el mismo event_id que acaba
+    // de emitir el píxel de index.html → Meta deduplica y cuenta uno solo.
+    // Acá el evento viaja con el emparejamiento completo (nombre, comuna,
+    // región, RUT), no solo con la IP y el user agent como el del navegador.
+    metaCapi.enviarAddPaymentInfo({
+      eventId: req.body && req.body.apiEventId,
+      valor: amount,
+      email: customerEmail, phone: customerPhone,
+      nombre: customerName, rut: customerRut,
+      comuna: shippingAddress && shippingAddress.commune,
+      region: shippingAddress && shippingAddress.region,
+      clientIp: pedido.clientIp, clientUa: pedido.clientUa,
+      fbp: pedido.fbp, fbc: pedido.fbc
+    }).catch(e => console.error('[capi]', e.message));
     enviarPedidoNuevo(pedido).catch(e => console.error('[email]', e.message));
     // Si en 10 min no hay pago confirmado, correo de recuperación al cliente
     programarRecuperacion(commerceOrder, pedido);
