@@ -46,7 +46,8 @@ fbq('track', 'PageView');
 // del navegador), deduplicado contra la CAPI por el event_id compartido.
 (function(){
   var q = new URLSearchParams(location.search);
-  var monto = parseInt(q.get('monto'), 10);
+  var crudo = q.get('monto'); // string tal cual llega en la URL, sin parsear
+  var monto = parseInt(crudo, 10);
   // Referencia del pago según el medio: Flow/Webpay mandan 'orden';
   // Mercado Pago manda 'payment_id' o 'collection_id'.
   var ref = q.get('orden') || q.get('payment_id') || q.get('collection_id');
@@ -65,9 +66,25 @@ fbq('track', 'PageView');
   var yaClave = 'deus-purchase-' + ref;
   try { if (sessionStorage.getItem(yaClave)) { limpiar(); return; } } catch (e) {}
 
-  function dispararPurchase(){
+  function dispararPurchase(montoServidor){
     try { sessionStorage.setItem(yaClave, '1'); } catch (e) {}
-    var datos = { value: (monto > 0 ? monto : 0), currency: 'CLP', content_name: 'DEUS Band' };
+    var datos = { currency: 'CLP', content_name: 'DEUS Band' };
+    // El monto sale del servidor (mismo dato que ya alimenta el ledger y la
+    // Conversions API): navegador y servidor reportan el mismo número por
+    // construcción. Si por algún motivo no vino, no mandamos value — mejor un
+    // evento incompleto que uno inventado; la CAPI aporta el valor igual.
+    if (montoServidor > 0) datos.value = montoServidor;
+
+    // Instrumentación TEMPORAL para diagnosticar el value corrupto que reporta
+    // Meta: si el string crudo de la URL no coincide con el monto verificado,
+    // lo mandamos al backend con su forma original. Sacar una vez resuelto.
+    if (montoServidor > 0 && monto !== montoServidor) {
+      try {
+        navigator.sendBeacon(API + '/pixel/monto-anomalo?crudo=' + encodeURIComponent(crudo || '') +
+          '&srv=' + montoServidor + '&orden=' + encodeURIComponent(ref));
+      } catch (e) {}
+    }
+
     fbq('track', 'Purchase', datos, { eventID: 'purchase-' + ref });
     limpiar();
   }
@@ -81,7 +98,7 @@ fbq('track', 'PageView');
     fetch(API + '/orden/estado?ref=' + encodeURIComponent(ref), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(data){
-        if (data && data.pagado) { dispararPurchase(); return; }
+        if (data && data.pagado) { dispararPurchase(data.monto); return; }
         if (intentos < MAX) setTimeout(verificar, 2000); // ~10s de margen total
         else limpiar(); // sin confirmar: la CAPI del servidor cubre la venta
       })

@@ -168,6 +168,14 @@
   status = 200
   force = true
 
+# Instrumentación temporal: success.html reporta acá cuando el monto crudo de
+# la URL no coincide con el monto verificado del servidor.
+[[redirects]]
+  from = "/pixel/*"
+  to = "https://deus-band.onrender.com/pixel/:splat"
+  status = 200
+  force = true
+
 # Canje del sorteo.
 [[redirects]]
   from = "/sorteo"

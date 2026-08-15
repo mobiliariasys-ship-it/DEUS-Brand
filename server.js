@@ -488,11 +488,32 @@ app.post('/track/conversion', (req, res) => {
 // Si el webhook aún no llegó, responde pagado:false y el píxel no dispara; la
 // Conversions API del servidor igual reporta esa venta a Meta con el mismo
 // event_id, así que no se pierde ninguna compra real.
+//
+// El monto viaja en la misma respuesta (no solo el booleano): así success.html
+// deja de depender del ?monto= que arma el navegador y usa el mismo dato
+// autoritativo que ya alimenta el ledger y la Conversions API. Navegador y
+// servidor reportan el mismo número por construcción.
+//
+// Nota de seguridad menor: como responde por referencia de orden, y las
+// referencias (deus-<Date.now()>, o el n° de pago de MercadoPago/Webpay) son
+// enumerables, esto permite iterar y confirmar si una referencia existe y su
+// monto. Antes ya era enumerable el booleano; el impacto adicional es bajo
+// (casi todas las órdenes valen lo mismo) pero queda anotado.
 app.get('/orden/estado', (req, res) => {
   const ref = (req.query.ref || req.query.orden || '').toString().trim().slice(0, 80);
   res.set('Cache-Control', 'no-store');
   if (!ref) return res.json({ pagado: false });
-  res.json({ pagado: metrics.ordenConfirmada(ref) });
+  const venta = metrics.buscarVenta(ref);
+  res.json(venta ? { pagado: true, monto: venta.monto } : { pagado: false });
+});
+
+// Instrumentación TEMPORAL para diagnosticar el value corrupto que reporta
+// Meta: success.html manda esto cuando el monto crudo de la URL no coincide
+// con el monto verificado de /orden/estado. Solo loguea; no hace nada más.
+// Sacar este endpoint (y el sendBeacon en success.html) una vez resuelto.
+app.post('/pixel/monto-anomalo', (req, res) => {
+  console.log('[pixel] monto anomalo — crudo="' + (req.query.crudo || '') + '" srv=' + (req.query.srv || '') + ' orden=' + (req.query.orden || ''));
+  res.sendStatus(204);
 });
 
 // ── Panel de administración (protegido con STOCK_KEY) ──

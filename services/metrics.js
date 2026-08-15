@@ -299,15 +299,22 @@ function ticketsTotal() { return tickets.length; }
 // El correo que le llega al CLIENTE muestra solo los últimos 8 caracteres
 // del n° de orden ("Pedido XXXXXXXX"), así que además del calce exacto se
 // acepta que el n° ingresado sea el sufijo (mínimo 6 caracteres) del guardado.
-function ordenConfirmada(orden) {
+// Busca la venta confirmada que corresponde a un n° de orden (calce exacto o
+// por sufijo, mismo criterio que ordenConfirmada). Devuelve el registro
+// completo — con su monto autoritativo — o null.
+function buscarVenta(orden) {
   const o = String(orden || '').trim().toLowerCase();
-  if (!o) return false;
-  return ventas.some(v => {
+  if (!o) return null;
+  return ventas.find(v => {
     const guardado = v.orden.toLowerCase();
     if (guardado === o) return true;
     if (o.length >= 6 && guardado.endsWith(o)) return true;
     return false;
-  });
+  }) || null;
+}
+
+function ordenConfirmada(orden) {
+  return !!buscarVenta(orden);
 }
 
 function resumenVentas() {
@@ -451,7 +458,7 @@ function snapshot() {
 }
 
 module.exports = {
-  init, ping, registrarVenta, ordenConfirmada, snapshot, visitantesEnVivo,
+  init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
   resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
   registrarFalloChat
