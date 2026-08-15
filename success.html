@@ -78,7 +78,7 @@ fbq('track', 'PageView');
     // Instrumentación TEMPORAL para diagnosticar el value corrupto que reporta
     // Meta: si el string crudo de la URL no coincide con el monto verificado,
     // lo mandamos al backend con su forma original. Sacar una vez resuelto.
-    if (montoServidor > 0 && monto !== montoServidor) {
+    if (montoServidor > 0 && crudo && monto !== montoServidor) {
       try {
         navigator.sendBeacon(API + '/pixel/monto-anomalo?crudo=' + encodeURIComponent(crudo || '') +
           '&srv=' + montoServidor + '&orden=' + encodeURIComponent(ref));
