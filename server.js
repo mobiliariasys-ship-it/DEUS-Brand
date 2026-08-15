@@ -377,7 +377,14 @@ app.post('/notificaciones', async (req, res) => {
         // Purchase a Meta desde el SERVIDOR (Conversions API): captura el 100%
         // de las ventas aunque el cliente no vuelva a success.html. Mismo
         // event_id que el píxel del navegador → Meta deduplica si llegan ambos.
-        metaCapi.enviarPurchase({ orden: info.id, valor: info.transaction_amount, email: emailCliente, phone: pedido.customer.phone, clientIp: meta.client_ip, clientUa: meta.client_ua, fbp: meta.fbp, fbc: meta.fbc })
+        metaCapi.enviarPurchase({
+          orden: info.id, valor: info.transaction_amount,
+          email: emailCliente, phone: pedido.customer.phone,
+          clientIp: meta.client_ip, clientUa: meta.client_ua, fbp: meta.fbp, fbc: meta.fbc,
+          nombre: pedido.customer.name, rut: pedido.customer.rut,
+          comuna: pedido.shipping && pedido.shipping.address && pedido.shipping.address.commune,
+          region: pedido.shipping && pedido.shipping.address && pedido.shipping.address.region
+        })
           .catch(err => console.error('[capi] Error inesperado:', err.message));
         // Atribución de conducta: cuenta esta compra con las acciones que hizo
         // la sesión (viajaron en la metadata). Idempotente por n° de pago, así

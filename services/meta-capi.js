@@ -28,9 +28,17 @@ function sha256(v) {
   return crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
 }
 
+// Para nombre/comuna/región: Meta normaliza sin tildes antes de emparejar, así
+// que si mandamos "Ñuñoa" o "José" con acento tal cual, el hash no calza con
+// el de Meta y el dato no suma nada al Event Match Quality.
+function sha256Normalizado(v) {
+  const sinTildes = String(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return sha256(sinTildes);
+}
+
 // Envía un evento Purchase a Meta. Nunca lanza: registra el resultado y resuelve
 // un booleano, para no interferir con el flujo del webhook si Meta falla.
-function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clientUa, fbp, fbc }) {
+function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clientUa, fbp, fbc, nombre, rut, comuna, region }) {
   return new Promise(resolve => {
     const token = (process.env.META_CAPI_TOKEN || '').trim();
     if (!token) { console.log('[capi] META_CAPI_TOKEN no configurado — se omite el envío a Meta'); return resolve(false); }
@@ -39,6 +47,19 @@ function enviarPurchase({ orden, valor, email, phone, sourceUrl, clientIp, clien
     const userData = {};
     if (email) userData.em = [sha256(email)];
     if (phone) { const p = String(phone).replace(/[^0-9]/g, ''); if (p) userData.ph = [sha256(p)]; }
+    // Identificador estable por CLIENTE (el RUT, que ya se pide para la boleta),
+    // a diferencia del event_id que es por COMPRA.
+    if (rut) { const r = String(rut).replace(/[^0-9kK]/g, ''); if (r) userData.external_id = [sha256(r)]; }
+    // Nombre, comuna y región: los mismos datos que ya hacen que AddPaymentInfo
+    // llegue a 9.3/10 de Event Match Quality, y que hoy le faltan al Purchase.
+    if (nombre) {
+      const partes = String(nombre).trim().split(/\s+/).filter(Boolean);
+      if (partes[0]) userData.fn = [sha256Normalizado(partes[0])];
+      if (partes.length > 1) userData.ln = [sha256Normalizado(partes.slice(1).join(' '))];
+    }
+    if (comuna) userData.ct = [sha256Normalizado(comuna)];
+    if (region) userData.st = [sha256Normalizado(region)];
+    userData.country = [sha256('cl')]; // la tienda solo vende en Chile
     // IP y navegador del cliente: van SIN hashear. Mejoran mucho el emparejamiento
     // (Event Match Quality) y la atribución. Se capturan cuando el cliente inicia
     // el pago desde su navegador (no en el webhook, donde la IP es la de la pasarela).

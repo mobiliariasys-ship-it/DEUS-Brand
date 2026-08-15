@@ -152,7 +152,17 @@ router.post('/flow/confirmacion', async (req, res) => {
       const ticketFlow = metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder, email: (pedido && pedido.customer && pedido.customer.email) || st.payer });
       // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que
       // success.html) por si el cliente no llega a disparar el píxel en el navegador.
-      metaCapi.enviarPurchase({ orden: st.commerceOrder, valor: st.amount, email: (pedido && pedido.customer && pedido.customer.email) || st.payer, phone: pedido && pedido.customer && pedido.customer.phone, clientIp: pedido && pedido.clientIp, clientUa: pedido && pedido.clientUa, fbp: pedido && pedido.fbp, fbc: pedido && pedido.fbc })
+      metaCapi.enviarPurchase({
+        orden: st.commerceOrder, valor: st.amount,
+        email: (pedido && pedido.customer && pedido.customer.email) || st.payer,
+        phone: pedido && pedido.customer && pedido.customer.phone,
+        clientIp: pedido && pedido.clientIp, clientUa: pedido && pedido.clientUa,
+        fbp: pedido && pedido.fbp, fbc: pedido && pedido.fbc,
+        nombre: pedido && pedido.customer && pedido.customer.name,
+        rut: pedido && pedido.customer && pedido.customer.rut,
+        comuna: pedido && pedido.shipping && pedido.shipping.address && pedido.shipping.address.commune,
+        region: pedido && pedido.shipping && pedido.shipping.address && pedido.shipping.address.region
+      })
         .catch(e => console.error('[capi]', e.message));
       enviarPagoConfirmado({
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },
