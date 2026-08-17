@@ -2608,6 +2608,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (!selectedShipping) {
             msg.style.color = '#c0392b';
             msg.textContent = 'No pudimos validar esa dirección. Revisa la comuna y vuelve a intentar.';
+            // Embudo — paso 4x: apretó pagar (co:4pago ya disparó) pero la
+            // cotización de envío lo frenó ANTES de llegar a la pasarela.
+            //
+            // Sin este evento el caso caía en un hueco: no era co:45redir ni
+            // co:4xerror, así que el panel lo contaba como "no llegó a la
+            // pasarela" sin causa y culpaba al backend de pago, cuando el
+            // problema es la cotización de despacho (Chilexpress/Starken/
+            // Bluexpress). De 12 caídas ahí, solo 1 tenía error de conexión.
+            if (window.deusEvento) window.deusEvento('co:4xenvio');
             return false;
           }
           return true;

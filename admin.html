@@ -507,6 +507,7 @@
     var ex=document.getElementById('co-extra'); if(!ex) return;
     var apreto=conducta['co:4pago']||0, llego=conducta['co:45redir']||0;
     var err=conducta['co:4xerror']||0, pagaron=conducta['co:5pago']||0;
+    var errEnvio=conducta['co:4xenvio']||0;   // frenados por la cotización de envío
     var nunca=Math.max(apreto-llego,0);
     // Si pagaron más de los que "llegaron a la pasarela", el evento se está
     // perdiendo y el número de abajo sería una alarma falsa.
@@ -522,9 +523,19 @@
     } else if(apreto>0){
       h+='<div class="co-note">';
       if(nunca>0){
+        // Desglose por causa. Antes este número se atribuía entero al backend
+        // de pago, pero entre "apretó pagar" y "llegó a la pasarela" hay dos
+        // cosas que pueden fallar, y son arreglos distintos.
+        var sinCausa=Math.max(nunca-err-errEnvio,0);
+        var causas=[];
+        if(errEnvio>0) causas.push('<b>'+errEnvio+'</b> por cotización de envío');
+        if(err>0) causas.push('<b>'+err+'</b> con error de conexión');
+        if(sinCausa>0) causas.push('<b>'+sinCausa+'</b> sin causa registrada');
         h+='<b style="color:#f0736f">'+nunca+' apretaron pagar y no llegaron a la pasarela</b>'+
-           (err>0? ' · '+err+' con error de conexión':'')+
-           '<br><small>Si este número es alto, el problema es al crear el pago (tu backend o el gateway), no el cliente.</small>';
+           (causas.length? '<br>'+causas.join(' · ') : '')+
+           '<br><small>Cotización de envío: falló Chilexpress/Starken/Bluexpress al revalidar la dirección — el cliente vio "no pudimos validar esa dirección". '+
+           'Error de conexión: tu backend o el gateway al crear el pago. '+
+           'Sin causa: lo más probable es que hayan abandonado durante la espera.</small>';
       } else {
         h+='<b style="color:#7fd589">Todos los que apretaron pagar llegaron a la pasarela ✓</b>'+
            '<br><small>Entonces los que no pagan se pierden dentro de Flow/MercadoPago, no en tu web.</small>';
