@@ -4,9 +4,17 @@
 // solo se dispara si el cliente aterriza en esa página; muchos pagos se
 // aprueban sin que el cliente regrese → esas ventas nunca llegaban al píxel).
 //
-// Deduplicación: usa el mismo event_id que el píxel del navegador
-// ('purchase-<id de pago>'). Si ambos eventos llegan (navegador + servidor),
-// Meta descarta el duplicado y cuenta la compra UNA sola vez.
+// El servidor es la ÚNICA fuente del Purchase: success.html ya no lo dispara.
+// Una orden pagada = un correo de "pago confirmado" = un Purchase, porque los
+// tres salen del mismo bloque del webhook.
+//
+// Idempotencia: los medios de pago avisan el mismo pago más de una vez
+// (MercadoPago manda 'payment.created' y 'payment.updated', y los retornos de
+// Webpay/Flow están montados en GET y POST, así que un refresh del navegador
+// los reejecuta). Sin guarda, cada aviso mandaba otro Purchase y Meta contaba
+// compras que no existían. Por eso se lleva registro DURABLE de qué órdenes ya
+// se reportaron, en el mismo Postgres del ledger: si la orden ya está, no se
+// vuelve a enviar, venga por el camino que venga y las veces que venga.
 //
 // Variables de entorno en Render:
 //   META_CAPI_TOKEN = token de Conversions API. Events Manager → tu píxel →
@@ -18,6 +26,7 @@
 // se configure el token, así que desplegarlo no cambia el comportamiento actual.
 const https = require('https');
 const crypto = require('crypto');
+const persist = require('./persist');
 
 const PIXEL_ID = (process.env.META_PIXEL_ID || '2086346891978245').trim();
 const API_VERSION = 'v21.0';
@@ -122,12 +131,49 @@ function enviarEvento(nombreEvento, { eventId, valor, email, phone, sourceUrl, c
   });
 }
 
+// Órdenes cuyo Purchase ya se le reportó a Meta. Vive en el mismo almacén
+// durable que el ledger (Postgres), así que sobrevive a los deploys de Render:
+// un reintento de webhook al día siguiente tampoco vuelve a contar la venta.
+const REPORTADAS_FILE = 'meta-purchases.json';
+const MAX_RECORDADAS = 5000;   // se conservan las más recientes; de sobra
+let reportadas = null;
+let cargaEnCurso = null;
+
+function cargarReportadas() {
+  if (reportadas) return Promise.resolve(reportadas);
+  if (!cargaEnCurso) {
+    cargaEnCurso = persist.load(REPORTADAS_FILE, [])
+      .then(a => { reportadas = new Set(Array.isArray(a) ? a : []); return reportadas; })
+      .catch(e => {
+        // Si no se puede leer, arrancamos vacío: preferimos arriesgar un
+        // duplicado puntual antes que dejar de reportar ventas reales.
+        console.error('[capi] No se pudo leer el registro de órdenes reportadas:', e.message);
+        reportadas = new Set();
+        return reportadas;
+      });
+  }
+  return cargaEnCurso;
+}
+
 // Purchase: se dispara desde el webhook del medio de pago, cuando la venta ya
-// está confirmada. El id lo arma el n° de orden, igual que el píxel en
-// success.html ('purchase-<orden>').
+// está confirmada, y SOLO una vez por orden. El event_id sigue siendo
+// 'purchase-<orden>'.
 function enviarPurchase(datos) {
   if (!datos || !datos.orden) { console.log('[capi] sin id de orden — se omite'); return Promise.resolve(false); }
-  return enviarEvento('Purchase', Object.assign({}, datos, { eventId: 'purchase-' + datos.orden }));
+  const orden = String(datos.orden);
+  return cargarReportadas().then(set => {
+    if (set.has(orden)) {
+      console.log('[capi] Purchase ya reportado para la orden', orden, '— se omite (idempotencia)');
+      return false;
+    }
+    // Se marca ANTES de enviar: si dos avisos del mismo pago entran casi a la
+    // vez, el segundo ya la encuentra marcada y no duplica.
+    set.add(orden);
+    const lista = [...set];
+    persist.save(REPORTADAS_FILE, lista.slice(-MAX_RECORDADAS))
+      .catch(e => console.error('[capi] Error guardando órdenes reportadas:', e.message));
+    return enviarEvento('Purchase', Object.assign({}, datos, { eventId: 'purchase-' + orden }));
+  });
 }
 
 // AddPaymentInfo: se dispara al crear la orden en la pasarela, que es el mismo

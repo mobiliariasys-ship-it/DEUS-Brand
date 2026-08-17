@@ -37,75 +37,32 @@ try {
 if (__match) fbq('init', '2086346891978245', __match);
 else fbq('init', '2086346891978245');
 fbq('track', 'PageView');
-// Purchase del navegador: SOLO se dispara si el servidor confirma que esa orden
-// corresponde a un pago realmente aprobado.
+// El Purchase lo manda SOLO el servidor, por la Conversions API, desde el
+// mismo bloque del webhook que envía el correo de "pago confirmado". Una orden
+// pagada = un correo = un Purchase, con idempotencia por n° de orden.
 //
-// Antes, el píxel disparaba Purchase con solo leer la URL: entrar directo a
-// /success.html, recargarla o inventar el parámetro contaba una compra falsa.
-// Ahora primero preguntamos a /orden/estado; recién si responde pagado:true
-// disparamos. Esto NO puede subcontar ventas reales: la Conversions API del
-// servidor (webhook = fuente de verdad) ya reporta cada compra a Meta con el
-// MISMO event_id 'purchase-<orden>', así que si acá no llegara a disparar (p.
-// ej. el webhook aún no procesa el pago), Meta igual cuenta la venta una vez.
-// El píxel del navegador queda como refuerzo con mejor emparejamiento (cookies
-// del navegador), deduplicado contra la CAPI por el event_id compartido.
+// Antes el navegador mandaba además su propio Purchase desde acá. Se sacó
+// porque su guarda anti-duplicado vivía en sessionStorage, que es POR PESTAÑA:
+// las pasarelas suelen devolver al cliente en una pestaña nueva, y ahí la
+// guarda simplemente no existía. Una misma venta emitía varios eventos y Meta
+// terminaba contando más compras de las que realmente ocurrían.
+//
+// No se pierde cobertura: la CAPI dispara desde el webhook —aunque el cliente
+// no vuelva al sitio, tenga bloqueador de anuncios o iOS le corte el rastreo—
+// y ya viaja con fbp, fbc, IP y user agent del navegador (capturados cuando
+// inicia el pago) más email, teléfono, nombre, comuna, región y RUT. El píxel
+// no aportaba ningún dato que el servidor no tuviera.
 (function(){
   var q = new URLSearchParams(location.search);
-  // El ?monto= de la URL ya no se lee: el value del Purchase sale de
-  // /orden/estado, que es el mismo dato que alimenta el ledger y la CAPI.
   // Referencia del pago según el medio: Flow/Webpay mandan 'orden';
   // Mercado Pago manda 'payment_id' o 'collection_id'.
   var ref = q.get('orden') || q.get('payment_id') || q.get('collection_id');
-  var API = (window.DEUS_API_BASE || '').replace(/\/$/, '');
-
-  function limpiar(){
-    // La compra ya se concretó, así que los datos de emparejamiento cumplieron
-    // su función. Se borran para no dejar la identidad de un cliente guardada
-    // en un equipo compartido: quien vuelva después arranca como visitante
-    // nuevo. Al que abandonó el checkout NO le pasa por acá, y es justamente el
-    // que queremos reconocer cuando vuelva.
-    try { localStorage.removeItem('deus-fb-match'); } catch (e) {}
-  }
-
-  // Sin referencia de pago no hay nada que verificar → nunca disparamos.
-  if (!ref) { limpiar(); return; }
-
-  // Guarda contra doble disparo si el cliente recarga la página de éxito.
-  var yaClave = 'deus-purchase-' + ref;
-  try { if (sessionStorage.getItem(yaClave)) { limpiar(); return; } } catch (e) {}
-
-  function dispararPurchase(montoServidor){
-    try { sessionStorage.setItem(yaClave, '1'); } catch (e) {}
-    var datos = { currency: 'CLP', content_name: 'DEUS Band' };
-    // El monto sale del servidor (mismo dato que ya alimenta el ledger y la
-    // Conversions API): navegador y servidor reportan el mismo número por
-    // construcción. Si por algún motivo no vino, no mandamos value — mejor un
-    // evento incompleto que uno inventado; la CAPI aporta el valor igual.
-    if (montoServidor > 0) datos.value = montoServidor;
-
-    fbq('track', 'Purchase', datos, { eventID: 'purchase-' + ref });
-    limpiar();
-  }
-
-  // Pregunta al servidor si el pago está confirmado. Reintenta unas pocas veces
-  // por si el webhook del medio de pago todavía no terminó de procesar (carrera
-  // normal entre el redirect del navegador y la confirmación server-to-server).
-  var intentos = 0, MAX = 5;
-  function verificar(){
-    intentos++;
-    fetch(API + '/orden/estado?ref=' + encodeURIComponent(ref), { cache: 'no-store' })
-      .then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(data){
-        if (data && data.pagado) { dispararPurchase(data.monto); return; }
-        if (intentos < MAX) setTimeout(verificar, 2000); // ~10s de margen total
-        else limpiar(); // sin confirmar: la CAPI del servidor cubre la venta
-      })
-      .catch(function(){
-        if (intentos < MAX) setTimeout(verificar, 2000);
-        else limpiar();
-      });
-  }
-  verificar();
+  // Llegó con referencia de pago: la compra terminó, así que los datos de
+  // emparejamiento ya cumplieron su función. Se borran para no dejar la
+  // identidad de un cliente guardada en un equipo compartido. Al que abandonó
+  // el checkout NO le pasa por acá, y es justamente el que queremos reconocer
+  // cuando vuelva.
+  if (ref) { try { localStorage.removeItem('deus-fb-match'); } catch (e) {} }
 })();
 </script>
 <noscript><img height="1" width="1" style="display:none"
