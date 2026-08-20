@@ -2277,6 +2277,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             checkoutQty,
             checkoutTapones ? TAPONES_PRICE : precioBanda()
           );
+          // Un id de AddPaymentInfo por CHECKOUT, no por clic. Si el cliente
+          // se equivoca, corrige un dato y vuelve a apretar pagar, los dos
+          // intentos comparten id y Meta los deduplica: cuenta una persona
+          // que ingreso datos de pago, no dos. Se renueva al reabrir.
+          nuevoApiEventId();
           if (window.fbq) fbq('track', 'InitiateCheckout', { value: checkoutTapones ? TAPONES_PRICE : precioBanda(), currency: 'CLP', content_name: checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band' });
           if (window.deusTrackCheckout) window.deusTrackCheckout();
           // Embudo del checkout — paso 1: abrió el checkout.
@@ -2622,12 +2627,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           return true;
         }
 
-        // Id del AddPaymentInfo de este intento de pago. Lo genera el navegador
-        // al apretar "pagar" y viaja al backend dentro del pedido, para que el
+        // Id del AddPaymentInfo de ESTE checkout. Lo genera el navegador al
+        // abrir el checkout y viaja al backend dentro del pedido, para que el
         // evento del píxel y el de la Conversions API lleguen a Meta con el
-        // MISMO event_id. Sin esto Meta no los deduplica y cada pago contaría
-        // dos veces. Se regenera en cada intento (si el cliente reintenta con
-        // otro medio de pago, es un evento nuevo, no el mismo repetido).
+        // MISMO event_id y se deduplican.
+        //
+        // Se genera una vez por apertura, NO por clic en pagar. Antes se
+        // regeneraba en cada intento: quien se equivocaba, corregía un dato y
+        // volvía a apretar pagar generaba un AddPaymentInfo nuevo cada vez, y
+        // Meta contaba varias veces a la misma persona. Compartiendo el id, los
+        // reintentos colapsan en uno solo, que es lo que el evento significa:
+        // "ingresó datos de pago", no "apretó el botón".
         let apiEventId = '';
         function nuevoApiEventId() {
           apiEventId = 'apinfo-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
@@ -2703,7 +2713,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           wp.textContent = 'Redirigiendo...';
           msg.style.color = '#666';
           msg.textContent = 'Conectando con Webpay...';
-          nuevoApiEventId();
           actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
           try {
@@ -2741,7 +2750,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           wp.textContent = 'Redirigiendo a Webpay...';
           msg.style.color = '#666';
           msg.textContent = 'Conectando con Webpay...';
-          nuevoApiEventId();
           actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
           try {
@@ -2789,7 +2797,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           btn.textContent = 'Procesando...';
           msg.style.color = '#666';
           msg.textContent = 'Preparando pago seguro...';
-          nuevoApiEventId();
           actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
           try {
