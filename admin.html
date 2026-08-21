@@ -143,7 +143,7 @@
 
   /* Charts */
   .chart-container{width:100%;overflow-x:auto;background:#0b0b0b;border-radius:12px;padding:14px;border:1px solid var(--border-soft);}
-  #chartDias,#chartVentas{width:100%;height:auto;display:block;min-width:520px;}
+  #chartDias,#chartVentas,#chartConv{width:100%;height:auto;display:block;min-width:520px;}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
   .two-col section{margin-bottom:0;}
 
@@ -246,6 +246,11 @@
     <section>
       <div class="sec-h"><h2>💰 Ventas · últimos 30 días</h2><span class="pill" id="chart-ventas-total"></span></div>
       <div class="chart-container"><canvas id="chartVentas" width="820" height="200"></canvas></div>
+    </section>
+    <section>
+      <div class="sec-h"><h2>📈 Conversión · últimos 30 días</h2><span class="pill" id="chart-conv-total"></span></div>
+      <div class="chart-container"><canvas id="chartConv" width="820" height="200"></canvas></div>
+      <p class="hint">Ventas ÷ visitas de cada día. La línea punteada es el promedio real del periodo — es la referencia, no las barras sueltas. Los días en gris tienen muy pocas visitas: ahí el porcentaje es ruido, no señal.</p>
     </section>
     </div>
 
@@ -998,15 +1003,34 @@
     var totalV=0, totalM=0; v30.forEach(function(x){ totalV+=x.ventas; totalM+=x.monto; });
     document.getElementById('chart-ventas-total').textContent=totalV+' ventas · '+money(totalM);
     dibujarBarras('chartVentas', v30.map(function(x){ return { fecha:x.fecha, valor:x.ventas }; }), '#0f9fd0');
+    // Conversión diaria = ventas ÷ visitas de ESE día. Ojo con los dias de
+    // poco trafico: 1 venta sobre 3 visitas da 33% y no significa nada, asi
+    // que esos van atenuados y NO entran en la escala del grafico.
+    var MIN_VISITAS = 30;
+    var ventasPorFecha = {};
+    v30.forEach(function(x){ ventasPorFecha[x.fecha] = x.ventas; });
+    var convDias = u30.map(function(x){
+      return {
+        fecha: x.fecha,
+        valor: x.vistas ? (ventasPorFecha[x.fecha]||0) / x.vistas * 100 : 0,
+        tenue: x.vistas < MIN_VISITAS
+      };
+    });
+    // El promedio se calcula sobre los totales, no promediando los dias: un dia
+    // de 3 visitas no puede pesar lo mismo que uno de 700.
+    var convProm = totalVistas ? totalV / totalVistas * 100 : 0;
+    document.getElementById('chart-conv-total').textContent =
+      pct1(convProm) + ' promedio · ' + totalV + ' de ' + totalVistas;
+    dibujarBarras('chartConv', convDias, '#9b8cff', { ref: convProm, refLbl: 'promedio', sinCifras: true });
     document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
   }
 
   // Gráficos de barras (estilo ecualizador): un estado por canvas.
   // datos = [{fecha:'YYYY-MM-DD', valor:N}]; colorBase = color de la base del degradado.
   var charts={};
-  function dibujarBarras(id, datos, colorBase){
+  function dibujarBarras(id, datos, colorBase, opts){
     var st=charts[id]||(charts[id]={alturas:[],corriendo:false});
-    st.datos=datos; st.colorBase=colorBase;
+    st.datos=datos; st.colorBase=colorBase; st.opts=opts||{};
     if(st.alturas.length!==datos.length) st.alturas=new Array(datos.length).fill(0);
     if(!st.corriendo && datos.length){ st.corriendo=true; requestAnimationFrame(function(){ frameBarras(id); }); }
   }
@@ -1021,10 +1045,13 @@
     for(var gl=0;gl<=4;gl++){ var gy=padT+(h-padB-padT)*gl/4; ctx.beginPath(); ctx.moveTo(padX,gy+.5); ctx.lineTo(w-padX,gy+.5); ctx.stroke(); }
     var n=st.datos.length;
     var gap=3, barW=(w-padX*2-gap*(n-1))/n;
-    var maxV=1; st.datos.forEach(function(d){ if(d.valor>maxV) maxV=d.valor; });
+    // Un dia de poca muestra con 33% no puede aplastar la escala del resto.
+    var maxV=0; st.datos.forEach(function(d){ if(!d.tenue && d.valor>maxV) maxV=d.valor; });
+    if(st.opts.ref>maxV) maxV=st.opts.ref;
+    if(!(maxV>0)) maxV=1;
     var quieto=true;
     for(var i=0;i<n;i++){
-      var objetivo=(st.datos[i].valor/maxV)*(h-padB-padT);
+      var objetivo=Math.min(st.datos[i].valor/maxV,1)*(h-padB-padT);
       st.alturas[i]+=(objetivo-st.alturas[i])*0.18;
       if(Math.abs(objetivo-st.alturas[i])>0.5) quieto=false;
       var barH=Math.max(2,st.alturas[i]);
@@ -1032,11 +1059,11 @@
       var g=ctx.createLinearGradient(0,y,0,h-padB);
       g.addColorStop(0,'#7fd8f2'); g.addColorStop(1,st.colorBase);
       ctx.fillStyle=g;
-      ctx.globalAlpha=st.datos[i].valor?0.95:0.22;
+      ctx.globalAlpha=st.datos[i].valor?(st.datos[i].tenue?0.28:0.95):0.22;
       ctx.fillRect(x,y,barW,barH);
       ctx.globalAlpha=1;
       // Cifra sobre la barra (solo si hay valor)
-      if(st.datos[i].valor){
+      if(st.datos[i].valor && !st.opts.sinCifras){
         ctx.fillStyle='#ddd'; ctx.font='10px monospace'; ctx.textAlign='center';
         ctx.fillText(String(st.datos[i].valor),x+barW/2,y-4);
       }
@@ -1045,6 +1072,19 @@
         ctx.fillStyle='#777'; ctx.font='9px monospace'; ctx.textAlign='center';
         ctx.fillText(st.datos[i].fecha.slice(8),x+barW/2,h-10);
       }
+    }
+    // Linea de referencia (el promedio real del periodo). Va encima de las
+    // barras: es contra esto que hay que leerlas, no contra el dia mas alto.
+    if(st.opts.ref>0){
+      var ry=h-padB-Math.min(st.opts.ref/maxV,1)*(h-padB-padT);
+      ctx.save();
+      ctx.strokeStyle=st.colorBase; ctx.globalAlpha=0.75;
+      ctx.setLineDash([5,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(padX,ry+.5); ctx.lineTo(w-padX,ry+.5); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha=1;
+      ctx.fillStyle='#b9b9b9'; ctx.font='10px monospace'; ctx.textAlign='left';
+      ctx.fillText(pct1(st.opts.ref)+' '+(st.opts.refLbl||''),padX+4,ry-5);
+      ctx.restore();
     }
     ctx.strokeStyle='#262626'; ctx.beginPath();
     ctx.moveTo(padX,h-padB+.5); ctx.lineTo(w-padX,h-padB+.5); ctx.stroke();
