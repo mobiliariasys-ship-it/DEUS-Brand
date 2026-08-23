@@ -13,6 +13,14 @@
 // nuevo (el disco de Render es efímero). O sea: es una red de emergencia para
 // no perder ventas mientras la base está caída, no un reemplazo. Si aparece el
 // aviso de "Postgres INALCANZABLE" en los logs, hay que arreglar DATABASE_URL.
+//
+// Y una vez que se cae a archivos, se queda en archivos hasta que se reinicie
+// el proceso. NO se vuelve a Postgres en caliente, aunque la base reviva: el
+// estado en memoria arrancó vacío (o desde el archivo local), y como metrics.js
+// guarda el objeto COMPLETO en cada escritura, el primer guardado contra la
+// base recuperada le pisaría meses de ventas con lo poco que juntó desde el
+// arranque. Reconectar es trabajo del redeploy, que sí vuelve a leer el
+// histórico antes de escribir nada.
 const fs = require('fs');
 const path = require('path');
 const db = require('./db');
@@ -40,27 +48,36 @@ function saveFile(file, data) {
 // `key` se usa tal cual como nombre de archivo (modo local) o como clave en
 // la base de datos (modo Postgres) — mantiene compatibilidad con los mismos
 // nombres que ya se usaban (ej. 'metrics-data.json', 'pedidos.json').
+// Se enciende en cuanto una lectura NO pudo salir de Postgres. Desde ahí el
+// estado en memoria ya no desciende de la base, así que escribirle sería
+// destructivo. Solo lo apaga un reinicio.
+let modoArchivo = false;
+
 async function load(key, fallback) {
-  if (await db.init()) {
+  if (!modoArchivo && await db.init()) {
     try {
       const v = await db.get(key);
+      // Clave inexistente (primer arranque) NO es un fallo: la base responde.
       return v === undefined ? fallback : v;
     } catch (e) {
       console.error(`[persist] Error leyendo "${key}" de la base de datos:`, e.message);
-      return fallback;
     }
   }
-  // Postgres no configurado o inalcanzable.
+  if (!modoArchivo) {
+    console.error('[persist] MODO ARCHIVO: no se pudo leer de Postgres. Los guardados van a disco efímero y no se escribirá en la base hasta el próximo deploy (para no pisar el histórico).');
+    modoArchivo = true;
+  }
   return loadFile(key, fallback);
 }
 
 async function save(key, data) {
-  if (await db.init()) {
+  if (!modoArchivo && await db.init()) {
     try {
       await db.set(key, data);
       return;
     } catch (e) {
-      // La base respondía al arrancar pero este guardado falló. Se deja copia
+      // La base sí respondió al leer, así que el estado en memoria desciende
+      // del histórico y volver a intentar más tarde es seguro. Se deja copia
       // local igual: perder la venta es peor que dejar un archivo huérfano.
       console.error(`[persist] Error guardando "${key}" en la base de datos:`, e.message, '— se deja copia local');
     }
