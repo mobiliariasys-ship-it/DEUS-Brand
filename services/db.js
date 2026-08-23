@@ -14,10 +14,21 @@ const { Pool } = require('pg');
 // siempre y de paso se va el warning en los logs.
 const connectionString = (process.env.DATABASE_URL || '').trim()
   .replace(/sslmode=(require|prefer|verify-ca)\b/i, 'sslmode=verify-full');
+
+// OJO: esto solo dice que la variable EXISTE, no que la base responda. Quien
+// decide si se puede usar Postgres de verdad es init(), que sí la contacta.
+// persist.js tiene que preguntarle a init(), no a esto.
 const activa = !!connectionString;
 
 let pool = null;
-let listo = null;
+let listo = null;      // promesa del intento de conexión en curso o ya exitoso
+let fallidoEn = 0;     // cuándo falló el último intento (0 = no hay fallo)
+
+// Cuánto se espera antes de reintentar después de un fallo. Sin esta espera,
+// con la base caída cada guardado pagaría un timeout de red; y si el fallo se
+// recordara para siempre, una caída pasajera obligaría a redesplegar para
+// volver a Postgres. Con esto se reintenta solo, cada tanto.
+const REINTENTO_MS = 60000;
 
 function getPool() {
   if (!pool) {
@@ -33,23 +44,41 @@ function getPool() {
   return pool;
 }
 
-// Crea la tabla si hace falta (idempotente). Se ejecuta una sola vez.
+// Crea la tabla si hace falta (idempotente) y de paso comprueba que la base
+// realmente responde.
+function conectar() {
+  return getPool().query(`
+    CREATE TABLE IF NOT EXISTS kv_store (
+      key TEXT PRIMARY KEY,
+      value JSONB NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `).then(() => {
+    fallidoEn = 0;
+    console.log('[db] Conectado a Postgres — persistencia sobrevive a los deploys.');
+    return true;
+  }).catch(err => {
+    fallidoEn = Date.now();
+    listo = null;   // se vuelve a intentar pasado REINTENTO_MS
+    console.error('[db] Postgres INALCANZABLE:', err.message);
+    console.error('[db] persist.js pasa a archivos locales — los datos NO sobreviven al próximo deploy. Revisá DATABASE_URL.');
+    return false;
+  });
+}
+
+// Devuelve true solo si la base está contactada y usable.
 function init() {
   if (!activa) return Promise.resolve(false);
   if (!listo) {
-    listo = getPool().query(`
-      CREATE TABLE IF NOT EXISTS kv_store (
-        key TEXT PRIMARY KEY,
-        value JSONB NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      )
-    `).then(() => {
-      console.log('[db] Conectado a Postgres — persistencia sobrevive a los deploys.');
-      return true;
-    }).catch(err => {
-      console.error('[db] No se pudo inicializar la tabla:', err.message);
-      return false;
-    });
+    if (fallidoEn && Date.now() - fallidoEn < REINTENTO_MS) return Promise.resolve(false);
+    try {
+      listo = conectar();
+    } catch (err) {
+      fallidoEn = Date.now();
+      listo = null;
+      console.error('[db] No se pudo abrir el pool:', err.message);
+      return Promise.resolve(false);
+    }
   }
   return listo;
 }
