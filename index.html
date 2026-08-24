@@ -1298,7 +1298,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b><div class="ab-cd"><span class="ab-cd-lbl">Precio de oferta termina en</span><span class="ab-cd-boxes"><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span><span class="abcd-box"><b id="ofcd-s">--</b><small>seg</small></span></span></div></div>
+<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b><div class="ab-cd"><span class="ab-cd-lbl">Precio de oferta termina en</span><span class="ab-cd-boxes"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span><span class="abcd-box"><b id="ofcd-s">--</b><small>seg</small></span></span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -1697,7 +1697,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- Precio y envío ya vienen pintados en el HTML: aplicarReserva() sólo
              corre después del fetch de /stock, así que si el backend tarda el
              precio igual se ve completo (ancla + descuento + envío gratis). -->
-        <div class="price-block"><span class="pb-main"><sup>$</sup>54.990 <span class="price-was">$64.990</span> <span class="price-save">-15%</span></span><span class="offer-cd"><span class="cdb"><b id="ocd-h">--</b><small>hrs</small></span><span class="cdb"><b id="ocd-m">--</b><small>min</small></span><span class="cdb"><b id="ocd-s">--</b><small>seg</small></span></span></div>
+        <div class="price-block"><span class="pb-main"><sup>$</sup>54.990 <span class="price-was">$64.990</span> <span class="price-save">-15%</span></span><span class="offer-cd"><span class="cdb"><b id="ocd-d">--</b><small>días</small></span><span class="cdb"><b id="ocd-h">--</b><small>hrs</small></span><span class="cdb"><b id="ocd-m">--</b><small>min</small></span><span class="cdb"><b id="ocd-s">--</b><small>seg</small></span></span></div>
         <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
@@ -3783,22 +3783,27 @@ function msRestanteOferta() {
 // separando cada vez que se toque uno de los dos. El HTML de la página repite
 // estas cajitas ya pintadas a propósito: evita el parpadeo de "--" mientras no
 // haya corrido aplicarReserva(), que espera al fetch de /stock.
+var OFERTA_UNIDADES = [['d', 'días'], ['h', 'hrs'], ['m', 'min'], ['s', 'seg']];
+
 function htmlCajitasOferta(pre, claseCaja) {
-  return ['h', 'm', 's'].map(function (u, i) {
-    return '<span class="' + claseCaja + '"><b id="' + pre + '-' + u + '">--</b><small>' +
-           ['hrs', 'min', 'seg'][i] + '</small></span>';
+  return OFERTA_UNIDADES.map(function (u) {
+    return '<span class="' + claseCaja + '"><b id="' + pre + '-' + u[0] + '">--</b><small>' +
+           u[1] + '</small></span>';
   }).join('');
 }
 
 function pintarContadorOferta() {
   var ms = msRestanteOferta();
   var z = function (n) { return String(n).padStart(2, '0'); };
-  // Las horas NO se cortan en 24: la oferta se comunica en horas ("quedan 71"),
-  // que es lo que aprieta. Un "faltan 2 días" se lee como que sobra tiempo.
-  var v = [z(Math.floor(ms / 3600000)), z(Math.floor(ms / 60000) % 60), z(Math.floor(ms / 1000) % 60)];
+  var v = [
+    z(Math.floor(ms / 86400000)),
+    z(Math.floor(ms / 3600000) % 24),
+    z(Math.floor(ms / 60000) % 60),
+    z(Math.floor(ms / 1000) % 60)
+  ];
   ['ofcd', 'ocd'].forEach(function (pre) {
-    ['h', 'm', 's'].forEach(function (u, i) {
-      var e = document.getElementById(pre + '-' + u);
+    OFERTA_UNIDADES.forEach(function (u, i) {
+      var e = document.getElementById(pre + '-' + u[0]);
       if (e) e.textContent = v[i];
     });
   });
