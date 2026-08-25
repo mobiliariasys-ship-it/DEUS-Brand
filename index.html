@@ -1696,8 +1696,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="colors-row">
           <span class="clabel">Color</span>
           <div class="cdot active" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
-          <div class="cdot" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
-          <div class="cdot" style="background:#e8b4bc;" title="Rosado" onclick="setColor('rosada',this)"></div>
+          <div class="cdot sold-out" style="background:#888;" title="Gris — agotado" onclick="setColor('gris',this)"></div>
+          <div class="cdot sold-out" style="background:#e8b4bc;" title="Rosado — agotado" onclick="setColor('rosada',this)"></div>
           <span class="color-now" id="color-now">Negro</span>
         </div>
         <!-- Aparece solo si la foto que se está viendo no es el color elegido -->
@@ -2252,7 +2252,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // decide qué color se cobra.
             const colorActual = colorForzado || (typeof selectedColor !== 'undefined' ? selectedColor : 'negra');
             if (typeof AGOTADOS !== 'undefined' && AGOTADOS[colorActual]) {
-              alert('El color negro está agotado. Elige el color gris para comprar.');
+              alert('Ese color está agotado. Elegí uno disponible para comprar.');
               return;
             }
             setCheckoutColor(colorActual); // bloquea el color con el que se abrió
@@ -2422,7 +2422,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function abrirDialogoCarrito() {
           qtyDialogColor = typeof selectedColor !== 'undefined' ? selectedColor : 'negra';
           if (typeof AGOTADOS !== 'undefined' && AGOTADOS[qtyDialogColor]) {
-            alert('El color negro está agotado. Elige el color gris.');
+            alert('Ese color está agotado. Elegí uno disponible.');
             qtyDialogColor = null;
             return;
           }
@@ -3641,7 +3641,7 @@ let currentSlide = 0;
 let selectedColor = 'negra';
 
 // Colores sin stock: no se pueden comprar ni agregar al carrito
-const AGOTADOS = {};
+const AGOTADOS = { gris: true, rosada: true };
 
 // Stock real desde el backend: el mismo contador que baja con cada pago
 // confirmado (endpoint /stock del proyecto web). Sin números fijos en el front.
@@ -3651,14 +3651,24 @@ const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
 // Sincroniza aviso de stock, foto y color en página y checkout
 function textoStock(color) {
   if (window.modoReserva) return '';
-  if (AGOTADOS[color]) return '⚫ Color negro AGOTADO — disponible en gris';
-  return '';
+  if (!AGOTADOS[color]) return '';
+  // Se arma con el color de verdad en vez de un texto fijo: antes decía
+  // siempre "negro agotado, disponible en gris", que hoy es al revés.
+  const disponible = colorOrder.filter(c => !AGOTADOS[c]).map(c => COLOR_LABEL[c] || c);
+  return 'Color ' + (COLOR_LABEL[color] || color).toUpperCase() + ' agotado' +
+         (disponible.length ? ' — disponible en ' + disponible.join(' y ') : '');
 }
 function updateStockUI() {
   // Aviso de stock EN LA PÁGINA: usa el color del carrusel (lo que se ve).
   const pageColor = colorOrder[currentSlide];
   const stockNote = document.getElementById('stock-note');
-  if (stockNote) { const t = textoStock(pageColor); stockNote.textContent = t; stockNote.style.display = t ? '' : 'none'; }
+  // Solo cuando la foto que se mira ES el color elegido. Si son distintos, el
+  // aviso de arriba (color-mismatch) ya dice que está agotado y con cuál se va
+  // el pedido; repetirlo acá abajo es decir dos veces lo mismo en una pantalla.
+  if (stockNote) {
+    const t = (pageColor === selectedColor) ? textoStock(pageColor) : '';
+    stockNote.textContent = t; stockNote.style.display = t ? '' : 'none';
+  }
   // Nombre del color ELEGIDO (no el de la foto visible): confirma qué se
   // está por comprar.
   const cn = document.getElementById('color-now');
@@ -3934,6 +3944,9 @@ function goSlide(i, elegir) {
 function setColor(color, el) {
   const idx = colorOrder.indexOf(color);
   if (idx < 0) return;
+  // Agotado: se mueve la galería para que lo pueda ver, pero NO pasa a ser el
+  // color elegido. Así nadie llega a la pasarela con algo que no hay en stock.
+  if (AGOTADOS[color]) { goSlide(idx); return; }
   selectedColor = color;
   goSlide(idx);
 }
@@ -3949,6 +3962,12 @@ function actualizarAvisoColor() {
   const n = COLOR_LABEL[viendo] || viendo;
   const nCap = n.charAt(0).toUpperCase() + n.slice(1);
   av.style.display = '';
+  if (AGOTADOS[viendo]) {
+    // Sin botón para elegirlo: ofrecerlo y que después falle sería peor.
+    av.innerHTML = 'El ' + nCap + ' está <b>agotado</b> — tu pedido va en ' +
+      (COLOR_LABEL[selectedColor] || selectedColor);
+    return;
+  }
   av.innerHTML = 'Estás viendo el ' + nCap +
     ' <button type="button" class="pick-color" onclick="setColor(\'' + viendo + '\')">Elegir ' + n + '</button>';
 }
