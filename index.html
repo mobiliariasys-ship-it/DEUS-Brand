@@ -1152,9 +1152,9 @@ body.sb-on .wa-float{bottom:82px;}
   padding:18px 16px 16px;margin-bottom:16px;}
 .buybox .colors-row{margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.07);}
 /* Dentro de la caja hay 32px menos de ancho: el precio se ajusta para que
-   $54.990 + $62.990 + -13% entren SIEMPRE en una sola línea. */
+   $54.990 + $62.990 + -12% entren SIEMPRE en una sola línea. */
 .buybox .price-block{white-space:normal;margin-bottom:11px;}
-/* El nowrap baja al span interno: $54.990 + $62.990 + -13% siguen entrando
+/* El nowrap baja al span interno: $54.990 + $62.990 + -12% siguen entrando
    SIEMPRE en una línea, pero el contador de la oferta queda libre de bajar a
    la suya cuando no hay ancho. Si el nowrap se quedaba en .price-block, las
    tres cajitas empujaban el bloque fuera de la caja en móvil. */
@@ -1168,7 +1168,7 @@ body.sb-on .wa-float{bottom:82px;}
   .buybox .price-block .price-save{font-size:.57rem;padding:3px 8px;margin-left:7px;}
 }
 /* Contador de la oferta junto al precio. Reutiliza las cajitas .offer-cd que
-   ya define el sistema (mismo dorado que el sello -13%), así que se lee como
+   ya define el sistema (mismo dorado que el sello -12%), así que se lee como
    parte del bloque de precio y no como un widget pegado aparte. */
 .price-block .offer-cd{margin-left:14px;}
 @media(max-width:820px){
@@ -1176,7 +1176,7 @@ body.sb-on .wa-float{bottom:82px;}
      como un widget suelto debajo, va pegado al precio y con un "TERMINA EN"
      chico delante — así la fila entra como segunda línea del bloque de precio
      y no como un elemento aparte. La etiqueta solo aparece acá: en desktop las
-     cajitas van junto al sello -13% y el contexto ya se entiende sin texto. */
+     cajitas van junto al sello -12% y el contexto ya se entiende sin texto. */
   .price-block .offer-cd{display:flex;align-items:center;justify-content:flex-start;margin:7px 0 0;}
   .price-block .offer-cd::before{
     content:'Termina en';font-family:'DM Sans',sans-serif;font-size:.62rem;
@@ -1706,7 +1706,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- Precio y envío ya vienen pintados en el HTML: aplicarReserva() sólo
              corre después del fetch de /stock, así que si el backend tarda el
              precio igual se ve completo (ancla + descuento + envío gratis). -->
-        <div class="price-block"><span class="pb-main"><sup>$</sup>54.990 <span class="price-was">$62.990</span> <span class="price-save">-13%</span></span><span class="offer-cd"><span class="cdb"><b id="ocd-d">--</b><small>días</small></span><span class="cdb"><b id="ocd-h">--</b><small>hrs</small></span><span class="cdb"><b id="ocd-m">--</b><small>min</small></span></span></div>
+        <div class="price-block"><span class="pb-main"><sup>$</sup>54.990 <span class="price-was">$62.990</span> <span class="price-save">-12%</span></span><span class="offer-cd"><span class="cdb"><b id="ocd-d">--</b><small>días</small></span><span class="cdb"><b id="ocd-h">--</b><small>hrs</small></span><span class="cdb"><b id="ocd-m">--</b><small>min</small></span></span></div>
         <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
@@ -3709,9 +3709,12 @@ function aplicarReserva() {
   // Envío gratis activo: se muestra sello verde junto al precio.
   const oferta = ofertaActiva() && !on;
   const pb = document.querySelector('.price-block');
-  // Precio $54.990 con ancla tachada $62.990 (-13%) — SOLO visual: el precio
+  // Precio $54.990 con ancla tachada $62.990 (-12%) — SOLO visual: el precio
   // que se cobra y el 'value' que va al píxel/CAPI siguen siendo 54.990.
-  const ancla = ' <span class="price-was">$62.990</span> <span class="price-save">-13%</span>';
+  // El sello dice -12% y el descuento real es 12,70%: se redondea HACIA ABAJO
+  // a propósito, así lo que se entrega siempre es igual o mejor que lo que se
+  // anuncia. Al revés sería anunciar una rebaja que no se aplica.
+  const ancla = ' <span class="price-was">$62.990</span> <span class="price-save">-12%</span>';
   if (pb) pb.innerHTML = '<span class="pb-main"><sup>$</sup>54.990' + ancla + '</span>' +
     '<span class="offer-cd">' + htmlCajitasOferta('ocd', 'cdb') + '</span>';
   // El envío gratis ya no va pegado al precio: tiene su propia línea fina
@@ -3721,7 +3724,7 @@ function aplicarReserva() {
     ? '<svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE'
     : '';
   const fc = document.querySelector('.fc-price');
-  const fcAncla = ' <span class="fold">$62.990</span> <span class="price-save">-13%</span>';
+  const fcAncla = ' <span class="fold">$62.990</span> <span class="price-save">-12%</span>';
   if (fc) fc.innerHTML = oferta
     ? '$54.990' + fcAncla + '<small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>'
     : '$54.990' + fcAncla;
