@@ -352,12 +352,12 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 /* "Termina en" arriba, cajitas del contador debajo — dos filas centradas, con
    la etiqueta como título y los números como el dato principal. */
 .announce-bar .ab-cd{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:5px;text-transform:none;}
-.announce-bar .ab-cd-lbl{font-size:.58rem;letter-spacing:2.5px;color:#9a9a9a;font-weight:600;text-transform:uppercase;}
+.announce-bar .ab-cd-lbl{font-size:.62rem;letter-spacing:2.5px;color:#9a9a9a;font-weight:600;text-transform:uppercase;}
 .announce-bar .ab-cd-boxes{display:inline-flex;gap:5px;}
-.abcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:3px 8px;min-width:36px;line-height:1;}
-.abcd-box b{font-size:.9rem;font-weight:800;color:#e7cf9c;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
-.abcd-box small{font-size:.42rem;letter-spacing:1.2px;color:#7a7a7a;margin-top:3px;text-transform:uppercase;font-weight:500;}
-@media(max-width:600px){.abcd-box{min-width:32px;padding:3px 6px;}.abcd-box b{font-size:.82rem;}}
+.abcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:7px;padding:5px 10px;min-width:42px;line-height:1;}
+.abcd-box b{font-size:1.05rem;font-weight:800;color:#e7cf9c;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+.abcd-box small{font-size:.48rem;letter-spacing:1.2px;color:#7a7a7a;margin-top:4px;text-transform:uppercase;font-weight:500;}
+@media(max-width:600px){.abcd-box{min-width:38px;padding:4px 8px;}.abcd-box b{font-size:.98rem;}}
 @media(max-width:600px){.announce-bar .ab-plazo{font-size:.55rem;letter-spacing:1px;}}
 .rcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:4px 9px;min-width:42px;}
 .rcd-box b{font-size:1rem;font-weight:700;line-height:1;color:#fff;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
@@ -508,7 +508,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 }
 
 .offer-kicker{font-size:.66rem;letter-spacing:2.5px;text-transform:uppercase;color:#d9bf92;margin-bottom:10px;font-weight:600;}
-.price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;color:#c9c9c9;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);text-decoration-thickness:1.5px;margin-left:8px;vertical-align:middle;}.price-save{display:inline-block;font-family:'DM Sans',sans-serif;font-size:.66rem;letter-spacing:1px;color:#d9bf92;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:3px 10px;margin-left:10px;vertical-align:middle;font-weight:600;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:2px;color:#7fd589;background:rgba(105,196,109,.12);border:1px solid rgba(105,196,109,.5);border-radius:6px;padding:4px 10px;vertical-align:middle;margin-left:8px;font-weight:600;}.offer-cd{display:inline-flex;gap:4px;vertical-align:middle;margin-left:8px;}.offer-cd .cdb{display:inline-flex;flex-direction:column;align-items:center;background:#1c1c1c;border:1px solid #3a3a3a;border-radius:6px;padding:3px 6px 2px;min-width:26px;}.offer-cd .cdb b{font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:#d9bf92;line-height:1;letter-spacing:.5px;}.offer-cd .cdb small{font-family:'DM Sans',sans-serif;font-size:.42rem;letter-spacing:.5px;color:#909090;text-transform:uppercase;margin-top:1px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:22px;}
+.price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;color:#c9c9c9;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);text-decoration-thickness:1.5px;margin-left:8px;vertical-align:middle;}.price-save{display:inline-block;font-family:'DM Sans',sans-serif;font-size:.66rem;letter-spacing:1px;color:#d9bf92;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:3px 10px;margin-left:10px;vertical-align:middle;font-weight:600;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:2px;color:#7fd589;background:rgba(105,196,109,.12);border:1px solid rgba(105,196,109,.5);border-radius:6px;padding:4px 10px;vertical-align:middle;margin-left:8px;font-weight:600;}.offer-cd{display:inline-flex;gap:5px;vertical-align:middle;margin-left:8px;}.offer-cd .cdb{display:inline-flex;flex-direction:column;align-items:center;background:#1c1c1c;border:1px solid #3a3a3a;border-radius:7px;padding:5px 9px 4px;min-width:38px;}.offer-cd .cdb b{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#d9bf92;line-height:1;letter-spacing:.5px;}.offer-cd .cdb small{font-family:'DM Sans',sans-serif;font-size:.5rem;letter-spacing:.8px;color:#909090;text-transform:uppercase;margin-top:3px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:22px;}
 .price-block sup{font-family:'DM Sans',sans-serif;font-size:1.2rem;color:var(--silver);vertical-align:top;margin-top:10px;margin-right:2px;font-weight:300;}
 /* Mejores prácticas mockup: pill de oferta, orden precio→normal, tarjetas */
 .offer-pill{display:inline-block;align-self:flex-start;background:linear-gradient(135deg,#911f1f,#6b1313);color:#ffdede;font-size:.64rem;letter-spacing:1.8px;font-weight:700;text-transform:uppercase;border-radius:20px;padding:7px 16px;margin-bottom:12px;}
@@ -1179,7 +1179,7 @@ body.sb-on .wa-float{bottom:82px;}
      cajitas van junto al sello -15% y el contexto ya se entiende sin texto. */
   .price-block .offer-cd{display:flex;align-items:center;justify-content:flex-start;margin:7px 0 0;}
   .price-block .offer-cd::before{
-    content:'Termina en';font-family:'DM Sans',sans-serif;font-size:.55rem;
+    content:'Termina en';font-family:'DM Sans',sans-serif;font-size:.62rem;
     letter-spacing:1.6px;text-transform:uppercase;color:#8a8a8a;
     font-weight:600;margin-right:4px;
   }
