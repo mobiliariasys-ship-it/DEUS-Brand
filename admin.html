@@ -99,8 +99,28 @@
   .cb-lbl{width:120px;flex:none;font-size:.8rem;color:#c9c9c9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .cb-track{flex:1;background:#0b0b0b;border:1px solid #1e1e1e;border-radius:7px;height:22px;overflow:hidden;}
   .cb-bar{height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--cyan-soft),var(--cyan));transition:width .7s cubic-bezier(.2,.7,.2,1);}
-  .cb-val{width:80px;flex:none;text-align:right;font-weight:700;font-size:.84rem;font-variant-numeric:tabular-nums;color:#fff;}
+  .cb-val{width:62px;flex:none;text-align:right;font-weight:700;font-size:.84rem;font-variant-numeric:tabular-nums;color:#fff;}
   .cb-val small{color:var(--muted);font-weight:400;font-size:.7rem;}
+  /* Sub-linea de cada fila de "Que lleva a comprar". Un "18%" suelto no se
+     puede leer: hace falta el conteo en palabras y contra que compararlo. */
+  .cb-item{margin:9px 0;}
+  .cb-item .cb-row{margin:0;}
+  .cb-sub{margin:2px 0 0 131px;font-size:.66rem;color:#7d7d86;font-variant-numeric:tabular-nums;}
+  .cb-sub b{color:#6fd0f5;font-weight:700;}
+  .cb-sub .peor{color:#e0857f;}
+  .cb-flojo{font-size:.55rem;color:#c9a86a;background:#2a2320;border:1px solid #4a3a2e;
+    border-radius:20px;padding:1px 7px;margin-left:6px;white-space:nowrap;}
+  @media(max-width:620px){ .cb-sub{margin-left:0;} }
+  /* Seleccion de dias en el grafico de conversion */
+  .sel-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 0;}
+  .sel-res{margin:12px 0 0;background:#15161a;border:1px solid #2a2c33;border-radius:10px;
+    padding:13px 16px;font-size:.8rem;color:#ccc;line-height:1.55;}
+  .sel-res .big{font-weight:700;font-size:1.45rem;color:#9b8cff;margin-right:9px;
+    font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+  .sel-res small{color:#7d7d86;font-size:.71rem;display:block;margin-top:5px;line-height:1.5;}
+  .sel-res .vs{color:#6fd0f5;font-weight:700;}
+  .sel-res .vs.peor{color:#e0857f;}
+  #chartConv{cursor:pointer;}
 
   /* Buttons */
   .btn{background:var(--green);color:#0c1a06;border:none;padding:9px 16px;border-radius:9px;font-weight:700;font-size:.74rem;cursor:pointer;letter-spacing:.3px;}
@@ -251,6 +271,17 @@
       <div class="sec-h"><h2>📈 Conversión · últimos 30 días</h2><span class="pill" id="chart-conv-total"></span></div>
       <div class="chart-container"><canvas id="chartConv" width="820" height="200"></canvas></div>
       <p class="hint">Ventas ÷ visitas de cada día. La línea punteada es el promedio real del periodo — es la referencia, no las barras sueltas. Los días en gris tienen muy pocas visitas: ahí el porcentaje es ruido, no señal.</p>
+      <!-- Elegir días y sacarles el promedio. Se puede tocar barra por barra o
+           usar los atajos; el resultado se recalcula solo. -->
+      <div class="sel-bar">
+        <span class="rango-lbl">Promedio de</span>
+        <button class="rango-btn" id="selb-3" onclick="selUltimos(3)">Últimos 3</button>
+        <button class="rango-btn" id="selb-7" onclick="selUltimos(7)">Últimos 7</button>
+        <button class="rango-btn" id="selb-14" onclick="selUltimos(14)">Últimos 14</button>
+        <button class="rango-btn" id="selb-0" onclick="selUltimos(0)">Los 30</button>
+        <span class="rango-nota">o tocá las barras para elegir días sueltos</span>
+      </div>
+      <div class="sel-res" id="conv-sel-res"></div>
     </section>
     </div>
 
@@ -566,6 +597,12 @@
   // reseñas va primero: el embudo de scroll se leía al revés.
   var ORDEN_HITO=['hito:precio','hito:reviews','hito:sensor','hito:app','hito:mide','hito:diseno','hito:faq','hito:final'];
   function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+  // Si aparece un evento que COND_LBL todavia no conoce, se muestra
+  // presentable en vez de la clave cruda ("accion:tapones" -> "Tapones").
+  function lblCond(k){
+    if(COND_LBL[k]) return COND_LBL[k];
+    return cap(String(k).replace(/^(accion|hito|co|disp|fuente):/,'').replace(/[_-]+/g,' '));
+  }
   // embudo=true → además del %, muestra cuánta gente se pierde en cada
   // escalón y pinta en rojo el peor. Es lo que convierte la lista de scroll en
   // un diagnóstico: dice EN QUÉ SECCIÓN abandonan.
@@ -642,6 +679,19 @@
     if (ULT_CONV) pintarConversion(ULT_CONV.convAcc, ULT_CONV.conducta, ULT_CONV.nComp);
   }
 
+  // Debajo de esta muestra el porcentaje es ruido: 3 de 4 da 75% y no
+  // significa nada. Esas filas van al final y avisadas, para que no encabecen
+  // la lista solo por tener el denominador chico.
+  var MIN_MUESTRA = 15;
+  // Conversion general del sitio (30 dias). Es contra esto que se leen las
+  // tasas: sin referencia, un 18% suelto no se puede interpretar.
+  var CONV_SITIO = 0;
+
+  function veces(x){
+    if(!(x>0)) return '';
+    return (x>=10 ? Math.round(x) : (Math.round(x*10)/10)).toLocaleString('es-CL');
+  }
+
   function pintarConversion(convAcc, conducta, nComp){
     convAcc=convAcc||{}; conducta=conducta||{};
     ULT_CONV = { convAcc:convAcc, conducta:conducta, nComp:nComp };
@@ -652,19 +702,40 @@
       var base=conducta[k]||0, comp=convAcc[k]||0;
       // En modo "compradores" el denominador es el total de compras rastreadas.
       var den = porCompradores ? (nComp||0) : base;
-      return { lbl: COND_LBL[k]||k, base:base, comp:comp, den:den, rate: den? comp/den*100 : 0 };
+      return { lbl: lblCond(k), base:base, comp:comp, den:den,
+               rate: den? comp/den*100 : 0, flojo: den < MIN_MUESTRA };
     }).filter(function(x){ return porCompradores ? x.comp>0 : x.base>0; })
-      .sort(function(a,b){ return b.rate-a.rate; });
+      .sort(function(a,b){
+        // Los de muestra chica siempre abajo, por alto que sea su porcentaje.
+        if(a.flojo!==b.flojo) return a.flojo ? 1 : -1;
+        return b.rate-a.rate;
+      });
     document.getElementById('conv-empty').style.display=items.length?'none':'block';
     document.getElementById('conv-base').textContent = nComp ? (nComp+' compras rastreadas') : 'sin compras aún';
     items.forEach(function(it){
-      var pct=Math.round(it.rate);
+      // Un porcentaje bajo con un decimal se lee mejor que redondeado a 0%.
+      var txt = it.rate>=10 ? Math.round(it.rate)+'%' : pct1(it.rate);
       var grad = porCompradores ? 'linear-gradient(90deg,#7a5cd0,#a887f5)' : 'linear-gradient(90deg,#0f9fd0,#1ec8f0)';
-      var row=document.createElement('div'); row.className='cb-row';
-      row.innerHTML='<div class="cb-lbl" title="'+esc(it.lbl)+'">'+esc(it.lbl)+'</div>'+
-        '<div class="cb-track"><div class="cb-bar" style="width:'+Math.min(pct,100)+'%;background:'+grad+'"></div></div>'+
-        '<div class="cb-val">'+pct+'% <small>'+it.comp+'/'+it.den+'</small></div>';
-      cont.appendChild(row);
+      // El conteo en palabras: "9 de 50 compraron" se entiende, "9/50" no.
+      var sub = porCompradores
+        ? num0(it.comp)+' de '+num0(it.den)+' compradores hicieron esto'
+        : num0(it.comp)+' de '+num0(it.den)+' que lo hicieron, compraron';
+      // Cuantas veces mejor (o peor) que la conversion general del sitio.
+      if(!porCompradores && CONV_SITIO>0 && it.rate>0 && !it.flojo){
+        var x = it.rate / CONV_SITIO;
+        sub += x>=1
+          ? ' · <b>'+veces(x)+'×</b> el promedio del sitio'
+          : ' · <span class="peor">'+veces(1/x)+'× peor</span> que el promedio';
+      }
+      if(it.flojo) sub += ' <span class="cb-flojo">pocos datos</span>';
+      var item=document.createElement('div'); item.className='cb-item';
+      item.innerHTML='<div class="cb-row">'+
+        '<div class="cb-lbl" title="'+esc(it.lbl)+'">'+esc(it.lbl)+'</div>'+
+        '<div class="cb-track"><div class="cb-bar" style="width:'+Math.min(it.rate,100)+'%;background:'+grad+
+          (it.flojo?';opacity:.45':'')+'"></div></div>'+
+        '<div class="cb-val"'+(it.flojo?' style="color:#8b8b93"':'')+'>'+txt+'</div>'+
+        '</div><div class="cb-sub">'+sub+'</div>';
+      cont.appendChild(item);
     });
   }
 
@@ -1013,16 +1084,109 @@
       return {
         fecha: x.fecha,
         valor: x.vistas ? (ventasPorFecha[x.fecha]||0) / x.vistas * 100 : 0,
+        // Se guardan los crudos: el promedio de una seleccion se saca sumando
+        // ventas y visitas, NO promediando porcentajes (ver promedioSel).
+        ventas: ventasPorFecha[x.fecha]||0,
+        visitas: x.vistas||0,
         tenue: x.vistas < MIN_VISITAS
       };
     });
+    CONV_DIAS = convDias;
     // El promedio se calcula sobre los totales, no promediando los dias: un dia
     // de 3 visitas no puede pesar lo mismo que uno de 700.
     var convProm = totalVistas ? totalV / totalVistas * 100 : 0;
     document.getElementById('chart-conv-total').textContent =
       pct1(convProm) + ' promedio · ' + totalV + ' de ' + totalVistas;
-    dibujarBarras('chartConv', convDias, '#9b8cff', { ref: convProm, refLbl: 'promedio', sinCifras: true });
+    // Referencia del sitio para "Que lleva a comprar": se fija aca porque es
+    // donde estan los totales de 30 dias, y se repinta esa seccion con ella.
+    CONV_SITIO = convProm;
+    if (ULT_CONV) pintarConversion(ULT_CONV.convAcc, ULT_CONV.conducta, ULT_CONV.nComp);
+    dibujarBarras('chartConv', convDias, '#9b8cff',
+      { ref: convProm, refLbl: 'promedio', sinCifras: true, sel: CONV_SEL, onClick: toggleDiaConv });
+    refrescarSel();
     document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
+  }
+
+  // ── Seleccion de dias en el grafico de conversion ────────────────────────
+  // Se pueden tocar barras sueltas o usar los atajos. El promedio de lo
+  // elegido se recalcula solo.
+  var CONV_DIAS = [];   // [{fecha, valor, ventas, visitas, tenue}] mas viejo -> mas nuevo
+  var CONV_SEL = {};    // fecha -> true
+
+  // El promedio se saca sumando ventas y visitas de los dias elegidos, NO
+  // promediando sus porcentajes: un dia de 3 visitas no puede pesar lo mismo
+  // que uno de 700. Se devuelve tambien el promedio simple para poder avisar
+  // cuando los dos numeros se separan mucho (senal de un dia raro).
+  function promedioSel(){
+    var v=0, s=0, n=0, sumaPct=0;
+    CONV_DIAS.forEach(function(d){
+      if(!CONV_SEL[d.fecha]) return;
+      v+=d.visitas; s+=d.ventas; n++; sumaPct+=d.valor;
+    });
+    return { dias:n, ventas:s, visitas:v,
+             pond: v? s/v*100 : 0,
+             simple: n? sumaPct/n : 0 };
+  }
+
+  function selUltimos(n){
+    CONV_SEL = {};
+    var arr = (n>0) ? CONV_DIAS.slice(-n) : CONV_DIAS;
+    arr.forEach(function(d){ CONV_SEL[d.fecha]=true; });
+    refrescarSel();
+  }
+
+  function toggleDiaConv(i){
+    var d=CONV_DIAS[i]; if(!d) return;
+    if(CONV_SEL[d.fecha]) delete CONV_SEL[d.fecha]; else CONV_SEL[d.fecha]=true;
+    refrescarSel();
+  }
+
+  function refrescarSel(){
+    var caja=document.getElementById('conv-sel-res');
+    if(!caja) return;
+    // Marca el atajo que coincide exactamente con lo elegido (si es que alguno).
+    var elegidos=Object.keys(CONV_SEL).length;
+    [3,7,14,0].forEach(function(n){
+      var b=document.getElementById('selb-'+n); if(!b) return;
+      var cant = n>0 ? n : CONV_DIAS.length;
+      // Sin dias cargados (o sin nada elegido) no se marca ningun atajo: si no,
+      // "Los 30" aparecia activo con el grafico vacio.
+      var coincide = cant>0 && elegidos===cant &&
+        CONV_DIAS.slice(-cant).every(function(d){ return CONV_SEL[d.fecha]; });
+      b.classList.toggle('active', coincide);
+    });
+    var r=promedioSel();
+    if(!r.dias){
+      caja.innerHTML='<span style="color:#7d7d86">Tocá las barras del gráfico o usá un atajo para ver el promedio de esos días.</span>';
+    } else {
+      var txt='<span class="big">'+pct1(r.pond)+'</span>'+
+        'promedio de '+r.dias+(r.dias===1?' día':' días')+
+        '<small>'+r.ventas+(r.ventas===1?' venta':' ventas')+' ÷ '+num0(r.visitas)+' visitas. '+
+        'Se suman ventas y visitas en vez de promediar los porcentajes de cada día: si no, un día de 3 visitas pesaría igual que uno de 700.';
+      // Comparacion contra los 30 dias completos, que es lo que dice si el
+      // periodo elegido va mejor o peor de lo normal.
+      if(CONV_SITIO>0 && r.pond>0){
+        var dif=r.pond-CONV_SITIO;
+        // Menos de una decima no es una diferencia: decir "0% por encima"
+        // seria ruido con forma de dato.
+        if(Math.abs(dif)<0.05){
+          txt+='<br>En línea con el promedio de los 30 días ('+pct1(CONV_SITIO)+').';
+        } else {
+          txt+='<br><span class="vs'+(dif>0?'':' peor')+'">'+(dif>0?'▲ ':'▼ ')+pct1(Math.abs(dif))+'</span> '+
+               (dif>0?'por encima':'por debajo')+' del promedio de los 30 días ('+pct1(CONV_SITIO)+').';
+        }
+      }
+      // Cuando el ponderado y el promedio simple se separan, es que los dias
+      // elegidos tienen trafico muy desparejo. Se dice el hecho, sin inventar
+      // cual dia lo causa.
+      if(r.dias>1 && Math.abs(r.pond-r.simple)>=0.4){
+        txt+='<br>Promediando los días por igual daría '+pct1(r.simple)+
+             ' — los días elegidos tienen tráfico muy desparejo.';
+      }
+      caja.innerHTML=txt+'</small>';
+    }
+    // Repinta el grafico para que se vea que quedo elegido.
+    if(charts['chartConv']) { charts['chartConv'].opts.sel=CONV_SEL; arrancarChart('chartConv'); }
   }
 
   // Gráficos de barras (estilo ecualizador): un estado por canvas.
@@ -1032,7 +1196,32 @@
     var st=charts[id]||(charts[id]={alturas:[],corriendo:false});
     st.datos=datos; st.colorBase=colorBase; st.opts=opts||{};
     if(st.alturas.length!==datos.length) st.alturas=new Array(datos.length).fill(0);
-    if(!st.corriendo && datos.length){ st.corriendo=true; requestAnimationFrame(function(){ frameBarras(id); }); }
+    // El click se engancha una sola vez por canvas: dibujarBarras se llama en
+    // cada refresco y si no, se irian apilando listeners.
+    var cv=document.getElementById(id);
+    if(cv && st.opts.onClick && !st.clickeable){
+      st.clickeable=true;
+      cv.addEventListener('click', function(e){
+        var q=charts[id]; if(!q||!q.datos.length||!q.opts.onClick) return;
+        // El canvas se escala por CSS (width:100%), asi que hay que llevar la
+        // coordenada del click al sistema interno antes de buscar la barra.
+        var r=cv.getBoundingClientRect();
+        var x=(e.clientX-r.left)*(cv.width/r.width);
+        var n=q.datos.length, padX=10, gap=3;
+        var barW=(cv.width-padX*2-gap*(n-1))/n;
+        var i=Math.floor((x-padX)/(barW+gap));
+        if(i>=0 && i<n) q.opts.onClick(i);
+      });
+    }
+    arrancarChart(id);
+  }
+  // Vuelve a poner en marcha la animacion de un canvas ya dibujado (se usa al
+  // cambiar la seleccion, que no cambia los datos pero si como se pintan).
+  function arrancarChart(id){
+    var st=charts[id];
+    if(st && !st.corriendo && st.datos && st.datos.length){
+      st.corriendo=true; requestAnimationFrame(function(){ frameBarras(id); });
+    }
   }
   function frameBarras(id){
     var st=charts[id], canvas=document.getElementById(id);
@@ -1049,6 +1238,7 @@
     var maxV=0; st.datos.forEach(function(d){ if(!d.tenue && d.valor>maxV) maxV=d.valor; });
     if(st.opts.ref>maxV) maxV=st.opts.ref;
     if(!(maxV>0)) maxV=1;
+    var haySel = !!(st.opts.sel && Object.keys(st.opts.sel).length);
     var quieto=true;
     for(var i=0;i<n;i++){
       var objetivo=Math.min(st.datos[i].valor/maxV,1)*(h-padB-padT);
@@ -1060,16 +1250,26 @@
       g.addColorStop(0,'#7fd8f2'); g.addColorStop(1,st.colorBase);
       ctx.fillStyle=g;
       ctx.globalAlpha=st.datos[i].valor?(st.datos[i].tenue?0.28:0.95):0.22;
+      // Con una seleccion activa, los dias que quedaron fuera se apagan para
+      // que se vea de un golpe cuales estan entrando en el promedio.
+      var elegido = !haySel || !!st.opts.sel[st.datos[i].fecha];
+      if(haySel && !elegido) ctx.globalAlpha*=0.2;
       ctx.fillRect(x,y,barW,barH);
       ctx.globalAlpha=1;
+      if(haySel && elegido){
+        ctx.strokeStyle='#cfc6ff'; ctx.globalAlpha=0.85; ctx.lineWidth=1;
+        ctx.strokeRect(x+.5,y+.5,barW-1,barH-1);
+        ctx.globalAlpha=1;
+      }
       // Cifra sobre la barra (solo si hay valor)
       if(st.datos[i].valor && !st.opts.sinCifras){
         ctx.fillStyle='#ddd'; ctx.font='10px monospace'; ctx.textAlign='center';
         ctx.fillText(String(st.datos[i].valor),x+barW/2,y-4);
       }
       // Día del mes bajo la barra (uno de cada dos para no saturar)
-      if(i%2===0){
-        ctx.fillStyle='#777'; ctx.font='9px monospace'; ctx.textAlign='center';
+      if(i%2===0 || (haySel && elegido)){
+        ctx.fillStyle=(haySel&&elegido)?'#cfc6ff':'#777';
+        ctx.font='9px monospace'; ctx.textAlign='center';
         ctx.fillText(st.datos[i].fecha.slice(8),x+barW/2,h-10);
       }
     }
