@@ -12,10 +12,10 @@
 const SUBIDA_MS = Date.UTC(2026, 7, 27, 6, 0, 0);
 
 const ANTES   = { precio: 54990, ancla: 62990, off: 12 };
-const DESPUES = { precio: 62990, ancla: 78990, off: 20 };
+const DESPUES = { precio: 62990, ancla: 74999, off: 16 };
 
 // El sello de descuento se redondea HACIA ABAJO a propósito: 62.990→54.990 es
-// 12,70% y se anuncia 12%; 78.990→62.990 es 20,25% y se anuncia 20%. Así lo
+// 12,70% y se anuncia 12%; 74.999→62.990 es 16,01% y se anuncia 16%. Así lo
 // que se entrega siempre es igual o mejor que lo anunciado. Al revés sería
 // anunciar una rebaja que después no se aplica.
 function precios(ahora = Date.now()) {

@@ -1706,7 +1706,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- Precio y envío ya vienen pintados en el HTML: aplicarReserva() sólo
              corre después del fetch de /stock, así que si el backend tarda el
              precio igual se ve completo (ancla + descuento + envío gratis). -->
-        <div class="price-block"><span class="pb-main"><sup>$</sup>62.990 <span class="price-was">$78.990</span> <span class="price-save">-20%</span></span><span class="offer-cd"><span class="cdb"><b id="ocd-d">--</b><small>días</small></span><span class="cdb"><b id="ocd-h">--</b><small>hrs</small></span><span class="cdb"><b id="ocd-m">--</b><small>min</small></span></span></div>
+        <div class="price-block"><span class="pb-main"><sup>$</sup>62.990 <span class="price-was">$74.999</span> <span class="price-save">-16%</span></span><span class="offer-cd"><span class="cdb"><b id="ocd-d">--</b><small>días</small></span><span class="cdb"><b id="ocd-h">--</b><small>hrs</small></span><span class="cdb"><b id="ocd-m">--</b><small>min</small></span></span></div>
         <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
@@ -1942,7 +1942,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const SUBIDA_PRECIO_MS = Date.UTC(2026, 7, 27, 6, 0, 0);
         let PRECIO = Date.now() < SUBIDA_PRECIO_MS
           ? { precio: 54990, ancla: 62990, off: 12 }
-          : { precio: 62990, ancla: 78990, off: 20 };
+          : { precio: 62990, ancla: 74999, off: 16 };
         const clp = n => '$' + Number(n).toLocaleString('es-CL');
         const precioBanda = () => PRECIO.precio;
         const envioGratis = () => ofertaActiva();
