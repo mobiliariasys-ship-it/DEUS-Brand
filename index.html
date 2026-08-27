@@ -345,10 +345,9 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 .announce-bar .reserva-cd{display:flex;gap:6px;justify-content:center;text-transform:none;}
 /* Tercera línea del top bar: el plazo de entrega, bajo el contador */
 .announce-bar .ab-plazo{font-size:.62rem;letter-spacing:1.8px;color:#9a9a9a;font-weight:500;margin-top:2px;}
-/* Contador de 24h del envío gratis: reloj rodante, gris para no gritar */
-/* Contador de 24h del envío gratis en cajitas — mismo lenguaje visual que el
-   contador de reserva (rcd-box), pero un poco más pequeño porque va en la
-   barra superior. Cada dígito tiene su recuadro con su etiqueta abajo. */
+/* Cajitas del contador de la oferta en la barra superior. Cada dígito tiene
+   su recuadro con su etiqueta abajo. Las del bloque de precio usan .cdb, que
+   es el mismo lenguaje visual en chico. */
 /* "Termina en" arriba, cajitas del contador debajo — dos filas centradas, con
    la etiqueta como título y los números como el dato principal. */
 .announce-bar .ab-cd{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:5px;text-transform:none;}
@@ -359,10 +358,6 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 .abcd-box small{font-size:.48rem;letter-spacing:1.2px;color:#7a7a7a;margin-top:4px;text-transform:uppercase;font-weight:500;}
 @media(max-width:600px){.abcd-box{min-width:38px;padding:4px 8px;}.abcd-box b{font-size:.98rem;}}
 @media(max-width:600px){.announce-bar .ab-plazo{font-size:.55rem;letter-spacing:1px;}}
-.rcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:4px 9px;min-width:42px;}
-.rcd-box b{font-size:1rem;font-weight:700;line-height:1;color:#fff;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
-.rcd-box small{font-size:.44rem;letter-spacing:1.5px;color:#9a9a9a;margin-top:3px;text-transform:uppercase;}
-@media(max-width:600px){.rcd-box{min-width:34px;padding:3px 7px;}.rcd-box b{font-size:.86rem;}}
 .promo-timer{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:7px;}
 .promo-label{font-size:.55rem;letter-spacing:2.5px;color:#1b2b2b;}
 .cd-row{display:flex;gap:6px;}
@@ -1307,7 +1302,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b><div class="ab-cd"><span class="ab-cd-lbl">Precio de oferta termina en</span><span class="ab-cd-boxes"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
+<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b><div class="ab-cd"><span class="ab-cd-lbl">Precio de oferta termina en</span><span class="ab-cd-boxes"><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -1706,7 +1701,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- Precio y envío ya vienen pintados en el HTML: aplicarReserva() sólo
              corre después del fetch de /stock, así que si el backend tarda el
              precio igual se ve completo (ancla + descuento + envío gratis). -->
-        <div class="price-block"><span class="pb-main"><sup>$</sup>62.990 <span class="price-was">$74.999</span> <span class="price-save">-16%</span></span><span class="offer-cd"><span class="cdb"><b id="ocd-d">--</b><small>días</small></span><span class="cdb"><b id="ocd-h">--</b><small>hrs</small></span><span class="cdb"><b id="ocd-m">--</b><small>min</small></span></span></div>
+        <div class="price-block"><span class="pb-main"><sup>$</sup>62.990 <span class="price-was">$74.999</span> <span class="price-save">-16%</span></span><span class="offer-cd"><span class="cdb"><b id="ocd-h">--</b><small>hrs</small></span><span class="cdb"><b id="ocd-m">--</b><small>min</small></span></span></div>
         <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
@@ -3765,7 +3760,6 @@ function aplicarReserva() {
     : '<b>' + clp(PRECIO.precio) + '</b>';
   const ab = document.getElementById('offer-bar');
   // Top bar: solo "ENVÍO GRATIS", SIN contador (se retiró a pedido).
-  pararContadorReserva();
   if (ab) {
     ab.classList.remove('reserva');
     ab.innerHTML = (ofertaActiva()
@@ -3773,9 +3767,6 @@ function aplicarReserva() {
       : '🔥 <b>Última unidad</b> disponible') +
       '<div class="ab-cd"><span class="ab-cd-lbl">Precio de oferta termina en</span>' +
       '<span class="ab-cd-boxes">' + htmlCajitasOferta('ofcd', 'abcd-box') + '</span></div>';
-    // Pinta el contador de inmediato al cambiar de modo (evita el "00:00:00"
-    // que aparecería medio segundo antes del primer tick del setInterval).
-    if (typeof pintarContadorEnvio === 'function') pintarContadorEnvio();
   }
   // Repinta las cajitas recién creadas: si no, se ven "--" hasta el próximo tick.
   if (typeof pintarContadorOferta === 'function') pintarContadorOferta();
@@ -3790,44 +3781,42 @@ function aplicarReserva() {
   document.documentElement.classList.add('reserva-ready');
 }
 
-// Contador regresivo del top bar: apunta al fin del envío gratis (OFERTA_END).
-let reservaCdIv = null;
-function pintarContadorReserva() {
-  const eld = document.getElementById('rcd-d');
-  if (!eld) return;
-  let d = OFERTA_END - Date.now();
-  if (d < 0) d = 0;
-  const z = n => String(n).padStart(2, '0');
-  eld.textContent = z(Math.floor(d / 86400000));
-  document.getElementById('rcd-h').textContent = z(Math.floor(d / 3600000) % 24);
-  document.getElementById('rcd-m').textContent = z(Math.floor(d / 60000) % 60);
-  document.getElementById('rcd-s').textContent = z(Math.floor(d / 1000) % 60);
-}
-function iniciarContadorReserva() {
-  pintarContadorReserva();
-  if (reservaCdIv) return;
-  reservaCdIv = setInterval(pintarContadorReserva, 1000);
-}
-function pararContadorReserva() {
-  if (reservaCdIv) { clearInterval(reservaCdIv); reservaCdIv = null; }
-}
 
-// ── Contador del precio de oferta: ciclo rodante de 3 días ──
-// Pinta las horas que le quedan al precio de oferta en cajitas (hrs/min/seg),
-// en dos lugares: el top bar y al lado del precio principal.
+// ── Contador del precio de oferta: termina a la 01:00 de Chile, todos los días ──
+// Pinta lo que le queda al precio de oferta en cajitas (hrs/min), en dos
+// lugares: el top bar y al lado del precio principal.
 //
-// El ciclo dura 72 h y está anclado a un instante FIJO, no a la primera visita.
-// Gracias a eso todos los visitantes ven exactamente el mismo tiempo restante
-// —el contador viejo de 24 h daba un número distinto a cada uno— y se reinicia
-// solo cada 3 días a las 02:00 de Chile, sin ninguna fecha que mantener en el
-// servidor ni que acordarse de mover a mano.
-var OFERTA_ANCLA = Date.UTC(2026, 7, 24, 6, 0, 0);   // 24-ago-2026, 02:00 de Chile
-var OFERTA_CICLO_MS = 72 * 3600 * 1000;
+// Se calcula sobre la hora REAL de Chile en vez de contar milisegundos desde
+// un ancla fija. Dos motivos: respeta el horario de verano sin tocar nada
+// (Intl resuelve el offset del día), y todos los visitantes ven exactamente
+// el mismo tiempo restante — no depende de la primera visita ni de
+// localStorage. Tampoco hay ninguna fecha que mantener en el servidor.
+var OFERTA_HORA_FIN = 1;   // 01:00 de Chile
+
+// Segundos que faltan para la próxima vez que en Chile sean las `hora` en
+// punto. Si esa hora ya pasó hoy, apunta a la de mañana.
+function segHastaHoraChile(hora) {
+  try {
+    var p = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Santiago', hour12: false,
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).formatToParts(new Date());
+    var hh = 0, mm = 0, ss = 0;
+    p.forEach(function (x) {
+      if (x.type === 'hour') hh = +x.value % 24;   // en-US puede devolver 24 a medianoche
+      if (x.type === 'minute') mm = +x.value;
+      if (x.type === 'second') ss = +x.value;
+    });
+    var falta = hora * 3600 - (hh * 3600 + mm * 60 + ss);
+    if (falta <= 0) falta += 24 * 3600;
+    return falta;
+  } catch (e) {
+    return 12 * 3600;   // sin Intl: valor neutro, no rompe la página
+  }
+}
 
 function msRestanteOferta() {
-  var t = (Date.now() - OFERTA_ANCLA) % OFERTA_CICLO_MS;
-  if (t < 0) t += OFERTA_CICLO_MS;   // antes del ancla el resto de JS sale negativo
-  return OFERTA_CICLO_MS - t;
+  return segHastaHoraChile(OFERTA_HORA_FIN) * 1000;
 }
 
 // Marcado de las cajitas. Vive acá para que el top bar y el precio no se vayan
@@ -3835,9 +3824,11 @@ function msRestanteOferta() {
 // estas cajitas ya pintadas a propósito: evita el parpadeo de "--" mientras no
 // haya corrido aplicarReserva(), que espera al fetch de /stock.
 // Sin segundos a propósito: un dígito que cambia cada segundo se lee como
-// cuenta atrás de lanzamiento y le quita seriedad al precio. Días y horas
+// cuenta atrás de lanzamiento y le quita seriedad al precio. Las horas
 // comunican el plazo; los minutos dan el movimiento justo.
-var OFERTA_UNIDADES = [['d', 'días'], ['h', 'hrs'], ['m', 'min']];
+// Sin "días" tampoco: el ciclo dura 24 h, así que esa cajita marcaría 00
+// siempre y solo ocuparía espacio.
+var OFERTA_UNIDADES = [['h', 'hrs'], ['m', 'min']];
 
 function htmlCajitasOferta(pre, claseCaja) {
   return OFERTA_UNIDADES.map(function (u) {
@@ -3850,8 +3841,7 @@ function pintarContadorOferta() {
   var ms = msRestanteOferta();
   var z = function (n) { return String(n).padStart(2, '0'); };
   var v = [
-    z(Math.floor(ms / 86400000)),
-    z(Math.floor(ms / 3600000) % 24),
+    z(Math.floor(ms / 3600000)),
     z(Math.floor(ms / 60000) % 60)
   ];
   ['ofcd', 'ocd'].forEach(function (pre) {
@@ -3864,51 +3854,6 @@ function pintarContadorOferta() {
 pintarContadorOferta();
 setInterval(pintarContadorOferta, 1000);
 
-// ── Contador de 24 horas del envío gratis (rodante) ──
-// El "ciclo" arranca al abrir la pestaña y muestra 24:00:00 → 00:00:00,
-// entonces se reinicia solo a 24:00:00. No depende de fechas guardadas: cada
-// visitante ve un contador propio de 24h desde que abre la página, lo que
-// crea urgencia sin obligarte a mantener ninguna fecha en el servidor.
-// El contador cuenta hasta las 02:00 de la madrugada de Chile y se reinicia
-// solo todos los días a esa hora. Se calcula sobre la hora REAL de Chile
-// (zona America/Santiago), así respeta el horario de verano sin tocar nada.
-// Todos los visitantes ven el mismo tiempo restante; no depende de la primera
-// visita ni de localStorage.
-function segHasta2amChile() {
-  var seg = 0;
-  try {
-    var p = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/Santiago', hour12: false,
-      hour: '2-digit', minute: '2-digit', second: '2-digit'
-    }).formatToParts(new Date());
-    var hh = 0, mm = 0, ss = 0;
-    p.forEach(function (x) {
-      if (x.type === 'hour') hh = +x.value % 24;   // en-US puede devolver 24 a medianoche
-      if (x.type === 'minute') mm = +x.value;
-      if (x.type === 'second') ss = +x.value;
-    });
-    var ahoraSeg = hh * 3600 + mm * 60 + ss;
-    var objetivo = 2 * 3600; // 02:00:00
-    seg = objetivo - ahoraSeg;
-    if (seg <= 0) seg += 24 * 3600; // ya pasaron las 2am → apunta a las 2am de mañana
-  } catch (e) {
-    seg = 12 * 3600; // sin Intl: valor neutro, no rompe
-  }
-  return seg;
-}
-function pintarContadorEnvio() {
-  var eh = document.getElementById('abcd-h');
-  if (!eh) return;
-  var falta = segHasta2amChile();
-  var h = Math.floor(falta / 3600);
-  var m = Math.floor(falta / 60) % 60;
-  var s = Math.floor(falta) % 60;
-  var z = function (n) { return String(n).padStart(2, '0'); };
-  eh.textContent = z(h);
-  document.getElementById('abcd-m').textContent = z(m);
-  document.getElementById('abcd-s').textContent = z(s);
-}
-setInterval(pintarContadorEnvio, 1000);
 
 // ── Contador del sorteo mensual ──
 // Cuenta hasta el FIN DEL MES en curso (00:00 del día 1 del mes siguiente,
