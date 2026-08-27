@@ -8,12 +8,9 @@ const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 const metrics = require('../services/metrics');
 const metaCapi = require('../services/meta-capi');
 
-// Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
-const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
-const PRODUCT_PRICE = 54990;
 // Precio único $54.990, con stock y en modo reserva (igual que server.js y
 // transbank.js, y que lo que muestra el sitio).
-const precioBanda = () => 54990;
+const { precioBanda } = require('../services/precio');
 const TAPONES_PRICE = 14990; // compra de solo tapones de oído (sin banda)
 const pedidosFlow = new Map();
 
