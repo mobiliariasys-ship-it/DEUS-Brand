@@ -26,3 +26,12 @@ deus_band_logo_sin_fondo.png
 banda_negra_sola.jpg
 # Conversaciones del chatbot: llevan lo que escriben los clientes.
 chats.json
+
+# Mockups de diseño (canvas de propuestas para la ficha de producto).
+# Van fuera del repo por dos razones: el archivo publicado del canvas pesa
+# 2,5 MB y es material generado, y sobre todo netlify.toml usa publish = "."
+# — todo lo que se commitea queda servido en deusbrand.cl, y las reglas de
+# bloqueo de arriba son ruta por ruta, así que esta carpeta quedaría pública.
+# El diseño vive en el artifact publicado; para volver a editarlo se lee de
+# ahí, no de acá.
+.design-deus/
