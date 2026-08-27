@@ -513,7 +513,6 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .price-block .price-was{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#9a9a9a;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.4);text-decoration-thickness:1.5px;margin-left:12px;vertical-align:middle;}
 .fc-price .price-save{margin-left:10px;font-size:.6rem;padding:3px 9px;vertical-align:middle;}
 .reassure-item small{display:block;color:#8f8f8f;font-size:.63rem;font-weight:400;margin-top:3px;line-height:1.45;}
-.app-badge-phones{margin-left:auto;height:82px;width:auto;border-radius:10px;flex-shrink:0;}
 .day-card{margin-top:16px;border:1px solid rgba(105,196,109,.35);border-radius:14px;padding:18px 18px 16px;text-align:center;background:rgba(105,196,109,.03);}
 .day-shield{line-height:0;margin-bottom:8px;}
 .day-title{font-size:.68rem;letter-spacing:2.5px;color:#7fd589;font-weight:700;text-transform:uppercase;margin-bottom:14px;}
@@ -632,7 +631,13 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .resist-badge{display:flex;align-items:center;gap:13px;margin-top:16px;padding:14px 16px;border:1px solid #333;border-radius:10px;background:linear-gradient(135deg,#191919,#121212);}
 .app-badge-ico{width:42px;height:42px;border-radius:11px;object-fit:cover;flex-shrink:0;}
 .app-badge b{font-size:.88rem;}
-.app-badge-sub{font-size:.7rem;color:#7fc9a0;margin-top:3px;letter-spacing:.3px;}
+/* Mismo "circulito" verde que el .app-free de la sección La App, para que el
+   dato se lea igual en los dos lugares donde aparece. Va sin mayúsculas y con
+   menos letter-spacing que aquel: este texto es más largo y así entra en una
+   sola línea. nowrap lo garantiza. */
+.app-badge-sub{display:inline-block;margin-top:7px;font-size:.62rem;color:#69c46d;
+  border:1px solid rgba(105,196,109,.45);border-radius:20px;padding:5px 12px;
+  font-weight:600;letter-spacing:.3px;white-space:nowrap;}
 .resist-badge svg{flex-shrink:0;}
 .resist-badge b{display:block;font-size:.86rem;letter-spacing:.3px;margin-bottom:3px;color:var(--white);}
 .resist-badge span{font-size:.76rem;color:var(--silver);line-height:1.5;}
@@ -1738,7 +1743,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <b>App Da Halo — iOS y Android</b>
           <div class="app-badge-sub">100% gratis · sin pagos ni suscripciones</div>
         </div>
-        <img src="img/app-rot-1.webp" alt="Pantallas de la app Da Halo" class="app-badge-phones" loading="lazy" decoding="async">
       </div>
 
       <div class="day-card">
