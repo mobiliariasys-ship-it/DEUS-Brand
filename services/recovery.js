@@ -74,7 +74,7 @@ async function enviarCorreoRecuperacion(pedido) {
           <a href="${WHATSAPP}" style="display:inline-block;background:#25d366;color:#fff;text-decoration:none;padding:13px 28px;border-radius:24px;font-weight:700;font-size:14px">💬 Escríbenos por WhatsApp</a>
         </div>
         <p style="margin:28px 0 0;padding-top:16px;border-top:1px solid #eee;font-size:12px;color:#999;text-align:center">
-          Pago 100% seguro con Webpay y Mercado Pago · Envío a todo Chile · Garantía de 30 días
+          Pago 100% seguro con Webpay y Mercado Pago · Envío a todo Chile · Garantía de 60 días
         </p>
       </div>
     </div>`;
