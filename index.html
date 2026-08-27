@@ -1696,8 +1696,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="colors-row">
           <span class="clabel">Color</span>
           <div class="cdot active" style="background:#111;" title="Negro" onclick="setColor('negra',this)"></div>
-          <div class="cdot sold-out" style="background:#888;" title="Gris — agotado" onclick="setColor('gris',this)"></div>
-          <div class="cdot sold-out" style="background:#e8b4bc;" title="Rosado — agotado" onclick="setColor('rosada',this)"></div>
+          <div class="cdot" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
+          <div class="cdot" style="background:#e8b4bc;" title="Rosado" onclick="setColor('rosada',this)"></div>
           <span class="color-now" id="color-now">Negro</span>
         </div>
         <!-- Aparece solo si la foto que se está viendo no es el color elegido -->
@@ -3640,8 +3640,14 @@ let currentSlide = 0;
 // color que el cliente no quiso. Ahora SOLO cambia al tocar un círculo.
 let selectedColor = 'negra';
 
-// Colores sin stock: no se pueden comprar ni agregar al carrito
-const AGOTADOS = { gris: true, rosada: true };
+// Colores sin stock: no se pueden comprar ni agregar al carrito.
+// Vacío = catálogo completo a la venta. Los cruces rojos sobre los círculos
+// hacían caer la confianza de toda la página, no sólo la del color tachado,
+// así que se prefiere vender los tres y resolver el stock en el pedido.
+// Para volver a agotar uno: agregarlo acá Y ponerle la clase .sold-out al
+// círculo en la fila de colores. Esta tabla apaga sola los cinco guardas
+// (checkout, carrito, setColor, aviso de color y texto de stock).
+const AGOTADOS = {};
 
 // Stock real desde el backend: el mismo contador que baja con cada pago
 // confirmado (endpoint /stock del proyecto web). Sin números fijos en el front.
