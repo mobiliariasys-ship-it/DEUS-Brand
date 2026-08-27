@@ -353,6 +353,20 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 .announce-bar .ab-cd{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:5px;text-transform:none;}
 .announce-bar .ab-cd-lbl{font-size:.62rem;letter-spacing:2.5px;color:#9a9a9a;font-weight:600;text-transform:uppercase;}
 .announce-bar .ab-cd-boxes{display:inline-flex;gap:5px;}
+/* Al hacer scroll en móvil el contador del top bar se pliega y arriba queda
+   solo el "ENVÍO GRATIS". Debajo de 820px el mismo contador ya aparece en su
+   propia línea junto al precio, así que tenerlo además fijo arriba todo el
+   rato se lee como insistencia. En escritorio hay espacio de sobra y las
+   cajitas van junto al sello, así que ahí no se toca.
+   Se anima max-height porque height:auto no es animable; 90px pasa holgado la
+   altura real (~60px) incluso si las fuentes cargan tarde y crecen. */
+@media(max-width:820px){
+  .announce-bar .ab-cd{
+    overflow:hidden; max-height:90px; opacity:1;
+    transition:max-height .28s ease, opacity .18s ease, margin-top .28s ease;
+  }
+  .announce-bar.ab-compacta .ab-cd{ max-height:0; opacity:0; margin-top:0; }
+}
 .abcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:7px;padding:5px 10px;min-width:42px;line-height:1;}
 .abcd-box b{font-size:1.05rem;font-weight:800;color:#e7cf9c;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
 .abcd-box small{font-size:.48rem;letter-spacing:1.2px;color:#7a7a7a;margin-top:4px;text-transform:uppercase;font-weight:500;}
@@ -4281,10 +4295,17 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
 <script>
 (function(){
   var bar=document.getElementById('stickyBuy');
+  var top=document.getElementById('offer-bar');
   function onScroll(){
-    var show=window.scrollY>600;
+    var y=window.scrollY;
+    var show=y>600;
     bar.classList.toggle('show',show);
     document.body.classList.toggle('sb-on',show);
+    // Top bar: apenas se empieza a bajar se pliega el contador (el CSS solo lo
+    // aplica en móvil). 80px es pasado el rebote del scroll pero antes de que
+    // el precio salga de pantalla, así que nunca quedan los dos contadores
+    // compitiendo. Al volver arriba reaparece solo.
+    if(top) top.classList.toggle('ab-compacta',y>80);
   }
   window.addEventListener('scroll',onScroll,{passive:true});
   onScroll();
