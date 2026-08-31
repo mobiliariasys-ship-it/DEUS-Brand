@@ -2105,7 +2105,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // final iban a cobrar algo.
             : 'Ya está incluido — no pagas despacho';
         }
-        async function calcularEnvio() {
+        // Cotización de envío en vuelo y turno de la última pedida.
+        //
+        // Acá se caían compras con TODOS los datos llenos. Al tocar "Pagar" en
+        // el celular, el blur del campo dirección dispara calcularEnvio(), que
+        // dejaba selectedShipping en null ANTES de tener reemplazo. El clic
+        // entraba a asegurarEnvio() milisegundos después, lo veía null y
+        // lanzaba una SEGUNDA cotización en paralelo. Si cualquiera de las dos
+        // fallaba (backend dormido, red del celular), el cliente terminaba en
+        // "No pudimos validar esa dirección" sin poder pagar.
+        //
+        // Ahora hay una sola cotización por destino — quien llegue después
+        // espera la misma promesa en vez de largar otra — y una respuesta
+        // vieja nunca pisa a una más nueva (turno).
+        let cotizacionEnVuelo = null;   // { clave, promesa }
+        let turnoCotizacion = 0;
+
+        function calcularEnvio() {
+          const clave = ['sh-region', 'sh-commune', 'sh-address']
+            .map(id => (document.getElementById(id)?.value || '').trim()).join('|');
+          if (cotizacionEnVuelo && cotizacionEnVuelo.clave === clave) return cotizacionEnVuelo.promesa;
+          const promesa = cotizarEnvio(++turnoCotizacion).finally(() => {
+            if (cotizacionEnVuelo && cotizacionEnVuelo.clave === clave) cotizacionEnVuelo = null;
+          });
+          cotizacionEnVuelo = { clave, promesa };
+          return promesa;
+        }
+
+        async function cotizarEnvio(turno) {
           const region = document.getElementById('sh-region').value.trim();
           const commune = document.getElementById('sh-commune').value.trim();
           const address = document.getElementById('sh-address').value.trim();
@@ -2121,8 +2148,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
 
           results.innerHTML = '<div class="shipping-msg">Consultando tarifas en tiempo real...</div>';
-          document.getElementById('total-row').style.display = 'none';
-          selectedShipping = null;
+          // OJO: acá NO se borra selectedShipping ni se esconde el total. La
+          // cotización anterior sigue valiendo hasta que llegue una nueva
+          // buena; borrarla de entrada era lo que dejaba al cliente sin poder
+          // pagar si esta consulta fallaba.
 
           try {
             const res = await fetchBackend('/calcular-envio', {
@@ -2131,6 +2160,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               body: JSON.stringify({ region, commune, city: commune, address, regionCode: getRegionCode(region) })
             }, s => { results.innerHTML = '<div class="shipping-msg">' + s + '</div>'; });
             const data = await res.json();
+            // Si mientras esperábamos se pidió otra cotización, esta quedó
+            // vieja: no toca ni el DOM ni selectedShipping.
+            if (turno !== turnoCotizacion) return;
 
             if (!res.ok || !data.carriers?.length) {
               results.innerHTML = `<div class="shipping-error">${data.error || 'No hay opciones de envío para esta dirección.'}</div>`;
@@ -2660,20 +2692,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
           msg.style.color = '#666';
           msg.textContent = 'Confirmando tu dirección...';
-          try { await calcularEnvio(); } catch (e) {}
+          // No se espera la cotización para siempre: fetchBackend reintenta 4
+          // veces con 25 s de timeout, así que con el backend dormido el
+          // cliente quedaba mirando "Confirmando tu dirección..." casi dos
+          // minutos, con el botón todavía vivo. A los 6 s seguimos con el
+          // respaldo; la cotización sigue en vuelo y si alcanza a llegar
+          // actualiza la etiqueta del courier sola.
+          const aTiempo = new Promise(r => setTimeout(r, 6000));
+          try { await Promise.race([calcularEnvio(), aTiempo]); } catch (e) {}
           if (!selectedShipping) {
-            msg.style.color = '#c0392b';
-            msg.textContent = 'No pudimos validar esa dirección. Revisa la comuna y vuelve a intentar.';
-            // Embudo — paso 4x: apretó pagar (co:4pago ya disparó) pero la
-            // cotización de envío lo frenó ANTES de llegar a la pasarela.
+            // Antes esto devolvía false y el cliente quedaba trabado con TODOS
+            // los datos llenos. No corresponde: el envío es GRATIS (price 0) y
+            // la dirección del pedido sale de direccionActual(), leída en vivo
+            // del formulario. O sea, la cotización no cambia ni un peso de lo
+            // que se cobra ni la dirección a la que se despacha — lo único que
+            // aporta es la etiqueta del courier. Perder la venta por eso es
+            // regalar la compra.
             //
-            // Sin este evento el caso caía en un hueco: no era co:45redir ni
-            // co:4xerror, así que el panel lo contaba como "no llegó a la
-            // pasarela" sin causa y culpaba al backend de pago, cuando el
-            // problema es la cotización de despacho (Chilexpress/Starken/
-            // Bluexpress). De 12 caídas ahí, solo 1 tenía error de conexión.
-            if (window.deusEvento) window.deusEvento('co:4xenvio');
-            return false;
+            // Si no responde, seguimos con Starken (el courier que devuelve la
+            // tabla de tarifas del backend para todo Chile) y el pago
+            // continúa. El pedido llega igual y con la dirección correcta;
+            // cotizada:false avisa que el courier se asignó por respaldo.
+            const d = direccionActual();
+            selectedShipping = {
+              carrier: 'Starken', price: 0, cotizada: false,
+              address: { commune: d.commune, region: d.region, address: d.address }
+            };
+            // co:4xenvio sigue marcando que la cotización falló; co:4xrescate
+            // separa "falló Y perdimos la venta" de "falló pero pudo pagar".
+            if (window.deusEvento) { window.deusEvento('co:4xenvio'); window.deusEvento('co:4xrescate'); }
           }
           return true;
         }
@@ -2689,6 +2736,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Meta contaba varias veces a la misma persona. Compartiendo el id, los
         // reintentos colapsan en uno solo, que es lo que el evento significa:
         // "ingresó datos de pago", no "apretó el botón".
+        // Un solo intento de pago a la vez. Mientras asegurarEnvio() cotiza,
+        // el botón seguía habilitado y sin cambiar de texto: el cliente que no
+        // veía reacción volvía a tocarlo, y cada toque relanzaba otra
+        // cotización encima de la anterior.
+        let pagoEnCurso = false;
         let apiEventId = '';
         function nuevoApiEventId() {
           apiEventId = 'apinfo-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
@@ -2757,8 +2809,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function iniciarPagoFlow() {
           const msg = document.getElementById('mp-msg');
           if (!validarCheckout(msg)) return;
+          if (pagoEnCurso) return;
+          pagoEnCurso = true;
           // Cotiza el envío si aún no lo estaba (ya no hay botón para forzarlo).
-          if (!await asegurarEnvio(msg)) return;
+          if (!await asegurarEnvio(msg)) { pagoEnCurso = false; return; }
           const wp = document.getElementById('wp-btn');
           wp.disabled = true;
           wp.textContent = 'Redirigiendo...';
@@ -2783,6 +2837,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
           } catch (e) {
             if (window.deusEvento) window.deusEvento('co:4xerror');
+            pagoEnCurso = false;
             wp.disabled = false;
             wp.textContent = 'Pagar con Webpay';
             msg.textContent = 'No pudimos conectar. Espera 30 segundos y vuelve a intentar.';
@@ -2794,8 +2849,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function iniciarPagoWebpay() {
           const msg = document.getElementById('mp-msg');
           if (!validarCheckout(msg)) return;
+          if (pagoEnCurso) return;
+          pagoEnCurso = true;
           // Cotiza el envío si aún no lo estaba (ya no hay botón para forzarlo).
-          if (!await asegurarEnvio(msg)) return;
+          if (!await asegurarEnvio(msg)) { pagoEnCurso = false; return; }
           const wp = document.getElementById('wp-btn');
           wp.disabled = true;
           wp.textContent = 'Redirigiendo a Webpay...';
@@ -2804,11 +2861,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
           try {
-            const res = await fetch(api('/webpay/crear'), {
+            // fetchBackend, no fetch pelado: esta era la única vía de pago sin
+            // reintentos ni timeout. Con el backend dormido (Render apaga el
+            // servicio inactivo) el primer intento moría y el cliente veía
+            // "Error al conectar con Webpay" en vez de esperar a que despierte,
+            // que es lo que sí hacen Flow y MercadoPago.
+            const res = await fetchBackend('/webpay/crear', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(datosPedido())
-            });
+            }, s => { msg.style.display = ''; msg.textContent = s; });
             const data = await res.json();
             if (data.url && data.token) {
               // Webpay exige redirigir con un POST que lleva token_ws
@@ -2829,6 +2891,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
           } catch (e) {
             if (window.deusEvento) window.deusEvento('co:4xerror');
+            pagoEnCurso = false;
             wp.disabled = false;
             wp.textContent = 'Pagar con Webpay (Transbank)';
             msg.textContent = 'Error al conectar con Webpay. Intenta nuevamente.';
@@ -2841,8 +2904,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const msg = document.getElementById('mp-msg');
 
           if (!validarCheckout(msg)) return;
+          if (pagoEnCurso) return;
+          pagoEnCurso = true;
           // Cotiza el envío si aún no lo estaba (ya no hay botón para forzarlo).
-          if (!await asegurarEnvio(msg)) return;
+          if (!await asegurarEnvio(msg)) { pagoEnCurso = false; return; }
 
           btn.disabled = true;
           btn.textContent = 'Procesando...';
@@ -2866,6 +2931,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
           } catch(e) {
             if (window.deusEvento) window.deusEvento('co:4xerror');
+            pagoEnCurso = false;
             btn.disabled = false;
             btn.textContent = 'Pagar con MercadoPago';
             msg.textContent = 'No pudimos conectar. Espera 30 segundos y vuelve a intentar.';

@@ -543,7 +543,12 @@
     var ex=document.getElementById('co-extra'); if(!ex) return;
     var apreto=conducta['co:4pago']||0, llego=conducta['co:45redir']||0;
     var err=conducta['co:4xerror']||0, pagaron=conducta['co:5pago']||0;
-    var errEnvio=conducta['co:4xenvio']||0;   // frenados por la cotización de envío
+    var errEnvio=conducta['co:4xenvio']||0;      // falló la cotización de envío
+    var rescatados=conducta['co:4xrescate']||0;  // …pero igual pudieron pagar
+    // Desde el arreglo del respaldo, que falle la cotización ya no bota la
+    // venta: se sigue con Starken y el pago continúa. Solo cuentan como
+    // frenados los que fallaron SIN rescate (versiones viejas de la página).
+    var frenadosEnvio=Math.max(errEnvio-rescatados,0);
     var nunca=Math.max(apreto-llego,0);
     // Si pagaron más de los que "llegaron a la pasarela", el evento se está
     // perdiendo y el número de abajo sería una alarma falsa.
@@ -562,14 +567,18 @@
         // Desglose por causa. Antes este número se atribuía entero al backend
         // de pago, pero entre "apretó pagar" y "llegó a la pasarela" hay dos
         // cosas que pueden fallar, y son arreglos distintos.
-        var sinCausa=Math.max(nunca-err-errEnvio,0);
+        var sinCausa=Math.max(nunca-err-frenadosEnvio,0);
         var causas=[];
-        if(errEnvio>0) causas.push('<b>'+errEnvio+'</b> por cotización de envío');
+        if(frenadosEnvio>0) causas.push('<b>'+frenadosEnvio+'</b> por cotización de envío');
         if(err>0) causas.push('<b>'+err+'</b> con error de conexión');
         if(sinCausa>0) causas.push('<b>'+sinCausa+'</b> sin causa registrada');
+        if(rescatados>0){
+          h+='<div style="color:#8fc98f;margin-bottom:6px">🛟 <b>'+rescatados+'</b> pudieron pagar aunque se cayó la cotización de envío'+
+             '<br><small>El respaldo los despachó con Starken en vez de frenarlos. Sin él, eran '+rescatados+' ventas perdidas.</small></div>';
+        }
         h+='<b style="color:#f0736f">'+nunca+' apretaron pagar y no llegaron a la pasarela</b>'+
            (causas.length? '<br>'+causas.join(' · ') : '')+
-           '<br><small>Cotización de envío: falló Chilexpress/Starken/Bluexpress al revalidar la dirección — el cliente vio "no pudimos validar esa dirección". '+
+           '<br><small>Cotización de envío: falló al revalidar la dirección y la página todavía no tenía el respaldo que deja pagar igual. '+
            'Error de conexión: tu backend o el gateway al crear el pago. '+
            'Sin causa: lo más probable es que hayan abandonado durante la espera.</small>';
       } else {
