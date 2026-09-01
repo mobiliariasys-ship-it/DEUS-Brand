@@ -3,6 +3,7 @@ const router = express.Router();
 const https = require('https');
 const crypto = require('crypto');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarPagoFallido } = require('../services/email');
+const colores_ = require('../services/colores');
 const { decrementStock, getStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 const metrics = require('../services/metrics');
@@ -62,7 +63,10 @@ function flowReq(method, path, params) {
 
 // Iniciar pago con Flow
 router.post('/flow/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, colores } = req.body;
+  // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
+  const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
+  const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
   try {
     const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
     const amount = soloTapones
@@ -97,7 +101,8 @@ router.post('/flow/crear', async (req, res) => {
         : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
       product_price: soloTapones ? TAPONES_PRICE * qty : precioBanda() * qty + (tapones ? 12990 : 0),
       cantidad: qty, tapones: !!tapones, soloTapones: !!soloTapones,
-      color: selectedColor,
+      color: colorPedido,
+      colores: coloresPedido,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },
       // Datos del navegador del cliente para la Conversions API de Meta (mejoran
@@ -138,7 +143,7 @@ router.post('/flow/crear', async (req, res) => {
       cliente: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
       monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (Number(shippingCost) || 0),
-      color: selectedColor,
+      color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
     res.status(500).json({ error: 'No se pudo iniciar el pago con Flow' });

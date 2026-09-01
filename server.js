@@ -8,6 +8,7 @@ const equipoRoutes = require('./routes/equipo');
 const chatRoutes = require('./routes/chat');
 const atletas = require('./services/atletas');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico } = require('./services/email');
+const colores_ = require('./services/colores');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
 const persist = require('./services/persist');
@@ -168,7 +169,10 @@ const pedidos = [];
 function guardarPedidos() { persist.save('pedidos.json', pedidos).catch(e => console.error('[pedidos] Error guardando:', e.message)); }
 
 app.post('/crear-preferencia', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, acciones } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, acciones, colores } = req.body;
+  // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
+  const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
+  const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
 
   try {
     const preference = new Preference(client);
@@ -232,7 +236,11 @@ app.post('/crear-preferencia', async (req, res) => {
         customer_rut: customerRut,
         customer_email: customerEmail,
         customer_phone: customerPhone,
-        selected_color: selectedColor,
+        selected_color: colorPedido,
+        // El detalle por unidad también viaja acá: la metadata es la fuente
+        // autoritativa del despacho, y sin esto un pedido mezclado llegaría
+        // al correo como '2 negra + 1 gris' sin decir cuántas de cada una.
+        colores: coloresPedido.join(','),
         cantidad: qty,
         tapones: !!tapones,
         soloTapones: !!soloTapones,
@@ -278,7 +286,8 @@ app.post('/crear-preferencia', async (req, res) => {
       cantidad: qty,
       tapones: !!tapones,
       soloTapones: !!soloTapones,
-      color: selectedColor,
+      color: colorPedido,
+      colores: coloresPedido,
       customer: {
         name: customerName,
         rut: customerRut,
@@ -326,7 +335,7 @@ app.post('/crear-preferencia', async (req, res) => {
       cliente: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
       monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (Number(shippingCost) || 0),
-      color: selectedColor,
+      color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
     res.status(500).json({ error: 'Error al crear la preferencia de pago' });
@@ -367,6 +376,7 @@ app.post('/notificaciones', async (req, res) => {
         const pedido = {
           product: enMemoria.product || 'DEUS Band',
           color: meta.selected_color || enMemoria.color,
+          colores: (meta.colores ? String(meta.colores).split(',').filter(Boolean) : null) || enMemoria.colores,
           cantidad: Number(meta.cantidad) || enMemoria.cantidad,
           tapones: taponesPago,
           method: enMemoria.method || 'MercadoPago',
@@ -542,13 +552,21 @@ app.get('/admin/stats', (req, res) => {
   const corte45 = Date.now() - 45 * 86400000;
   const pedidosRecientes45 = [];
   for (const p of pedidos) {
+    // Cada unidad cuenta. Antes sumaba 1 por PEDIDO, así que un pedido de 3
+    // bandas pesaba lo mismo que uno de 1 y el "qué reponer" subestimaba las
+    // compras múltiples. Con colores mezclados, cada unidad va a su color.
     const c = (p.color || '—').toString().trim();
-    porColor[c] = (porColor[c] || 0) + 1;
+    const unidades = (Array.isArray(p.colores) && p.colores.length)
+      ? p.colores
+      : Array.from({ length: Math.max(1, parseInt(p.cantidad, 10) || 1) }, () => c);
+    for (const u of unidades) porColor[u] = (porColor[u] || 0) + 1;
     const cm = (p.shipping?.address?.commune || '—').toString().trim();
     porComuna[cm] = (porComuna[cm] || 0) + 1;
     // Versión compacta con fecha para que el panel filtre por periodo.
     const t = new Date(p.created_at).getTime();
-    if (!isNaN(t) && t >= corte45) pedidosRecientes45.push({ f: p.created_at, c, cm });
+    // c = unidades del pedido: el panel filtra por periodo y rearma el conteo
+    // por color desde acá, así que necesita el mismo detalle que porColor.
+    if (!isNaN(t) && t >= corte45) pedidosRecientes45.push({ f: p.created_at, c: unidades, cm });
   }
   res.json({
     ...snap,

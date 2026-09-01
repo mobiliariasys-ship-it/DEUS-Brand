@@ -975,7 +975,11 @@
       if(peds){
         porColor={}; porComuna={}; totPed=peds.length;
         peds.forEach(function(p){
-          porColor[p.c]=(porColor[p.c]||0)+1;
+          // p.c trae las UNIDADES del pedido (un color por banda). Los pedidos
+          // guardados antes de los colores por unidad traen un string suelto,
+          // así que se acepta cualquiera de las dos formas.
+          var us = Array.isArray(p.c) ? p.c : [p.c];
+          us.forEach(function(c){ porColor[c]=(porColor[c]||0)+1; });
           porComuna[p.cm]=(porComuna[p.cm]||0)+1;
         });
       }

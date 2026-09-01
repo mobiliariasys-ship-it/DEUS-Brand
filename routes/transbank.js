@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { WebpayPlus, Options, IntegrationApiKeys, IntegrationCommerceCodes, Environment } = require('transbank-sdk');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarPagoFallido } = require('../services/email');
+const colores_ = require('../services/colores');
 const { decrementStock, getStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 const metrics = require('../services/metrics');
@@ -34,7 +35,10 @@ function getBaseUrl(req) {
 
 // Inicia el pago con Webpay
 router.post('/webpay/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, colores } = req.body;
+  // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
+  const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
+  const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
   try {
     const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
     const amount = soloTapones
@@ -57,7 +61,8 @@ router.post('/webpay/crear', async (req, res) => {
       cantidad: qty,
       tapones: !!tapones,
       soloTapones: !!soloTapones,
-      color: selectedColor,
+      color: colorPedido,
+      colores: coloresPedido,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },
       // Datos del navegador del cliente para la Conversions API de Meta (mejor
@@ -99,7 +104,7 @@ router.post('/webpay/crear', async (req, res) => {
       cliente: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
       monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (Number(shippingCost) || 0),
-      color: selectedColor,
+      color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
     res.status(500).json({ error: 'No se pudo iniciar el pago con Webpay' });

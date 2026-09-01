@@ -1150,6 +1150,20 @@ body.sb-on .wa-float{bottom:82px;}
 .reserva-regalo .regalo-val b{color:#f2d9a8;}
 .reserva-regalo .regalo-fine{display:block;margin-top:4px;font-size:.66rem;color:#b89a5f;letter-spacing:.3px;font-weight:400;}
 .co-cuotas{font-size:.64rem;color:#7fc9a0;margin-top:4px;}
+/* Un color por banda. Solo aparece al llevar 2 o más: con una sola el color ya
+   se eligió en la página, y volver a preguntarlo sembraba la duda (por eso se
+   sacó en su momento el selector "Confirma tu color"). */
+.co-colores{margin-top:12px;border-top:1px solid var(--border);padding-top:11px;}
+.co-colores-t{font-size:.72rem;color:#9a9a9a;margin-bottom:7px;}
+.co-cu{display:flex;align-items:center;gap:10px;padding:4px 0;}
+.co-cu-n{font-size:.72rem;color:#8a8a8a;min-width:64px;}
+.co-cu-dots{display:flex;gap:8px;}
+.co-cu-d{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:border-color .15s,transform .15s;}
+.co-cu-d:hover{border-color:#fff;}
+/* Después del :hover a propósito: con la misma especificidad gana la última
+   regla, y el anillo blanco del hover tapaba el dorado del color elegido. */
+.co-cu-d.on{border-color:#e8b464;transform:scale(1.08);}
+.co-cu-d.agotado{opacity:.35;cursor:not-allowed;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
 .stock-note{font-size:.78rem;color:#e8b464;letter-spacing:.5px;margin:0 0 16px;}
 .proof-line{font-size:.74rem;color:#aaa;letter-spacing:.5px;margin:0 0 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;}
@@ -1822,6 +1836,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <span style="width:32px;text-align:center;font-size:.95rem;font-weight:600;" id="co-qty-display">1</span>
               <button class="cart-qty-btn" id="co-qty-plus" onclick="cambiarCantidadCheckout(1)">+</button>
             </div>
+            <!-- Selector de color POR UNIDAD. Antes, llevar 2 bandas obligaba a
+                 que las dos fueran del mismo color: quien quería una negra y
+                 una rosada tenía que hacer dos compras (dos envíos) o escribir
+                 por WhatsApp. Se pinta solo con cantidad ≥ 2. -->
+            <div class="co-colores" id="co-colores" style="display:none;">
+              <div class="co-colores-t">Elige el color de cada banda</div>
+              <div id="co-colores-lista"></div>
+            </div>
           </div>
 
           <div class="checkout-body">
@@ -2269,12 +2291,76 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // cambiar con los puntos del checkout). La orden usa ESTE, no la posición
         // del carrusel — así un swipe accidental ya no cambia el color comprado.
         let checkoutColor = 'negra';
+        // Color de CADA unidad del pedido. Con una sola banda es [checkoutColor]
+        // y todo se comporta igual que siempre; con 2 o más, el cliente elige
+        // uno por banda y el pedido viaja con el arreglo completo.
+        let checkoutColores = ['negra'];
+        const COLOR_HEX = { negra: '#111', gris: '#888', rosada: '#e8b4bc' };
+        // Espejo de PLURAL en services/colores.js (hay un test que los compara).
+        const COLOR_PLURAL = { negra: 'negras', gris: 'grises', rosada: 'rosadas' };
+
         function setCheckoutColor(color) {
           checkoutColor = color;
-          const coColor = document.getElementById('co-prod-color');
-          if (coColor) coColor.textContent = 'Color ' + (COLOR_LABEL[color] || color);
+          // setCheckoutColor significa "esta compra es de color X" (al abrir el
+          // checkout, o al elegir en la página), así que arrastra a todas las
+          // unidades. El detalle por banda se elige después, ya adentro.
+          checkoutColores = Array.from({ length: Math.max(1, checkoutQty || 1) }, () => color);
           const coImg = document.getElementById('co-prod-img');
           if (coImg && bandThumbs[color]) coImg.src = bandThumbs[color];
+          actualizarResumenColor();
+          pintarColoresCheckout();
+        }
+
+        // Ajusta el arreglo al largo de checkoutQty. Las unidades que el cliente
+        // ya eligió NO se tocan; las nuevas salen con el color de apertura.
+        function sincronizarColores() {
+          const base = checkoutColor || 'negra';
+          checkoutColores = Array.from({ length: Math.max(1, checkoutQty) },
+            (_, i) => checkoutColores[i] || base);
+        }
+
+        function setColorUnidad(i, color) {
+          if (typeof AGOTADOS !== 'undefined' && AGOTADOS[color]) return;
+          checkoutColores[i] = color;
+          pintarColoresCheckout();
+          actualizarResumenColor();
+        }
+
+        // Texto y foto de la tarjeta del producto. Con colores mezclados muestra
+        // el desglose ('2 negras + 1 rosada') en vez de un solo color, que era
+        // justamente la forma de terminar recibiendo lo que no se pidió.
+        function actualizarResumenColor() {
+          const el = document.getElementById('co-prod-color');
+          if (!el || checkoutTapones) return;
+          const cuenta = {};
+          for (const c of checkoutColores) cuenta[c] = (cuenta[c] || 0) + 1;
+          const claves = colorOrder.filter(c => cuenta[c]);
+          if (!claves.length) return;
+          // Mismo texto que arma resumen() en services/colores.js — el que
+          // queda en el pedido y en el correo. Si acá dijera otra cosa, el
+          // cliente vería un desglose y le llegaría otro.
+          el.textContent = claves.length === 1
+            ? 'Color ' + (COLOR_LABEL[claves[0]] || claves[0])
+            : claves.map(c => cuenta[c] + ' ' + (cuenta[c] > 1 ? (COLOR_PLURAL[c] || c) : c)).join(' + ');
+          const img = document.getElementById('co-prod-img');
+          if (img && bandThumbs[checkoutColores[0]]) img.src = bandThumbs[checkoutColores[0]];
+        }
+
+        function pintarColoresCheckout() {
+          const caja = document.getElementById('co-colores');
+          const lista = document.getElementById('co-colores-lista');
+          if (!caja || !lista) return;
+          const mostrar = checkoutQty > 1 && !checkoutTapones;
+          caja.style.display = mostrar ? '' : 'none';
+          if (!mostrar) return;
+          lista.innerHTML = checkoutColores.map((sel, i) =>
+            '<div class="co-cu"><span class="co-cu-n">Banda ' + (i + 1) + '</span><div class="co-cu-dots">' +
+            colorOrder.map(c => {
+              const ago = (typeof AGOTADOS !== 'undefined' && AGOTADOS[c]);
+              return '<div class="co-cu-d' + (c === sel ? ' on' : '') + (ago ? ' agotado' : '') +
+                '" style="background:' + COLOR_HEX[c] + '" title="' + (COLOR_LABEL[c] || c) + '"' +
+                (ago ? '' : ' onclick="setColorUnidad(' + i + ',\'' + c + '\')"') + '></div>';
+            }).join('') + '</div></div>').join('');
         }
         // colorForzado/qtyForzada: cuando se compra DESDE EL CARRITO, el color y
         // la cantidad vienen del carrito — NO de la posición del carrusel (así un
@@ -2338,6 +2424,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (nameEl) nameEl.textContent = checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band';
           if (imgEl) imgEl.src = checkoutTapones ? 'img/img-tapones.webp' : bandThumbs[checkoutColor] || bandThumbs.negra;
           document.getElementById('co-qty-display').textContent = String(checkoutQty);
+          // Recién acá se conoce la cantidad (puede venir forzada del carrito),
+          // así que el arreglo de colores se arma con el largo definitivo.
+          sincronizarColores();
+          pintarColoresCheckout();
+          actualizarResumenColor();
           // El aviso de envío gratis se muestra de entrada, antes de calcular
           // nada, para que el cliente sepa al tiro que no paga despacho.
           mostrarAvisoEnvioGratis();
@@ -2422,6 +2513,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const maxQty = getMaxQty(color);
           checkoutQty = Math.max(1, Math.min(maxQty, checkoutQty + delta));
           document.getElementById('co-qty-display').textContent = checkoutQty;
+          sincronizarColores();
+          pintarColoresCheckout();
+          actualizarResumenColor();
           actualizarTotalCheckout();
         }
         function actualizarTotalCheckout() {
@@ -2753,6 +2847,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             customerEmail: document.getElementById('co-email').value.trim(),
             customerPhone: document.getElementById('co-fono').value.trim(),
             selectedColor: checkoutColor,
+            // Un color por unidad. El backend arma con esto el texto que va al
+            // correo de despacho ('2 negra + 1 gris'); selectedColor queda como
+            // respaldo por si llegara un pedido sin el arreglo.
+            colores: checkoutTapones ? [] : checkoutColores.slice(0, checkoutQty),
             cantidad: checkoutQty,
             tapones: upsellTapones,
             soloTapones: checkoutTapones,
@@ -3786,8 +3884,10 @@ function updateStockUI() {
   const cc = (typeof checkoutColor !== 'undefined' && checkoutColor) ? checkoutColor : pageColor;
   const coImg = document.getElementById('co-prod-img');
   if (coImg && bandThumbs[cc]) coImg.src = bandThumbs[cc];
-  const coColor = document.getElementById('co-prod-color');
-  if (coColor) coColor.textContent = 'Color ' + COLOR_LABEL[cc];
+  // El texto lo pinta actualizarResumenColor(): pisarlo con un solo color
+  // borraba el desglose cuando la compra lleva colores mezclados.
+  if (typeof actualizarResumenColor === 'function') actualizarResumenColor();
+  else { const coColor = document.getElementById('co-prod-color'); if (coColor) coColor.textContent = 'Color ' + COLOR_LABEL[cc]; }
   const coStock = document.getElementById('co-stock');
   if (coStock) { const t = textoStock(cc); coStock.textContent = t; coStock.style.display = t ? '' : 'none'; }
 }
