@@ -144,6 +144,38 @@
   .mtr-row.total .mtr-val{font-size:1.05rem;color:var(--green);}
   .ads-presu-row{display:flex;align-items:center;gap:8px;margin-top:12px;}
   .ads-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  /* Gráfico de CTR diario por campaña. Paleta categórica fija (azul, naranja,
+     aqua, amarillo, magenta) validada contra este fondo: banda de luminosidad,
+     piso de croma, separación para daltonismo y contraste ≥3:1. No se cicla ni
+     se reordena — cada campaña conserva su color aunque se pause otra. */
+  .ctr-wrap{background:#0b0b0b;border-radius:12px;padding:14px;border:1px solid var(--border-soft);margin-bottom:14px;}
+  #chartCtr{width:100%;height:auto;display:block;min-width:520px;cursor:crosshair;}
+  .ctr-scroll{overflow-x:auto;}
+  .ctr-chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  /* Ficha estilo cotización: nombre, CTR de hoy y variación contra ayer. */
+  .ctr-chip{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;min-width:150px;}
+  .ctr-chip-n{display:flex;align-items:center;gap:6px;font-size:.72rem;color:#9a9a9a;margin-bottom:3px;}
+  .ctr-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+  .ctr-chip-v{font-size:1.15rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;}
+  .ctr-chip-d{font-size:.72rem;font-weight:600;font-variant-numeric:tabular-nums;}
+  .ctr-sube{color:#8fc98f;} .ctr-baja{color:#f0736f;} .ctr-igual{color:#777;}
+  .ctr-rango{display:flex;gap:6px;margin-bottom:12px;}
+  .ctr-rango button{background:transparent;border:1px solid var(--border);color:#9a9a9a;border-radius:7px;padding:4px 11px;font-size:.72rem;cursor:pointer;}
+  .ctr-rango button.on{border-color:#3987e5;color:#fff;}
+  /* Vista de tabla: el globo del cursor no puede ser la única forma de leer un
+     valor — con lector de pantalla o sin mouse no existe. */
+  /* Solo para lector de pantalla: da contexto a la tabla sin ocupar espacio. */
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  .ctr-tabla{margin-top:12px;overflow-x:auto;}
+  .ctr-tabla table{width:100%;border-collapse:collapse;font-size:.72rem;}
+  .ctr-tabla th,.ctr-tabla td{padding:5px 9px;text-align:right;border-bottom:1px solid var(--border-soft);font-variant-numeric:tabular-nums;color:#bbb;}
+  .ctr-tabla th{color:#9a9a9a;font-weight:600;text-align:right;}
+  .ctr-tabla th:first-child,.ctr-tabla td:first-child{text-align:left;}
+  .ctr-tabla th .ctr-dot{display:inline-block;margin-right:5px;vertical-align:middle;}
+  /* Globo del cursor: se posiciona sobre el canvas, no dentro. */
+  .ctr-tip{position:absolute;pointer-events:none;background:#141414;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.72rem;color:#ddd;white-space:nowrap;display:none;z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.5);}
+  .ctr-tip b{color:#fff;}
+  .ctr-tip-row{display:flex;align-items:center;gap:6px;margin-top:3px;}
 
   /* Tables */
   table{width:100%;border-collapse:collapse;font-size:.78rem;}
@@ -405,6 +437,21 @@
       <div class="sec-h"><h2>📣 Ads Manager (Meta) · últimos 7 días</h2><button class="btn ghost" onclick="cargarAds()">Actualizar</button></div>
       <div class="empty" id="ads-off" style="display:none">Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID).</div>
       <div class="empty" id="ads-empty" style="display:none">Sin campañas.</div>
+      <!-- CTR diario por campaña activa. El CTR es de clics en el ENLACE: el
+           "de todos los clics" sube con likes y comentarios sin que nadie haya
+           entrado al sitio, así que serviría para nada acá. -->
+      <div class="ctr-wrap" id="ctr-wrap" style="display:none;position:relative;">
+        <div class="ctr-rango">
+          <button data-dias="7" onclick="cargarCtr(7)">7 días</button>
+          <button data-dias="14" class="on" onclick="cargarCtr(14)">14 días</button>
+          <button data-dias="30" onclick="cargarCtr(30)">30 días</button>
+          <button id="ctr-btn-tabla" onclick="alternarTablaCtr()" style="margin-left:auto">Ver tabla</button>
+        </div>
+        <div class="ctr-chips" id="ctr-chips"></div>
+        <div class="ctr-scroll"><canvas id="chartCtr" width="820" height="230"></canvas></div>
+        <div class="ctr-tip" id="ctr-tip"></div>
+        <div class="ctr-tabla" id="ctr-tabla" style="display:none"></div>
+      </div>
       <div class="ads-grid" id="ads-grid"></div>
     </section>
 
@@ -1375,6 +1422,227 @@
       .catch(function(){});
   }
 
+  // ── CTR diario por campaña (gráfico de líneas) ─────────────────────────
+  // Paleta categórica fija de 5 slots, validada contra el fondo #0b0b0b
+  // (banda de luminosidad, croma, separación para daltonismo y contraste).
+  // El color se asigna por POSICIÓN en la lista del backend, que viene
+  // ordenada por id = orden de creación: así el color sigue a la campaña y no
+  // a su ranking, y pausar una no repinta a las demás.
+  var CTR_COLORES = ['#3987e5','#d95926','#199e70','#c98500','#d55181'];
+  var ctrSt = { series: [], fechas: [], dias: 14, hover: null, reveal: 0, corriendo: false };
+
+  function cargarCtr(dias){
+    if(dias) ctrSt.dias = dias;
+    Array.prototype.forEach.call(document.querySelectorAll('.ctr-rango button'), function(b){
+      b.classList.toggle('on', Number(b.getAttribute('data-dias')) === ctrSt.dias);
+    });
+    fetch(BASE+'/admin/ads/ctr-diario?dias='+ctrSt.dias+'&clave='+encodeURIComponent(clave))
+      .then(function(r){ if(!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(function(d){ prepararCtr(d.series||[]); })
+      .catch(function(){ document.getElementById('ctr-wrap').style.display='none'; });
+  }
+
+  function prepararCtr(series){
+    var wrap = document.getElementById('ctr-wrap');
+    // Con una sola campaña activa el gráfico igual sirve (ver su propia
+    // variación), pero sin ninguna no hay nada que dibujar.
+    if(!series.length){ wrap.style.display='none'; return; }
+    wrap.style.display='';
+    // La paleta tiene 5 slots y generar un 6º color rompería la separación
+    // validada, así que se grafican las 5 más antiguas y se avisa del resto.
+    var fuera = Math.max(0, series.length - CTR_COLORES.length);
+    ctrSt.series = series.slice(0, CTR_COLORES.length).map(function(s, i){
+      var porFecha = {};
+      (s.dias||[]).forEach(function(d){ porFecha[d.fecha] = d; });
+      return { id:s.id, nombre:s.nombre, color:CTR_COLORES[i], porFecha:porFecha };
+    });
+    // Unión de fechas: si una campaña arrancó después, sus días previos quedan
+    // como hueco y la línea se corta ahí en vez de inventar un cero.
+    var set = {};
+    series.forEach(function(s){ (s.dias||[]).forEach(function(d){ set[d.fecha]=1; }); });
+    ctrSt.fechas = Object.keys(set).sort();
+    ctrSt.fuera = fuera;
+    ctrSt.reveal = 0;
+    pintarChipsCtr();
+    pintarTablaCtr();
+    engancharCtr();
+    if(!ctrSt.corriendo){ ctrSt.corriendo = true; requestAnimationFrame(frameCtr); }
+  }
+
+  // Fichas estilo cotización: CTR del último día con dato y su variación
+  // contra el día anterior. Hacen de leyenda (color + nombre), así que la
+  // identidad de cada línea nunca depende solo del color.
+  function pintarChipsCtr(){
+    var cont = document.getElementById('ctr-chips');
+    cont.innerHTML = ctrSt.series.map(function(s){
+      var vals = ctrSt.fechas.map(function(f){ return s.porFecha[f]; }).filter(Boolean);
+      var hoy = vals.length ? vals[vals.length-1].ctr : 0;
+      var ayer = vals.length > 1 ? vals[vals.length-2].ctr : null;
+      var d = (ayer === null || !ayer) ? null : (hoy - ayer) / ayer * 100;
+      var cls = d === null ? 'ctr-igual' : (d > 0.5 ? 'ctr-sube' : (d < -0.5 ? 'ctr-baja' : 'ctr-igual'));
+      var flecha = d === null ? '·' : (d > 0.5 ? '▲' : (d < -0.5 ? '▼' : '='));
+      var txt = d === null ? 'sin comparación' : flecha+' '+Math.abs(d).toFixed(1)+'% vs ayer';
+      return '<div class="ctr-chip">'+
+        '<div class="ctr-chip-n"><span class="ctr-dot" style="background:'+s.color+'"></span>'+esc(s.nombre)+'</div>'+
+        '<div class="ctr-chip-v">'+hoy.toFixed(2)+'%</div>'+
+        '<div class="ctr-chip-d '+cls+'">'+txt+'</div>'+
+      '</div>';
+    }).join('') + (ctrSt.fuera ? '<div class="ctr-chip"><div class="ctr-chip-n">+'+ctrSt.fuera+' campaña(s) fuera del gráfico</div></div>' : '');
+  }
+
+  // Los mismos datos del gráfico, día por día. Se pinta siempre aunque esté
+  // oculta: así al abrirla ya está lista y no parpadea.
+  function pintarTablaCtr(){
+    var filas = ctrSt.fechas.slice().reverse().map(function(f){
+      return '<tr><td>'+f+'</td>' + ctrSt.series.map(function(s){
+        var d = s.porFecha[f];
+        return '<td>'+(d ? d.ctr.toFixed(2)+'%' : '—')+'</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    document.getElementById('ctr-tabla').innerHTML =
+      '<table><caption class="sr-only">CTR de enlace por día y campaña</caption><thead><tr><th>Día</th>' +
+      ctrSt.series.map(function(s){
+        return '<th><span class="ctr-dot" style="background:'+s.color+'"></span>'+esc(s.nombre)+'</th>';
+      }).join('') + '</tr></thead><tbody>'+filas+'</tbody></table>';
+  }
+  function alternarTablaCtr(){
+    var t = document.getElementById('ctr-tabla'), b = document.getElementById('ctr-btn-tabla');
+    var abierta = t.style.display !== 'none';
+    t.style.display = abierta ? 'none' : '';
+    b.textContent = abierta ? 'Ver tabla' : 'Ocultar tabla';
+    b.classList.toggle('on', !abierta);
+  }
+
+  // El cursor se engancha una sola vez: cargarCtr se llama en cada refresco y
+  // si no, se irían apilando listeners sobre el mismo canvas.
+  function engancharCtr(){
+    var cv = document.getElementById('chartCtr');
+    if(!cv || cv.dataset.enganchado) return;
+    cv.dataset.enganchado = '1';
+    cv.addEventListener('mousemove', function(e){
+      if(!ctrSt.fechas.length) return;
+      var r = cv.getBoundingClientRect();
+      var x = (e.clientX - r.left) * (cv.width / r.width);
+      var g = geoCtr(cv);
+      var n = ctrSt.fechas.length;
+      var i = n === 1 ? 0 : Math.round((x - g.padL) / ((cv.width - g.padL - g.padR) / (n-1)));
+      ctrSt.hover = (i >= 0 && i < n) ? i : null;
+      moverTipCtr(cv, r);
+      if(!ctrSt.corriendo){ ctrSt.corriendo = true; requestAnimationFrame(frameCtr); }
+    });
+    cv.addEventListener('mouseleave', function(){
+      ctrSt.hover = null;
+      document.getElementById('ctr-tip').style.display = 'none';
+      if(!ctrSt.corriendo){ ctrSt.corriendo = true; requestAnimationFrame(frameCtr); }
+    });
+  }
+
+  function geoCtr(cv){ return { padL:38, padR:12, padT:14, padB:26, w:cv.width, h:cv.height }; }
+
+  function maxCtr(){
+    var m = 0;
+    ctrSt.series.forEach(function(s){ ctrSt.fechas.forEach(function(f){
+      var d = s.porFecha[f]; if(d && d.ctr > m) m = d.ctr;
+    }); });
+    return m > 0 ? m * 1.15 : 1;
+  }
+
+  function moverTipCtr(cv, rect){
+    var tip = document.getElementById('ctr-tip');
+    if(ctrSt.hover === null){ tip.style.display='none'; return; }
+    var f = ctrSt.fechas[ctrSt.hover];
+    var filas = ctrSt.series.map(function(s){
+      var d = s.porFecha[f];
+      return '<div class="ctr-tip-row"><span class="ctr-dot" style="background:'+s.color+'"></span>'+
+        esc(s.nombre)+' <b>'+(d ? d.ctr.toFixed(2)+'%' : '—')+'</b>'+
+        (d ? ' <span style="color:#888">('+num0(d.clics)+' clics)</span>' : '')+'</div>';
+    }).join('');
+    tip.innerHTML = '<b>'+f+'</b>'+filas;
+    tip.style.display = 'block';
+    // Se posiciona dentro de .ctr-wrap (position:relative), convirtiendo la x
+    // interna del canvas a px de pantalla por la escala del CSS.
+    var g = geoCtr(cv), n = ctrSt.fechas.length;
+    var esc_ = rect.width / cv.width;
+    var xi = n === 1 ? g.padL : g.padL + (cv.width - g.padL - g.padR) * ctrSt.hover / (n-1);
+    var left = cv.offsetLeft + xi * esc_ + 14;
+    if(left + tip.offsetWidth > cv.offsetLeft + rect.width) left -= tip.offsetWidth + 28;
+    tip.style.left = left + 'px';
+    tip.style.top = (cv.offsetTop + 10) + 'px';
+  }
+
+  function frameCtr(){
+    var cv = document.getElementById('chartCtr');
+    if(!cv || !ctrSt.fechas.length){ ctrSt.corriendo = false; return; }
+    var ctx = cv.getContext('2d'), g = geoCtr(cv);
+    var max = maxCtr(), n = ctrSt.fechas.length;
+    var areaW = g.w - g.padL - g.padR, areaH = g.h - g.padT - g.padB;
+    ctrSt.reveal += (1 - ctrSt.reveal) * 0.12;
+    var listo = ctrSt.reveal > 0.995;
+    if(listo) ctrSt.reveal = 1;
+    ctx.clearRect(0,0,g.w,g.h);
+
+    // Rejilla recesiva + escala en % a la izquierda.
+    ctx.strokeStyle = '#181818'; ctx.lineWidth = 1;
+    ctx.fillStyle = '#666'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+    for(var l=0; l<=4; l++){
+      var gy = g.padT + areaH * l/4;
+      ctx.beginPath(); ctx.moveTo(g.padL, gy+.5); ctx.lineTo(g.w-g.padR, gy+.5); ctx.stroke();
+      ctx.fillText((max*(1-l/4)).toFixed(1)+'%', g.padL-6, gy+3);
+    }
+
+    var px = function(i){ return n===1 ? g.padL+areaW/2 : g.padL + areaW*i/(n-1); };
+    var py = function(v){ return g.padT + areaH - (Math.min(v,max)/max)*areaH*ctrSt.reveal; };
+
+    // Cruz del cursor, por debajo de las líneas.
+    if(ctrSt.hover !== null){
+      ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px(ctrSt.hover)+.5, g.padT); ctx.lineTo(px(ctrSt.hover)+.5, g.padT+areaH); ctx.stroke();
+    }
+
+    // Una línea por campaña. Los días sin dato cortan la línea en vez de
+    // bajarla a cero, que sería inventar una caída que no pasó.
+    ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctrSt.series.forEach(function(s){
+      ctx.strokeStyle = s.color;
+      ctx.beginPath();
+      var abierto = false;
+      for(var i=0;i<n;i++){
+        var d = s.porFecha[ctrSt.fechas[i]];
+        if(!d){ abierto = false; continue; }
+        var x = px(i), y = py(d.ctr);
+        if(!abierto){ ctx.moveTo(x,y); abierto = true; } else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    });
+
+    // Marcadores solo en el día señalado. El anillo del color del fondo
+    // separa dos campañas que ese día tuvieron el mismo CTR y quedarían
+    // pisadas una sobre otra.
+    if(ctrSt.hover !== null){
+      ctrSt.series.forEach(function(s){
+        var d = s.porFecha[ctrSt.fechas[ctrSt.hover]];
+        if(!d) return;
+        var x = px(ctrSt.hover), y = py(d.ctr);
+        ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
+        ctx.fillStyle = s.color; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = '#0b0b0b'; ctx.stroke();
+      });
+      ctx.lineWidth = 2;
+    }
+
+    // Fechas abajo: una de cada dos con 14 días, una de cada cuatro con 30,
+    // para que no se pisen entre ellas.
+    var paso = n > 20 ? 4 : (n > 10 ? 2 : 1);
+    ctx.font = '9px monospace'; ctx.textAlign = 'center';
+    for(var k=0;k<n;k++){
+      if(k % paso && k !== n-1) continue;
+      ctx.fillStyle = (ctrSt.hover === k) ? '#fff' : '#777';
+      ctx.fillText(ctrSt.fechas[k].slice(5).replace('-','/'), px(k), g.h-9);
+    }
+
+    if(!listo) requestAnimationFrame(frameCtr); else ctrSt.corriendo = false;
+  }
+
   // Ads Manager (Meta): carga manual (botón "Actualizar"), no auto-refresh
   // cada 5s como el resto del panel, para no gastar el rate limit de Meta.
   function money0(n){ return '$'+Math.round(Number(n)||0).toLocaleString('es-CL'); }
@@ -1383,6 +1651,7 @@
       if(r.status===503){ document.getElementById('ads-off').style.display='block'; document.getElementById('ads-grid').style.display='none'; throw new Error('off'); }
       return r.json();
     }).then(function(d){ pintarAds(d.campaigns||[]); }).catch(function(){});
+    cargarCtr();
   }
   // Vertical (una métrica por fila) en vez de la tabla horizontal de Meta Ads
   // Manager — más fácil de leer de un vistazo para decidir qué ajustar.

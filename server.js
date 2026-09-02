@@ -617,6 +617,31 @@ app.get('/admin/ads/campaigns', async (req, res) => {
   }
 });
 
+// Serie diaria de CTR por campaña ACTIVA — alimenta el gráfico de líneas del
+// panel. Va aparte de /admin/ads/campaigns porque son N+1 llamadas a Meta
+// (una por campaña) y no conviene pagarlas en cada refresco de las tarjetas.
+app.get('/admin/ads/ctr-diario', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const dias = [7, 14, 30].includes(Number(req.query.dias)) ? Number(req.query.dias) : 14;
+    // Solo las activas: una campaña pausada aporta una línea que se corta y
+    // ensucia la lectura sin decir nada del presente.
+    const campanas = (await metaAds.listCampaigns()).filter(c => c.status === 'ACTIVE');
+    // Orden por id ascendente = orden de creación. El color de cada campaña
+    // sale de esta posición, así que al pausar o crear una, las que ya estaban
+    // NO cambian de color.
+    campanas.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    const series = await Promise.all(campanas.map(async c => ({
+      id: c.id,
+      nombre: c.name,
+      dias: await metaAds.getInsightsDiarios(c.id, dias).catch(() => [])
+    })));
+    res.json({ dias, series });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
 app.post('/admin/ads/status', async (req, res) => {
   if (!claveAdsOk(req, res)) return;
   try {

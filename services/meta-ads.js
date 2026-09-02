@@ -123,6 +123,41 @@ async function getInsights(campaignId, datePreset = 'last_7d') {
   };
 }
 
+// Serie DIARIA de una campaña: mismo endpoint que getInsights pero con
+// time_increment=1, que devuelve una fila por día en vez de un solo agregado.
+// Es lo que necesita el gráfico del panel para mostrar la variación día a día.
+//
+// El CTR que se grafica es el de clics EN EL ENLACE (inline_link_click_ctr),
+// no el ctr "de todos los clics": ese último infla con likes, comentarios y
+// despliegues del texto, así que sube sin que nadie haya entrado al sitio.
+//
+// date_preset solo acepta valores de su enum, no un número arbitrario de días,
+// así que la ventana viene de una lista blanca.
+const VENTANAS_DIARIAS = { 7: 'last_7d', 14: 'last_14d', 30: 'last_30d' };
+
+async function getInsightsDiarios(campaignId, dias = 14) {
+  const preset = VENTANAS_DIARIAS[dias] || VENTANAS_DIARIAS[14];
+  const data = await llamar(`/${campaignId}/insights`, {
+    params: {
+      fields: 'spend,impressions,clicks,ctr,inline_link_clicks,inline_link_click_ctr',
+      time_increment: 1,
+      date_preset: preset
+    }
+  });
+  // Meta devuelve los días en orden ascendente, pero no lo promete: se ordena
+  // acá para que el gráfico no dependa de eso.
+  return (data.data || [])
+    .map(r => ({
+      fecha: r.date_start,
+      ctr: Number(r.inline_link_click_ctr || 0),
+      ctrTodos: Number(r.ctr || 0),
+      clics: Number(r.inline_link_clicks || 0),
+      impresiones: Number(r.impressions || 0),
+      gasto: Number(r.spend || 0)
+    }))
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+}
+
 async function setStatus(objectId, status) {
   if (status !== 'ACTIVE' && status !== 'PAUSED') throw new Error('status inválido: ' + status);
   return llamar(`/${objectId}`, { method: 'POST', params: { status } });
@@ -151,4 +186,4 @@ async function duplicateCampaign(campaignId, overrides = {}) {
   return { id: nuevaId };
 }
 
-module.exports = { listCampaigns, getInsights, setStatus, updateBudget, duplicateCampaign };
+module.exports = { listCampaigns, getInsights, getInsightsDiarios, setStatus, updateBudget, duplicateCampaign };
