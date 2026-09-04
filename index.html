@@ -631,9 +631,41 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .reviews-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .reviews-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1;}
 .reviews-sub{font-size:.62rem;letter-spacing:2px;color:#d9bf92;margin-top:8px;text-transform:uppercase;}
-.reviews-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}
+/* Reseñas en carrusel horizontal. Antes eran tarjetas apiladas: en celular
+   las 6 visibles sumaban ~2.500px de scroll, y la foto salía recortada a una
+   franja de 200px de alto sobre un original de 640×853 — se perdía la mitad.
+   Ahora van en una fila deslizable: ocupan el alto de UNA tarjeta y la foto
+   se ve en 4:5, casi entera. */
+.reviews-carr{position:relative;}
+.reviews-grid{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;
+  /* Sangra hasta el borde de la pantalla para que la tarjeta siguiente asome:
+     ese recorte es lo que le avisa al visitante que se desliza. */
+  padding:4px 24px 14px;margin:0 -24px;scroll-padding-inline:24px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  /* Cada tarjeta con su propio alto. Estiradas al alto de la más larga
+     quedaba un hueco muerto abajo de las reseñas cortas, y en un carrusel
+     donde se ve una a la vez ese desnivel no se nota. */
+  align-items:flex-start;}
+.reviews-grid::-webkit-scrollbar{display:none;}
+.reviews-grid>.review-card{flex:0 0 86%;max-width:340px;scroll-snap-align:center;}
+@media(min-width:900px){.reviews-grid>.review-card{flex-basis:320px;}}
+/* Flechas: solo en escritorio. En celular el deslizamiento es el gesto natural
+   y las flechas taparían la foto. */
+.rv-arrow{position:absolute;top:38%;transform:translateY(-50%);z-index:6;width:44px;height:44px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:rgba(255,255,255,.8);font-size:2rem;font-weight:900;line-height:1;display:none;align-items:center;justify-content:center;cursor:pointer;padding:0 0 4px;box-shadow:0 4px 14px rgba(0,0,0,.4);transition:background .2s,color .2s;}
+.rv-arrow:hover{color:#fff;background:rgba(0,0,0,.75);}
+.rv-arrow.l{left:-6px;} .rv-arrow.r{right:-6px;}
+@media(min-width:900px){.rv-arrow{display:flex;}}
+.rv-hint{text-align:center;font-size:.65rem;letter-spacing:2px;color:var(--silver);text-transform:uppercase;margin:0 0 12px;}
+.rv-hint b{color:#ddd;font-variant-numeric:tabular-nums;}
 .review-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;}
-.review-photo{width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:14px;display:block;cursor:zoom-in;transition:opacity .2s;}
+/* El contenedor del carrusel reserva el alto de la tarjeta más alta, así que
+   una sola reseña larga dejaba ~280px de hueco bajo todas las cortas. Acotar
+   el texto a 5 líneas topa ese máximo; las 2 reseñas que se recortan se leen
+   completas en el modal de "ver reseñas". */
+.reviews-grid .review-text{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+/* aspect-ratio en vez de alto fijo: la foto es 3:4, recortarla a 200px de alto
+   se comía la muñeca en varias. A 4:5 se ve el producto completo. */
+.review-photo{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;margin-bottom:14px;display:block;cursor:zoom-in;transition:opacity .2s;}
 .review-photo:hover{opacity:.9;}
 .foto-lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;}
 .foto-lightbox.show{display:flex;}
@@ -643,11 +675,9 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .review-text{color:#d8d8d8;font-size:.86rem;line-height:1.6;margin-bottom:14px;}
 .review-author{font-size:.66rem;letter-spacing:1px;color:var(--silver);}
 .review-ig{color:#fff;font-weight:600;}
-@media(max-width:520px){.reviews-grid{grid-template-columns:1fr;}}
-/* Solo 4 reseñas a la vista; el resto aparece al tocar "Ver más reseñas" */
-.reviews-grid .review-extra{display:none;}
-.reviews-grid.show-all .review-extra{display:block;}
-.reviews-more{text-align:center;margin-top:18px;}
+/* Ya no se ocultan reseñas: en el carrusel entran todas sin costo de alto,
+   así que se fue el botón "Ver más reseñas" y su clase .review-extra queda
+   solo como marca en el HTML. */
 .reviews-cta{text-align:center;margin-top:26px;}
 /* CRO: rating + reaseguros */
 .prod-rating{display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:16px;cursor:pointer;}
@@ -3055,7 +3085,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <h2 class="reviews-title">Reseñas de la comunidad</h2>
       <div class="reviews-sub">★★★★★ · Comentarios de Instagram</div>
     </div>
-    <div class="reviews-grid">
+    <div class="rv-hint">Desliza para verlas todas · <b id="rv-count">1 / 18</b></div>
+    <div class="reviews-carr">
+    <div class="reviews-grid" id="reviewsCarr">
       <div class="review-card">
         <img class="review-photo" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
@@ -3156,7 +3188,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-author"><span class="review-ig">@rodrigo.andres.cg</span> · Instagram</div>
       </div>
     </div>
-    <div class="reviews-more"><button class="btn-review" id="btn-mas-resenas" onclick="verMasResenas(this)">Ver más reseñas</button></div>
+      <button class="rv-arrow l" type="button" onclick="scrollResenas(-1)" aria-label="Reseña anterior">‹</button>
+      <button class="rv-arrow r" type="button" onclick="scrollResenas(1)" aria-label="Reseña siguiente">›</button>
+    </div>
     <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
   </section>
 
@@ -4453,13 +4487,30 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarTapo
   </div>
 </div>
 <script>
-// "Ver más reseñas": muestra las que quedan ocultas y esconde el botón
-function verMasResenas(btn){
-  var grid=document.querySelector('.reviews-grid');
-  if(grid) grid.classList.add('show-all');
-  var cont=document.querySelector('.reviews-more');
-  if(cont) cont.style.display='none';
+// Carrusel de reseñas: avance de a una tarjeta con las flechas y contador
+// que sigue el scroll (también cuando se desliza con el dedo).
+function scrollResenas(dir){
+  var c=document.getElementById('reviewsCarr');
+  var card=c && c.querySelector('.review-card');
+  if(!card) return;
+  c.scrollBy({ left: dir * (card.offsetWidth + 12), behavior: 'smooth' });
 }
+(function(){
+  var c=document.getElementById('reviewsCarr'), lbl=document.getElementById('rv-count');
+  if(!c||!lbl) return;
+  var total=c.querySelectorAll('.review-card').length;
+  function pintar(){
+    var card=c.querySelector('.review-card');
+    if(!card) return;
+    // +12 del gap. Se redondea al más cercano: con scroll-snap el centro de la
+    // tarjeta activa siempre cae sobre un múltiplo exacto.
+    var i=Math.round(c.scrollLeft/(card.offsetWidth+12))+1;
+    lbl.textContent=Math.min(Math.max(i,1),total)+' / '+total;
+  }
+  var t=null;
+  c.addEventListener('scroll',function(){ clearTimeout(t); t=setTimeout(pintar,60); },{passive:true});
+  pintar();
+})();
 function abrirResenasModal(){
   var grid=document.querySelector('.reviews-grid');
   var body=document.getElementById('reviews-modal-body');
