@@ -1749,7 +1749,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- Precio y envío ya vienen pintados en el HTML: aplicarReserva() sólo
              corre después del fetch de /stock, así que si el backend tarda el
              precio igual se ve completo (ancla + descuento + envío gratis). -->
-        <div class="price-block"><span class="pb-main"><sup>$</sup>62.990 <span class="price-was">$74.999</span> <span class="price-save">-16%</span></span></div>
+        <div class="price-block"><span class="pb-main"><sup>$</sup>62.990</span></div>
         <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
@@ -1990,6 +1990,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // con la hora mal vería un precio y se le cobraría otro.
         // La fecha de subida vive en services/precio.js — esta es su copia.
         const SUBIDA_PRECIO_MS = Date.UTC(2026, 7, 27, 6, 0, 0);
+        // `ancla` y `off` SIGUEN llegando del backend (ver el merge más abajo)
+        // pero NO se muestran: el sitio anuncia un solo precio. El ancla de
+        // $74.999 nunca se cobró, y en Chile el "precio anterior" que se anuncia
+        // tiene que haber sido un precio realmente cobrado — el SERNAC lo
+        // fiscaliza. Si algún día hay un precio anterior REAL (por ejemplo si
+        // sube a $74.990 y $62.990 pasa a ser el histórico), reponer el tachado
+        // es volver a renderizar price-was/price-save, cuyo CSS sigue estando.
         let PRECIO = Date.now() < SUBIDA_PRECIO_MS
           ? { precio: 54990, ancla: 62990, off: 12 }
           : { precio: 62990, ancla: 74999, off: 16 };
@@ -3950,11 +3957,9 @@ function aplicarReserva() {
   // El sello se redondea HACIA ABAJO a propósito (12,70% se anuncia 12%;
   // 20,25% se anuncia 20%), así lo que se entrega siempre es igual o mejor
   // que lo anunciado. Al revés sería anunciar una rebaja que no se aplica.
-  const ancla = ' <span class="price-was">' + clp(PRECIO.ancla) + '</span>' +
-    ' <span class="price-save">-' + PRECIO.off + '%</span>';
   // El contador junto al precio se retiró: el único que queda es el del top
   // bar, que ya lleva la urgencia sin repetirla dos veces en la misma pantalla.
-  if (pb) pb.innerHTML = '<span class="pb-main"><sup>$</sup>' + clp(PRECIO.precio).slice(1) + ancla + '</span>';
+  if (pb) pb.innerHTML = '<span class="pb-main"><sup>$</sup>' + clp(PRECIO.precio).slice(1) + '</span>';
   // El envío gratis ya no va pegado al precio: tiene su propia línea fina
   // debajo, para no competir con el botón de comprar.
   const sl = document.getElementById('ship-line');
@@ -3962,11 +3967,9 @@ function aplicarReserva() {
     ? '<svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE'
     : '';
   const fc = document.querySelector('.fc-price');
-  const fcAncla = ' <span class="fold">' + clp(PRECIO.ancla) + '</span>' +
-    ' <span class="price-save">-' + PRECIO.off + '%</span>';
   if (fc) fc.innerHTML = oferta
-    ? clp(PRECIO.precio) + fcAncla + '<small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>'
-    : clp(PRECIO.precio) + fcAncla;
+    ? clp(PRECIO.precio) + '<small style="display:block;font-size:.95rem;color:#69c46d;letter-spacing:2.5px;margin-top:8px;">ENVÍO GRATIS A TODO CHILE</small>'
+    : clp(PRECIO.precio);
   const sb = document.querySelector('.sb-price');
   if (sb) sb.innerHTML = on
     ? '<b>' + clp(PRECIO.precio) + '</b>'
