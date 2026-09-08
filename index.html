@@ -1897,7 +1897,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <div class="field-label">Datos de quien recibe</div>
             <div class="shipping-form">
-              <input class="shipping-input" id="co-nombre" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" oninput="window.deusEvento && window.deusEvento('co:2datos')" />
+              <input class="shipping-input" id="co-nombre" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" oninput="window.deusEvento && window.deusEvento('co:2datos'); dispararAddToCart();" />
               <input class="shipping-input" id="co-rut" aria-label="RUT (opcional)" placeholder="RUT (opcional)" style="grid-column:1/-1" />
               <input class="shipping-input" id="co-email" type="email" aria-label="Correo electrónico" placeholder="Correo electrónico" style="grid-column:1/-1" />
               <input class="shipping-input" id="co-fono" type="tel" aria-label="Teléfono de contacto" placeholder="Teléfono (ej: +56 9 1234 5678)" style="grid-column:1/-1" />
@@ -2360,6 +2360,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           checkoutColores[i] = color;
           pintarColoresCheckout();
           actualizarResumenColor();
+          dispararAddToCart();
         }
 
         // Texto y foto de la tarjeta del producto. Con colores mezclados muestra
@@ -2413,11 +2414,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // La clave evita contar dos veces al cliente que SÍ usó el carrito: ese
         // camino ya reportó esta misma selección y después llama a
         // abrirCheckout(). Cambiar de color o de cantidad sí es un evento nuevo.
-        let ultimoAddToCart = '';
+        // Dedupe por visita, no solo contra el evento anterior: con la clave
+        // simple, mirar negra -> gris -> negra emitia 3 AddToCart. El Set deja
+        // una sola por combinación (color, cantidad, precio) por carga.
+        const addToCartVistos = new Set();
         function reportarAddToCart(id, nombre, cantidad, precio) {
           const clave = [id, cantidad, precio].join('|');
-          if (clave === ultimoAddToCart) return;
-          ultimoAddToCart = clave;
+          if (addToCartVistos.has(clave)) return;
+          addToCartVistos.add(clave);
           if (!window.fbq) return;
           fbq('track', 'AddToCart', {
             value: precio * cantidad,
@@ -2427,6 +2431,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             content_type: 'product',
             contents: [{ id: id, quantity: cantidad, item_price: precio }]
           });
+        }
+        // AddToCart DIFERIDO. Antes salia dentro de abrirCheckout(), o sea a un
+        // clic de distancia de cualquier CTA y sin ninguna friccion en el medio.
+        // Una campaña optimizada a "Añadir al carrito" explotó exactamente eso:
+        // 41 AddToCart a $775 c/u y CERO compras, contra los $11.137 por
+        // AddToCart de solid, que sí vende. El evento no era falso, era barato:
+        // medio clic de profundidad. Ahora se arma al abrir y recién se emite
+        // cuando la persona hace algo que cuesta (escribir un dato, cambiar
+        // cantidad o color), así que ya no se puede producir en masa por clic.
+        let addToCartPendiente = null;
+        function armarAddToCart(id, nombre, cantidad, precio) {
+          addToCartPendiente = { id: id, nombre: nombre, cantidad: cantidad, precio: precio };
+        }
+        function dispararAddToCart() {
+          if (!addToCartPendiente) return;
+          const a = addToCartPendiente;
+          addToCartPendiente = null;
+          reportarAddToCart(a.id, a.nombre, a.cantidad, a.precio);
         }
         function abrirCheckout(colorForzado, qtyForzada, soloTapones) {
           checkoutTapones = !!soloTapones;
@@ -2478,10 +2500,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // en vez de salir solo con IP y user agent.
           const prev = window.deusLeerMatch();
           if (prev && window.fbq) fbq('init', '2086346891978245', prev);
-          // AddToCart antes del InitiateCheckout: en este sitio abrir el
-          // checkout ES el momento en que el cliente elige el producto (ver
-          // reportarAddToCart).
-          reportarAddToCart(
+          // Abrir el checkout es mirar el producto configurado, no agregarlo:
+          // eso es ViewContent. El AddToCart queda ARMADO y sale en cuanto la
+          // persona interactúa de verdad (ver armarAddToCart/dispararAddToCart).
+          if (window.fbq) fbq('track', 'ViewContent', {
+            value: checkoutTapones ? TAPONES_PRICE : precioBanda(),
+            currency: 'CLP',
+            content_ids: [checkoutTapones ? 'tapones' : checkoutColor],
+            content_name: checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
+            content_type: 'product'
+          });
+          armarAddToCart(
             checkoutTapones ? 'tapones' : checkoutColor,
             checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
             checkoutQty,
@@ -2553,6 +2582,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           pintarColoresCheckout();
           actualizarResumenColor();
           actualizarTotalCheckout();
+          // Tocar la cantidad es intención real: vale el AddToCart, y con la
+          // cantidad nueva, no la que había al abrir.
+          armarAddToCart(
+            checkoutTapones ? 'tapones' : checkoutColor,
+            checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
+            checkoutQty,
+            checkoutTapones ? TAPONES_PRICE : precioBanda()
+          );
+          dispararAddToCart();
         }
         function actualizarTotalCheckout() {
           const bandTotal = precioBanda() * checkoutQty;
