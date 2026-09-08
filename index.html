@@ -365,20 +365,10 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 .announce-bar .ab-cd{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:5px;text-transform:none;}
 .announce-bar .ab-cd-lbl{font-size:.62rem;letter-spacing:2.5px;color:#9a9a9a;font-weight:600;text-transform:uppercase;}
 .announce-bar .ab-cd-boxes{display:inline-flex;gap:5px;}
-/* Al hacer scroll en móvil el contador del top bar se pliega y arriba queda
-   solo el "ENVÍO GRATIS". Debajo de 820px el mismo contador ya aparece en su
-   propia línea junto al precio, así que tenerlo además fijo arriba todo el
-   rato se lee como insistencia. En escritorio hay espacio de sobra y las
-   cajitas van junto al sello, así que ahí no se toca.
-   Se anima max-height porque height:auto no es animable; 90px pasa holgado la
-   altura real (~60px) incluso si las fuentes cargan tarde y crecen. */
-@media(max-width:820px){
-  .announce-bar .ab-cd{
-    overflow:hidden; max-height:90px; opacity:1;
-    transition:max-height .28s ease, opacity .18s ease, margin-top .28s ease;
-  }
-  .announce-bar.ab-compacta .ab-cd{ max-height:0; opacity:0; margin-top:0; }
-}
+/* El top bar ya NO se pliega al hacer scroll. Ese plegado existía solo porque
+   debajo de 820px aparecía un segundo contador junto al precio y tener los dos
+   se leía como insistencia. Retirado ese, plegar este dejaba al visitante de
+   móvil sin ningún contador apenas bajaba 80px. */
 .abcd-box{display:inline-flex;flex-direction:column;align-items:center;background:#161616;border:1px solid #2c2c2c;border-radius:7px;padding:5px 10px;min-width:42px;line-height:1;}
 .abcd-box b{font-size:1.05rem;font-weight:800;color:#e7cf9c;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
 .abcd-box small{font-size:.48rem;letter-spacing:1.2px;color:#7a7a7a;margin-top:4px;text-transform:uppercase;font-weight:500;}
@@ -529,7 +519,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 }
 
 .offer-kicker{font-size:.66rem;letter-spacing:2.5px;text-transform:uppercase;color:#d9bf92;margin-bottom:10px;font-weight:600;}
-.price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;color:#c9c9c9;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);text-decoration-thickness:1.5px;margin-left:8px;vertical-align:middle;}.price-save{display:inline-block;font-family:'DM Sans',sans-serif;font-size:.66rem;letter-spacing:1px;color:#d9bf92;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:3px 10px;margin-left:10px;vertical-align:middle;font-weight:600;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:2px;color:#7fd589;background:rgba(105,196,109,.12);border:1px solid rgba(105,196,109,.5);border-radius:6px;padding:4px 10px;vertical-align:middle;margin-left:8px;font-weight:600;}.offer-cd{display:inline-flex;gap:5px;vertical-align:middle;margin-left:8px;}.offer-cd .cdb{display:inline-flex;flex-direction:column;align-items:center;background:#1c1c1c;border:1px solid #3a3a3a;border-radius:7px;padding:5px 9px 4px;min-width:38px;}.offer-cd .cdb b{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#d9bf92;line-height:1;letter-spacing:.5px;}.offer-cd .cdb small{font-family:'DM Sans',sans-serif;font-size:.5rem;letter-spacing:.8px;color:#909090;text-transform:uppercase;margin-top:3px;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:22px;}
+.price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;color:#c9c9c9;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);text-decoration-thickness:1.5px;margin-left:8px;vertical-align:middle;}.price-save{display:inline-block;font-family:'DM Sans',sans-serif;font-size:.66rem;letter-spacing:1px;color:#d9bf92;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:3px 10px;margin-left:10px;vertical-align:middle;font-weight:600;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:2px;color:#7fd589;background:rgba(105,196,109,.12);border:1px solid rgba(105,196,109,.5);border-radius:6px;padding:4px 10px;vertical-align:middle;margin-left:8px;font-weight:600;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:22px;}
 .price-block sup{font-family:'DM Sans',sans-serif;font-size:1.2rem;color:var(--silver);vertical-align:top;margin-top:10px;margin-right:2px;font-weight:300;}
 /* Mejores prácticas mockup: pill de oferta, orden precio→normal, tarjetas */
 .offer-pill{display:inline-block;align-self:flex-start;background:linear-gradient(135deg,#911f1f,#6b1313);color:#ffdede;font-size:.64rem;letter-spacing:1.8px;font-weight:700;text-transform:uppercase;border-radius:20px;padding:7px 16px;margin-bottom:12px;}
@@ -1237,23 +1227,6 @@ body.sb-on .wa-float{bottom:82px;}
   .buybox .price-block .price-was{font-size:1.12rem;margin-left:8px;}
   .buybox .price-block .price-save{font-size:.57rem;padding:3px 8px;margin-left:7px;}
 }
-/* Contador de la oferta junto al precio. Reutiliza las cajitas .offer-cd que
-   ya define el sistema (mismo dorado que el sello -12%), así que se lee como
-   parte del bloque de precio y no como un widget pegado aparte. */
-.price-block .offer-cd{margin-left:14px;}
-@media(max-width:820px){
-  /* Ya no cabe al lado del precio: baja a su propia línea. Para que no se lea
-     como un widget suelto debajo, va pegado al precio y con un "TERMINA EN"
-     chico delante — así la fila entra como segunda línea del bloque de precio
-     y no como un elemento aparte. La etiqueta solo aparece acá: en desktop las
-     cajitas van junto al sello -12% y el contexto ya se entiende sin texto. */
-  .price-block .offer-cd{display:flex;align-items:center;justify-content:flex-start;margin:7px 0 0;}
-  .price-block .offer-cd::before{
-    content:'Termina en';font-family:'DM Sans',sans-serif;font-size:.62rem;
-    letter-spacing:1.6px;text-transform:uppercase;color:#8a8a8a;
-    font-weight:600;margin-right:4px;
-  }
-}
 .color-now{margin-left:auto;font-size:.68rem;color:#9a9a9a;letter-spacing:.5px;}
 /* Aviso: la foto visible no es el color elegido */
 .color-mismatch{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:-6px 0 14px;
@@ -1776,7 +1749,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- Precio y envío ya vienen pintados en el HTML: aplicarReserva() sólo
              corre después del fetch de /stock, así que si el backend tarda el
              precio igual se ve completo (ancla + descuento + envío gratis). -->
-        <div class="price-block"><span class="pb-main"><sup>$</sup>62.990 <span class="price-was">$74.999</span> <span class="price-save">-16%</span></span><span class="offer-cd" id="cd-ocd" data-u="dhm"><span class="cdb"><b id="ocd-d">--</b><small>días</small></span><span class="cdb"><b id="ocd-h">--</b><small>hrs</small></span><span class="cdb"><b id="ocd-m">--</b><small>min</small></span></span></div>
+        <div class="price-block"><span class="pb-main"><sup>$</sup>62.990 <span class="price-was">$74.999</span> <span class="price-save">-16%</span></span></div>
         <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
@@ -4017,9 +3990,9 @@ function aplicarReserva() {
   // que lo anunciado. Al revés sería anunciar una rebaja que no se aplica.
   const ancla = ' <span class="price-was">' + clp(PRECIO.ancla) + '</span>' +
     ' <span class="price-save">-' + PRECIO.off + '%</span>';
-  if (pb) pb.innerHTML = '<span class="pb-main"><sup>$</sup>' + clp(PRECIO.precio).slice(1) + ancla + '</span>' +
-    '<span class="offer-cd" id="cd-ocd" data-u="' + firmaUnidadesOferta() + '">' +
-    htmlCajitasOferta('ocd', 'cdb') + '</span>';
+  // El contador junto al precio se retiró: el único que queda es el del top
+  // bar, que ya lleva la urgencia sin repetirla dos veces en la misma pantalla.
+  if (pb) pb.innerHTML = '<span class="pb-main"><sup>$</sup>' + clp(PRECIO.precio).slice(1) + ancla + '</span>';
   // El envío gratis ya no va pegado al precio: tiene su propia línea fina
   // debajo, para no competir con el botón de comprar.
   const sl = document.getElementById('ship-line');
@@ -4139,9 +4112,10 @@ function htmlCajitasOferta(pre, claseCaja, unidades) {
   }).join('');
 }
 
-// Los dos sitios donde vive el contador: id del contenedor, prefijo de los
-// <b> que van adentro, y la clase de cada cajita.
-var OFERTA_SITIOS = [['cd-ofcd', 'ofcd', 'abcd-box'], ['cd-ocd', 'ocd', 'cdb']];
+// Dónde vive el contador: id del contenedor, prefijo de los <b> que van
+// adentro, y la clase de cada cajita. Queda uno solo (el del top bar); el que
+// acompañaba al precio se retiró.
+var OFERTA_SITIOS = [['cd-ofcd', 'ofcd', 'abcd-box']];
 
 function pintarContadorOferta() {
   var ms = msRestanteOferta();
@@ -4573,17 +4547,11 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
 <script>
 (function(){
   var bar=document.getElementById('stickyBuy');
-  var top=document.getElementById('offer-bar');
   function onScroll(){
     var y=window.scrollY;
     var show=y>600;
     bar.classList.toggle('show',show);
     document.body.classList.toggle('sb-on',show);
-    // Top bar: apenas se empieza a bajar se pliega el contador (el CSS solo lo
-    // aplica en móvil). 80px es pasado el rebote del scroll pero antes de que
-    // el precio salga de pantalla, así que nunca quedan los dos contadores
-    // compitiendo. Al volver arriba reaparece solo.
-    if(top) top.classList.toggle('ab-compacta',y>80);
   }
   window.addEventListener('scroll',onScroll,{passive:true});
   onScroll();
