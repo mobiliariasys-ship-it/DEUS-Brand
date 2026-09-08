@@ -933,7 +933,7 @@ body.sb-on .chat-panel{bottom:82px;}
 .how-img.contain img{object-fit:contain;max-height:360px;padding:16px;width:auto;}
 .how-txt h3{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;margin-bottom:12px;}
 .how-txt p{color:var(--silver);font-size:.9rem;line-height:1.75;letter-spacing:.3px;}
-.monitor{max-width:1100px;margin:0 auto;padding:12px 24px 24px;}
+.monitor{max-width:1100px;margin:0 auto;padding:12px 24px 24px;scroll-margin-top:96px;}
 /* Beneficios */
 .benefits{max-width:1100px;margin:0 auto;padding:36px 24px 20px;}
 .benefits-head{text-align:center;margin-bottom:28px;}
@@ -1011,14 +1011,31 @@ body.sb-on .wa-float{bottom:82px;}
 .monitor-head{text-align:center;margin-bottom:24px;}
 .monitor-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .monitor-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1;}
-.monitor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;}
-.metric{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;transition:border-color .2s;}
-.metric:hover{border-color:#3a3a3a;}
-.metric .num{font-size:.62rem;letter-spacing:1px;color:#6f6f6f;font-weight:700;min-width:16px;}
-.metric .lbl{font-size:.84rem;font-weight:500;color:var(--white);letter-spacing:.2px;}
-.btn-metrics{display:none;margin:14px auto 0;background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;font-size:.66rem;letter-spacing:2px;text-transform:uppercase;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
-.btn-metrics:hover{border-color:#e8e8e8;color:#e8e8e8;}
-@media(max-width:520px){.monitor-grid{grid-template-columns:1fr 1fr;}.metric{padding:11px 12px;gap:9px;}.metric .lbl{font-size:.76rem;}.m-extra{display:none;}.monitor.open .m-extra{display:flex;}.btn-metrics{display:block;}}
+/* Las metricas van como chips, no como tarjetas. Antes eran diez cajas con el
+   mismo fondo, borde y radio que las cuatro tarjetas de arriba: la seccion se
+   leia como diez cuadros grises iguales, sin jerarquia. Los numeros 01-06 no
+   aportaban dato y desalineaban las filas (cada etiqueta ocupa distinto alto).
+   Ademas el boton "Ver todas" caia justo debajo del boton flotante de IA DEUS
+   y quedaba tapado — y esconder 4 metricas contradice el mensaje de la
+   seccion, que es exactamente cuantas cosas mide. Ahora se muestran las 10. */
+.monitor-sub{max-width:520px;margin:12px auto 0;font-size:.82rem;line-height:1.55;color:var(--silver);}
+.mchips-lbl{text-align:left;font-size:.58rem;letter-spacing:3.5px;text-transform:uppercase;color:#7a7a7a;margin:24px 0 12px;}
+.mchips{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-start;}
+.mchip{display:inline-flex;align-items:center;gap:7px;background:#151517;border:1px solid #2b2b33;border-radius:999px;padding:8px 14px;font-size:.75rem;color:#cfcfd6;line-height:1.3;}
+.mchip::before{content:'';width:5px;height:5px;border-radius:50%;background:#d9bf92;flex:0 0 auto;}
+/* El icono se alineaba al centro vertical: en una tarjeta de tres lineas
+   quedaba flotando a media altura en vez de junto al titulo. */
+.monitor .specs-sec .spec-list li{align-items:flex-start;}
+.monitor .specs-sec .spec-icon{margin-top:1px;}
+@media(max-width:520px){
+  .monitor-sub{font-size:.78rem;}
+  .mchip{font-size:.7rem;padding:6px 11px;gap:6px;}
+  .mchips{gap:5px;}
+  .mchips-lbl{margin:20px 0 10px;}
+  .monitor .specs-sec .spec-list{grid-template-columns:1fr;gap:6px;}
+  .monitor .specs-sec .spec-list li{padding:10px 12px;font-size:.68rem;line-height:1.4;}
+  .monitor .specs-sec .spec-label{font-size:.76rem;margin-bottom:2px;}
+}
 @media(max-width:760px){.how-row{grid-template-columns:1fr;gap:18px;margin-bottom:38px;}.how-row.reverse .how-img{order:0;}.how-img{min-height:230px;}}
 .app-stores{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:6px 0 44px;}
 .store-btn{display:inline-flex;align-items:center;gap:11px;background:#161616;border:1px solid var(--border);color:#f2f2f2;padding:11px 22px;text-decoration:none;transition:border-color .2s,transform .12s;}
@@ -3173,6 +3190,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
   </section>
 
+  <section class="monitor" id="mide">
+    <div class="monitor-head">
+      <div class="monitor-kicker">Monitoreo 24/7</div>
+      <h2 class="monitor-title">Lo que DEUS Band mide</h2>
+      <p class="monitor-sub">Sensores que trabajan todo el día y te dicen cómo estás, no solo cuánto te moviste.</p>
+    </div>
+    <div class="specs-sec specs-in-how">
+      <ul class="spec-list">
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
+      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
+    </ul>
+    </div>
+    <div class="mchips-lbl">Y todo esto en la app</div>
+    <div class="mchips">
+      <span class="mchip">Frecuencia cardíaca</span>
+      <span class="mchip">Saturación de O₂ (SpO₂)</span>
+      <span class="mchip">Recuperación</span>
+      <span class="mchip">HRV · Variabilidad cardíaca</span>
+      <span class="mchip">Nivel de estrés</span>
+      <span class="mchip">Calidad del sueño</span>
+      <span class="mchip">Pasos y calorías</span>
+      <span class="mchip">+100 modos deportivos</span>
+      <span class="mchip">Ritmo, velocidad y cadencia</span>
+      <span class="mchip">Notificaciones por vibración</span>
+    </div>
+  </section>
+
   <!-- COMO FUNCIONA -->
   <section class="how" id="tecnologia">
     <div class="how-head">
@@ -3539,42 +3585,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
 
   <!-- MONITOREO 24/7 + ESPECIFICACIONES (unificadas, bajo los botones de descarga) -->
-  <section class="monitor">
-    <div class="monitor-head">
-      <div class="monitor-kicker">Monitoreo 24/7</div>
-      <h2 class="monitor-title">Lo que DEUS Band mide</h2>
-    </div>
-    <!-- Destacados (antes seccion aparte de Especificaciones) -->
-    <div class="specs-sec specs-in-how">
-      <ul class="spec-list">
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería 20 Días por Carga</span>20 días de autonomía por carga para uso continuo sin interrupciones.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
-    </ul>
-    </div>
-    <div class="monitor-grid">
-      <div class="metric"><span class="num">01</span><span class="lbl">Frecuencia cardíaca</span></div>
-      <div class="metric"><span class="num">02</span><span class="lbl">Saturación de O₂ (SpO₂)</span></div>
-      <div class="metric"><span class="num">03</span><span class="lbl">Recuperación</span></div>
-      <div class="metric"><span class="num">04</span><span class="lbl">HRV · Variabilidad cardíaca</span></div>
-      <div class="metric"><span class="num">05</span><span class="lbl">Nivel de estrés</span></div>
-      <div class="metric"><span class="num">06</span><span class="lbl">Calidad del sueño</span></div>
-      <div class="metric m-extra"><span class="num">07</span><span class="lbl">Pasos y calorías</span></div>
-      <div class="metric m-extra"><span class="num">08</span><span class="lbl">+100 modos deportivos</span></div>
-      <div class="metric m-extra"><span class="num">09</span><span class="lbl">Ritmo, velocidad y cadencia</span></div>
-      <div class="metric m-extra"><span class="num">10</span><span class="lbl">Notificaciones por vibración · llamadas, mensajes y alarma</span></div>
-    </div>
-    <button class="btn-metrics" id="btnMetrics" onclick="toggleMetrics()">Ver todas las métricas (+4)</button>
-  </section>
-  <script>
-  function toggleMetrics(){
-    var sec=document.querySelector('.monitor');
-    var btn=document.getElementById('btnMetrics');
-    sec.classList.toggle('open');
-    btn.textContent=sec.classList.contains('open')?'Ver menos':'Ver todas las métricas (+4)';
-  }
-  </script>
+
 
 
   <!-- CARACTERÍSTICAS (bajadas: las reseñas van primero) -->
