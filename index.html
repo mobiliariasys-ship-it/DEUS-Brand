@@ -1367,7 +1367,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b><div class="ab-cd"><span class="ab-cd-lbl">Precio de oferta termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
+<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b><div class="ab-cd"><span class="ab-cd-lbl">Termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -3994,7 +3994,7 @@ function aplicarReserva() {
     ab.innerHTML = (ofertaActiva()
       ? '🚚 <b>ENVÍO GRATIS</b>'
       : '🔥 <b>Última unidad</b> disponible') +
-      '<div class="ab-cd"><span class="ab-cd-lbl">Precio de oferta termina en</span>' +
+      '<div class="ab-cd"><span class="ab-cd-lbl">Termina en</span>' +
       '<span class="ab-cd-boxes" id="cd-ofcd" data-u="' + firmaUnidadesOferta() + '">' +
       htmlCajitasOferta('ofcd', 'abcd-box') + '</span></div>';
   }
@@ -4023,7 +4023,7 @@ function aplicarReserva() {
 // el mismo tiempo restante — no depende de la primera visita ni de
 // localStorage. Tampoco hay ninguna fecha que mantener en el servidor.
 var OFERTA_HORA_FIN = 1;     // termina a la 01:00 de Chile
-var OFERTA_DIAS_CICLO = 3;   // y dura 3 días
+var OFERTA_DIAS_CICLO = 2;   // y dura 2 días
 
 // Lee el reloj de Chile una sola vez y devuelve lo que necesita el contador:
 // el día (contado desde 1970, para saber en qué punto del ciclo estamos) y
