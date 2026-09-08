@@ -1881,7 +1881,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <span class="ef-ico">🚚</span>
               <div class="ef-txt">
                 <b>Envío GRATIS a todo Chile</b>
-                <small id="envio-free-sub">Ya está incluido — no pagas despacho</small>
+                <small id="envio-free-sub" style="display:none;"></small>
               </div>
             </div>
 
@@ -2153,12 +2153,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (!caja || !sub) return;
           if (!envioGratis()) { caja.style.display = 'none'; return; }
           caja.style.display = 'flex';
-          sub.textContent = (ahorro > 0)
+          // Sin monto no se dice nada: "Envío GRATIS a todo Chile" ya se
+          // basta solo. El texto anterior ("Ya está incluido — no pagas
+          // despacho") se leía como que el despacho venía metido dentro del
+          // precio, o sea que igual lo estabas pagando. Cuando ya se cotizó
+          // sí aparece, porque ahí hay un número concreto que mostrar.
+          const hayMonto = ahorro > 0;
+          sub.textContent = hayMonto
             ? `Te ahorras $${ahorro.toLocaleString('es-CL')} en el despacho a tu comuna`
-            // Afirmación, no promesa condicional: el mensaje anterior ("escribe
-            // tu dirección y verás cuánto te ahorras") dejaba la duda de si al
-            // final iban a cobrar algo.
-            : 'Ya está incluido — no pagas despacho';
+            : '';
+          sub.style.display = hayMonto ? '' : 'none';
         }
         // Cotización de envío en vuelo y turno de la última pedida.
         //
