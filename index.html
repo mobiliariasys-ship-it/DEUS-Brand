@@ -1244,6 +1244,10 @@ body.sb-on .wa-float{bottom:82px;}
   .buybox .price-block .price-was{font-size:1.12rem;margin-left:8px;}
   .buybox .price-block .price-save{font-size:.57rem;padding:3px 8px;margin-left:7px;}
 }
+/* Sugerencia de correo mal tipeado. Va debajo del campo, no en un alert:
+   se corrige de un toque y no interrumpe el llenado del formulario. */
+.email-sug{font-size:.72rem;color:#e0c089;line-height:1.4;margin-top:-4px;}
+.email-sug button{background:transparent;border:none;color:#e8b464;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:0;}
 .color-now{margin-left:auto;font-size:.68rem;color:#9a9a9a;letter-spacing:.5px;}
 /* Aviso: la foto visible no es el color elegido */
 .color-mismatch{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:-6px 0 14px;
@@ -1889,7 +1893,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="shipping-form">
               <input class="shipping-input" id="co-nombre" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" oninput="window.deusEvento && window.deusEvento('co:2datos')" />
               <input class="shipping-input" id="co-rut" aria-label="RUT (opcional)" placeholder="RUT (opcional)" style="grid-column:1/-1" />
-              <input class="shipping-input" id="co-email" type="email" aria-label="Correo electrónico" placeholder="Correo electrónico" style="grid-column:1/-1" />
+              <input class="shipping-input" id="co-email" type="email" inputmode="email" autocomplete="email" aria-label="Correo electrónico" placeholder="Correo electrónico" style="grid-column:1/-1" oninput="revisarEmail()" onblur="revisarEmail()" />
+              <div class="email-sug" id="email-sug" style="display:none;grid-column:1/-1"></div>
               <input class="shipping-input" id="co-fono" type="tel" aria-label="Teléfono de contacto" placeholder="Teléfono (ej: +56 9 1234 5678)" style="grid-column:1/-1" />
             </div>
 
@@ -2881,7 +2886,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           return {
             customerName: document.getElementById('co-nombre').value.trim(),
             customerRut: document.getElementById('co-rut').value.trim(),
-            customerEmail: document.getElementById('co-email').value.trim(),
+            // Normalizado (sin espacios internos, en minúscula): el mismo
+            // correo escrito de dos formas no puede llegar distinto al
+            // backend ni al comprobante.
+            customerEmail: normalizarEmail(document.getElementById('co-email').value),
             customerPhone: document.getElementById('co-fono').value.trim(),
             selectedColor: checkoutColor,
             // Un color por unidad. El backend arma con esto el texto que va al
@@ -2918,6 +2926,112 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           } catch (e) { return ''; }
         }
 
+        // ── Correos mal tipeados ────────────────────────────────────────
+        // Se perdió una venta porque el cliente escribió ".con" en vez de
+        // ".com": el patrón de validación solo exigía un @ y un punto, así que
+        // pasaba limpio. El pedido entró, el correo rebotó y no hubo forma de
+        // contactarlo.
+        //
+        // Los dominios que concentran casi todo el correo personal en Chile.
+        const DOMINIOS_COMUNES = [
+          'gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'icloud.com',
+          'live.com', 'live.cl', 'hotmail.cl', 'outlook.cl', 'yahoo.cl',
+          'vtr.net', 'me.com', 'terra.cl'
+        ];
+        // TLD que NO EXISTEN: escribirlos es siempre un error de tipeo. Ojo con
+        // .co (Colombia), .cm (Camerún), .om (Omán) y .cl — esos SÍ existen y
+        // bloquearlos botaría correos válidos. Por eso la lista es corta y
+        // explícita en vez de "todo lo que no sea .com".
+        const TLD_IMPOSIBLES = ['con', 'cmo', 'comm', 'ocm', 'vom', 'xom', 'cim', 'cpm', 'clm', 'coom', 'con.', 'cok'];
+
+        // Distancia de edición: cuántos cambios de una letra separan dos textos.
+        function distanciaTexto(a, b) {
+          const m = a.length, n = b.length;
+          let prev = Array.from({ length: n + 1 }, (_, j) => j);
+          for (let i = 1; i <= m; i++) {
+            const fila = [i];
+            for (let j = 1; j <= n; j++) {
+              fila[j] = Math.min(
+                prev[j] + 1,
+                fila[j - 1] + 1,
+                prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+              );
+            }
+            prev = fila;
+          }
+          return prev[n];
+        }
+
+        function normalizarEmail(email) {
+          return String(email || '').trim().toLowerCase().replace(/\s+/g, '');
+        }
+
+        // Devuelve el correo corregido si el dominio se parece a uno común, o
+        // null si no hay nada que sugerir.
+        function sugerenciaEmail(email) {
+          const e = normalizarEmail(email);
+          const i = e.lastIndexOf('@');
+          if (i < 1 || i === e.length - 1) return null;
+          const usuario = e.slice(0, i), dominio = e.slice(i + 1);
+          if (DOMINIOS_COMUNES.indexOf(dominio) >= 0) return null;
+          let mejor = null, mejorD = 99;
+          for (const d of DOMINIOS_COMUNES) {
+            const dist = distanciaTexto(dominio, d);
+            if (dist < mejorD) { mejorD = dist; mejor = d; }
+          }
+          // Hasta 2 cambios sobre dominios de 9-12 letras es un tipeo. Más que
+          // eso ya es otro dominio (una empresa, una universidad) y sugerir
+          // ahí sería molestar a quien escribió bien.
+          return (mejor && mejorD > 0 && mejorD <= 2) ? usuario + '@' + mejor : null;
+        }
+
+        // TLD inexistente: acá sí frenamos, porque un falso positivo es
+        // imposible — esas terminaciones no existen en internet.
+        function tldImposible(email) {
+          const m = normalizarEmail(email).match(/\.([a-z]+)$/);
+          return !!m && TLD_IMPOSIBLES.indexOf(m[1]) >= 0;
+        }
+
+        // Teléfono: en Chile el móvil son 9 dígitos. Menos de 8 no es un
+        // número al que Starken pueda llamar para coordinar la entrega.
+        function telefonoUsable(t) {
+          return String(t || '').replace(/\D/g, '').length >= 8;
+        }
+
+        function revisarEmail() {
+          const input = document.getElementById('co-email');
+          const caja = document.getElementById('email-sug');
+          if (!input || !caja) return;
+          const sug = sugerenciaEmail(input.value);
+          if (!sug) { caja.style.display = 'none'; caja.innerHTML = ''; caja.dataset.sug = ''; return; }
+          // Si la sugerencia no cambió, NO se rehace el HTML. El campo llama a
+          // esta función también en su blur, y tocar el botón dispara ese blur
+          // primero: reescribir el innerHTML ahí destruía el botón justo
+          // mientras el dedo bajaba, y el toque no aterrizaba en nada.
+          if (caja.dataset.sug === sug) { caja.style.display = 'block'; return; }
+          caja.dataset.sug = sug;
+          caja.style.display = 'block';
+          // onmousedown/ontouchstart con preventDefault: así el campo ni
+          // siquiera pierde el foco al tocar, que es el otro lado del mismo
+          // problema.
+          caja.innerHTML = '¿Quisiste decir <button type="button"' +
+            ' onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"' +
+            ' onclick="aplicarSugerenciaEmail()">' +
+            sug.replace(/</g, '&lt;') + '</button>?';
+        }
+
+        function aplicarSugerenciaEmail() {
+          const input = document.getElementById('co-email');
+          const caja = document.getElementById('email-sug');
+          if (!input || !caja || !caja.dataset.sug) return;
+          input.value = caja.dataset.sug;
+          caja.style.display = 'none';
+          caja.innerHTML = '';
+          // Se olvida la sugerencia aplicada: si no, volver a escribir el mismo
+          // error no vuelve a avisar, porque el guard lo daría por ya mostrado.
+          caja.dataset.sug = '';
+        }
+
         // Valida nombre, teléfono y envío antes de pagar
         function validarCheckout(msg) {
           const d = datosPedido();
@@ -2928,7 +3042,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // compras (fricción alta en Chile). Se recibe si lo escriben, pero no
           // bloquea el pago.
           if (!d.customerEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.customerEmail)) { msg.textContent = 'Ingresa un correo válido.'; return false; }
+          // Terminación inexistente (.con, .cmo...): se frena y se ofrece la
+          // corrección, porque ese correo va a rebotar seguro.
+          if (tldImposible(d.customerEmail)) {
+            revisarEmail();
+            const sug = sugerenciaEmail(d.customerEmail);
+            msg.textContent = sug
+              ? 'Revisa tu correo: ¿quisiste decir ' + sug + '?'
+              : 'Revisa la terminación de tu correo (¿.com?).';
+            return false;
+          }
           if (!d.customerPhone) { msg.textContent = 'Ingresa un teléfono de contacto.'; return false; }
+          if (!telefonoUsable(d.customerPhone)) {
+            msg.textContent = 'Ingresa un teléfono con al menos 8 dígitos — lo usamos para coordinar la entrega.'; return false;
+          }
           // Ya no se exige el envío COTIZADO acá (no hay botón para forzarlo):
           // solo que la dirección esté completa. De cotizarlo se encarga
           // asegurarEnvio() justo antes de pagar.
