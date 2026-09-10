@@ -9,6 +9,7 @@ const chatRoutes = require('./routes/chat');
 const atletas = require('./services/atletas');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico } = require('./services/email');
 const colores_ = require('./services/colores');
+const correo_ = require('./services/correo');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
 const persist = require('./services/persist');
@@ -171,6 +172,12 @@ function guardarPedidos() { persist.save('pedidos.json', pedidos).catch(e => con
 app.post('/crear-preferencia', async (req, res) => {
   const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, acciones, colores } = req.body;
   // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
+  // MercadoPago tambien recibe el correo. Mismo corte que en Flow: si la
+  // pasarela lo va a rechazar, mejor decirselo al cliente ahora y que lo
+  // arregle, en vez de que se lleve un error generico y abandone.
+  if (!correo_.esUsable(customerEmail)) {
+    return res.status(400).json({ error: correo_.MENSAJE, campo: 'email' });
+  }
   const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
   const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
 
@@ -234,7 +241,7 @@ app.post('/crear-preferencia', async (req, res) => {
       metadata: {
         customer_name: customerName,
         customer_rut: customerRut,
-        customer_email: customerEmail,
+        customer_email: correo_.normalizar(customerEmail),
         customer_phone: customerPhone,
         selected_color: colorPedido,
         // El detalle por unidad también viaja acá: la metadata es la fuente
@@ -291,7 +298,7 @@ app.post('/crear-preferencia', async (req, res) => {
       customer: {
         name: customerName,
         rut: customerRut,
-        email: customerEmail,
+        email: correo_.normalizar(customerEmail),
         phone: customerPhone
       },
       shipping: {

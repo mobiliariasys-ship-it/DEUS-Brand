@@ -3,6 +3,7 @@ const router = express.Router();
 const https = require('https');
 const crypto = require('crypto');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarPagoFallido } = require('../services/email');
+const correo_ = require('../services/correo');
 const colores_ = require('../services/colores');
 const { decrementStock, getStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
@@ -67,6 +68,14 @@ router.post('/flow/crear', async (req, res) => {
   // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
   const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
   const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
+  // Flow rechaza el pago ENTERO si el correo no le parece valido (code 1620):
+  // el cliente no puede pagar, no es que rebote el comprobante. Se corta aca
+  // con 400 y un mensaje accionable — con 500 fetchBackend reintentaria 4
+  // veces con 4s de espera y el cliente esperaria 12 segundos para leer un
+  // "no pudimos conectar" que no le dice que arreglar.
+  if (!correo_.esUsable(customerEmail)) {
+    return res.status(400).json({ error: correo_.MENSAJE, campo: 'email' });
+  }
   try {
     const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
     const amount = soloTapones
@@ -83,7 +92,7 @@ router.post('/flow/crear', async (req, res) => {
         : 'DEUS Band' + (qty > 1 ? ' x' + qty : '') + (tapones ? ' + Tapones' : ''),
       currency: 'CLP',
       amount: String(amount),
-      email: customerEmail || 'cliente@deusbrand.cl',
+      email: correo_.normalizar(customerEmail),
       urlConfirmation: base + '/flow/confirmacion',
       urlReturn: base + '/flow/retorno'
     };
@@ -136,6 +145,11 @@ router.post('/flow/crear', async (req, res) => {
     res.json({ url: r.body.url + '?token=' + r.body.token });
   } catch (e) {
     console.error('[flow/crear] Error:', e.message);
+    // Si lo que se quejo fue el correo (1620), se le dice al cliente para que
+    // lo corrija. Cubre los tipeos que no estan en la lista de arriba.
+    if (/userEmail|is not valid|\b1620\b/i.test(e.message || '')) {
+      return res.status(400).json({ error: correo_.MENSAJE, campo: 'email' });
+    }
     // Aviso al dueño: el cliente se quedó sin poder pagar (venta rescatable)
     enviarPagoFallido({
       metodo: 'Webpay / Flow',

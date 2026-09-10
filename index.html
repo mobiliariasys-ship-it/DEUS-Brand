@@ -2942,7 +2942,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // .co (Colombia), .cm (Camerún), .om (Omán) y .cl — esos SÍ existen y
         // bloquearlos botaría correos válidos. Por eso la lista es corta y
         // explícita en vez de "todo lo que no sea .com".
-        const TLD_IMPOSIBLES = ['con', 'cmo', 'comm', 'ocm', 'vom', 'xom', 'cim', 'cpm', 'clm', 'coom', 'con.', 'cok'];
+        const TLD_IMPOSIBLES = ['con', 'cmo', 'comm', 'ocm', 'vom', 'xom', 'cim', 'cpm', 'clm', 'coom', 'cok'];
 
         // Distancia de edición: cuántos cambios de una letra separan dos textos.
         function distanciaTexto(a, b) {
@@ -3032,6 +3032,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           caja.dataset.sug = '';
         }
 
+        // La pasarela puede rechazar el pago por el correo (Flow devuelve
+        // code 1620 y no genera el link). Ese caso el cliente SÍ lo puede
+        // arreglar solo, así que se le dice qué pasa en vez de tirarle el
+        // "no pudimos conectar" genérico, que lo manda a reintentar el mismo
+        // error hasta que se aburre. Devuelve true si se hizo cargo.
+        function errorDeCorreo(data, msg) {
+          if (!data || data.campo !== 'email') return false;
+          msg.style.display = 'block';
+          msg.style.color = '#c0392b';
+          msg.textContent = data.error || 'Revisa tu correo antes de pagar.';
+          const input = document.getElementById('co-email');
+          if (input) {
+            try { input.focus(); input.select(); } catch (e) {}
+            input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+          if (typeof revisarEmail === 'function') revisarEmail();
+          return true;
+        }
+
         // Valida nombre, teléfono y envío antes de pagar
         function validarCheckout(msg) {
           const d = datosPedido();
@@ -3094,6 +3113,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               // al gateway. Separa "murió en nuestro backend" de "murió allá".
               if (window.deusEvento) { window.deusEvento('co:45redir'); window.deusEvento('co:m-flow'); }
               window.location.href = data.url;
+            } else if (errorDeCorreo(data, msg)) {
+              pagoEnCurso = false;
+              wp.disabled = false;
+              wp.textContent = 'Pagar con Webpay';
+              return;
             } else {
               throw new Error('Sin URL de Flow');
             }
@@ -3188,6 +3212,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               // Embudo — paso 4.5: preferencia creada, saltamos a MercadoPago.
               if (window.deusEvento) { window.deusEvento('co:45redir'); window.deusEvento('co:m-mp'); }
               window.location.href = data.init_point;
+            } else if (errorDeCorreo(data, msg)) {
+              pagoEnCurso = false;
+              btn.disabled = false;
+              btn.textContent = 'Pagar con MercadoPago';
+              return;
             } else {
               throw new Error('Sin init_point');
             }
