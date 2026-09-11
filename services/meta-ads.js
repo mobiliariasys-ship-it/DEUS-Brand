@@ -215,13 +215,36 @@ async function getGastoDiarioCuenta(dias = 14) {
   // responde en esta cuenta. Se incluyen las PAUSADAS a propósito: una campaña
   // apagada hoy igual gastó plata mientras corría, y esa plata salió del mismo
   // bolsillo que la de las activas.
-  const campanas = await listCampaigns();
+  let campanas;
+  try {
+    campanas = await listCampaigns();
+  } catch (e) {
+    // Los dos caminos caídos = el token no sirve para NADA de Meta, no es un
+    // permiso puntual del nodo de la cuenta. El mensaje tiene que decirlo, o
+    // el panel muestra el mismo texto en dos situaciones que se arreglan
+    // distinto: una cambiando de endpoint, la otra regenerando el token.
+    throw new Error(
+      'los dos caminos fallaron. Nivel cuenta: ' + (errorCuenta || 'sin datos') +
+      ' · Nivel campañas: ' + (e.message || e) +
+      '. El token de Meta no tiene acceso a nada — hay que regenerarlo en Render.'
+    );
+  }
   const porCampana = await Promise.all(
     campanas.map(c => getInsightsDiarios(c.id, dias).catch(() => []))
   );
   const mapa = {};
+  let filas = 0;
   for (const dias_ of porCampana) {
+    filas += dias_.length;
     for (const d of dias_) mapa[d.fecha] = (mapa[d.fecha] || 0) + (Number(d.gasto) || 0);
+  }
+  // Campañas que responden pero sin una sola fila de insights: el permiso de
+  // insights está cortado aunque el de leer campañas no. Distinto problema.
+  if (campanas.length && !filas) {
+    throw new Error(
+      'se leyeron ' + campanas.length + ' campañas pero ninguna devolvió insights. ' +
+      'Nivel cuenta: ' + (errorCuenta || 'sin datos') + '. Falta el permiso ads_read sobre los insights.'
+    );
   }
   return { mapa, via: 'campañas', campanas: campanas.length, errorCuenta };
 }
