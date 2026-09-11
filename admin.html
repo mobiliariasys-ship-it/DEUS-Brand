@@ -1756,10 +1756,26 @@
   // cada 5s como el resto del panel, para no gastar el rate limit de Meta.
   function money0(n){ return '$'+Math.round(Number(n)||0).toLocaleString('es-CL'); }
   function cargarAds(){
+    // El .catch vacío que había acá se tragaba TODO: con el token de Meta
+    // caído, la sección quedaba en blanco como si no hubiera campañas, y no
+    // había forma de saber desde el panel que el problema era el token. Es el
+    // mismo fallo silencioso que tuvo la utilidad diaria.
+    var off = document.getElementById('ads-off');
     fetch(BASE+'/admin/ads/campaigns?clave='+encodeURIComponent(clave)).then(function(r){
-      if(r.status===503){ document.getElementById('ads-off').style.display='block'; document.getElementById('ads-grid').style.display='none'; throw new Error('off'); }
-      return r.json();
-    }).then(function(d){ pintarAds(d.campaigns||[]); }).catch(function(){});
+      if(r.status===503){ off.textContent='Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID en Render).'; off.style.display='block'; document.getElementById('ads-grid').style.display='none'; throw new Error('off'); }
+      return r.json().then(function(d){
+        if(!r.ok) throw new Error(d && d.error ? d.error : 'Meta respondió '+r.status);
+        return d;
+      });
+    }).then(function(d){
+      off.style.display='none';
+      pintarAds(d.campaigns||[]);
+    }).catch(function(e){
+      if(e && e.message==='off') return;
+      off.textContent='⚠️ Meta no respondió: '+(e && e.message ? e.message : 'error desconocido')+'. Si dice que el acceso está bloqueado, hay que regenerar META_ADS_ACCESS_TOKEN en Render.';
+      off.style.display='block';
+      document.getElementById('ads-grid').style.display='none';
+    });
     cargarCtr();
     // La utilidad no depende de que Meta Ads este configurado: si no responde,
     // igual muestra ventas y costos con el gasto en 0 y lo avisa.
