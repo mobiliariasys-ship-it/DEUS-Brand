@@ -1530,7 +1530,8 @@
       ' · ads = gasto real de Meta, no el presupuesto.';
     if (!d.adsOk) nota += ' ⚠️ El gasto en ads figura en 0 y la utilidad está inflada. Motivo: ' +
       (d.adsError || 'Meta no respondió') + '.';
-    else if (d.diagnostico) nota += ' Meta reportó ' + d.diagnostico.diasQueCalzan + ' de ' + d.dias + ' días con gasto.';
+    else if (d.diagnostico) nota += ' Meta reportó ' + d.diagnostico.diasQueCalzan + ' de ' + d.dias +
+      ' días con gasto' + (d.diagnostico.via === 'campañas' ? ', sumando campaña por campaña' : '') + '.';
     if (f.some(function(x){ return x.estimado; })) nota += ' Los días con * tienen ventas anteriores a que se guardara la cantidad: las unidades van estimadas desde el monto.';
     document.getElementById('util-nota').textContent = nota;
   }

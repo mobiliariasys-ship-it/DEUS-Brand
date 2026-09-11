@@ -190,14 +190,40 @@ async function duplicateCampaign(campaignId, overrides = {}) {
 // diaria hay que restar todo lo gastado en publicidad ese día, incluidas las
 // campañas pausadas después, que igual consumieron plata mientras corrían.
 async function getGastoDiarioCuenta(dias = 14) {
-  const { adAccountId } = creds();
   const preset = VENTANAS_DIARIAS[dias] || VENTANAS_DIARIAS[14];
-  const data = await llamar(`/${adAccountId}/insights`, {
-    params: { fields: 'spend', time_increment: 1, date_preset: preset }
-  });
+
+  // Camino 1: una sola llamada a nivel de CUENTA. Es lo barato — un request
+  // trae todo. En esta cuenta Meta lo rechaza con "API access blocked": el
+  // token tiene permiso sobre las campañas pero no sobre el nodo de la cuenta.
+  let errorCuenta = '';
+  try {
+    const { adAccountId } = creds();
+    const data = await llamar(`/${adAccountId}/insights`, {
+      params: { fields: 'spend', time_increment: 1, date_preset: preset }
+    });
+    if (data.data && data.data.length) {
+      const mapa = {};
+      for (const r of data.data) mapa[r.date_start] = Number(r.spend || 0);
+      return { mapa, via: 'cuenta' };
+    }
+  } catch (e) {
+    errorCuenta = e.message || String(e);
+  }
+
+  // Camino 2: sumar campaña por campaña. Son más requests (una por campaña),
+  // pero es EXACTAMENTE el mismo endpoint que usa el gráfico de CTR, que sí
+  // responde en esta cuenta. Se incluyen las PAUSADAS a propósito: una campaña
+  // apagada hoy igual gastó plata mientras corría, y esa plata salió del mismo
+  // bolsillo que la de las activas.
+  const campanas = await listCampaigns();
+  const porCampana = await Promise.all(
+    campanas.map(c => getInsightsDiarios(c.id, dias).catch(() => []))
+  );
   const mapa = {};
-  for (const r of (data.data || [])) mapa[r.date_start] = Number(r.spend || 0);
-  return mapa;
+  for (const dias_ of porCampana) {
+    for (const d of dias_) mapa[d.fecha] = (mapa[d.fecha] || 0) + (Number(d.gasto) || 0);
+  }
+  return { mapa, via: 'campañas', campanas: campanas.length, errorCuenta };
 }
 
 module.exports = { listCampaigns, getInsights, getInsightsDiarios, getGastoDiarioCuenta, setStatus, updateBudget, duplicateCampaign };

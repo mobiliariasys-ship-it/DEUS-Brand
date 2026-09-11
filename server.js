@@ -668,8 +668,11 @@ app.get('/admin/utilidad-diaria', async (req, res) => {
     const ventas = metrics.ventasPorDia(dias);
     // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
     // media verdad sirve más que un panel en blanco.
-    let gasto = {}, adsOk = true, adsError = '';
-    try { gasto = await metaAds.getGastoDiarioCuenta(dias); }
+    let gasto = {}, adsOk = true, adsError = '', via = '';
+    try {
+      const r = await metaAds.getGastoDiarioCuenta(dias);
+      gasto = r.mapa; via = r.via;
+    }
     catch (e) {
       adsOk = false;
       // El mensaje VIAJA al panel. Antes solo iba al log de Render, así que la
@@ -697,7 +700,7 @@ app.get('/admin/utilidad-diaria', async (req, res) => {
 
     res.json({
       dias, adsOk, adsError, filas, total: tot,
-      diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan },
+      diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan, via },
       costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA }
     });
   } catch (e) {

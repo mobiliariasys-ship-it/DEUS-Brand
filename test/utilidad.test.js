@@ -92,3 +92,23 @@ test('las ventas guardan la cantidad en las tres pasarelas', () => {
     assert.ok(/soloTapones:/.test(llamada), f + ' debe marcar los pedidos de solo tapones');
   }
 });
+
+test('el gasto en ads tiene respaldo cuando Meta bloquea el nodo de la cuenta', () => {
+  // Esta cuenta responde "API access blocked" a /act_XXX/insights pero sí
+  // contesta /{campaignId}/insights, que es lo que usa el gráfico de CTR.
+  const src = fs.readFileSync(path.join(__dirname, '..', 'services', 'meta-ads.js'), 'utf8');
+  const i = src.indexOf('async function getGastoDiarioCuenta');
+  assert.ok(i >= 0);
+  const fn = src.slice(i, src.indexOf('\n}', i));
+  assert.ok(/listCampaigns\(\)/.test(fn), 'debe poder sumar campaña por campaña');
+  assert.ok(/getInsightsDiarios\(/.test(fn), 'el respaldo usa el endpoint que sí responde');
+  // Las campañas PAUSADAS gastaron plata mientras corrían: filtrar por ACTIVE
+  // acá subestimaría el gasto y sobrestimaría la utilidad.
+  assert.ok(!/status\s*===\s*'ACTIVE'/.test(fn), 'no debe filtrar por campañas activas');
+});
+
+test('el endpoint entiende el nuevo retorno {mapa, via}', () => {
+  const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  assert.ok(/r\.mapa/.test(srv), 'debe leer el mapa del retorno');
+  assert.ok(/via/.test(srv), 'debe reportar por qué camino vino el dato');
+});
