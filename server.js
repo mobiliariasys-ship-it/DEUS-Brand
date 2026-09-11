@@ -668,15 +668,36 @@ app.get('/admin/utilidad-diaria', async (req, res) => {
     const ventas = metrics.ventasPorDia(dias);
     // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
     // media verdad sirve más que un panel en blanco.
-    let gasto = {}, adsOk = true;
+    let gasto = {}, adsOk = true, adsError = '';
     try { gasto = await metaAds.getGastoDiarioCuenta(dias); }
-    catch (e) { adsOk = false; console.error('[utilidad] Meta no respondió:', e.message); }
+    catch (e) {
+      adsOk = false;
+      // El mensaje VIAJA al panel. Antes solo iba al log de Render, así que la
+      // columna de ads salía en 0 sin decir por qué y no había cómo saber si
+      // faltaba el token, si Meta rechazó la llamada o si no había datos.
+      adsError = e.message || 'Meta no respondió';
+      console.error('[utilidad] Meta no respondió:', adsError);
+    }
 
     const filas = ventas.map(d => utilidad_.calcularDia(d, gasto[d.fecha]));
     const tot = utilidad_.totalizar(filas);
 
+    // Meta fecha por el huso de la CUENTA publicitaria, y las ventas se agrupan
+    // por día de Chile. Si los dos no coinciden, la llamada responde bien pero
+    // ninguna fecha calza y la columna de ads queda en cero igual — un fallo
+    // que se ve idéntico a "no hay datos". Se detecta y se informa.
+    const fechasMeta = Object.keys(gasto);
+    const calzan = ventas.filter(d => gasto[d.fecha] != null).length;
+    if (adsOk && fechasMeta.length && !calzan) {
+      adsOk = false;
+      adsError = 'Meta devolvió ' + fechasMeta.length + ' días (' + fechasMeta.sort()[0] +
+        ' a ' + fechasMeta.sort().slice(-1)[0] + ') pero ninguno coincide con los días del panel. ' +
+        'Revisa el huso horario de la cuenta publicitaria.';
+    }
+
     res.json({
-      dias, adsOk, filas, total: tot,
+      dias, adsOk, adsError, filas, total: tot,
+      diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan },
       costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA }
     });
   } catch (e) {

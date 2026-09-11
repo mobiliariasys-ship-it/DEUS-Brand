@@ -1528,7 +1528,9 @@
     var nota = 'Banda ' + money0(d.costos.banda) + ' por unidad · envío ' + money0(d.costos.envio) +
       ' por pedido · pasarela ' + (d.costos.pasarela * 100).toFixed(1).replace('.', ',') + '%' +
       ' · ads = gasto real de Meta, no el presupuesto.';
-    if (!d.adsOk) nota += ' ⚠️ Meta no respondió: el gasto figura en 0 y la utilidad está inflada.';
+    if (!d.adsOk) nota += ' ⚠️ El gasto en ads figura en 0 y la utilidad está inflada. Motivo: ' +
+      (d.adsError || 'Meta no respondió') + '.';
+    else if (d.diagnostico) nota += ' Meta reportó ' + d.diagnostico.diasQueCalzan + ' de ' + d.dias + ' días con gasto.';
     if (f.some(function(x){ return x.estimado; })) nota += ' Los días con * tienen ventas anteriores a que se guardara la cantidad: las unidades van estimadas desde el monto.';
     document.getElementById('util-nota').textContent = nota;
   }
