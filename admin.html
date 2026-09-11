@@ -1494,6 +1494,7 @@
       kpi('Promedio por día', money0(t.utilidad / dias), t.utilidad >= 0 ? 'bien' : 'mal') +
       kpi('Vendido', money0(t.ingresos), '') +
       kpi('Gastado en ads', money0(t.ads), '') +
+      kpi('de eso, IVA', money0(t.ivaAds || 0), '') +
       kpi('Costo por venta', t.unidades ? money0(cpa) : '—', '') +
       kpi('Días con venta', conVenta + ' de ' + dias, '');
 
@@ -1516,7 +1517,7 @@
     document.getElementById('util-tabla').innerHTML =
       '<table><thead><tr>' +
       '<th>Día</th><th>Pedidos</th><th>Unid.</th><th>Vendido</th>' +
-      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th><th>Ads</th><th>Utilidad</th>' +
+      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th><th>Ads +IVA</th><th>Utilidad</th>' +
       '</tr></thead><tbody>' + filas + '</tbody><tfoot><tr>' +
       '<th>Total</th><th>' + t.pedidos + '</th><th>' + t.unidades + '</th><th>' + money0(t.ingresos) + '</th>' +
       '<th>−' + money0(t.costoBandas) + '</th><th>−' + money0(t.costoEnvios) + '</th>' +
@@ -1527,7 +1528,8 @@
 
     var nota = 'Banda ' + money0(d.costos.banda) + ' por unidad · envío ' + money0(d.costos.envio) +
       ' por pedido · pasarela ' + (d.costos.pasarela * 100).toFixed(1).replace('.', ',') + '%' +
-      ' · ads = gasto real de Meta, no el presupuesto.';
+      ' · ads = gasto real de Meta + ' + Math.round((d.costos.iva || 0.19) * 100) + '% de IVA' +
+      ' (la API reporta sin IVA, el cobro llega con IVA).';
     if (!d.adsOk) nota += ' ⚠️ El gasto en ads figura en 0 y la utilidad está inflada. Motivo: ' +
       (d.adsError || 'Meta no respondió') + '.';
     else if (d.diagnostico) nota += ' Meta reportó ' + d.diagnostico.diasQueCalzan + ' de ' + d.dias +

@@ -701,7 +701,7 @@ app.get('/admin/utilidad-diaria', async (req, res) => {
     res.json({
       dias, adsOk, adsError, filas, total: tot,
       diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan, via },
-      costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA }
+      costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA, iva: utilidad_.IVA }
     });
   } catch (e) {
     errorAds(res, e);
