@@ -186,4 +186,18 @@ async function duplicateCampaign(campaignId, overrides = {}) {
   return { id: nuevaId };
 }
 
-module.exports = { listCampaigns, getInsights, getInsightsDiarios, setStatus, updateBudget, duplicateCampaign };
+// Gasto diario de la CUENTA COMPLETA (no de una campaña): para la utilidad
+// diaria hay que restar todo lo gastado en publicidad ese día, incluidas las
+// campañas pausadas después, que igual consumieron plata mientras corrían.
+async function getGastoDiarioCuenta(dias = 14) {
+  const { adAccountId } = creds();
+  const preset = VENTANAS_DIARIAS[dias] || VENTANAS_DIARIAS[14];
+  const data = await llamar(`/${adAccountId}/insights`, {
+    params: { fields: 'spend', time_increment: 1, date_preset: preset }
+  });
+  const mapa = {};
+  for (const r of (data.data || [])) mapa[r.date_start] = Number(r.spend || 0);
+  return mapa;
+}
+
+module.exports = { listCampaigns, getInsights, getInsightsDiarios, getGastoDiarioCuenta, setStatus, updateBudget, duplicateCampaign };

@@ -179,7 +179,7 @@ router.post('/flow/confirmacion', async (req, res) => {
       marcarPagado(st.commerceOrder); // cancela el correo de recuperación
       if (!(pedido && pedido.soloTapones)) decrementStock(st.commerceOrder); // solo tapones no descuenta stock de banda
       // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
-      const ticketFlow = metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder, email: (pedido && pedido.customer && pedido.customer.email) || st.payer });
+      const ticketFlow = metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder, email: (pedido && pedido.customer && pedido.customer.email) || st.payer, unidades: pedido && pedido.cantidad, soloTapones: pedido && pedido.soloTapones });
       // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que
       // success.html) por si el cliente no llega a disparar el píxel en el navegador.
       metaCapi.enviarPurchase({

@@ -232,7 +232,12 @@ function registrarVenta(v) {
     fecha: new Date().toISOString(),
     metodo: v.metodo || '',
     nombre: v.nombre || '',
-    orden: v.orden ? String(v.orden) : ''
+    orden: v.orden ? String(v.orden) : '',
+    // Unidades de BANDA del pedido (no de tapones): el costo de $17.000 es por
+    // banda, no por pedido, y un pedido de 3 cuesta el triple. Las ventas
+    // viejas no lo traen — ventasPorDia() las estima desde el monto.
+    unidades: Number(v.unidades) > 0 ? Number(v.unidades) : null,
+    soloTapones: !!v.soloTapones
   });
   const ticket = asignarTicket({ nombre: v.nombre, orden: v.orden, email: v.email });
   if (!yaContada) sumarEvento('co:5pago');
@@ -330,6 +335,36 @@ function resumenVentas() {
     total: { count: ventas.length, monto: totMonto },
     ultimas: ventas.slice(-12).reverse()
   };
+}
+
+// Ventas agrupadas por día de Chile, para la utilidad diaria del panel.
+// Devuelve SIEMPRE los últimos `dias` días, con ceros incluidos: un día sin
+// ventas igual gastó en publicidad y tiene que aparecer en rojo, no faltar.
+function ventasPorDia(dias = 14) {
+  const precio = require('./precio').precioBanda();
+  const mapa = {};
+  for (const v of ventas) {
+    const d = new Date(v.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    if (!mapa[d]) mapa[d] = { fecha: d, pedidos: 0, unidades: 0, ingresos: 0, estimado: false };
+    mapa[d].pedidos += 1;
+    mapa[d].ingresos += v.monto;
+    if (v.soloTapones) {
+      // Pedido de tapones: no lleva banda, así que no suma costo de banda.
+    } else if (v.unidades) {
+      mapa[d].unidades += v.unidades;
+    } else {
+      // Venta anterior a que se guardara la cantidad: se estima desde el monto.
+      mapa[d].unidades += Math.max(1, Math.round((v.monto || 0) / precio));
+      mapa[d].estimado = true;
+    }
+  }
+  const salida = [];
+  const ahora = Date.now();
+  for (let i = dias - 1; i >= 0; i--) {
+    const d = new Date(ahora - i * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    salida.push(mapa[d] || { fecha: d, pedidos: 0, unidades: 0, ingresos: 0, estimado: false });
+  }
+  return salida;
 }
 
 // Vistas diarias de los últimos 30 días (fecha Chile, día por día).
@@ -458,7 +493,7 @@ function snapshot() {
 }
 
 module.exports = {
-  init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo,
+  init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo, ventasPorDia,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
   resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
   registrarFalloChat

@@ -159,6 +159,23 @@
   .ctr-chip-v{font-size:1.15rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;}
   .ctr-chip-d{font-size:.72rem;font-weight:600;font-variant-numeric:tabular-nums;}
   .ctr-sube{color:#8fc98f;} .ctr-baja{color:#f0736f;} .ctr-igual{color:#777;}
+  /* Utilidad diaria. Usa las mismas cajas que la tabla del CTR para que el
+     panel no se vea como dos productos distintos pegados. */
+  .util-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;}
+  .util-kpi{background:var(--card,#141418);border:1px solid var(--border-soft,#2a2a32);border-radius:9px;padding:11px 13px;}
+  .util-kpi .k{font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:#8a8a92;margin-bottom:6px;}
+  .util-kpi .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;color:#e8e8ee;}
+  .util-kpi.bien .v{color:#69c46d;} .util-kpi.mal .v{color:#e07a6a;}
+  .util-tabla{overflow-x:auto;}
+  .util-tabla table{width:100%;border-collapse:collapse;font-size:.72rem;}
+  .util-tabla th,.util-tabla td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--border-soft,#2a2a32);font-variant-numeric:tabular-nums;color:#bbb;}
+  .util-tabla th{color:#9a9a9a;font-weight:600;}
+  .util-tabla th:first-child,.util-tabla td:first-child{text-align:left;}
+  .util-tabla td.gasto{color:#9a8f8f;}
+  .util-tabla td.util{font-weight:700;}
+  .util-tabla td.pos{color:#69c46d;} .util-tabla td.neg{color:#e07a6a;}
+  .util-tabla tr.hoy td{background:rgba(232,180,100,.06);}
+  .util-nota{font-size:.64rem;color:#7a7a82;margin-top:10px;line-height:1.5;}
   .ctr-rango{display:flex;gap:6px;margin-bottom:12px;}
   .ctr-rango button{background:transparent;border:1px solid var(--border);color:#9a9a9a;border-radius:7px;padding:4px 11px;font-size:.72rem;cursor:pointer;}
   .ctr-rango button.on{border-color:#3987e5;color:#fff;}
@@ -431,6 +448,19 @@
       <div class="sec-h"><h2>📦 Pedidos recientes</h2></div>
       <div class="scroll"><table id="t-pedidos"><thead><tr><th>Fecha</th><th>Cliente</th><th>Comuna</th><th>Color</th><th>Total</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
       <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
+    </section>
+
+    <section id="sec-utilidad">
+      <div class="sec-h"><h2>💰 Utilidad diaria</h2><button class="btn ghost" onclick="cargarUtilidad()">Actualizar</button></div>
+      <div class="ctr-rango">
+        <button data-udias="7" onclick="cargarUtilidad(7)">7 días</button>
+        <button data-udias="14" class="on" onclick="cargarUtilidad(14)">14 días</button>
+        <button data-udias="30" onclick="cargarUtilidad(30)">30 días</button>
+      </div>
+      <div class="util-kpis" id="util-kpis"></div>
+      <div class="util-tabla" id="util-tabla"></div>
+      <div class="util-nota" id="util-nota"></div>
+      <div class="empty" id="util-off" style="display:none">No se pudo cargar la utilidad.</div>
     </section>
 
     <section id="sec-ads">
@@ -1431,6 +1461,82 @@
   var CTR_COLORES = ['#3987e5','#d95926','#199e70','#c98500','#d55181'];
   var ctrSt = { series: [], fechas: [], dias: 14, hover: null, reveal: 0, corriendo: false };
 
+  // ── Utilidad diaria ────────────────────────────────────────────────────
+  // Lo que queda después de TODO: bandas, envíos, pasarela y publicidad. El
+  // gasto de ads es el real de la cuenta de Meta, no el presupuesto puesto —
+  // un día que no gastó el presupuesto completo no tiene por qué cargarlo.
+  var utilSt = { dias: 14 };
+
+  function cargarUtilidad(dias){
+    if(dias) utilSt.dias = dias;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-udias]'), function(b){
+      b.classList.toggle('on', Number(b.getAttribute('data-udias')) === utilSt.dias);
+    });
+    fetch(BASE+'/admin/utilidad-diaria?dias='+utilSt.dias+'&clave='+encodeURIComponent(clave))
+      .then(function(r){ if(!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(pintarUtilidad)
+      .catch(function(){
+        document.getElementById('util-off').style.display='';
+        document.getElementById('util-tabla').innerHTML='';
+        document.getElementById('util-kpis').innerHTML='';
+      });
+  }
+
+  function pintarUtilidad(d){
+    document.getElementById('util-off').style.display='none';
+    var t = d.total, f = d.filas || [];
+    var dias = f.length || 1;
+    var conVenta = f.filter(function(x){ return x.pedidos > 0; }).length;
+    var cpa = t.unidades ? t.ads / t.unidades : 0;
+
+    document.getElementById('util-kpis').innerHTML =
+      kpi('Utilidad ' + d.dias + ' días', money0(t.utilidad), t.utilidad >= 0 ? 'bien' : 'mal') +
+      kpi('Promedio por día', money0(t.utilidad / dias), t.utilidad >= 0 ? 'bien' : 'mal') +
+      kpi('Vendido', money0(t.ingresos), '') +
+      kpi('Gastado en ads', money0(t.ads), '') +
+      kpi('Costo por venta', t.unidades ? money0(cpa) : '—', '') +
+      kpi('Días con venta', conVenta + ' de ' + dias, '');
+
+    var hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    var filas = f.slice().reverse().map(function(r){
+      var cls = r.utilidad >= 0 ? 'pos' : 'neg';
+      return '<tr' + (r.fecha === hoy ? ' class="hoy"' : '') + '>' +
+        '<td>' + r.fecha.slice(5) + (r.fecha === hoy ? ' · hoy' : '') + (r.estimado ? ' *' : '') + '</td>' +
+        '<td>' + r.pedidos + '</td>' +
+        '<td>' + r.unidades + '</td>' +
+        '<td>' + money0(r.ingresos) + '</td>' +
+        '<td class="gasto">−' + money0(r.costoBandas) + '</td>' +
+        '<td class="gasto">−' + money0(r.costoEnvios) + '</td>' +
+        '<td class="gasto">−' + money0(r.pasarela) + '</td>' +
+        '<td class="gasto">−' + money0(r.ads) + '</td>' +
+        '<td class="util ' + cls + '">' + (r.utilidad >= 0 ? '' : '−') + money0(Math.abs(r.utilidad)) + '</td>' +
+      '</tr>';
+    }).join('');
+
+    document.getElementById('util-tabla').innerHTML =
+      '<table><thead><tr>' +
+      '<th>Día</th><th>Pedidos</th><th>Unid.</th><th>Vendido</th>' +
+      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th><th>Ads</th><th>Utilidad</th>' +
+      '</tr></thead><tbody>' + filas + '</tbody><tfoot><tr>' +
+      '<th>Total</th><th>' + t.pedidos + '</th><th>' + t.unidades + '</th><th>' + money0(t.ingresos) + '</th>' +
+      '<th>−' + money0(t.costoBandas) + '</th><th>−' + money0(t.costoEnvios) + '</th>' +
+      '<th>−' + money0(t.pasarela) + '</th><th>−' + money0(t.ads) + '</th>' +
+      '<th style="color:' + (t.utilidad >= 0 ? '#69c46d' : '#e07a6a') + '">' +
+      (t.utilidad >= 0 ? '' : '−') + money0(Math.abs(t.utilidad)) + '</th>' +
+      '</tr></tfoot></table>';
+
+    var nota = 'Banda ' + money0(d.costos.banda) + ' por unidad · envío ' + money0(d.costos.envio) +
+      ' por pedido · pasarela ' + (d.costos.pasarela * 100).toFixed(1).replace('.', ',') + '%' +
+      ' · ads = gasto real de Meta, no el presupuesto.';
+    if (!d.adsOk) nota += ' ⚠️ Meta no respondió: el gasto figura en 0 y la utilidad está inflada.';
+    if (f.some(function(x){ return x.estimado; })) nota += ' Los días con * tienen ventas anteriores a que se guardara la cantidad: las unidades van estimadas desde el monto.';
+    document.getElementById('util-nota').textContent = nota;
+  }
+
+  function kpi(k, v, cls){
+    return '<div class="util-kpi ' + (cls || '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>';
+  }
+
   function cargarCtr(dias){
     if(dias) ctrSt.dias = dias;
     Array.prototype.forEach.call(document.querySelectorAll('.ctr-rango button'), function(b){
@@ -1652,6 +1758,9 @@
       return r.json();
     }).then(function(d){ pintarAds(d.campaigns||[]); }).catch(function(){});
     cargarCtr();
+    // La utilidad no depende de que Meta Ads este configurado: si no responde,
+    // igual muestra ventas y costos con el gasto en 0 y lo avisa.
+    cargarUtilidad();
   }
   // Vertical (una métrica por fila) en vez de la tabla horizontal de Meta Ads
   // Manager — más fácil de leer de un vistazo para decidir qué ajustar.

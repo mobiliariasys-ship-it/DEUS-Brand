@@ -134,7 +134,7 @@ async function handleRetorno(req, res) {
       marcarPagado(result.buy_order); // cancela el correo de recuperación
       if (!(pedido && pedido.soloTapones)) decrementStock(result.buy_order); // solo tapones no descuenta stock de banda
       // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
-      const ticketWP = metrics.registrarVenta({ monto: result.amount, metodo: 'Webpay', nombre: pedido && pedido.customer && pedido.customer.name, orden: result.buy_order, email: pedido && pedido.customer && pedido.customer.email });
+      const ticketWP = metrics.registrarVenta({ monto: result.amount, metodo: 'Webpay', nombre: pedido && pedido.customer && pedido.customer.name, orden: result.buy_order, email: pedido && pedido.customer && pedido.customer.email, unidades: pedido && pedido.cantidad, soloTapones: pedido && pedido.soloTapones });
       // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que
       // success.html) por si el cliente no llega a disparar el píxel en el navegador.
       metaCapi.enviarPurchase({

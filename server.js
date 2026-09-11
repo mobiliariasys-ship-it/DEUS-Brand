@@ -10,6 +10,7 @@ const atletas = require('./services/atletas');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico } = require('./services/email');
 const colores_ = require('./services/colores');
 const correo_ = require('./services/correo');
+const utilidad_ = require('./services/utilidad');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
 const persist = require('./services/persist');
@@ -419,7 +420,7 @@ app.post('/notificaciones', async (req, res) => {
         metrics.registrarConversion((meta.acciones_sesion || '').split(',').filter(Boolean), info.id, false);
         if (!soloTaponesPago) decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago; solo tapones no descuenta stock de banda
         // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
-        const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: pedido.customer.name, orden: info.id, email: emailCliente });
+        const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: pedido.customer.name, orden: info.id, email: emailCliente, unidades: pedido.cantidad, soloTapones: pedido.soloTapones });
 
         // Correo de confirmación al cliente (mismos datos autoritativos del pago).
         marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
@@ -644,6 +645,40 @@ app.get('/admin/ads/ctr-diario', async (req, res) => {
       dias: await metaAds.getInsightsDiarios(c.id, dias).catch(() => [])
     })));
     res.json({ dias, series });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+// Utilidad diaria: cruza las ventas del panel con el gasto real en Meta.
+//
+// Costos por venta, en orden de tamaño:
+//   - banda      $17.000 por UNIDAD (un pedido de 3 cuesta el triple)
+//   - envío       $4.000 por PEDIDO (uno de 3 bandas se despacha una vez)
+//   - pasarela      3,5% del monto (Webpay/Flow/MercadoPago)
+//   - publicidad  el gasto REAL del día en la cuenta de Meta, no el presupuesto
+//
+// El gasto de Meta es de la cuenta completa, no de una campaña: una campaña
+// pausada hoy igual consumió plata mientras corría, y esa plata salió del
+// mismo bolsillo.
+app.get('/admin/utilidad-diaria', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const dias = [7, 14, 30].includes(Number(req.query.dias)) ? Number(req.query.dias) : 14;
+    const ventas = metrics.ventasPorDia(dias);
+    // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
+    // media verdad sirve más que un panel en blanco.
+    let gasto = {}, adsOk = true;
+    try { gasto = await metaAds.getGastoDiarioCuenta(dias); }
+    catch (e) { adsOk = false; console.error('[utilidad] Meta no respondió:', e.message); }
+
+    const filas = ventas.map(d => utilidad_.calcularDia(d, gasto[d.fecha]));
+    const tot = utilidad_.totalizar(filas);
+
+    res.json({
+      dias, adsOk, filas, total: tot,
+      costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA }
+    });
   } catch (e) {
     errorAds(res, e);
   }
