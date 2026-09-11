@@ -134,3 +134,22 @@ test('el IVA no se aplica dos veces al totalizar', () => {
   assert.strictEqual(t.ads, Math.round(50000 * 1.19) + Math.round(30000 * 1.19));
   assert.strictEqual(t.ivaAds, t.ads - t.adsNeto);
 });
+
+test('una venta de la noche no se corre al día siguiente', () => {
+  // Render corre en UTC; las ventas se agrupan por día de CHILE. Una compra a
+  // las 22:00 del 10 en Chile son las 01:00 UTC del 11: si se agrupara por
+  // fecha del servidor, aparecería como venta del 11 y el día 10 saldría vacío.
+  const enChile = ms => new Date(ms).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+  assert.strictEqual(enChile(Date.UTC(2026, 8, 11, 1, 0, 0)), '2026-09-10');
+  // Y a la 01:25 de la madrugada del 11 en Chile, "hoy" es el 11.
+  assert.strictEqual(enChile(Date.UTC(2026, 8, 11, 4, 25, 0)), '2026-09-11');
+});
+
+test('metrics agrupa por día de Chile, no por el reloj del servidor', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'services', 'metrics.js'), 'utf8');
+  const i = src.indexOf('function ventasPorDia');
+  assert.ok(i >= 0);
+  const fn = src.slice(i, src.indexOf('\n}', i));
+  assert.ok((fn.match(/America\/Santiago/g) || []).length >= 2,
+    'tanto las ventas como los días del rango tienen que ir en hora de Chile');
+});
