@@ -87,6 +87,13 @@ const INSIGHTS_FIELDS = [
 
 const PURCHASE_ACTION_TYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
 
+// Lee un tipo de acción del array que manda Meta. Devuelve 0 si ese día no
+// hubo ninguna: Meta simplemente no incluye la fila, no manda un cero.
+function accionValor(actions, tipo) {
+  const a = (actions || []).find(x => x.action_type === tipo);
+  return a ? Number(a.value) || 0 : 0;
+}
+
 function extraerCompras(insights) {
   const actions = insights.actions || [];
   const costos = insights.cost_per_action_type || [];
@@ -139,7 +146,7 @@ async function getInsightsDiarios(campaignId, dias = 14) {
   const preset = VENTANAS_DIARIAS[dias] || VENTANAS_DIARIAS[14];
   const data = await llamar(`/${campaignId}/insights`, {
     params: {
-      fields: 'spend,impressions,clicks,ctr,inline_link_clicks,inline_link_click_ctr',
+      fields: 'spend,impressions,clicks,ctr,inline_link_clicks,inline_link_click_ctr,actions',
       time_increment: 1,
       date_preset: preset
     }
@@ -152,6 +159,11 @@ async function getInsightsDiarios(campaignId, dias = 14) {
       ctr: Number(r.inline_link_click_ctr || 0),
       ctrTodos: Number(r.ctr || 0),
       clics: Number(r.inline_link_clicks || 0),
+      // Gente que efectivamente ABRIÓ el sitio desde el anuncio. No es lo
+      // mismo que el clic: entre el clic y la página se pierde ~10% (cierran
+      // antes de que cargue). Es el número comparable con las visitas que
+      // cuenta el propio sitio, y el que separa el tráfico pagado del resto.
+      visitas: accionValor(r.actions, 'landing_page_view'),
       impresiones: Number(r.impressions || 0),
       gasto: Number(r.spend || 0)
     }))

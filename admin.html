@@ -175,7 +175,7 @@
   .util-tabla td.util{font-weight:700;}
   .util-tabla td.pos{color:#69c46d;} .util-tabla td.neg{color:#e07a6a;}
   .util-tabla tr.hoy td{background:rgba(232,180,100,.06);}
-  .util-nota{font-size:.64rem;color:#7a7a82;margin-top:10px;line-height:1.5;}
+  .util-nota,.ctr-nota{font-size:.64rem;color:#7a7a82;margin-top:10px;line-height:1.5;}
   .ctr-rango{display:flex;gap:6px;margin-bottom:12px;}
   .ctr-rango button{background:transparent;border:1px solid var(--border);color:#9a9a9a;border-radius:7px;padding:4px 11px;font-size:.72rem;cursor:pointer;}
   .ctr-rango button.on{border-color:#3987e5;color:#fff;}
@@ -248,6 +248,7 @@
       <div class="side-logo"><span class="side-mark"></span>DEUS</div>
       <button class="nav-i active" onclick="irA('top',this)"><span class="ico">📊</span> Dashboard</button>
       <button class="nav-i" onclick="irA('sec-graficos',this)"><span class="ico">📈</span> Gráficos</button>
+      <button class="nav-i" onclick="irA('sec-utilidad',this)"><span class="ico">💰</span> Utilidad</button>
       <button class="nav-i" onclick="irA('sec-embudo',this)"><span class="ico">🫗</span> Embudo</button>
       <button class="nav-i" onclick="irA('sec-conducta',this)"><span class="ico">🧭</span> Conducta</button>
       <button class="nav-i" onclick="irA('sec-convierte',this)"><span class="ico">🎯</span> Convierte</button>
@@ -333,6 +334,19 @@
       <div class="sel-res" id="conv-sel-res"></div>
     </section>
     </div>
+
+    <section id="sec-utilidad">
+      <div class="sec-h"><h2>💰 Utilidad diaria</h2><button class="btn ghost" onclick="cargarUtilidad()">Actualizar</button></div>
+      <div class="ctr-rango">
+        <button data-udias="7" onclick="cargarUtilidad(7)">7 días</button>
+        <button data-udias="14" class="on" onclick="cargarUtilidad(14)">14 días</button>
+        <button data-udias="30" onclick="cargarUtilidad(30)">30 días</button>
+      </div>
+      <div class="util-kpis" id="util-kpis"></div>
+      <div class="util-tabla" id="util-tabla"></div>
+      <div class="util-nota" id="util-nota"></div>
+      <div class="empty" id="util-off" style="display:none">No se pudo cargar la utilidad.</div>
+    </section>
 
     <section id="sec-embudo">
       <div class="sec-h"><h2>🫗 Embudo · dónde se caen</h2><span class="pill" id="funnel-conv"></span></div>
@@ -450,19 +464,6 @@
       <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
     </section>
 
-    <section id="sec-utilidad">
-      <div class="sec-h"><h2>💰 Utilidad diaria</h2><button class="btn ghost" onclick="cargarUtilidad()">Actualizar</button></div>
-      <div class="ctr-rango">
-        <button data-udias="7" onclick="cargarUtilidad(7)">7 días</button>
-        <button data-udias="14" class="on" onclick="cargarUtilidad(14)">14 días</button>
-        <button data-udias="30" onclick="cargarUtilidad(30)">30 días</button>
-      </div>
-      <div class="util-kpis" id="util-kpis"></div>
-      <div class="util-tabla" id="util-tabla"></div>
-      <div class="util-nota" id="util-nota"></div>
-      <div class="empty" id="util-off" style="display:none">No se pudo cargar la utilidad.</div>
-    </section>
-
     <section id="sec-ads">
       <div class="sec-h"><h2>📣 Ads Manager (Meta) · últimos 7 días</h2><button class="btn ghost" onclick="cargarAds()">Actualizar</button></div>
       <div class="empty" id="ads-off" style="display:none">Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID).</div>
@@ -477,10 +478,18 @@
           <button data-dias="30" onclick="cargarCtr(30)">30 días</button>
           <button id="ctr-btn-tabla" onclick="alternarTablaCtr()" style="margin-left:auto">Ver tabla</button>
         </div>
+        <!-- Una metrica a la vez, nunca las dos con dos ejes: un eje en % y
+             otro en personas sobre el mismo dibujo hace que las lineas se
+             crucen por casualidad de escala y se lea una relacion falsa. -->
+        <div class="ctr-rango ctr-metricas">
+          <button data-metrica="ctr" class="on" onclick="metricaCtr('ctr')">CTR del enlace</button>
+          <button data-metrica="visitas" onclick="metricaCtr('visitas')">Visitas desde el anuncio</button>
+        </div>
         <div class="ctr-chips" id="ctr-chips"></div>
         <div class="ctr-scroll"><canvas id="chartCtr" width="820" height="230"></canvas></div>
         <div class="ctr-tip" id="ctr-tip"></div>
         <div class="ctr-tabla" id="ctr-tabla" style="display:none"></div>
+        <div class="ctr-nota" id="ctr-nota"></div>
       </div>
       <div class="ads-grid" id="ads-grid"></div>
     </section>
@@ -965,6 +974,7 @@
 
   function pintar(d){
     ULT_DATA = d;
+    pintarNotaCtr();   // el total del sitio cambia cada 5s, el de Meta no
     // Ventas del periodo elegido: cuenta y facturación. Sale de ventasRecientes
     // (últimos 45 días con fecha), así que semana y mes salen exactos.
     pintarVentasPeriodo(d);
@@ -1459,7 +1469,39 @@
   // ordenada por id = orden de creación: así el color sigue a la campaña y no
   // a su ranking, y pausar una no repinta a las demás.
   var CTR_COLORES = ['#3987e5','#d95926','#199e70','#c98500','#d55181'];
-  var ctrSt = { series: [], fechas: [], dias: 14, hover: null, reveal: 0, corriendo: false };
+  var ctrSt = { series: [], fechas: [], dias: 14, metrica: 'ctr', hover: null, reveal: 0, corriendo: false };
+
+  // Las dos métricas que sabe graficar el panel. Comparten el gráfico pero se
+  // ven de a una: comparten también el eje, y un eje sirve para una sola
+  // unidad. 'sec' es el dato de apoyo que se muestra en el tooltip — cuando
+  // mirás una, la otra es justamente el contexto que falta.
+  var CTR_METRICAS = {
+    ctr: {
+      lbl: 'CTR del enlace', campo: 'ctr',
+      val: function(v){ return v.toFixed(2) + '%'; },
+      eje: function(v){ return v.toFixed(1) + '%'; },
+      sec: function(d){ return num0(d.clics) + ' clics'; }
+    },
+    visitas: {
+      lbl: 'Visitas desde el anuncio', campo: 'visitas',
+      val: function(v){ return num0(v); },
+      eje: function(v){ return num0(v); },
+      sec: function(d){ return d.ctr.toFixed(2) + '% CTR'; }
+    }
+  };
+  function mCtr(){ return CTR_METRICAS[ctrSt.metrica] || CTR_METRICAS.ctr; }
+  function valCtr(d){ return d ? (Number(d[mCtr().campo]) || 0) : 0; }
+
+  function metricaCtr(m){
+    if(!CTR_METRICAS[m] || m === ctrSt.metrica) return;
+    ctrSt.metrica = m;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-metrica]'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-metrica') === m);
+    });
+    ctrSt.reveal = 0;                       // se vuelve a dibujar desde la base
+    pintarChipsCtr(); pintarTablaCtr(); pintarNotaCtr();
+    if(!ctrSt.corriendo){ ctrSt.corriendo = true; requestAnimationFrame(frameCtr); }
+  }
 
   // ── Utilidad diaria ────────────────────────────────────────────────────
   // Lo que queda después de TODO: bandas, envíos, pasarela y publicidad. El
@@ -1544,7 +1586,7 @@
 
   function cargarCtr(dias){
     if(dias) ctrSt.dias = dias;
-    Array.prototype.forEach.call(document.querySelectorAll('.ctr-rango button'), function(b){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-dias]'), function(b){
       b.classList.toggle('on', Number(b.getAttribute('data-dias')) === ctrSt.dias);
     });
     fetch(BASE+'/admin/ads/ctr-diario?dias='+ctrSt.dias+'&clave='+encodeURIComponent(clave))
@@ -1576,6 +1618,7 @@
     ctrSt.reveal = 0;
     pintarChipsCtr();
     pintarTablaCtr();
+    pintarNotaCtr();
     engancharCtr();
     if(!ctrSt.corriendo){ ctrSt.corriendo = true; requestAnimationFrame(frameCtr); }
   }
@@ -1587,15 +1630,15 @@
     var cont = document.getElementById('ctr-chips');
     cont.innerHTML = ctrSt.series.map(function(s){
       var vals = ctrSt.fechas.map(function(f){ return s.porFecha[f]; }).filter(Boolean);
-      var hoy = vals.length ? vals[vals.length-1].ctr : 0;
-      var ayer = vals.length > 1 ? vals[vals.length-2].ctr : null;
+      var hoy = vals.length ? valCtr(vals[vals.length-1]) : 0;
+      var ayer = vals.length > 1 ? valCtr(vals[vals.length-2]) : null;
       var d = (ayer === null || !ayer) ? null : (hoy - ayer) / ayer * 100;
       var cls = d === null ? 'ctr-igual' : (d > 0.5 ? 'ctr-sube' : (d < -0.5 ? 'ctr-baja' : 'ctr-igual'));
       var flecha = d === null ? '·' : (d > 0.5 ? '▲' : (d < -0.5 ? '▼' : '='));
       var txt = d === null ? 'sin comparación' : flecha+' '+Math.abs(d).toFixed(1)+'% vs ayer';
       return '<div class="ctr-chip">'+
         '<div class="ctr-chip-n"><span class="ctr-dot" style="background:'+s.color+'"></span>'+esc(s.nombre)+'</div>'+
-        '<div class="ctr-chip-v">'+hoy.toFixed(2)+'%</div>'+
+        '<div class="ctr-chip-v">'+mCtr().val(hoy)+'</div>'+
         '<div class="ctr-chip-d '+cls+'">'+txt+'</div>'+
       '</div>';
     }).join('') + (ctrSt.fuera ? '<div class="ctr-chip"><div class="ctr-chip-n">+'+ctrSt.fuera+' campaña(s) fuera del gráfico</div></div>' : '');
@@ -1607,15 +1650,44 @@
     var filas = ctrSt.fechas.slice().reverse().map(function(f){
       return '<tr><td>'+f+'</td>' + ctrSt.series.map(function(s){
         var d = s.porFecha[f];
-        return '<td>'+(d ? d.ctr.toFixed(2)+'%' : '—')+'</td>';
+        return '<td>'+(d ? mCtr().val(valCtr(d)) : '—')+'</td>';
       }).join('') + '</tr>';
     }).join('');
     document.getElementById('ctr-tabla').innerHTML =
-      '<table><caption class="sr-only">CTR de enlace por día y campaña</caption><thead><tr><th>Día</th>' +
+      '<table><caption class="sr-only">'+mCtr().lbl+' por día y campaña</caption><thead><tr><th>Día</th>' +
       ctrSt.series.map(function(s){
         return '<th><span class="ctr-dot" style="background:'+s.color+'"></span>'+esc(s.nombre)+'</th>';
       }).join('') + '</tr></thead><tbody>'+filas+'</tbody></table>';
   }
+  // La comparación que no aparece en ningún otro lado del panel: de toda la
+  // gente que entró hoy al sitio, cuánta vino del anuncio. El resto es
+  // orgánico, directo, o gente que vio el anuncio y después entró por su
+  // cuenta — y esa diferencia es la que hace que el número de Meta nunca
+  // coincida con el contador de visitas del sitio.
+  function pintarNotaCtr(){
+    var el = document.getElementById('ctr-nota');
+    if(!el) return;
+    if(!ctrSt.fechas.length){ el.textContent = ''; return; }
+    var hoy = diasChile(1)[0];
+    var desdeAd = 0, hayAd = false;
+    ctrSt.series.forEach(function(s){
+      var d = s.porFecha[hoy];
+      if(d){ desdeAd += Number(d.visitas) || 0; hayAd = true; }
+    });
+    var total = (ULT_DATA && ULT_DATA.vistasPorDia && ULT_DATA.vistasPorDia[hoy]) || 0;
+    if(!hayAd && !total){ el.textContent = ''; return; }
+    var txt = 'Hoy entraron <b>' + num0(desdeAd) + '</b> personas desde el anuncio';
+    if(total){
+      var pct = total ? Math.round(desdeAd / total * 100) : 0;
+      txt += ' y <b>' + num0(total) + '</b> al sitio en total — el ' + pct + '% del tráfico es pagado.';
+      if(desdeAd > total) txt += ' Meta cuenta más de las que registra el sitio: los bloqueadores de anuncios le tapan el píxel a una parte.';
+    } else {
+      txt += '.';
+    }
+    txt += ' El gráfico y la tabla de arriba son SOLO tráfico del anuncio — no incluyen orgánico ni directo.';
+    el.innerHTML = txt;
+  }
+
   function alternarTablaCtr(){
     var t = document.getElementById('ctr-tabla'), b = document.getElementById('ctr-btn-tabla');
     var abierta = t.style.display !== 'none';
@@ -1653,7 +1725,7 @@
   function maxCtr(){
     var m = 0;
     ctrSt.series.forEach(function(s){ ctrSt.fechas.forEach(function(f){
-      var d = s.porFecha[f]; if(d && d.ctr > m) m = d.ctr;
+      var d = s.porFecha[f]; if(d && valCtr(d) > m) m = valCtr(d);
     }); });
     return m > 0 ? m * 1.15 : 1;
   }
@@ -1665,8 +1737,8 @@
     var filas = ctrSt.series.map(function(s){
       var d = s.porFecha[f];
       return '<div class="ctr-tip-row"><span class="ctr-dot" style="background:'+s.color+'"></span>'+
-        esc(s.nombre)+' <b>'+(d ? d.ctr.toFixed(2)+'%' : '—')+'</b>'+
-        (d ? ' <span style="color:#888">('+num0(d.clics)+' clics)</span>' : '')+'</div>';
+        esc(s.nombre)+' <b>'+(d ? mCtr().val(valCtr(d)) : '—')+'</b>'+
+        (d ? ' <span style="color:#888">('+mCtr().sec(d)+')</span>' : '')+'</div>';
     }).join('');
     tip.innerHTML = '<b>'+f+'</b>'+filas;
     tip.style.display = 'block';
@@ -1698,7 +1770,7 @@
     for(var l=0; l<=4; l++){
       var gy = g.padT + areaH * l/4;
       ctx.beginPath(); ctx.moveTo(g.padL, gy+.5); ctx.lineTo(g.w-g.padR, gy+.5); ctx.stroke();
-      ctx.fillText((max*(1-l/4)).toFixed(1)+'%', g.padL-6, gy+3);
+      ctx.fillText(mCtr().eje(max*(1-l/4)), g.padL-6, gy+3);
     }
 
     var px = function(i){ return n===1 ? g.padL+areaW/2 : g.padL + areaW*i/(n-1); };
@@ -1720,7 +1792,7 @@
       for(var i=0;i<n;i++){
         var d = s.porFecha[ctrSt.fechas[i]];
         if(!d){ abierto = false; continue; }
-        var x = px(i), y = py(d.ctr);
+        var x = px(i), y = py(valCtr(d));
         if(!abierto){ ctx.moveTo(x,y); abierto = true; } else ctx.lineTo(x,y);
       }
       ctx.stroke();
@@ -1733,7 +1805,7 @@
       ctrSt.series.forEach(function(s){
         var d = s.porFecha[ctrSt.fechas[ctrSt.hover]];
         if(!d) return;
-        var x = px(ctrSt.hover), y = py(d.ctr);
+        var x = px(ctrSt.hover), y = py(valCtr(d));
         ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
         ctx.fillStyle = s.color; ctx.fill();
         ctx.lineWidth = 2; ctx.strokeStyle = '#0b0b0b'; ctx.stroke();
