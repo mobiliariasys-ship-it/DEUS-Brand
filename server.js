@@ -342,7 +342,9 @@ app.post('/crear-preferencia', async (req, res) => {
       error: error.message || String(error),
       cliente: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
-      monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (Number(shippingCost) || 0),
+      // El upsell de tapones (+$12.990) tambien va en el aviso: si no, el monto
+      // de la venta rescatable sale menor al que el cliente iba a pagar.
+      monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (soloTapones ? 0 : (tapones ? 12990 : 0)) + (Number(shippingCost) || 0),
       color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));

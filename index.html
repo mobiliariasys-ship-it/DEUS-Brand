@@ -1918,8 +1918,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <div id="shipping-results"></div>
 
-            <!-- Upsell de tapones retirado del checkout (a pedido). El JS de
-                 toggleUpsell/upsellTapones queda inerte (usa guardas if(el)). -->
+            <!-- Upsell: Tapones de oído DEUS. Se oculta cuando el checkout es
+                 de "solo tapones" (no tiene sentido sumar tapones a un pedido
+                 de tapones). El JS que ya existe gestiona el toggle. -->
+            <div class="upsell-card" id="upsell-card" onclick="toggleUpsell()" style="cursor:pointer;">
+              <img src="img/img-tapones.webp" alt="Tapones de oído DEUS" class="upsell-img" loading="lazy" decoding="async">
+              <div class="upsell-info">
+                <div class="upsell-name">Tapones de oído DEUS</div>
+                <div class="upsell-desc">3 tamaños incluidos · reducción de ruido</div>
+                <div class="upsell-price">+ $12.990</div>
+              </div>
+              <button type="button" class="upsell-btn" id="upsell-btn">+ Agregar</button>
+            </div>
 
             <div class="total-row" id="total-row" style="display:none">
               <span class="total-label">Total a pagar</span>
