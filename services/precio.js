@@ -12,12 +12,17 @@
 const SUBIDA_MS = Date.UTC(2026, 7, 27, 6, 0, 0);
 
 const ANTES   = { precio: 54990, ancla: 62990, off: 12 };
-const DESPUES = { precio: 62990, ancla: 74999, off: 16 };
+const DESPUES = { precio: 68990, ancla: 74999, off: 8 };
 
 // El sello de descuento se redondea HACIA ABAJO a propósito: 62.990→54.990 es
-// 12,70% y se anuncia 12%; 74.999→62.990 es 16,01% y se anuncia 16%. Así lo
+// 12,70% y se anuncia 12%; 74.999→68.990 es 8,01% y se anuncia 8%. Así lo
 // que se entrega siempre es igual o mejor que lo anunciado. Al revés sería
 // anunciar una rebaja que después no se aplica.
+//
+// `ancla` y `off` hoy NO se muestran en el sitio (se anuncia un solo precio),
+// pero se mantienen coherentes por si algún día se repone el tachado: el
+// SERNAC exige que el "precio anterior" haya sido un precio realmente cobrado,
+// y $74.999 nunca lo fue.
 function precios(ahora = Date.now()) {
   return ahora < SUBIDA_MS ? ANTES : DESPUES;
 }
