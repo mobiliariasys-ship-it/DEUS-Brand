@@ -170,6 +170,67 @@ async function getInsightsDiarios(campaignId, dias = 14) {
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
 }
 
+// ── Serie HORARIA de un anuncio ────────────────────────────────────────────
+// El gráfico diario dice si un anuncio sirve; este dice a qué HORA sirve, que
+// es otra pregunta y se responde con otro corte.
+//
+// Meta agrega las horas en el huso de la CUENTA (America/Santiago), el mismo
+// en el que el panel cuenta las ventas, así que las dos series se pueden mirar
+// una al lado de la otra sin corregir nada.
+function diaChile(atras = 0) {
+  return new Date(Date.now() - atras * 86400000)
+    .toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+}
+
+async function getCtrHorario(objectId, dias = 3) {
+  const n = [1, 3, 7].includes(Number(dias)) ? Number(dias) : 3;
+  const data = await llamar(`/${objectId}/insights`, {
+    params: {
+      fields: 'impressions,clicks,inline_link_clicks,spend',
+      breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+      time_increment: 1,
+      // Ventana explícita y NO date_preset: last_3d devuelve los 3 días
+      // CERRADOS anteriores y deja HOY afuera, y hoy es justamente lo que se
+      // quiere mirar cuando el CTR se está moviendo.
+      time_range: JSON.stringify({ since: diaChile(n - 1), until: diaChile(0) })
+    }
+  });
+  return (data.data || [])
+    .map(r => {
+      const impresiones = Number(r.impressions || 0);
+      // CTR del ENLACE calculado acá en vez de pedir inline_link_click_ctr:
+      // es la misma división, y así una hora con impresiones pero sin clics
+      // da 0 en vez de un campo que Meta simplemente no manda.
+      const clics = Number(r.inline_link_clicks || 0);
+      return {
+        fecha: r.date_start,
+        hora: Number(String(r.hourly_stats_aggregated_by_advertiser_time_zone || '0').slice(0, 2)) || 0,
+        ctr: impresiones ? (clics / impresiones) * 100 : 0,
+        clics,
+        clicsTodos: Number(r.clicks || 0),
+        impresiones,
+        gasto: Number(r.spend || 0)
+      };
+    })
+    // Una hora sin entrega no es un CTR de 0%: es una hora sin datos. Se cae
+    // de la serie para que la línea se CORTE en vez de desplomarse y hacer
+    // creer que el anuncio se cayó cuando en realidad estaba pausado.
+    .filter(h => h.impresiones > 0)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.hora - b.hora);
+}
+
+// Anuncios de la cuenta. Hace falta para ubicar uno POR NOMBRE: los creativos
+// de Meta son inmutables, así que cada vez que se cambia el video o el copy
+// nace un anuncio NUEVO con otro id, y un id escrito a mano dejaría el gráfico
+// mudo sin avisar.
+async function listAds() {
+  const { adAccountId } = creds();
+  const data = await llamar(`/${adAccountId}/ads`, {
+    params: { fields: 'id,name,effective_status', limit: 100 }
+  });
+  return data.data || [];
+}
+
 async function setStatus(objectId, status) {
   if (status !== 'ACTIVE' && status !== 'PAUSED') throw new Error('status inválido: ' + status);
   return llamar(`/${objectId}`, { method: 'POST', params: { status } });
@@ -261,4 +322,4 @@ async function getGastoDiarioCuenta(dias = 14) {
   return { mapa, via: 'campañas', campanas: campanas.length, errorCuenta };
 }
 
-module.exports = { listCampaigns, getInsights, getInsightsDiarios, getGastoDiarioCuenta, setStatus, updateBudget, duplicateCampaign };
+module.exports = { listCampaigns, listAds, getInsights, getInsightsDiarios, getCtrHorario, getGastoDiarioCuenta, setStatus, updateBudget, duplicateCampaign };

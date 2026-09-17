@@ -652,6 +652,45 @@ app.get('/admin/ads/ctr-diario', async (req, res) => {
   }
 });
 
+// CTR hora a hora de UN anuncio — el gráfico "en vivo" del panel.
+//
+// Cuál anuncio: el id de META_AD_CTR_HORARIO_ID si está puesto; si no, el
+// primero cuyo nombre contenga lo buscado (?anuncio=, por defecto "giratorio");
+// y si tampoco aparece, el activo que salga primero. Se resuelve por NOMBRE y
+// no por id fijo a propósito: los creativos de Meta son inmutables, así que al
+// cambiar el video o el copy nace un anuncio NUEVO con otro id y un id escrito
+// a mano dejaría el gráfico mudo sin decir por qué.
+app.get('/admin/ads/ctr-horario', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const dias = [1, 3, 7].includes(Number(req.query.dias)) ? Number(req.query.dias) : 3;
+    const buscado = String(req.query.anuncio || 'giratorio');
+    const fijo = (process.env.META_AD_CTR_HORARIO_ID || '').trim();
+    const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const ads = await metaAds.listAds();
+    const anuncio = (fijo && ads.find(a => a.id === fijo))
+      || ads.find(a => norm(a.name).includes(norm(buscado)))
+      || ads.find(a => a.effective_status === 'ACTIVE')
+      || ads[0];
+    if (!anuncio) return res.status(404).json({ error: 'La cuenta de Meta no tiene anuncios.' });
+
+    const horas = await metaAds.getCtrHorario(anuncio.id, dias);
+    res.json({
+      dias,
+      anuncio: { id: anuncio.id, nombre: anuncio.name, estado: anuncio.effective_status },
+      // Aviso honesto en la respuesta: si lo que se está graficando NO es el
+      // anuncio pedido, el panel lo dice en vez de mostrar otra línea como si
+      // fuera la buena.
+      exacto: norm(anuncio.name).includes(norm(buscado)),
+      buscado,
+      horas
+    });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
 // Utilidad diaria: cruza las ventas del panel con el gasto real en Meta.
 //
 // Costos por venta, en orden de tamaño:

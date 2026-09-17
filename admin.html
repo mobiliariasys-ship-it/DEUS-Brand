@@ -491,6 +491,22 @@
         <div class="ctr-tabla" id="ctr-tabla" style="display:none"></div>
         <div class="ctr-nota" id="ctr-nota"></div>
       </div>
+      <!-- CTR hora a hora del anuncio principal. El gráfico de arriba dice si
+           el anuncio sirve; este dice a qué HORA sirve. Se refresca solo cada
+           60 min: Meta publica la hora en curso con atraso, y pedirla más
+           seguido solo quema el rate limit de la cuenta. -->
+      <div class="ctr-wrap" id="hora-wrap" style="display:none;position:relative;">
+        <div class="ctr-rango">
+          <button data-hdias="1" onclick="cargarHora(1)">Hoy</button>
+          <button data-hdias="3" class="on" onclick="cargarHora(3)">3 días</button>
+          <button data-hdias="7" onclick="cargarHora(7)">7 días</button>
+          <button onclick="cargarHora()" style="margin-left:auto">Actualizar</button>
+        </div>
+        <div class="ctr-chips" id="hora-chips"></div>
+        <div class="ctr-scroll"><canvas id="chartHora" width="820" height="230"></canvas></div>
+        <div class="ctr-tip" id="hora-tip"></div>
+        <div class="ctr-nota" id="hora-nota"></div>
+      </div>
       <div class="ads-grid" id="ads-grid"></div>
     </section>
 
@@ -1826,6 +1842,227 @@
     if(!listo) requestAnimationFrame(frameCtr); else ctrSt.corriendo = false;
   }
 
+  // ── CTR hora a hora del anuncio principal (GIRATORIO) ──────────────────
+  // Una sola serie, un solo anuncio. El corte por hora existe para una
+  // decisión concreta: en qué franja el creativo rinde y en cuál se quema.
+  var horaSt = { puntos: [], dias: 3, nombre: '', exacto: true, buscado: '', hover: null, reveal: 0, corriendo: false, leido: 0 };
+  var HORA_COLOR = '#3987e5';
+
+  function cargarHora(dias){
+    if(dias) horaSt.dias = dias;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hdias]'), function(b){
+      b.classList.toggle('on', Number(b.getAttribute('data-hdias')) === horaSt.dias);
+    });
+    fetch(BASE+'/admin/ads/ctr-horario?dias='+horaSt.dias+'&clave='+encodeURIComponent(clave))
+      .then(function(rp){ if(!rp.ok) throw new Error('sin datos'); return rp.json(); })
+      .then(pintarHora)
+      .catch(function(){ document.getElementById('hora-wrap').style.display='none'; });
+  }
+
+  function pintarHora(d){
+    horaSt.puntos  = d.horas || [];
+    horaSt.nombre  = (d.anuncio && d.anuncio.nombre) || 'anuncio';
+    horaSt.exacto  = d.exacto !== false;
+    horaSt.buscado = d.buscado || '';
+    horaSt.leido   = Date.now();
+    horaSt.hover   = null;
+    horaSt.reveal  = 0;
+    document.getElementById('hora-wrap').style.display = horaSt.puntos.length ? '' : 'none';
+    pintarChipsHora(); pintarNotaHora();
+    if(!horaSt.corriendo){ horaSt.corriendo = true; requestAnimationFrame(frameHora); }
+  }
+
+  // CTR de un conjunto de horas: se suman clics e impresiones y se divide UNA
+  // vez. Promediar los CTR hora a hora le daría el mismo peso a una hora de 50
+  // impresiones que a una de 900, y así salen los "8% de CTR" de madrugada.
+  function ctrDe(lista){
+    var c = 0, i = 0;
+    lista.forEach(function(p){ c += p.clics; i += p.impresiones; });
+    return i ? c / i * 100 : 0;
+  }
+
+  function pintarChipsHora(){
+    var cont = document.getElementById('hora-chips'), ps = horaSt.puntos;
+    if(!ps.length){ cont.innerHTML = ''; return; }
+
+    var ultima = ps[ps.length-1], previa = ps.length > 1 ? ps[ps.length-2] : null;
+    var dif = (previa && previa.ctr) ? (ultima.ctr - previa.ctr) / previa.ctr * 100 : null;
+    var cls = dif === null ? 'ctr-igual' : (dif > 0.5 ? 'ctr-sube' : (dif < -0.5 ? 'ctr-baja' : 'ctr-igual'));
+    var fle = dif === null ? '·' : (dif > 0.5 ? '▲' : (dif < -0.5 ? '▼' : '='));
+
+    // Mejor y peor franja del día, agregando todas las veces que se repitió
+    // esa hora en la ventana. Se exigen 300 impresiones para entrar: con menos
+    // el CTR es ruido y el "mejor horario" cambia en cada refresco. Con la
+    // ventana de "Hoy" casi ninguna franja llega, y está bien: un solo día no
+    // alcanza para declarar el mejor horario.
+    var porHora = {};
+    ps.forEach(function(p){ (porHora[p.hora] = porHora[p.hora] || []).push(p); });
+    var franjas = Object.keys(porHora).map(function(h){
+      var l = porHora[h], imp = l.reduce(function(a,x){ return a + x.impresiones; }, 0);
+      return { hora: Number(h), ctr: ctrDe(l), imp: imp };
+    }).filter(function(f){ return f.imp >= 300; }).sort(function(a,b){ return b.ctr - a.ctr; });
+
+    var html = '<div class="ctr-chip">'+
+      '<div class="ctr-chip-n"><span class="ctr-dot" style="background:'+HORA_COLOR+'"></span>'+esc(horaSt.nombre)+' · última hora</div>'+
+      '<div class="ctr-chip-v">'+ultima.ctr.toFixed(2)+'%</div>'+
+      '<div class="ctr-chip-d '+cls+'">'+(dif === null ? 'sin comparación' : fle+' '+Math.abs(dif).toFixed(0)+'% vs la hora anterior')+'</div>'+
+    '</div>';
+    html += '<div class="ctr-chip">'+
+      '<div class="ctr-chip-n">Promedio de la ventana</div>'+
+      '<div class="ctr-chip-v">'+ctrDe(ps).toFixed(2)+'%</div>'+
+      '<div class="ctr-chip-d ctr-igual">'+ps.length+' horas con entrega</div>'+
+    '</div>';
+    if(franjas.length >= 2){
+      var mej = franjas[0], peo = franjas[franjas.length-1];
+      html += '<div class="ctr-chip">'+
+        '<div class="ctr-chip-n">Mejor franja</div>'+
+        '<div class="ctr-chip-v">'+mej.hora+':00</div>'+
+        '<div class="ctr-chip-d ctr-sube">'+mej.ctr.toFixed(2)+'% de CTR</div>'+
+      '</div>';
+      html += '<div class="ctr-chip">'+
+        '<div class="ctr-chip-n">Peor franja</div>'+
+        '<div class="ctr-chip-v">'+peo.hora+':00</div>'+
+        '<div class="ctr-chip-d ctr-baja">'+peo.ctr.toFixed(2)+'% de CTR</div>'+
+      '</div>';
+    }
+    cont.innerHTML = html;
+  }
+
+  function pintarNotaHora(){
+    var el = document.getElementById('hora-nota'); if(!el) return;
+    var hh = new Date(horaSt.leido).toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/Santiago' });
+    var t = '';
+    if(!horaSt.exacto){
+      t += '⚠️ No encontré un anuncio que se llame «'+esc(horaSt.buscado)+'»; se está graficando <b>'+esc(horaSt.nombre)+'</b>. ';
+    }
+    t += 'Última lectura a las <b>'+hh+'</b> (hora de Chile) · se actualiza sola cada hora. ';
+    t += 'Meta publica la hora en curso con unos minutos de atraso, así que el último punto siempre queda corto y sube después. ';
+    t += 'Las horas sin entrega no dibujan punto: la línea se <b>corta</b> en vez de caer a 0% — una campaña pausada no es un CTR de cero. ';
+    t += 'El CTR es de clics en el ENLACE, igual que el gráfico de arriba.';
+    el.innerHTML = t;
+  }
+
+  function geoHora(cv){ return { padL:38, padR:12, padT:14, padB:26, w:cv.width, h:cv.height }; }
+
+  function frameHora(){
+    var cv = document.getElementById('chartHora');
+    if(!cv || !horaSt.puntos.length){ horaSt.corriendo = false; return; }
+    var ctx = cv.getContext('2d'), g = geoHora(cv), ps = horaSt.puntos, n = ps.length;
+    var max = 0; ps.forEach(function(p){ if(p.ctr > max) max = p.ctr; });
+    max = max > 0 ? max * 1.15 : 1;
+    var areaW = g.w - g.padL - g.padR, areaH = g.h - g.padT - g.padB;
+    horaSt.reveal += (1 - horaSt.reveal) * 0.12;
+    var listo = horaSt.reveal > 0.995; if(listo) horaSt.reveal = 1;
+    ctx.clearRect(0,0,g.w,g.h);
+
+    ctx.strokeStyle = '#181818'; ctx.lineWidth = 1;
+    ctx.fillStyle = '#666'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+    for(var l=0; l<=4; l++){
+      var gy = g.padT + areaH * l/4;
+      ctx.beginPath(); ctx.moveTo(g.padL, gy+.5); ctx.lineTo(g.w-g.padR, gy+.5); ctx.stroke();
+      ctx.fillText((max*(1-l/4)).toFixed(1)+'%', g.padL-6, gy+3);
+    }
+
+    var px = function(i){ return n===1 ? g.padL+areaW/2 : g.padL + areaW*i/(n-1); };
+    var py = function(v){ return g.padT + areaH - (Math.min(v,max)/max)*areaH*horaSt.reveal; };
+
+    // Separador vertical en cada cambio de día: sin esto, 168 horas seguidas
+    // se leen como un solo día larguísimo.
+    ctx.strokeStyle = '#222';
+    for(var b=1;b<n;b++){
+      if(ps[b].fecha === ps[b-1].fecha) continue;
+      ctx.beginPath(); ctx.moveTo(px(b)+.5, g.padT); ctx.lineTo(px(b)+.5, g.padT+areaH); ctx.stroke();
+    }
+
+    // Promedio de la ventana, punteado: la referencia contra la que se lee si
+    // una hora fue buena o solo se ve alta.
+    var prom = ctrDe(ps);
+    if(prom > 0 && prom < max){
+      ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle = '#4a4a4a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(g.padL, py(prom)+.5); ctx.lineTo(g.w-g.padR, py(prom)+.5); ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = '#6a6a6a'; ctx.font = '9px monospace'; ctx.textAlign = 'left';
+      ctx.fillText('prom '+prom.toFixed(2)+'%', g.padL+4, py(prom)-4);
+    }
+
+    if(horaSt.hover !== null){
+      ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px(horaSt.hover)+.5, g.padT); ctx.lineTo(px(horaSt.hover)+.5, g.padT+areaH); ctx.stroke();
+    }
+
+    // La línea se corta entre horas NO consecutivas (hubo un hueco sin
+    // entrega) por la misma razón que el gráfico diario corta los días sin
+    // dato: unir los extremos dibujaría una caída que nunca ocurrió.
+    ctx.strokeStyle = HORA_COLOR; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath();
+    var abierto = false;
+    for(var i=0;i<n;i++){
+      var seguido = i === 0 || (ps[i].fecha === ps[i-1].fecha && ps[i].hora === ps[i-1].hora + 1)
+        || (ps[i].fecha !== ps[i-1].fecha && ps[i].hora === 0 && ps[i-1].hora === 23);
+      var x = px(i), y = py(ps[i].ctr);
+      if(!seguido || !abierto){ ctx.moveTo(x,y); abierto = true; } else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    if(horaSt.hover !== null){
+      var hp = ps[horaSt.hover];
+      ctx.beginPath(); ctx.arc(px(horaSt.hover), py(hp.ctr), 5, 0, Math.PI*2);
+      ctx.fillStyle = HORA_COLOR; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#0b0b0b'; ctx.stroke();
+    }
+
+    // Eje X: la fecha en cada cambio de día, y la hora cada tantas para no
+    // pisarse entre ellas.
+    var paso = n > 96 ? 12 : (n > 40 ? 6 : 3);
+    ctx.font = '9px monospace'; ctx.textAlign = 'center';
+    for(var k=0;k<n;k++){
+      var esDia = k === 0 || ps[k].fecha !== ps[k-1].fecha;
+      if(!esDia && k % paso) continue;
+      ctx.fillStyle = (horaSt.hover === k) ? '#fff' : (esDia ? '#9a9a9a' : '#777');
+      ctx.fillText(esDia ? ps[k].fecha.slice(8)+'/'+ps[k].fecha.slice(5,7) : ps[k].hora+'h', px(k), g.h-9);
+    }
+
+    if(!listo) requestAnimationFrame(frameHora); else horaSt.corriendo = false;
+  }
+
+  // El cursor se engancha UNA vez: cargarHora() corre en cada refresco y
+  // enganchar acá dentro acumularía un listener por hora transcurrida.
+  (function(){
+    var cv = document.getElementById('chartHora'); if(!cv) return;
+    cv.addEventListener('mousemove', function(ev){
+      if(!horaSt.puntos.length) return;
+      var rect = cv.getBoundingClientRect(), g = geoHora(cv);
+      var x = (ev.clientX - rect.left) * (cv.width / rect.width);
+      var n = horaSt.puntos.length;
+      var i = n === 1 ? 0 : Math.round((x - g.padL) / ((cv.width - g.padL - g.padR) / (n-1)));
+      horaSt.hover = (i >= 0 && i < n) ? i : null;
+      moverTipHora(cv, rect);
+      if(!horaSt.corriendo){ horaSt.corriendo = true; requestAnimationFrame(frameHora); }
+    });
+    cv.addEventListener('mouseleave', function(){
+      horaSt.hover = null;
+      document.getElementById('hora-tip').style.display = 'none';
+      if(!horaSt.corriendo){ horaSt.corriendo = true; requestAnimationFrame(frameHora); }
+    });
+  })();
+
+  function moverTipHora(cv, rect){
+    var tip = document.getElementById('hora-tip');
+    if(horaSt.hover === null){ tip.style.display='none'; return; }
+    var p = horaSt.puntos[horaSt.hover];
+    tip.innerHTML = '<b>'+p.fecha.slice(5).replace('-','/')+' · '+String(p.hora).padStart(2,'0')+':00</b>'+
+      '<div class="ctr-tip-row"><span class="ctr-dot" style="background:'+HORA_COLOR+'"></span>CTR <b>'+p.ctr.toFixed(2)+'%</b></div>'+
+      '<div class="ctr-tip-row" style="color:#999">'+num0(p.clics)+' clics · '+num0(p.impresiones)+' impresiones</div>'+
+      '<div class="ctr-tip-row" style="color:#999">'+money0(p.gasto)+' gastados</div>';
+    tip.style.display = 'block';
+    var g = geoHora(cv), n = horaSt.puntos.length, k = rect.width / cv.width;
+    var xi = n === 1 ? g.padL : g.padL + (cv.width - g.padL - g.padR) * horaSt.hover / (n-1);
+    var left = cv.offsetLeft + xi * k + 14;
+    if(left + tip.offsetWidth > cv.offsetLeft + rect.width) left -= tip.offsetWidth + 28;
+    tip.style.left = left + 'px';
+    tip.style.top = (cv.offsetTop + 10) + 'px';
+  }
+
   // Ads Manager (Meta): carga manual (botón "Actualizar"), no auto-refresh
   // cada 5s como el resto del panel, para no gastar el rate limit de Meta.
   function money0(n){ return '$'+Math.round(Number(n)||0).toLocaleString('es-CL'); }
@@ -1851,6 +2088,7 @@
       document.getElementById('ads-grid').style.display='none';
     });
     cargarCtr();
+    cargarHora();
     // La utilidad no depende de que Meta Ads este configurado: si no responde,
     // igual muestra ventas y costos con el gasto en 0 y lo avisa.
     cargarUtilidad();
@@ -1944,6 +2182,10 @@
   document.getElementById('key').addEventListener('keydown',function(e){ if(e.key==='Enter') entrar(); });
   // Refresco en vivo
   setInterval(function(){ if(clave && document.getElementById('panel').style.display!=='none') cargar(false); }, 5000);
+  // El CTR horario va aparte y MUCHO más lento: Meta publica cada hora con
+  // atraso, así que pedirlo cada 5s no traería nada nuevo y quemaría el
+  // rate limit de la cuenta para todo lo demás.
+  setInterval(function(){ if(clave && document.getElementById('panel').style.display!=='none') cargarHora(); }, 3600000);
 </script>
 </body>
 </html>
