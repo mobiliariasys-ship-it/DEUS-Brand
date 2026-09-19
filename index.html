@@ -1401,7 +1401,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar">🚚 <b>ENVÍO GRATIS</b><div class="ab-cd"><span class="ab-cd-lbl">Termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
+<div class="announce-bar" id="offer-bar">🇨🇱 <b class="ab-titulo">ENVÍO GRATIS POR SEPTIEMBRE</b><div class="ab-plazo">1-2 días de envío</div><div class="ab-cd"><span class="ab-cd-lbl">Termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -4210,12 +4210,19 @@ function aplicarReserva() {
   // Top bar: solo "ENVÍO GRATIS", SIN contador (se retiró a pedido).
   if (ab) {
     ab.classList.remove('reserva');
+    // "POR SEPTIEMBRE" y el contador solo mientras quede septiembre. Pasado el
+    // 30 el banner cae solo a "ENVÍO GRATIS" a secas, que sigue siendo cierto,
+    // en vez de quedarse anunciando un mes que ya pasó.
+    var quedaPromo = msRestanteOferta();
     ab.innerHTML = (ofertaActiva()
-      ? '🚚 <b>ENVÍO GRATIS</b>'
-      : '🔥 <b>Última unidad</b> disponible') +
-      '<div class="ab-cd"><span class="ab-cd-lbl">Termina en</span>' +
-      '<span class="ab-cd-boxes" id="cd-ofcd" data-u="' + firmaUnidadesOferta() + '">' +
-      htmlCajitasOferta('ofcd', 'abcd-box') + '</span></div>';
+      ? '🇨🇱 <b class="ab-titulo">ENVÍO GRATIS' + (quedaPromo > 0 ? ' POR SEPTIEMBRE' : '') + '</b>'
+      : '🔥 <b class="ab-titulo">Última unidad</b> disponible') +
+      '<div class="ab-plazo">1-2 días de envío</div>' +
+      (quedaPromo > 0
+        ? '<div class="ab-cd"><span class="ab-cd-lbl">Termina en</span>' +
+          '<span class="ab-cd-boxes" id="cd-ofcd" data-u="' + firmaUnidadesOferta() + '">' +
+          htmlCajitasOferta('ofcd', 'abcd-box') + '</span></div>'
+        : '');
   }
   // Repinta las cajitas recién creadas: si no, se ven "--" hasta el próximo tick.
   if (typeof pintarContadorOferta === 'function') pintarContadorOferta();
@@ -4233,16 +4240,19 @@ function aplicarReserva() {
 
 // ── Contador del precio de oferta: termina a la 01:00 de Chile, todos los días ──
 // Pinta lo que le queda al precio de oferta en cajitas, en dos lugares: el
-// top bar y al lado del precio principal. El ciclo dura 2 días y termina a la
-// 01:00 de Chile, y al terminar arranca solo otra vez en 48 h.
+// top bar. Antes era un ciclo rodante de 2 días; ahora cuenta lo que le queda
+// a la promo de septiembre y se apaga solo cuando el mes termina.
 //
-// Se calcula sobre la hora REAL de Chile en vez de contar milisegundos desde
-// un ancla fija. Dos motivos: respeta el horario de verano sin tocar nada
-// (Intl resuelve el offset del día), y todos los visitantes ven exactamente
-// el mismo tiempo restante — no depende de la primera visita ni de
-// localStorage. Tampoco hay ninguna fecha que mantener en el servidor.
-var OFERTA_HORA_FIN = 1;     // termina a la 01:00 de Chile
-var OFERTA_DIAS_CICLO = 2;   // y dura 2 días
+// Se calcula sobre la hora REAL de Chile en vez de restar milisegundos contra
+// un ancla en UTC. Dos motivos: respeta el horario de verano sin tocar nada
+// (Intl resuelve el offset del día, y en Chile el cambio cae justo a principios
+// de septiembre), y todos los visitantes ven exactamente el mismo tiempo
+// restante — no depende de la primera visita ni de localStorage.
+//
+// El corte va como DÍA contado desde 1970 porque es la misma unidad que
+// devuelve ahoraChile().dia, así la resta no vuelve a pasar por ninguna
+// conversión de huso.
+var FIN_PROMO_DIA = Date.UTC(2026, 9, 1) / 86400000;   // 1-oct-2026 00:00 de Chile
 
 // Lee el reloj de Chile una sola vez y devuelve lo que necesita el contador:
 // el día (contado desde 1970, para saber en qué punto del ciclo estamos) y
@@ -4264,17 +4274,12 @@ function ahoraChile() {
 function msRestanteOferta() {
   try {
     var a = ahoraChile();
-    // Cuánto falta para la PRÓXIMA 01:00. Si la de hoy ya pasó, es la de mañana.
-    var falta = OFERTA_HORA_FIN * 3600 - a.seg;
-    var dia = a.dia;
-    if (falta <= 0) { falta += 86400; dia += 1; }
-    // Esa 01:00 cierra el ciclo solo si cae en un día múltiplo del ciclo; si
-    // no, todavía queda una vuelta de 24 h por delante. Así el corte cae
-    // siempre día por medio sin guardar ninguna fecha en ningún lado.
-    var resto = ((dia % OFERTA_DIAS_CICLO) + OFERTA_DIAS_CICLO) % OFERTA_DIAS_CICLO;
-    return (falta + resto * 86400) * 1000;
+    var seg = (FIN_PROMO_DIA - a.dia) * 86400 - a.seg;
+    return seg > 0 ? seg * 1000 : 0;
   } catch (e) {
-    return 24 * 3600 * 1000;   // sin Intl: valor neutro, no rompe la página
+    // Sin Intl no se puede saber la hora de Chile, y un plazo inventado es
+    // peor que ninguno: se devuelve 0 y el banner queda sin contador.
+    return 0;
   }
 }
 
@@ -4312,8 +4317,20 @@ function htmlCajitasOferta(pre, claseCaja, unidades) {
 // acompañaba al precio se retiró.
 var OFERTA_SITIOS = [['cd-ofcd', 'ofcd', 'abcd-box']];
 
+// Se llama cada segundo, así que también sirve de red para el cambio de mes:
+// aunque /stock no responda y aplicarReserva() no llegue a correr, el banner
+// se limpia solo al pasar la medianoche del 30.
+function apagarPromoVencida() {
+  Array.prototype.forEach.call(document.querySelectorAll('.announce-bar .ab-cd'), function (e) {
+    e.parentNode.removeChild(e);
+  });
+  var t = document.querySelector('.announce-bar .ab-titulo');
+  if (t && /SEPTIEMBRE/i.test(t.textContent)) t.textContent = 'ENVÍO GRATIS';
+}
+
 function pintarContadorOferta() {
   var ms = msRestanteOferta();
+  if (ms <= 0) { apagarPromoVencida(); return; }
   var u = unidadesOferta(ms);
   var z = function (n) { return String(n).padStart(2, '0'); };
   // Se recalcula desde el reloj real en cada tick (no se descuenta 1 a mano),
