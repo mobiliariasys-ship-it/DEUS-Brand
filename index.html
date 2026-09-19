@@ -4630,6 +4630,40 @@ var ioVideosResena = ('IntersectionObserver' in window) ? new IntersectionObserv
   });
 }, { threshold: 0.5 }) : null;
 
+// PRECARGA ANTICIPADA. El <video> sale con preload="none" para que quien abre
+// la página y se va sin bajar no cargue con los 626 KB. El problema del
+// preload="none" a secas es el otro extremo: si la descarga recién empieza
+// cuando la tarjeta se ve, el primer segundo se queda en el poster.
+//
+// El disparador NO es la geometría. La sección de reseñas está a unos 1.950 px
+// del tope, así que cualquier rootMargin lo bastante grande para dar ventaja
+// dispara ya en la carga inicial y le compite el ancho de banda justo a lo que
+// se ve primero — medido: con 1.500 px pedía el video con scrollY en 0.
+//
+// El disparador es el PRIMER SCROLL, que es la primera señal de que alguien
+// piensa bajar. Ahí quedan más de 1.200 px de recorrido hasta las reseñas,
+// tiempo de sobra para 626 KB, y quien nunca hace scroll no lo pide nunca.
+// Y nunca antes del load: primero termina lo que se ve, después el video.
+var precargaResenaHecha = false;
+function precargarVideosResena(){
+  if (precargaResenaHecha) return;
+  precargaResenaHecha = true;
+  Array.prototype.forEach.call(document.querySelectorAll('.review-video'), function(v){
+    v.preload = 'auto';
+    // readyState 0 = todavía no bajó nada. El guard evita que load() reinicie
+    // un video que ya arrancó, por ejemplo si se llegó de golpe con un ancla.
+    if (v.readyState === 0) { try { v.load(); } catch (err) {} }
+  });
+}
+function armarPrecargaResena(){
+  // Si la página abre ya desplazada (recarga a media altura, o un ancla), la
+  // intención ya está: no hay que esperar un scroll que quizá no llegue.
+  if (window.scrollY > 0) { precargarVideosResena(); return; }
+  window.addEventListener('scroll', precargarVideosResena, { once: true, passive: true });
+}
+if (document.readyState === 'complete') armarPrecargaResena();
+else window.addEventListener('load', armarPrecargaResena);
+
 // Se llama dos veces: sobre la página y sobre el clon que arma el modal de
 // reseñas. Un clon por innerHTML NO arrastra la propiedad muted ni queda
 // observado, así que sin esta segunda pasada el video del modal se quedaba
