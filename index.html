@@ -685,6 +685,11 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .review-stars{color:#e9c46a;font-size:.8rem;letter-spacing:2px;margin-bottom:10px;}
 .review-text{color:#d8d8d8;font-size:.86rem;line-height:1.6;margin-bottom:14px;}
 .review-author{font-size:.66rem;letter-spacing:1px;color:var(--silver);}
+/* Ubicación del cliente, bajo el @. Va en su propia línea y no pegada al
+   autor porque la fila ya lleva "@handle · Instagram" y un tercer dato ahí
+   la parte en dos en pantallas angostas. */
+.review-loc{display:flex;align-items:center;gap:5px;font-size:.62rem;letter-spacing:.8px;color:#8a8a8a;margin-top:5px;}
+.review-loc svg{flex-shrink:0;opacity:.85;}
 .review-ig{color:#fff;font-weight:600;}
 /* Ya no se ocultan reseñas: en el carrusel entran todas sin costo de alto,
    así que se fue el botón "Ver más reseñas" y su clase .review-extra queda
@@ -3306,47 +3311,55 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"La batería me dura muchísimo y lo de medir el sueño es adictivo. Súper cómoda para dormir con ella."</p>
         <div class="review-author"><span class="review-ig">@marcelo.rojas_</span> · Instagram</div>
+        <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Providencia</div>
       </div>
       <div class="review-card">
         <img class="review-photo" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Muy bueno, llegó en el tiempo correspondiente y la atención 10 de 10, y del producto nada que decir, muy bueno."</p>
         <div class="review-author"><span class="review-ig">@Pdrozzzz</span> · Instagram</div>
+        <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Frutillar</div>
       </div>
       <div class="review-card">
         <img class="review-photo" src="img/resena-jose.webp" alt="DEUS Band con correa de nylon en la muñeca, en el gimnasio junto al rack de mancuernas — reseña de José" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Muy buena experiencia, muy útil, lleva muy bien el sueño y el monitoreo general. Cómoda y combinable con todo. Muy feliz."</p>
         <div class="review-author"><span class="review-ig">@joose.ojedaa</span> · Instagram</div>
+        <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Calera de Tango</div>
       </div>
       <div class="review-card">
         <img class="review-photo" src="img/resena-cristobal.webp" alt="DEUS Band en la muneca en el gimnasio — reseña de Cristóbal Nanning" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Entrenando mejor con DEUS Band 🔝"</p>
         <div class="review-author"><span class="review-ig">@_cristobalnanning</span> · Instagram</div>
+        <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Buin</div>
       </div>
       <div class="review-card">
         <img class="review-photo" src="img/resena-diorr.webp" alt="DEUS Band con correa de nylon en la muñeca, entrenando con mancuernas en el gimnasio — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Muy precisa en los datos y cómoda para mis entrenamientos 💪🏽☄️"</p>
         <div class="review-author"><span class="review-ig">@diorr.jayy</span> · Instagram</div>
+        <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Las Condes</div>
       </div>
       <div class="review-card review-extra">
         <img class="review-photo" src="img/resena-cffs.webp" alt="DEUS Band en la muneca en la cancha — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Las mejores mediciones gracias a DEUS Band 💪🏽"</p>
         <div class="review-author"><span class="review-ig">@cffs_kvbir</span> · Instagram</div>
+        <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>San Miguel</div>
       </div>
       <div class="review-card review-extra">
         <img class="review-photo" src="img/resena-nicolas.webp" alt="DEUS Band en la muñeca al aire libre — reseña de Nicolas" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Superó mis expectativas por mucho!! Muy cómodo para dormir y salir a trotar!!"</p>
         <div class="review-author"><span class="review-ig">@Elhayecknico</span> · Instagram</div>
+        <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Villarrica</div>
       </div>
       <div class="review-card review-extra">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Llegó rápido y la calidad es mejor de lo que esperaba. La app es simple y clara, la recomiendo 100%."</p>
         <div class="review-author"><span class="review-ig">@andres.fuentesg</span> · Instagram</div>
+        <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Puerto Varas</div>
       </div>
       <div class="review-card review-extra">
         <div class="review-stars">★★★★★</div>
