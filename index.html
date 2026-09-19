@@ -668,9 +668,10 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
    se comía la muñeca en varias. A 4:5 se ve el producto completo. */
 .review-photo{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;margin-bottom:14px;display:block;cursor:zoom-in;transition:opacity .2s;}
 .review-photo:hover{opacity:.9;}
-/* El video de reseña usa .review-photo para heredar tamaño y recorte. Solo
-   cambia el cursor: no abre el visor de fotos, abre pantalla completa. */
-.review-video{cursor:pointer;background:#111;}
+/* El video de reseña usa .review-photo para heredar tamaño y recorte, pero
+   NO es pinchable: .review-photo trae cursor:zoom-in para el visor de fotos y
+   acá hay que anularlo, si no promete un clic que no hace nada. */
+.review-video{cursor:default;background:#111;}
 .foto-lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;}
 .foto-lightbox.show{display:flex;}
 .foto-lightbox img{max-width:100%;max-height:90vh;border-radius:10px;}
@@ -3301,8 +3302,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="review-card">
         <video class="review-photo review-video" src="img/resena-marcelo.mp4" poster="img/resena-marcelo-poster.webp"
                muted loop playsinline preload="none" disablepictureinpicture
-               aria-label="DEUS Band con correa de nylon en la muñeca, en un parque — reseña de Marcelo"
-               onclick="pantallaCompletaVideo(this)"></video>
+               aria-label="DEUS Band con correa de nylon en la muñeca, en un parque — reseña de Marcelo"></video>
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"La batería me dura muchísimo y lo de medir el sueño es adictivo. Súper cómoda para dormir con ella."</p>
         <div class="review-author"><span class="review-ig">@marcelo.rojas_</span> · Instagram</div>
@@ -4619,16 +4619,6 @@ function fotoMover(d, ev){
   fotoIdx = (fotoIdx + d + fotoGaleria.length) % fotoGaleria.length;
   pintarFoto();
 }
-// Pantalla completa del video de reseña. iOS Safari no implementa
-// requestFullscreen en <video>: usa webkitEnterFullscreen, que además es el
-// único que existe en iPhone. Si no hay ninguno (o falla), al menos que no
-// quede muerto: se reproduce o se pausa.
-function pantallaCompletaVideo(v){
-  if (v.requestFullscreen) { v.requestFullscreen().catch(function(){}); return; }
-  if (v.webkitEnterFullscreen) { v.webkitEnterFullscreen(); return; }
-  if (v.paused) v.play().catch(function(){}); else v.pause();
-}
-
 // Se reproduce solo mientras la tarjeta está a la vista. Fuera de pantalla se
 // pausa: son 18 tarjetas en un carrusel y dejar video corriendo donde nadie lo
 // mira gasta batería y datos a cambio de nada.
