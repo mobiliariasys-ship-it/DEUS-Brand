@@ -1144,7 +1144,7 @@ body.sb-on .wa-float{bottom:82px;}
   .gal-slider{height:auto;min-height:0;aspect-ratio:1200/1306;max-height:none;}
   .detail{grid-template-columns:1fr;}
 }
-.shipping-section{margin:24px 0;border:1px solid var(--border);padding:20px;}.shipping-title{font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:#aaa;margin-bottom:16px;}.shipping-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}.shipping-input{background:#111;border:1px solid var(--border);color:var(--white);padding:10px 14px;font-family:"DM Sans",sans-serif;font-size:.78rem;width:100%;}.shipping-input:focus{outline:none;border-color:#555;}.btn-calcular{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;font-size:.6rem;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s;width:100%;grid-column:1/-1;}.btn-calcular:hover{border-color:#e8e8e8;color:#e8e8e8;}.carrier-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}.carrier-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);cursor:pointer;transition:border-color .2s;}.carrier-option:hover,.carrier-option.selected{border-color:#e8e8e8;}.carrier-name{font-weight:600;font-size:.78rem;flex:1;}.carrier-time{font-size:.65rem;color:#666;margin-top:2px;}.carrier-price{font-family:"Bebas Neue",sans-serif;font-size:1.2rem;color:#e8e8e8;}.total-row{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}.total-label{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:#aaa;}.total-price{font-family:"Bebas Neue",sans-serif;font-size:2rem;}.shipping-msg{font-size:.65rem;color:#666;letter-spacing:1px;margin-top:10px;text-align:center;}.shipping-error{color:#c0392b;font-size:.65rem;letter-spacing:1px;margin-top:10px;}.ac-wrap{position:relative;}.ac-list{position:absolute;top:100%;left:0;right:0;background:#111;border:1px solid #555;border-top:none;max-height:200px;overflow-y:auto;z-index:60;display:none;}.ac-list.show{display:block;}.ac-item{padding:9px 14px;font-size:.78rem;color:var(--white);cursor:pointer;border-bottom:1px solid #1a1a1a;}.ac-item:last-child{border-bottom:none;}.ac-item:hover{background:#1e1e1e;}
+.shipping-section{margin:24px 0;border:1px solid var(--border);padding:20px;}.shipping-title{font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:#aaa;margin-bottom:16px;}.shipping-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}.shipping-input{background:#111;border:1px solid var(--border);color:var(--white);padding:10px 14px;font-family:"DM Sans",sans-serif;font-size:.78rem;width:100%;}.shipping-input:focus{outline:none;border-color:#555;}.btn-calcular{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;font-size:.6rem;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s;width:100%;grid-column:1/-1;}.btn-calcular:hover{border-color:#e8e8e8;color:#e8e8e8;}.carrier-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}.carrier-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);cursor:pointer;transition:border-color .2s;}.carrier-option:hover,.carrier-option.selected{border-color:#e8e8e8;}.carrier-name{font-weight:600;font-size:.78rem;flex:1;}.carrier-time{font-size:.65rem;color:#666;margin-top:2px;}.carrier-price{font-family:"Bebas Neue",sans-serif;font-size:1.2rem;color:#e8e8e8;}.total-row{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}.total-nota{font-size:.62rem;letter-spacing:1px;color:#7fc9a0;text-align:right;margin-top:4px;}.total-label{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:#aaa;}.total-price{font-family:"Bebas Neue",sans-serif;font-size:2rem;}.shipping-msg{font-size:.65rem;color:#666;letter-spacing:1px;margin-top:10px;text-align:center;}.shipping-error{color:#c0392b;font-size:.65rem;letter-spacing:1px;margin-top:10px;}.ac-wrap{position:relative;}.ac-list{position:absolute;top:100%;left:0;right:0;background:#111;border:1px solid #555;border-top:none;max-height:200px;overflow-y:auto;z-index:60;display:none;}.ac-list.show{display:block;}.ac-item{padding:9px 14px;font-size:.78rem;color:var(--white);cursor:pointer;border-bottom:1px solid #1a1a1a;}.ac-item:last-child{border-bottom:none;}.ac-item:hover{background:#1e1e1e;}
 /* Aviso de envío gratis dentro del checkout: se ve desde que se abre, sin
    que el cliente tenga que apretar "Calcular envío". */
 .envio-free{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 16px;border:1px solid rgba(105,196,109,.45);background:rgba(105,196,109,.10);border-radius:8px;}
@@ -1970,10 +1970,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <button type="button" class="upsell-btn" id="upsell-btn">+ Agregar</button>
             </div>
 
-            <div class="total-row" id="total-row" style="display:none">
+            <!-- El total se ve desde que abre el checkout. Antes estaba en
+                 display:none hasta elegir courier, y eso tenía sentido cuando el
+                 envío costaba: el total no se sabía hasta cotizar. Con el envío
+                 gratis el total se conoce de entrada, y esconderlo significaba
+                 que quien agregaba los tapones NO veía por ningún lado los
+                 $81.980 que le iban a cobrar — el precio de arriba es solo la
+                 línea de la banda y no incluye el upsell. -->
+            <div class="total-row" id="total-row">
               <span class="total-label">Total a pagar</span>
               <span class="total-price" id="total-display">$68.990</span>
             </div>
+            <div class="total-nota" id="total-nota">Envío gratis incluido</div>
 
             <div class="cta-row" style="margin-top:18px;display:block;">
               <div class="pay-buttons">
@@ -2363,7 +2371,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (window.deusEvento) window.deusEvento('co:3envio');
           const total = subtotalCheckout() + (carrier.price || 0);
           document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
-          document.getElementById('total-row').style.display = 'flex';
+          // Ya no hace falta revelar la fila: se muestra desde que abre el modal.
           document.querySelectorAll('.carrier-option').forEach(x => x.classList.remove('selected'));
           if (el) {
             el.classList.add('selected');
@@ -2624,6 +2632,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const total = subtotalCheckout() + (selectedShipping?.price || 0);
           if (document.getElementById('total-display')) {
             document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
+          }
+          // Con envío gratis el número de arriba YA es el definitivo. Si algún
+          // día el envío vuelve a costar, el total queda incompleto hasta elegir
+          // courier y hay que decirlo — si no, alguien lee como final un número
+          // que después va a subir, que es justo la sorpresa que se quiere evitar.
+          const nota = document.getElementById('total-nota');
+          if (nota) {
+            const faltaEnvio = !ofertaActiva() && !selectedShipping;
+            nota.textContent = faltaEnvio ? 'Falta sumar el envío, se calcula más abajo' : 'Envío gratis incluido';
+            nota.style.color = faltaEnvio ? '#c9a227' : '#7fc9a0';
           }
           if (checkoutTapones) {
             document.getElementById('co-prod-price').innerHTML =
