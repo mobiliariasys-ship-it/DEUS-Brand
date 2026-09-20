@@ -66,6 +66,41 @@ async function llamar(path, { method = 'GET', params, body } = {}) {
   return data;
 }
 
+// Meta pagina los edges de a 25 filas y deja el resto detrás de paging.next.
+// Con time_increment=1 eso muerde apenas la ventana pasa de 25 filas y NO
+// avisa: la respuesta llega con 200 y parece completa.
+//
+// Lo que rompía: la vista de 30 días se quedaba con 25 y perdía los 5 días más
+// recientes (Meta devuelve ascendente), así que el panel mostraba esos días con
+// gasto en publicidad CERO y una utilidad inflada. El desglose horario —hasta
+// 168 filas en la ventana de 7 días— se quedaba en el primer día largo.
+//
+// Se pide una página grande Y se sigue el cursor: el limit ahorra vueltas, el
+// cursor es lo que garantiza que no falte ninguna fila. El tope de páginas es
+// para que un cursor que se repita no deje el request colgado para siempre.
+const MAX_PAGINAS_INSIGHTS = 20;
+
+async function llamarUrl(url) {
+  const res = await fetch(url);
+  chequearUso(res);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error?.message || `Meta respondió ${res.status}`);
+  return data;
+}
+
+async function insightsCompletos(path, params) {
+  let data = await llamar(path, { params: { ...params, limit: 500 } });
+  const filas = [];
+  for (let i = 0; i < MAX_PAGINAS_INSIGHTS; i++) {
+    filas.push(...(data.data || []));
+    const siguiente = data.paging && data.paging.next;
+    // En la última vuelta no se pide otra página: se iba a descartar igual.
+    if (!siguiente || i === MAX_PAGINAS_INSIGHTS - 1) break;
+    data = await llamarUrl(siguiente);
+  }
+  return filas;
+}
+
 async function listCampaigns() {
   const { adAccountId } = creds();
   const data = await llamar(`/${adAccountId}/campaigns`, {
@@ -144,16 +179,14 @@ const VENTANAS_DIARIAS = { 7: 'last_7d', 14: 'last_14d', 30: 'last_30d' };
 
 async function getInsightsDiarios(campaignId, dias = 14) {
   const preset = VENTANAS_DIARIAS[dias] || VENTANAS_DIARIAS[14];
-  const data = await llamar(`/${campaignId}/insights`, {
-    params: {
-      fields: 'spend,impressions,clicks,ctr,inline_link_clicks,inline_link_click_ctr,actions',
-      time_increment: 1,
-      date_preset: preset
-    }
+  const filas = await insightsCompletos(`/${campaignId}/insights`, {
+    fields: 'spend,impressions,clicks,ctr,inline_link_clicks,inline_link_click_ctr,actions',
+    time_increment: 1,
+    date_preset: preset
   });
   // Meta devuelve los días en orden ascendente, pero no lo promete: se ordena
   // acá para que el gráfico no dependa de eso.
-  return (data.data || [])
+  return filas
     .map(r => ({
       fecha: r.date_start,
       ctr: Number(r.inline_link_click_ctr || 0),
@@ -184,18 +217,16 @@ function diaChile(atras = 0) {
 
 async function getCtrHorario(objectId, dias = 3) {
   const n = [1, 3, 7].includes(Number(dias)) ? Number(dias) : 3;
-  const data = await llamar(`/${objectId}/insights`, {
-    params: {
-      fields: 'impressions,clicks,inline_link_clicks,spend',
-      breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
-      time_increment: 1,
-      // Ventana explícita y NO date_preset: last_3d devuelve los 3 días
-      // CERRADOS anteriores y deja HOY afuera, y hoy es justamente lo que se
-      // quiere mirar cuando el CTR se está moviendo.
-      time_range: JSON.stringify({ since: diaChile(n - 1), until: diaChile(0) })
-    }
+  const filas = await insightsCompletos(`/${objectId}/insights`, {
+    fields: 'impressions,clicks,inline_link_clicks,spend',
+    breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+    time_increment: 1,
+    // Ventana explícita y NO date_preset: last_3d devuelve los 3 días CERRADOS
+    // anteriores y deja HOY afuera, y hoy es justamente lo que se quiere mirar
+    // cuando el CTR se está moviendo.
+    time_range: JSON.stringify({ since: diaChile(n - 1), until: diaChile(0) })
   });
-  return (data.data || [])
+  return filas
     .map(r => {
       const impresiones = Number(r.impressions || 0);
       // CTR del ENLACE calculado acá en vez de pedir inline_link_click_ctr:
@@ -271,12 +302,12 @@ async function getGastoDiarioCuenta(dias = 14) {
   let errorCuenta = '';
   try {
     const { adAccountId } = creds();
-    const data = await llamar(`/${adAccountId}/insights`, {
-      params: { fields: 'spend', time_increment: 1, date_preset: preset }
+    const filas = await insightsCompletos(`/${adAccountId}/insights`, {
+      fields: 'spend', time_increment: 1, date_preset: preset
     });
-    if (data.data && data.data.length) {
+    if (filas.length) {
       const mapa = {};
-      for (const r of data.data) mapa[r.date_start] = Number(r.spend || 0);
+      for (const r of filas) mapa[r.date_start] = Number(r.spend || 0);
       return { mapa, via: 'cuenta' };
     }
   } catch (e) {
