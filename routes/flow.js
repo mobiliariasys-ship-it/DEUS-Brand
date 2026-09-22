@@ -12,8 +12,7 @@ const metaCapi = require('../services/meta-capi');
 
 // Precio único $54.990, con stock y en modo reserva (igual que server.js y
 // transbank.js, y que lo que muestra el sitio).
-const { precioBanda } = require('../services/precio');
-const TAPONES_PRICE = 14990; // compra de solo tapones de oído (sin banda)
+const { precioBanda, TAPONES_PRICE, calcularMonto } = require('../services/precio');
 const pedidosFlow = new Map();
 
 // Producción por defecto; sandbox si FLOW_ENV=sandbox
@@ -64,7 +63,7 @@ function flowReq(method, path, params) {
 
 // Iniciar pago con Flow
 router.post('/flow/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, colores } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, colores, codigo } = req.body;
   // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
   const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
   const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
@@ -77,10 +76,11 @@ router.post('/flow/crear', async (req, res) => {
     return res.status(400).json({ error: correo_.MENSAJE, campo: 'email' });
   }
   try {
-    const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
-    const amount = soloTapones
-      ? TAPONES_PRICE * qty + (Number(shippingCost) || 0)
-      : precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+    // Una sola fuente para lo que se cobra: misma función que usan Mercado
+    // Pago y Transbank, así las tres pasarelas no pueden cobrar distinto.
+    const m = calcularMonto({ cantidad, tapones, soloTapones, shippingCost, codigo });
+    const qty = m.qty;
+    const amount = m.total;
     const commerceOrder = 'deus-' + Date.now();
     const base = getBaseUrl(req);
 
@@ -108,7 +108,9 @@ router.post('/flow/crear', async (req, res) => {
       product: soloTapones
         ? 'Tapones de oído DEUS' + (qty > 1 ? ` x${qty}` : '')
         : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
-      product_price: soloTapones ? TAPONES_PRICE * qty : precioBanda() * qty + (tapones ? 12990 : 0),
+      product_price: m.productos,
+      cupon: m.codigo,
+      descuento: m.descuento,
       cantidad: qty, tapones: !!tapones, soloTapones: !!soloTapones,
       color: colorPedido,
       colores: coloresPedido,
@@ -158,7 +160,7 @@ router.post('/flow/crear', async (req, res) => {
       producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
       // El upsell de tapones (+$12.990) tambien va en el aviso: si no, el monto
       // de la venta rescatable sale menor al que el cliente iba a pagar.
-      monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (soloTapones ? 0 : (tapones ? 12990 : 0)) + (Number(shippingCost) || 0),
+      monto: calcularMonto({ cantidad, tapones, soloTapones, shippingCost, codigo }).total,
       color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
