@@ -118,12 +118,6 @@
   force = true
 
 [[redirects]]
-  from = "/descuento"
-  to = "https://deus-band.onrender.com/descuento"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/stock"
   to = "https://deus-band.onrender.com/stock"
   status = 200

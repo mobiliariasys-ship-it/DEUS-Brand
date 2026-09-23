@@ -38,46 +38,22 @@ const precioBanda = (ahora) => precios(ahora).precio;
 const TAPONES_PRICE  = 14990;   // comprados solos, sin banda
 const UPSELL_TAPONES = 12990;   // agregados a la compra de una banda
 
-// Códigos de descuento vigentes. La clave va en MAYÚSCULAS; descuentoDe()
-// normaliza lo que escribe el cliente, que puede llegar en minúscula o con
-// espacios de sobra.
-const DESCUENTOS = {
-  DEUSKEZ: 0.07,
-};
-
-function descuentoDe(codigo) {
-  const c = String(codigo || '').trim().toUpperCase();
-  const pct = DESCUENTOS[c];
-  return pct ? { codigo: c, pct } : null;
-}
-
 // El monto que se cobra, en UN solo lugar.
 //
 // Antes esta fórmula estaba copiada NUEVE veces: el cobro, el registro del
 // pedido y el aviso de pago fallido, en cada uno de server.js, flow.js y
-// transbank.js. Sin descuento eso ya era frágil; con descuento, olvidarse de
-// una copia significa cobrar distinto según por dónde entró el cliente.
-//
-// Dos reglas:
-//   - El descuento se aplica al subtotal de PRODUCTOS, no al envío.
-//   - El total se redondea HACIA ABAJO: 68.990 x 0,93 = 64.160,7 y se cobra
-//     64.160. Así lo entregado nunca es menos que lo anunciado; al revés sería
-//     prometer un 7% y aplicar 6,99%.
-function calcularMonto({ cantidad, tapones, soloTapones, shippingCost, codigo } = {}) {
+// transbank.js, mas TAPONES_PRICE declarado tres veces y el 12990 del upsell
+// escrito a mano en seis. Copias asi son las que terminan cobrando distinto
+// segun la pasarela por la que entro el cliente. Las tres llaman a esta.
+function calcularMonto({ cantidad, tapones, soloTapones, shippingCost } = {}) {
   const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
   const envio = Math.max(0, Number(shippingCost) || 0);
-  const subtotal = soloTapones
+  const productos = soloTapones
     ? TAPONES_PRICE * qty
     : precioBanda() * qty + (tapones ? UPSELL_TAPONES : 0);
-  const desc = descuentoDe(codigo);
-  const productos = desc ? Math.floor(subtotal * (1 - desc.pct)) : subtotal;
   return {
     qty,
-    subtotal,                                  // productos a precio de lista
-    codigo: desc ? desc.codigo : null,
-    pct: desc ? desc.pct : 0,
-    descuento: subtotal - productos,
-    productos,                                 // productos ya con descuento
+    productos,                                 // subtotal de productos, sin envío
     envio,
     total: productos + envio,                  // lo que se cobra
   };
@@ -85,5 +61,5 @@ function calcularMonto({ cantidad, tapones, soloTapones, shippingCost, codigo } 
 
 module.exports = {
   SUBIDA_MS, precios, precioBanda, ANTES, DESPUES,
-  TAPONES_PRICE, UPSELL_TAPONES, DESCUENTOS, descuentoDe, calcularMonto,
+  TAPONES_PRICE, UPSELL_TAPONES, calcularMonto,
 };

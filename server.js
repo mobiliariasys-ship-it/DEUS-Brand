@@ -21,7 +21,7 @@ const metaAds = require('./services/meta-ads');
 // Precio AUTORITATIVO: es el que se cobra, con stock y en modo reserva. El
 // sitio lo lee de /stock y muestra exactamente esto, así no puede pasar que la
 // página diga un precio y la pasarela cobre otro. Ver services/precio.js.
-const { precioBanda, precios, TAPONES_PRICE, UPSELL_TAPONES, calcularMonto, descuentoDe } = require('./services/precio');
+const { precioBanda, precios, TAPONES_PRICE, UPSELL_TAPONES, calcularMonto } = require('./services/precio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -170,7 +170,7 @@ const pedidos = [];
 function guardarPedidos() { persist.save('pedidos.json', pedidos).catch(e => console.error('[pedidos] Error guardando:', e.message)); }
 
 app.post('/crear-preferencia', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, acciones, colores, codigo } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, acciones, colores } = req.body;
   // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
   // MercadoPago tambien recibe el correo. Mismo corte que en Flow: si la
   // pasarela lo va a rechazar, mejor decirselo al cliente ahora y que lo
@@ -186,7 +186,7 @@ app.post('/crear-preferencia', async (req, res) => {
 
     // Una sola fuente para lo que se cobra: misma función que usan Flow y
     // Transbank, así las tres pasarelas no pueden cobrar distinto.
-    const m = calcularMonto({ cantidad, tapones, soloTapones, shippingCost, codigo });
+    const m = calcularMonto({ cantidad, tapones, soloTapones, shippingCost });
     const qty = m.qty;
 
     // Compra de SOLO tapones (sin banda): el único ítem es el estuche de tapones.
@@ -215,22 +215,6 @@ app.post('/crear-preferencia', async (req, res) => {
         title: 'Tapones de oído DEUS',
         description: 'Tapones de oído — 3 tamaños incluidos',
         unit_price: UPSELL_TAPONES,
-        quantity: 1,
-        currency_id: 'CLP'
-      });
-    }
-
-    // Con cupón, los productos se colapsan en UNA línea al monto ya rebajado.
-    // Mercado Pago no acepta un ítem de precio negativo, y descontar cada ítem
-    // por separado haría que la suma no calce con calcularMonto() por el
-    // redondeo — y ahí MP rechaza la preferencia o cobra otra cosa.
-    if (m.codigo) {
-      items.length = 0;
-      items.push({
-        title: (soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band') + (qty > 1 ? ` x${qty}` : '')
-          + (!soloTapones && tapones ? ' + Tapones de oído' : ''),
-        description: `Descuento ${Math.round(m.pct * 100)}% con el código ${m.codigo}`,
-        unit_price: m.productos,
         quantity: 1,
         currency_id: 'CLP'
       });
@@ -306,8 +290,6 @@ app.post('/crear-preferencia', async (req, res) => {
         ? 'Tapones de oído DEUS' + (qty > 1 ? ` x${qty}` : '')
         : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
       product_price: m.productos,
-      cupon: m.codigo,
-      descuento: m.descuento,
       cantidad: qty,
       tapones: !!tapones,
       soloTapones: !!soloTapones,
@@ -361,7 +343,7 @@ app.post('/crear-preferencia', async (req, res) => {
       producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
       // El upsell de tapones (+$12.990) tambien va en el aviso: si no, el monto
       // de la venta rescatable sale menor al que el cliente iba a pagar.
-      monto: calcularMonto({ cantidad, tapones, soloTapones, shippingCost, codigo }).total,
+      monto: calcularMonto({ cantidad, tapones, soloTapones, shippingCost }).total,
       color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
@@ -866,20 +848,6 @@ app.get('/stock', (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   const p = precios();
   res.json({ remaining: getStock(), precio: p.precio, ancla: p.ancla, off: p.off });
-});
-
-// Valida un código de descuento para el checkout.
-//
-// Devuelve SOLO si el código existe y su porcentaje — nunca la lista completa,
-// que sería regalar los códigos a cualquiera que abra la consola. El monto no
-// se calcula acá: la pantalla lo estima con la misma regla y la pasarela lo
-// vuelve a calcular con calcularMonto(), que es la que manda. Si algún día las
-// dos no coincidieran, el cliente paga lo que dice la pasarela.
-app.get('/descuento', (req, res) => {
-  res.set('Cache-Control', 'no-store');
-  const d = descuentoDe(req.query.codigo);
-  if (!d) return res.json({ ok: false });
-  res.json({ ok: true, codigo: d.codigo, pct: d.pct });
 });
 
 // Ajuste manual del stock, protegido con la clave STOCK_KEY de Render.

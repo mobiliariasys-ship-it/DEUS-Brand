@@ -63,7 +63,7 @@ function flowReq(method, path, params) {
 
 // Iniciar pago con Flow
 router.post('/flow/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, colores, codigo } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, colores } = req.body;
   // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
   const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
   const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
@@ -78,7 +78,7 @@ router.post('/flow/crear', async (req, res) => {
   try {
     // Una sola fuente para lo que se cobra: misma función que usan Mercado
     // Pago y Transbank, así las tres pasarelas no pueden cobrar distinto.
-    const m = calcularMonto({ cantidad, tapones, soloTapones, shippingCost, codigo });
+    const m = calcularMonto({ cantidad, tapones, soloTapones, shippingCost });
     const qty = m.qty;
     const amount = m.total;
     const commerceOrder = 'deus-' + Date.now();
@@ -109,8 +109,6 @@ router.post('/flow/crear', async (req, res) => {
         ? 'Tapones de oído DEUS' + (qty > 1 ? ` x${qty}` : '')
         : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
       product_price: m.productos,
-      cupon: m.codigo,
-      descuento: m.descuento,
       cantidad: qty, tapones: !!tapones, soloTapones: !!soloTapones,
       color: colorPedido,
       colores: coloresPedido,
@@ -160,7 +158,7 @@ router.post('/flow/crear', async (req, res) => {
       producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
       // El upsell de tapones (+$12.990) tambien va en el aviso: si no, el monto
       // de la venta rescatable sale menor al que el cliente iba a pagar.
-      monto: calcularMonto({ cantidad, tapones, soloTapones, shippingCost, codigo }).total,
+      monto: calcularMonto({ cantidad, tapones, soloTapones, shippingCost }).total,
       color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
