@@ -224,9 +224,17 @@ function registrarVenta(v) {
   // compras anteriores a que existieran los eventos co:, y daba porcentajes
   // imposibles (45 pagos sobre 5 que abrieron = 900%). Así los 5 pasos
   // arrancan desde cero en el mismo momento y el embudo cuadra.
-  // Se cuenta solo la primera vez que se ve la orden (el webhook puede
-  // reintentar): si ya tenía ticket, es un reintento y no suma.
-  const yaContada = v.orden ? !!buscarTicketPorOrden(v.orden) : false;
+  // Se cuenta solo la primera vez que se ve la orden. Las pasarelas reavisan
+  // el MISMO pago más de una vez: MercadoPago manda 'payment.updated' días
+  // después (p. ej. al liberar el dinero retenido) y reintenta los webhooks
+  // que fallaron. El ticket del sorteo hace de registro de "esta orden ya se
+  // procesó" porque vive en el mismo almacén durable que el ledger.
+  //
+  // Antes este chequeo existía pero SOLO frenaba el contador del embudo: el
+  // ventas.push() de abajo corría igual, así que cada reaviso agregaba una
+  // venta fantasma al panel y a la utilidad diaria.
+  const yaVista = v.orden ? buscarTicketPorOrden(v.orden) : null;
+  if (yaVista) return yaVista;
   ventas.push({
     monto: Number(v.monto) || 0,
     fecha: new Date().toISOString(),
@@ -240,7 +248,7 @@ function registrarVenta(v) {
     soloTapones: !!v.soloTapones
   });
   const ticket = asignarTicket({ nombre: v.nombre, orden: v.orden, email: v.email });
-  if (!yaContada) sumarEvento('co:5pago');
+  sumarEvento('co:5pago');
   guardar();
   return ticket;
 }

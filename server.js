@@ -402,7 +402,16 @@ app.post('/notificaciones', async (req, res) => {
           }
         };
 
-        await enviarPagoConfirmado(info, pedido);
+        // ¿Es un reaviso del MISMO pago? MercadoPago manda más de una
+        // notificación por pago (payment.created, payment.updated días después
+        // al liberar el dinero, y reintentos de los que fallaron). Sin este
+        // corte, cada reaviso reenviaba los dos correos: el de "pago
+        // confirmado" al dueño y —peor— el de confirmación AL CLIENTE, que a
+        // los días parece un segundo cobro.
+        const reaviso = !!metrics.buscarTicketPorOrden(info.id);
+        if (reaviso) console.log('[webhook] Pago', info.id, 'ya procesado — no se reenvían correos');
+
+        if (!reaviso) await enviarPagoConfirmado(info, pedido);
         // Purchase a Meta desde el SERVIDOR (Conversions API): captura el 100%
         // de las ventas aunque el cliente no vuelva a success.html. Mismo
         // event_id que el píxel del navegador → Meta deduplica si llegan ambos.
@@ -425,7 +434,7 @@ app.post('/notificaciones', async (req, res) => {
 
         // Correo de confirmación al cliente (mismos datos autoritativos del pago).
         marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
-        enviarConfirmacionCliente({
+        if (!reaviso) enviarConfirmacionCliente({
           email: emailCliente,
           name: pedido.customer.name,
           monto: info.transaction_amount,

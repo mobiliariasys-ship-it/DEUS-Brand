@@ -133,6 +133,13 @@ async function handleRetorno(req, res) {
     console.log(`[webpay/retorno] ${result.buy_order} — ${result.status} (${result.response_code})`);
 
     if (aprobado) {
+      // ¿Es un reaviso del MISMO pago? Hay que preguntarlo ANTES de
+      // registrar la venta, que es justo el paso que deja la marca. Sin esto,
+      // cada reintento reenviaba los dos correos — el del dueño y el del
+      // CLIENTE, que días después parece un segundo cobro.
+      const reaviso = !!metrics.buscarTicketPorOrden(result.buy_order);
+      if (reaviso) console.log('[webpay/retorno] ya procesado — no se reenvían correos');
+
       marcarPagado(result.buy_order); // cancela el correo de recuperación
       if (!(pedido && pedido.soloTapones)) decrementStock(result.buy_order); // solo tapones no descuenta stock de banda
       // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
@@ -151,13 +158,13 @@ async function handleRetorno(req, res) {
         region: pedido && pedido.shipping && pedido.shipping.address && pedido.shipping.address.region
       })
         .catch(e => console.error('[capi]', e.message));
-      enviarPagoConfirmado({
+      if (!reaviso) enviarPagoConfirmado({
         payer: { email: (pedido && pedido.customer && pedido.customer.email) || '(Pago con Webpay)' },
         transaction_amount: result.amount,
         id: result.buy_order
       }, pedido).catch(e => console.error('[email]', e.message));
       // Confirmación al cliente (el correo lo tomamos del pedido guardado)
-      enviarConfirmacionCliente({
+      if (!reaviso) enviarConfirmacionCliente({
         email: pedido && pedido.customer && pedido.customer.email,
         name: pedido && pedido.customer && pedido.customer.name,
         monto: result.amount,

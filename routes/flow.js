@@ -177,6 +177,13 @@ router.post('/flow/confirmacion', async (req, res) => {
     const pedido = pedidosFlow.get(st.commerceOrder);
     console.log('[flow/confirmacion] ' + st.commerceOrder + ' status=' + st.status);
     if (st.status === 2) {
+      // ¿Es un reaviso del MISMO pago? Hay que preguntarlo ANTES de
+      // registrar la venta, que es justo el paso que deja la marca. Sin esto,
+      // cada reintento reenviaba los dos correos — el del dueño y el del
+      // CLIENTE, que días después parece un segundo cobro.
+      const reaviso = !!metrics.buscarTicketPorOrden(st.commerceOrder);
+      if (reaviso) console.log('[flow/confirmacion] ya procesado — no se reenvían correos');
+
       if (pedido) pedido.status = 'paid';
       marcarPagado(st.commerceOrder); // cancela el correo de recuperación
       if (!(pedido && pedido.soloTapones)) decrementStock(st.commerceOrder); // solo tapones no descuenta stock de banda
@@ -196,13 +203,13 @@ router.post('/flow/confirmacion', async (req, res) => {
         region: pedido && pedido.shipping && pedido.shipping.address && pedido.shipping.address.region
       })
         .catch(e => console.error('[capi]', e.message));
-      enviarPagoConfirmado({
+      if (!reaviso) enviarPagoConfirmado({
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },
         transaction_amount: st.amount,
         id: st.commerceOrder
       }, pedido).catch(e => console.error('[email]', e.message));
       // Confirmación al cliente
-      enviarConfirmacionCliente({
+      if (!reaviso) enviarConfirmacionCliente({
         email: (pedido && pedido.customer && pedido.customer.email) || st.payer,
         name: pedido && pedido.customer && pedido.customer.name,
         monto: st.amount,
