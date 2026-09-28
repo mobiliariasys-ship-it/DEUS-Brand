@@ -606,6 +606,44 @@ app.post('/admin/reset-tiempo', (req, res) => {
   res.json({ ok: true });
 });
 
+// Carga manual de una venta, protegida con STOCK_KEY.
+//
+// Para qué existe: hay ventas REALES que el panel no ve. Las presenciales no
+// pasan por ninguna pasarela, y mientras persist.js está en modo archivo cada
+// reinicio de Render se lleva las del día. Esto las repone.
+//
+// NO le avisa a Meta. La CAPI ya mandó el Purchase cuando la venta ocurrió
+// (por eso Meta suele mostrar más ventas que el panel), y una presencial no
+// vino de un anuncio: en los dos casos reportarla acá sería contarla doble.
+//
+// Tampoco toca el stock — para eso está /stock/ajustar. Juntar las dos cosas
+// acá se arriesga a descontar dos veces la misma banda.
+//
+// `orden` es obligatoria porque es la llave de idempotencia: si la mandás dos
+// veces, la segunda no suma. Para una presencial sirve cualquier referencia
+// estable, ej. "presencial-2026-09-27-1".
+app.post('/admin/venta', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+
+  const { monto, fecha, metodo, nombre, orden, email, unidades, soloTapones } = req.body || {};
+  const m = Number(monto);
+  if (!m || m <= 0) return res.status(400).json({ error: 'monto tiene que ser un número mayor a 0' });
+  if (!orden || !String(orden).trim()) return res.status(400).json({ error: 'orden es obligatoria (llave de idempotencia)' });
+  if (fecha && isNaN(new Date(fecha))) return res.status(400).json({ error: 'fecha inválida — usá ISO, ej. 2026-09-27T20:00:00-03:00' });
+
+  const yaEstaba = !!metrics.buscarTicketPorOrden(String(orden).trim());
+  const ticket = metrics.registrarVenta({
+    monto: m, fecha, metodo: metodo || 'Manual', nombre: nombre || '',
+    orden: String(orden).trim(), email: email || '',
+    unidades: Number(unidades) > 0 ? Number(unidades) : null,
+    soloTapones: !!soloTapones
+  });
+  console.log('[admin/venta]', yaEstaba ? 'orden ya registrada, no se suma:' : 'venta cargada a mano:', orden, m);
+  res.json({ ok: true, duplicada: yaEstaba, ticket: ticket && ticket.numero || null });
+});
+
 // ── Ads Manager (Marketing API de Meta), protegido con STOCK_KEY ──
 function claveAdsOk(req, res) {
   const clave = (process.env.STOCK_KEY || '').trim();

@@ -235,9 +235,15 @@ function registrarVenta(v) {
   // venta fantasma al panel y a la utilidad diaria.
   const yaVista = v.orden ? buscarTicketPorOrden(v.orden) : null;
   if (yaVista) return yaVista;
+  // La fecha por defecto es AHORA, que es lo correcto para el webhook de una
+  // pasarela. Pero una venta cargada a mano se está reponiendo días después
+  // (una que el modo archivo perdió, o una presencial), y con el reloj del
+  // momento caería en el día equivocado: dejaría el día real igual de corto
+  // y de paso inflaría hoy. Por eso se puede pasar.
+  const cuando = v.fecha ? new Date(v.fecha) : null;
   ventas.push({
     monto: Number(v.monto) || 0,
-    fecha: new Date().toISOString(),
+    fecha: (cuando && !isNaN(cuando)) ? cuando.toISOString() : new Date().toISOString(),
     metodo: v.metodo || '',
     nombre: v.nombre || '',
     orden: v.orden ? String(v.orden) : '',
