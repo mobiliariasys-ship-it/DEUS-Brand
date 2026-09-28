@@ -167,6 +167,28 @@
   .util-kpi .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;color:#e8e8ee;}
   .util-kpi.bien .v{color:#69c46d;} .util-kpi.mal .v{color:#e07a6a;}
   .util-tabla{overflow-x:auto;}
+  /* Alta manual de ventas: el panel solo ve lo que pasó por una pasarela. Las
+     presenciales y las que se pierden cuando persist.js cae a modo archivo hay
+     que reponerlas a mano, y en el DÍA que ocurrieron. */
+  .util-add{background:transparent;border:1px solid var(--border);color:var(--faint);width:22px;height:22px;
+    border-radius:6px;cursor:pointer;font-size:.8rem;line-height:1;padding:0;}
+  .util-add:hover{border-color:var(--green);color:var(--green);}
+  .vm-fondo{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:none;align-items:center;justify-content:center;padding:18px;}
+  .vm-fondo.on{display:flex;}
+  .vm-caja{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:400px;}
+  .vm-caja h3{margin:0 0 4px;font-size:.92rem;color:#fff;}
+  .vm-dia{font-size:.72rem;color:var(--cyan);margin-bottom:16px;}
+  .vm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .vm-campo{display:flex;flex-direction:column;gap:4px;}
+  .vm-campo.ancho{grid-column:1/-1;}
+  .vm-campo label{font-size:.64rem;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;}
+  .vm-campo input,.vm-campo select{background:var(--card2);border:1px solid var(--border);color:var(--ink);
+    padding:8px 10px;border-radius:7px;font-size:.78rem;font-family:inherit;width:100%;}
+  .vm-campo input:focus,.vm-campo select:focus{outline:none;border-color:var(--cyan);}
+  .vm-chk{display:flex;align-items:center;gap:7px;font-size:.72rem;color:#bbb;grid-column:1/-1;}
+  .vm-chk input{width:auto;}
+  .vm-msg{font-size:.7rem;margin-top:12px;min-height:16px;}
+  .vm-pie{display:flex;gap:9px;justify-content:flex-end;margin-top:14px;}
   .util-tabla table{width:100%;border-collapse:collapse;font-size:.72rem;}
   .util-tabla th,.util-tabla td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--border-soft,#2a2a32);font-variant-numeric:tabular-nums;color:#bbb;}
   .util-tabla th{color:#9a9a9a;font-weight:600;}
@@ -347,6 +369,30 @@
       <div class="util-nota" id="util-nota"></div>
       <div class="empty" id="util-off" style="display:none">No se pudo cargar la utilidad.</div>
     </section>
+
+    <div class="vm-fondo" id="vm-fondo" onclick="if(event.target===this)cerrarAltaVenta()">
+      <div class="vm-caja">
+        <h3>Agregar venta</h3>
+        <div class="vm-dia" id="vm-dia"></div>
+        <div class="vm-grid">
+          <div class="vm-campo"><label>Monto cobrado</label><input id="vm-monto" type="number" inputmode="numeric" placeholder="68990"></div>
+          <div class="vm-campo"><label>Unidades</label><input id="vm-unidades" type="number" inputmode="numeric" value="1" min="1"></div>
+          <div class="vm-campo"><label>Medio de pago</label>
+            <select id="vm-metodo">
+              <option>MercadoPago</option><option>Webpay</option><option>Flow</option>
+              <option>Presencial</option><option>Transferencia</option><option>Otro</option>
+            </select></div>
+          <div class="vm-campo"><label>Nombre (opcional)</label><input id="vm-nombre" placeholder="Cliente"></div>
+          <div class="vm-campo ancho"><label>ID de pago (opcional)</label><input id="vm-orden" placeholder="se genera solo si lo dejás vacío"></div>
+          <label class="vm-chk"><input type="checkbox" id="vm-tapones"> Es una compra de solo tapones</label>
+        </div>
+        <div class="vm-msg" id="vm-msg"></div>
+        <div class="vm-pie">
+          <button class="btn ghost" onclick="cerrarAltaVenta()">Cancelar</button>
+          <button class="btn" id="vm-ok" onclick="guardarVentaManual()">Agregar</button>
+        </div>
+      </div>
+    </div>
 
     <section id="sec-embudo">
       <div class="sec-h"><h2>🫗 Embudo · dónde se caen</h2><span class="pill" id="funnel-conv"></span></div>
@@ -1569,19 +1615,20 @@
         '<td class="gasto">−' + money0(r.pasarela) + '</td>' +
         '<td class="gasto">−' + money0(r.ads) + '</td>' +
         '<td class="util ' + cls + '">' + (r.utilidad >= 0 ? '' : '−') + money0(Math.abs(r.utilidad)) + '</td>' +
+        '<td><button class="util-add" title="Agregar una venta al ' + r.fecha + '" onclick="abrirAltaVenta(\'' + r.fecha + '\')">+</button></td>' +
       '</tr>';
     }).join('');
 
     document.getElementById('util-tabla').innerHTML =
       '<table><thead><tr>' +
       '<th>Día</th><th>Pedidos</th><th>Unid.</th><th>Vendido</th>' +
-      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th><th>Ads +IVA</th><th>Utilidad</th>' +
+      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th><th>Ads +IVA</th><th>Utilidad</th><th></th>' +
       '</tr></thead><tbody>' + filas + '</tbody><tfoot><tr>' +
       '<th>Total</th><th>' + t.pedidos + '</th><th>' + t.unidades + '</th><th>' + money0(t.ingresos) + '</th>' +
       '<th>−' + money0(t.costoBandas) + '</th><th>−' + money0(t.costoEnvios) + '</th>' +
       '<th>−' + money0(t.pasarela) + '</th><th>−' + money0(t.ads) + '</th>' +
       '<th style="color:' + (t.utilidad >= 0 ? '#69c46d' : '#e07a6a') + '">' +
-      (t.utilidad >= 0 ? '' : '−') + money0(Math.abs(t.utilidad)) + '</th>' +
+      (t.utilidad >= 0 ? '' : '−') + money0(Math.abs(t.utilidad)) + '</th><th></th>' +
       '</tr></tfoot></table>';
 
     var nota = 'Banda ' + money0(d.costos.banda) + ' por unidad · envío ' + money0(d.costos.envio) +
@@ -1594,6 +1641,75 @@
       ' días con gasto' + (d.diagnostico.via === 'campañas' ? ', sumando campaña por campaña' : '') + '.';
     if (f.some(function(x){ return x.estimado; })) nota += ' Los días con * tienen ventas anteriores a que se guardara la cantidad: las unidades van estimadas desde el monto.';
     document.getElementById('util-nota').textContent = nota;
+  }
+
+  // ── Alta manual de ventas ────────────────────────────────────────────────
+  // El panel solo registra lo que pasó por una pasarela. Quedan afuera las
+  // ventas presenciales y las que se pierden en cada reinicio de Render
+  // mientras persist.js está en modo archivo. Esto las repone EN SU DÍA: si
+  // se cargaran con la fecha de hoy, el día real quedaría igual de corto y
+  // encima hoy saldría inflado.
+  var vmFecha = null;
+
+  function abrirAltaVenta(fecha){
+    vmFecha = fecha;
+    document.getElementById('vm-dia').textContent = 'Se suma al ' + fecha;
+    document.getElementById('vm-monto').value = '';
+    document.getElementById('vm-unidades').value = '1';
+    document.getElementById('vm-nombre').value = '';
+    document.getElementById('vm-orden').value = '';
+    document.getElementById('vm-tapones').checked = false;
+    document.getElementById('vm-msg').textContent = '';
+    document.getElementById('vm-fondo').classList.add('on');
+    document.getElementById('vm-monto').focus();
+  }
+
+  function cerrarAltaVenta(){
+    document.getElementById('vm-fondo').classList.remove('on');
+    vmFecha = null;
+  }
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && document.getElementById('vm-fondo').classList.contains('on')) cerrarAltaVenta();
+  });
+
+  function guardarVentaManual(){
+    var msg = document.getElementById('vm-msg');
+    var btn = document.getElementById('vm-ok');
+    var monto = parseInt(document.getElementById('vm-monto').value, 10);
+    if (!monto || monto <= 0) { msg.style.color = '#e07a6a'; msg.textContent = 'Poné el monto que se cobró.'; return; }
+    var unidades = parseInt(document.getElementById('vm-unidades').value, 10) || 1;
+    // Mediodía de Chile: cae dentro del día elegido sin importar el horario de
+    // verano, que en septiembre cambia.
+    var fechaISO = vmFecha + 'T12:00:00-03:00';
+    // Sin ID de pago se genera una referencia única. Es la llave anti-duplicado
+    // del backend: dos ventas distintas del mismo día necesitan llaves distintas.
+    var orden = (document.getElementById('vm-orden').value || '').trim() ||
+                ('manual-' + vmFecha + '-' + Date.now().toString(36));
+
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    msg.style.color = '#9a9a9a'; msg.textContent = 'Guardando...';
+    fetch(BASE + '/admin/venta?clave=' + encodeURIComponent(clave), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        monto: monto, fecha: fechaISO, unidades: unidades,
+        metodo: document.getElementById('vm-metodo').value,
+        nombre: (document.getElementById('vm-nombre').value || '').trim(),
+        orden: orden, soloTapones: document.getElementById('vm-tapones').checked
+      })
+    })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res){
+      btn.disabled = false; btn.textContent = 'Agregar';
+      if (!res.ok || !res.d.ok) { msg.style.color = '#e07a6a'; msg.textContent = res.d.error || 'No se pudo guardar.'; return; }
+      if (res.d.duplicada) { msg.style.color = '#e7cf9c'; msg.textContent = 'Ese ID de pago ya estaba cargado — no se sumó de nuevo.'; return; }
+      cerrarAltaVenta();
+      cargarUtilidad();
+    })
+    .catch(function(){
+      btn.disabled = false; btn.textContent = 'Agregar';
+      msg.style.color = '#e07a6a'; msg.textContent = 'No se pudo conectar con el servidor.';
+    });
   }
 
   function kpi(k, v, cls){
