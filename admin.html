@@ -1600,7 +1600,13 @@
       kpi('Gastado en ads', money0(t.ads), '') +
       kpi('de eso, IVA', money0(t.ivaAds || 0), '') +
       kpi('Costo por venta', t.unidades ? money0(cpa) : '—', '') +
-      kpi('Días con venta', conVenta + ' de ' + dias, '');
+      kpi('Días con venta', conVenta + ' de ' + dias, '') +
+      // Attach del upsell de tapones. Se mide para saber si mover su precio
+      // sirve de algo: con un attach bajo, el upsell casi no mueve la
+      // contribución por pedido y bajarle el precio es pelear por migajas.
+      kpi('Pedidos con tapones', t.pedidos
+            ? (t.conTapones || 0) + ' de ' + t.pedidos + ' · ' + Math.round(((t.conTapones || 0) / t.pedidos) * 100) + '%'
+            : '—', '');
 
     var hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
     var filas = f.slice().reverse().map(function(r){

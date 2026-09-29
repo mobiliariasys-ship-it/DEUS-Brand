@@ -251,7 +251,12 @@ function registrarVenta(v) {
     // banda, no por pedido, y un pedido de 3 cuesta el triple. Las ventas
     // viejas no lo traen — ventasPorDia() las estima desde el monto.
     unidades: Number(v.unidades) > 0 ? Number(v.unidades) : null,
-    soloTapones: !!v.soloTapones
+    soloTapones: !!v.soloTapones,
+    // Upsell de tapones sobre una compra de banda. Distinto de soloTapones,
+    // que marca un pedido SIN banda. Sin este dato no se puede saber qué
+    // proporción de los pedidos lo lleva, que es lo único que dice si vale la
+    // pena tocarle el precio.
+    tapones: !!v.tapones
   });
   const ticket = asignarTicket({ nombre: v.nombre, orden: v.orden, email: v.email });
   sumarEvento('co:5pago');
@@ -359,9 +364,10 @@ function ventasPorDia(dias = 14) {
   const mapa = {};
   for (const v of ventas) {
     const d = new Date(v.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
-    if (!mapa[d]) mapa[d] = { fecha: d, pedidos: 0, unidades: 0, ingresos: 0, estimado: false };
+    if (!mapa[d]) mapa[d] = { fecha: d, pedidos: 0, unidades: 0, ingresos: 0, conTapones: 0, estimado: false };
     mapa[d].pedidos += 1;
     mapa[d].ingresos += v.monto;
+    if (v.tapones) mapa[d].conTapones += 1;
     if (v.soloTapones) {
       // Pedido de tapones: no lleva banda, así que no suma costo de banda.
     } else if (v.unidades) {
@@ -376,7 +382,7 @@ function ventasPorDia(dias = 14) {
   const ahora = Date.now();
   for (let i = dias - 1; i >= 0; i--) {
     const d = new Date(ahora - i * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
-    salida.push(mapa[d] || { fecha: d, pedidos: 0, unidades: 0, ingresos: 0, estimado: false });
+    salida.push(mapa[d] || { fecha: d, pedidos: 0, unidades: 0, ingresos: 0, conTapones: 0, estimado: false });
   }
   return salida;
 }

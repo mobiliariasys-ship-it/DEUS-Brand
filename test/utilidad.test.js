@@ -153,3 +153,42 @@ test('metrics agrupa por día de Chile, no por el reloj del servidor', () => {
   assert.ok((fn.match(/America\/Santiago/g) || []).length >= 2,
     'tanto las ventas como los días del rango tienen que ir en hora de Chile');
 });
+
+// ── Attach del upsell de tapones ───────────────────────────────────────────
+// Se mide para poder decidir si mover su precio sirve: con un attach bajo el
+// upsell casi no mueve la contribución por pedido, y bajarle el precio resigna
+// margen a cambio de nada. Antes el dato no se guardaba en ninguna parte.
+
+test('el upsell de tapones se cuenta aparte de los pedidos de solo tapones', () => {
+  const r = u.calcularDia({ fecha: '2026-09-28', pedidos: 8, unidades: 8, ingresos: 551920, conTapones: 1 }, 0);
+  assert.strictEqual(r.conTapones, 1);
+  // No entra en la cuenta: falta el costo por set y un número inventado
+  // ensuciaría la utilidad, que es con la que se deciden los presupuestos.
+  assert.strictEqual(r.utilidad, 551920 - r.costoBandas - r.costoEnvios - r.pasarela);
+});
+
+test('un día sin el dato no rompe ni inventa', () => {
+  const r = u.calcularDia({ fecha: '2026-09-01', pedidos: 3, unidades: 3, ingresos: 206970 }, 0);
+  assert.strictEqual(r.conTapones, 0, 'las ventas viejas no traen el dato: cuentan como 0, no como undefined');
+});
+
+test('el total suma los pedidos con tapones', () => {
+  const t = u.totalizar([
+    u.calcularDia({ fecha: '2026-09-27', pedidos: 8, unidades: 8, ingresos: 551920, conTapones: 1 }, 0),
+    u.calcularDia({ fecha: '2026-09-28', pedidos: 6, unidades: 6, ingresos: 413940, conTapones: 2 }, 0)
+  ]);
+  assert.strictEqual(t.conTapones, 3);
+  assert.strictEqual(t.pedidos, 14);
+});
+
+test('las tres pasarelas guardan si el pedido llevó el upsell', () => {
+  // Sin esto el attach queda en 0 para siempre y el panel miente diciendo que
+  // nadie lo lleva.
+  for (const f of ['../server.js', '../routes/flow.js', '../routes/transbank.js']) {
+    const src = fs.readFileSync(path.join(__dirname, f), 'utf8');
+    const i = src.indexOf('registrarVenta(');
+    const llamada = src.slice(i, i + 600);
+    assert.ok(/tapones:/.test(llamada.replace(/soloTapones:/g, '')),
+      f + ' no pasa `tapones` a registrarVenta: el attach quedaría siempre en 0');
+  }
+});

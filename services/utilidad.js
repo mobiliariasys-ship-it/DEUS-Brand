@@ -29,6 +29,10 @@ function calcularDia(d, ads) {
   return {
     fecha: d.fecha,
     pedidos, unidades, ingresos,
+    // Cuántos de esos pedidos llevaron el upsell de tapones. Va como dato, no
+    // entra en la utilidad: falta el costo por set y meter una cifra inventada
+    // ensuciaría el único número con el que se deciden los presupuestos.
+    conTapones: Number(d.conTapones) || 0,
     costoBandas, costoEnvios, pasarela,
     adsNeto, ivaAds,
     ads: gastoAds,
@@ -40,11 +44,12 @@ function calcularDia(d, ads) {
 function totalizar(filas) {
   return filas.reduce((a, f) => ({
     pedidos: a.pedidos + f.pedidos, unidades: a.unidades + f.unidades,
+    conTapones: a.conTapones + (f.conTapones || 0),
     ingresos: a.ingresos + f.ingresos, costoBandas: a.costoBandas + f.costoBandas,
     costoEnvios: a.costoEnvios + f.costoEnvios, pasarela: a.pasarela + f.pasarela,
     adsNeto: a.adsNeto + f.adsNeto, ivaAds: a.ivaAds + f.ivaAds,
     ads: a.ads + f.ads, utilidad: a.utilidad + f.utilidad
-  }), { pedidos: 0, unidades: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, adsNeto: 0, ivaAds: 0, ads: 0, utilidad: 0 });
+  }), { pedidos: 0, unidades: 0, conTapones: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, adsNeto: 0, ivaAds: 0, ads: 0, utilidad: 0 });
 }
 
 module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, IVA, calcularDia, totalizar };

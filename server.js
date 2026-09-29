@@ -430,7 +430,7 @@ app.post('/notificaciones', async (req, res) => {
         metrics.registrarConversion((meta.acciones_sesion || '').split(',').filter(Boolean), info.id, false);
         if (!soloTaponesPago) decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago; solo tapones no descuenta stock de banda
         // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
-        const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: pedido.customer.name, orden: info.id, email: emailCliente, unidades: pedido.cantidad, soloTapones: pedido.soloTapones });
+        const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: pedido.customer.name, orden: info.id, email: emailCliente, unidades: pedido.cantidad, soloTapones: pedido.soloTapones, tapones: pedido.tapones });
 
         // Correo de confirmación al cliente (mismos datos autoritativos del pago).
         marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
@@ -627,7 +627,7 @@ app.post('/admin/venta', (req, res) => {
   if (!clave) return res.status(404).json({ error: 'No disponible' });
   if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
 
-  const { monto, fecha, metodo, nombre, orden, email, unidades, soloTapones } = req.body || {};
+  const { monto, fecha, metodo, nombre, orden, email, unidades, soloTapones, tapones } = req.body || {};
   const m = Number(monto);
   if (!m || m <= 0) return res.status(400).json({ error: 'monto tiene que ser un número mayor a 0' });
   if (!orden || !String(orden).trim()) return res.status(400).json({ error: 'orden es obligatoria (llave de idempotencia)' });
@@ -638,7 +638,7 @@ app.post('/admin/venta', (req, res) => {
     monto: m, fecha, metodo: metodo || 'Manual', nombre: nombre || '',
     orden: String(orden).trim(), email: email || '',
     unidades: Number(unidades) > 0 ? Number(unidades) : null,
-    soloTapones: !!soloTapones
+    soloTapones: !!soloTapones, tapones: !!tapones
   });
   console.log('[admin/venta]', yaEstaba ? 'orden ya registrada, no se suma:' : 'venta cargada a mano:', orden, m);
   res.json({ ok: true, duplicada: yaEstaba, ticket: ticket && ticket.numero || null });
