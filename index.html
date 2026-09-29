@@ -674,6 +674,10 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
    se comía la muñeca en varias. A 4:5 se ve el producto completo. */
 .review-photo{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;margin-bottom:14px;display:block;cursor:zoom-in;transition:opacity .2s;}
 .review-photo:hover{opacity:.9;}
+/* Foto que NO abre el visor: .review-photo trae cursor:zoom-in y
+   dejarlo sin onclick prometía una lupa que no hace nada. */
+.review-nozoom{cursor:default;}
+.review-nozoom:hover{opacity:1;}
 /* El video de reseña usa .review-photo para heredar tamaño y recorte, pero
    NO es pinchable: .review-photo trae cursor:zoom-in para el visor de fotos y
    acá hay que anularlo, si no promete un clic que no hace nada. */
@@ -3354,6 +3358,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-author"><span class="review-ig">@joose.ojedaa</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>La Serena</div>
       </div>
+      <div class="review-card review-extra">
+        <img class="review-photo review-nozoom" src="img/resena-raul.webp" alt="DEUS Band negra en la muñeca apoyada sobre una barra, en el gimnasio — reseña de Raúl" loading="lazy" decoding="async">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Espectacular la banda, me ha ayudado mucho con los datos, muy precisos 👌🏽"</p>
+        <div class="review-author"><span class="review-ig">@pedraza_raul</span> · Instagram</div>
+      </div>
       <div class="review-card">
         <img class="review-photo" src="img/resena-cristobal.webp" alt="DEUS Band en la muneca en el gimnasio — reseña de Cristóbal Nanning" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
@@ -3367,6 +3377,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p class="review-text">"Muy precisa en los datos y cómoda para mis entrenamientos 💪🏽☄️"</p>
         <div class="review-author"><span class="review-ig">@diorr.jayy</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Las Condes</div>
+      </div>
+      <div class="review-card review-extra">
+        <img class="review-photo" src="img/resena-auto.webp" alt="DEUS Band en la muñeca al volante del auto — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Súper cómoda, me gusta cómo queda. Es súper estética y precisa 👌🏽"</p>
+        <div class="review-author"><span class="review-ig">@robertogonzGtr34</span> · Instagram</div>
       </div>
       <div class="review-card">
         <img class="review-photo" src="img/resena-keznit.webp" alt="DEUS Band negra con correa de nylon en la muñeca — reseña de Keznit" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
@@ -3395,18 +3411,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p class="review-text">"Soy kinesiólogo y me sirve mucho para medir la actividad física. La batería dura más de 20 días y es muy cómoda para dormir y analizar mi sueño."</p>
         <div class="review-author"><span class="review-ig">@andres.fuentesg</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Puerto Varas</div>
-      </div>
-      <div class="review-card review-extra">
-        <img class="review-photo" src="img/resena-auto.webp" alt="DEUS Band en la muñeca al volante del auto — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Súper cómoda, me gusta cómo queda. Es súper estética y precisa 👌🏽"</p>
-        <div class="review-author"><span class="review-ig">@robertogonzGtr34</span> · Instagram</div>
-      </div>
-      <div class="review-card review-extra">
-        <img class="review-photo" src="img/resena-raul.webp" alt="DEUS Band negra en la muñeca apoyada sobre una barra, en el gimnasio — reseña de Raúl" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Espectacular la banda, me ha ayudado mucho con los datos, muy precisos 👌🏽"</p>
-        <div class="review-author"><span class="review-ig">@pedraza_raul</span> · Instagram</div>
       </div>
       <div class="review-card review-extra">
         <div class="review-stars">★★★★★</div>
