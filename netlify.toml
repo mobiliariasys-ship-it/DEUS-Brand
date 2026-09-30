@@ -129,6 +129,22 @@
   status = 200
   force = true
 
+# El chatbot: el front lo llama en el mismo origen (DEUS_API_BASE = ''), así
+# que sin estas dos reglas /chat nunca llega a Render y el bot queda muerto en
+# producción. Van dos (no solo /chat/*) porque el comodín no cubre /chat pelado,
+# igual que /stock y /stock/*.
+[[redirects]]
+  from = "/chat"
+  to = "https://deus-band.onrender.com/chat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/chat/*"
+  to = "https://deus-band.onrender.com/chat/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/resenas"
   to = "https://deus-band.onrender.com/resenas"
