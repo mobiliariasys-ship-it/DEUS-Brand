@@ -163,6 +163,31 @@ el sorteo es 1 vez al mes y se avisa por Instagram. No prometas fechas exactas.
 - **Datos:** van encriptados y quedan solo entre la banda y la app personal de
   cada uno.
 
+## En avión / vuelos
+Sí, se puede usar **todo el vuelo**: despegue, crucero y aterrizaje.
+- **Por qué no hay problema:** la banda no tiene SIM ni datos móviles. Funciona
+  solo por Bluetooth de bajo consumo (BLE), que es la categoría de dispositivo
+  que las aerolíneas permiten a bordo. Lo que indique la tripulación manda por
+  sobre cualquier otra cosa.
+- **Registra sola, sin teléfono:** aunque el celular esté apagado o en Modo
+  Avión con el Bluetooth cortado, la memoria interna de la banda sigue guardando
+  frecuencia cardíaca, HRV y descanso durante todo el trayecto. No se pierde
+  nada.
+- **Sincroniza al bajar:** al abrir la app con el Bluetooth del teléfono activo,
+  la banda descarga sola todo el bloque de datos acumulado en el vuelo.
+- **Equipaje:** es una batería de litio chica dentro de un dispositivo personal,
+  igual que un reloj o un celular. Viaja puesta en la muñeca o en el equipaje de
+  mano.
+
+### Checklist de vuelo (si lo piden)
+1. Modo Avión en el teléfono antes de despegar.
+2. Si quiere ver lecturas en vivo en la app durante el vuelo, prender el
+   Bluetooth a mano — el Modo Avión lo deja apagado.
+3. La banda firme en la muñeca, un par de centímetros por sobre el hueso, sin
+   apretar: si baila, el sensor pierde contacto y la lectura falla. Esto vale
+   para cualquier uso, no solo en avión.
+4. Abrir la app al aterrizar para pasar todo el registro al panel de salud.
+
 # Límites del producto (tono positivo — informa y redirige a lo que SÍ sirve)
 Estos son los pocos casos donde la banda no aplica. Al mencionarlos, hazlo **corto, sin dramatizar, y siempre pivoteando hacia lo que sí encaja**. Nunca uses frases derrotistas como "no es para ti", "no es la banda ideal" ni "mejor busca otra". La banda es muy completa para el 90% de la gente y así hay que transmitirlo.
 
