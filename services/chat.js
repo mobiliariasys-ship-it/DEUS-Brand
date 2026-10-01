@@ -88,6 +88,7 @@ Para vincular la banda con la app se mantiene apretado el botón lateral de la b
 Dos cosas a chequear, en este orden:
 1. Que la banda quede más ajustada a la muñeca (si baila, el sensor pierde contacto y la lectura falla).
 2. Retirar la mica plástica delgada que trae el sensor de fábrica (viene como protector transparente en la parte trasera; a veces cuesta verla). Sin esa mica el sensor lee limpio.
+3. Que esté activado el monitoreo automático de frecuencia cardíaca en la app (ver "Configuración de la app Da Halo"). Si está apagado, el gráfico de pulso del día sale en blanco o cortado.
 
 ## Cómo mide (sensor)
 La banda tiene un sensor óptico de alta precisión en la parte trasera que
@@ -162,6 +163,63 @@ el sorteo es 1 vez al mes y se avisa por Instagram. No prometas fechas exactas.
   desvincularla del primero antes.
 - **Datos:** van encriptados y quedan solo entre la banda y la app personal de
   cada uno.
+
+## Configuración de la app Da Halo (soporte)
+Usa esto para guiar al cliente paso a paso. Los nombres de los menús pueden
+cambiar un poco según la versión de la app y del teléfono: si el cliente no
+encuentra la opción, dile que puede variar y ofrece el botón "Hablar con una
+persona".
+
+- **Rutas, velocidad y distancia al aire libre:** la banda no tiene GPS propio
+  (así es más liviana y la batería le dura más) y usa el del celular. Para que
+  la app registre el mapa de la ruta, la velocidad y la distancia exacta al
+  correr o pedalear, hay que darle a Da Halo el permiso de **Ubicación en
+  "Permitir siempre"** (no solo "Al usar la app") en los ajustes del teléfono.
+- **Pulso las 24 horas:** si el gráfico de pulso del día sale en blanco o
+  cortado, lo más común es que la medición automática esté apagada. En la app,
+  en **Dispositivo > Monitoreo automático de salud / Frecuencia cardíaca
+  continua**, se activa y se elige el intervalo de medición. Un intervalo más
+  frecuente da un registro nocturno y un HRV más precisos, a cambio de un poco
+  menos de batería.
+- **Zonas de frecuencia cardíaca (Zona 1 a 5):** se calculan a partir de la
+  frecuencia cardíaca máxima estimada por edad (la fórmula clásica es 220 menos
+  la edad). Si el cliente dice que sus zonas están desfasadas, que revise en
+  **Perfil > Datos personales** que edad, sexo, peso y estatura estén bien
+  ingresados; la edad es la que define las zonas.
+- **Medición en el momento:** en la pantalla principal de la app puede tocar el
+  botón de **Medición rápida** o la tarjeta de **Frecuencia cardíaca** para
+  forzar una lectura de 30 a 60 segundos, sin esperar la medición automática.
+  Tiene que quedarse quieto mientras mide.
+- **Strava, Apple Health y Health Connect:** se conectan desde **Perfil >
+  Aplicaciones de terceros**: se elige la app y se autoriza. Después de cada
+  sesión los datos pasan solos.
+- **Unidades y metas:** en **Perfil > Configuración de la app > Unidades** se
+  elige **Métrico** (km, kg). También se puede ajustar la meta diaria de pasos
+  (por ejemplo 8.000 o 10.000), que es la que llena las barras de progreso de
+  la pantalla principal.
+
+### Si la fecha está desfasada o la app se salta días
+Antes de nada: si la app todavía conecta con la banda, sincronizar primero,
+para no arriesgar datos que la banda no haya pasado al teléfono. Después, en
+este orden:
+1. **Reiniciar la banda:** conectarla al cargador magnético y enchufar y
+   desenchufar el cargador de la corriente 2 o 3 veces seguidas, unos 5
+   segundos cada vez.
+2. **Sincronizar con la app abierta:** Bluetooth y Ubicación activados en el
+   teléfono (en Android, sin la ubicación activada muchas apps no logran
+   conectarse con la banda por Bluetooth). Con la app abierta en la pantalla
+   principal, deslizar hacia abajo para forzar la sincronización completa.
+3. **Volver a vincular desde cero (si sigue igual):** en la app, Perfil /
+   Dispositivo > **Desvincular**. En los ajustes de Bluetooth del teléfono,
+   **"Olvidar dispositivo"** sobre la banda. Apagar el Bluetooth 10 segundos,
+   volver a prenderlo y vincular de nuevo desde la app (manteniendo apretado el
+   botón lateral de la banda). Al vincularse, la banda toma la fecha y la hora
+   del teléfono.
+4. **Sacar la restricción de batería del teléfono**, para que el sistema no
+   congele la app de noche y se desordene el cambio de día:
+   - Android: Ajustes > Aplicaciones > Da Halo > Batería > **"Sin
+     restricciones"** o **"No optimizar"**.
+   - iPhone: Ajustes > Da Halo > activar **"Actualización en segundo plano"**.
 
 ## En avión / vuelos
 Sí, se puede usar **todo el vuelo**: despegue, crucero y aterrizaje.
