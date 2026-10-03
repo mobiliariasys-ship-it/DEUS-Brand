@@ -208,6 +208,7 @@ async function enviarPagoConfirmado(payment, pedido) {
           ${fila('Color', (pedido?.color || '').toString().toUpperCase())}
           ${pedido?.cantidad ? fila('Cantidad', pedido.cantidad) : ''}
           ${pedido?.tapones ? fila('Extra', 'Tapones de oído DEUS') : ''}
+          ${pedido?.regaloTapones ? fila('🎁 Regalo Cyber', 'Tapones de oído DEUS — INCLUIR EN EL PAQUETE') : ''}
         </table>
 
         <h3 style="margin:20px 0 12px">Dirección de envío</h3>
@@ -258,6 +259,7 @@ async function enviarConfirmacionCliente(datos) {
         <div style="background:#f7f7f7;border-radius:10px;padding:18px 20px;margin:22px 0">
           <table style="width:100%;border-collapse:collapse;font-size:14px">
             <tr><td style="padding:5px 0;color:#888">Producto</td><td style="text-align:right"><b>DEUS Band${datos.color ? ' — ' + String(datos.color).toUpperCase() : ''}</b></td></tr>
+            ${datos.regaloTapones ? `<tr><td style="padding:5px 0;color:#888">🎁 Regalo Cyber</td><td style="text-align:right"><b>Tapones de oído DEUS</b></td></tr>` : ''}
             ${datos.carrier ? `<tr><td style="padding:5px 0;color:#888">Envío</td><td style="text-align:right">${datos.carrier}</td></tr>` : ''}
             ${lugar ? `<tr><td style="padding:5px 0;color:#888">Dirección</td><td style="text-align:right">${lugar}</td></tr>` : ''}
             <tr><td style="padding:10px 0 0;color:#888;border-top:1px solid #e2e2e2">Total pagado</td><td style="text-align:right;padding-top:10px;border-top:1px solid #e2e2e2"><b style="font-size:16px">${money(datos.monto)}</b></td></tr>

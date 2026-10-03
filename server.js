@@ -21,7 +21,7 @@ const metaAds = require('./services/meta-ads');
 // Precio AUTORITATIVO: es el que se cobra, con stock y en modo reserva. El
 // sitio lo lee de /stock y muestra exactamente esto, así no puede pasar que la
 // página diga un precio y la pasarela cobre otro. Ver services/precio.js.
-const { precioBanda, precios, TAPONES_PRICE, UPSELL_TAPONES, calcularMonto } = require('./services/precio');
+const { precioBanda, precios, TAPONES_PRICE, UPSELL_TAPONES, calcularMonto, regaloCyber } = require('./services/precio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -251,6 +251,9 @@ app.post('/crear-preferencia', async (req, res) => {
         cantidad: qty,
         tapones: !!tapones,
         soloTapones: !!soloTapones,
+        // Regalo Cyber (tapones DEUS gratis). En snake_case porque así lo
+        // devuelve MercadoPago en el webhook.
+        regalo_tapones: regaloCyber({ soloTapones }),
         shipping_carrier: shippingCarrier,
         shipping_cost: shippingCost,
         shipping_address: shippingAddress,
@@ -293,6 +296,7 @@ app.post('/crear-preferencia', async (req, res) => {
       cantidad: qty,
       tapones: !!tapones,
       soloTapones: !!soloTapones,
+      regaloTapones: regaloCyber({ soloTapones }),
       color: colorPedido,
       colores: coloresPedido,
       customer: {
@@ -381,6 +385,7 @@ app.post('/notificaciones', async (req, res) => {
         const enMemoria = [...pedidos].reverse().find(p => (p.customer?.email || '').toLowerCase() === (emailCliente || '').toLowerCase()) || {};
         const taponesPago = meta.tapones !== undefined ? (meta.tapones === true || meta.tapones === 'true') : !!enMemoria.tapones;
         const soloTaponesPago = meta.soloTapones !== undefined ? (meta.soloTapones === true || meta.soloTapones === 'true') : !!enMemoria.soloTapones;
+        const regaloPago = meta.regalo_tapones !== undefined ? (meta.regalo_tapones === true || meta.regalo_tapones === 'true') : !!enMemoria.regaloTapones;
         const costoPago = (meta.shipping_cost !== undefined && meta.shipping_cost !== null && meta.shipping_cost !== '') ? Number(meta.shipping_cost) : enMemoria.shipping?.cost;
         const pedido = {
           product: enMemoria.product || 'DEUS Band',
@@ -388,6 +393,7 @@ app.post('/notificaciones', async (req, res) => {
           colores: (meta.colores ? String(meta.colores).split(',').filter(Boolean) : null) || enMemoria.colores,
           cantidad: Number(meta.cantidad) || enMemoria.cantidad,
           tapones: taponesPago,
+          regaloTapones: regaloPago,
           method: enMemoria.method || 'MercadoPago',
           customer: {
             name: meta.customer_name || enMemoria.customer?.name,
@@ -442,7 +448,8 @@ app.post('/notificaciones', async (req, res) => {
           color: pedido.color,
           carrier: pedido.shipping.carrier,
           address: pedido.shipping.address,
-          ticket: ticketMP && ticketMP.numero
+          ticket: ticketMP && ticketMP.numero,
+          regaloTapones: pedido.regaloTapones
         }).catch(err => console.error('[email] Confirmación cliente:', err.message));
       }
     } catch (err) {

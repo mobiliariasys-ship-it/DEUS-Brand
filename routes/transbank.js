@@ -10,7 +10,7 @@ const metaCapi = require('../services/meta-capi');
 
 // Precio único $54.990, con stock y en modo reserva (igual que server.js y
 // flow.js, y que lo que muestra el sitio).
-const { precioBanda, TAPONES_PRICE, calcularMonto } = require('../services/precio');
+const { precioBanda, TAPONES_PRICE, calcularMonto, regaloCyber } = require('../services/precio');
 const pedidosWebpay = new Map(); // buyOrder -> pedido
 
 // Producción si hay credenciales reales; si no, integración (pruebas)
@@ -61,6 +61,7 @@ router.post('/webpay/crear', async (req, res) => {
       cantidad: qty,
       tapones: !!tapones,
       soloTapones: !!soloTapones,
+      regaloTapones: regaloCyber({ soloTapones }), // regalo Cyber: tapones DEUS gratis
       color: colorPedido,
       colores: coloresPedido,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
@@ -172,7 +173,8 @@ async function handleRetorno(req, res) {
         color: pedido && pedido.color,
         carrier: pedido && pedido.shipping && pedido.shipping.carrier,
         address: pedido && pedido.shipping && pedido.shipping.address,
-        ticket: ticketWP && ticketWP.numero
+        ticket: ticketWP && ticketWP.numero,
+        regaloTapones: !!(pedido && pedido.regaloTapones)
       }).catch(e => console.error('[email] Confirmación cliente:', e.message));
       return res.redirect(`/success.html?monto=${Number(result.amount) || ''}&orden=${encodeURIComponent(result.buy_order || '')}`);
     }

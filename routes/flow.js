@@ -12,7 +12,7 @@ const metaCapi = require('../services/meta-capi');
 
 // Precio único $54.990, con stock y en modo reserva (igual que server.js y
 // transbank.js, y que lo que muestra el sitio).
-const { precioBanda, TAPONES_PRICE, calcularMonto } = require('../services/precio');
+const { precioBanda, TAPONES_PRICE, calcularMonto, regaloCyber } = require('../services/precio');
 const pedidosFlow = new Map();
 
 // Producción por defecto; sandbox si FLOW_ENV=sandbox
@@ -110,6 +110,7 @@ router.post('/flow/crear', async (req, res) => {
         : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
       product_price: m.productos,
       cantidad: qty, tapones: !!tapones, soloTapones: !!soloTapones,
+      regaloTapones: regaloCyber({ soloTapones }), // regalo Cyber: tapones DEUS gratis
       color: colorPedido,
       colores: coloresPedido,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
@@ -217,7 +218,8 @@ router.post('/flow/confirmacion', async (req, res) => {
         color: pedido && pedido.color,
         carrier: pedido && pedido.shipping && pedido.shipping.carrier,
         address: pedido && pedido.shipping && pedido.shipping.address,
-        ticket: ticketFlow && ticketFlow.numero
+        ticket: ticketFlow && ticketFlow.numero,
+        regaloTapones: !!(pedido && pedido.regaloTapones)
       }).catch(e => console.error('[email] Confirmación cliente:', e.message));
     } else if (pedido) pedido.status = 'rejected';
   } catch (e) { console.error('[flow/confirmacion] Error:', e.message); }
