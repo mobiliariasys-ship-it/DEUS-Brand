@@ -82,17 +82,25 @@ function capturarCorreos() {
   };
 }
 
-test('el correo de despacho y el del cliente dicen que van los tapones de regalo', async () => {
-  const { enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
+test('los correos de una compra Cyber dicen "+ Tapones de oído DEUS GRATIS"', async () => {
+  const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
   const cap = capturarCorreos();
   try {
-    const pedido = { product: 'DEUS Band', color: 'negra', cantidad: 1, regaloTapones: true, customer: { name: 'Prueba Cyber' }, shipping: { carrier: 'Starken', cost: 0, address: {} } };
+    const pedido = { preference_id: 'deus-1', created_at: new Date().toISOString(), product: 'DEUS Band', product_price: 68990, total: 68990, color: 'negra', cantidad: 1, regaloTapones: true, customer: { name: 'Prueba Cyber' }, shipping: { carrier: 'Starken', cost: 0, address: {} } };
+    await enviarPedidoNuevo(pedido);
     await enviarPagoConfirmado({ id: 'cyber-1', transaction_amount: 68990 }, pedido);
     await enviarConfirmacionCliente({ email: 'cliente@ejemplo.com', name: 'Prueba', monto: 68990, id: 'cyber-1', color: 'negra', regaloTapones: true });
     await enviarPagoConfirmado({ id: 'normal-1', transaction_amount: 68990 }, { ...pedido, regaloTapones: false });
+    await enviarConfirmacionCliente({ email: 'cliente@ejemplo.com', name: 'Prueba', monto: 68990, id: 'normal-1', color: 'negra', regaloTapones: false });
   } finally { cap.restaurar(); }
-  assert.strictEqual(cap.enviados.length, 3);
-  assert.match(cap.enviados[0].html, /Regalo Cyber.*INCLUIR EN EL PAQUETE/s, 'el despacho tiene que ver que va el regalo');
-  assert.match(cap.enviados[1].html, /Regalo Cyber.*Tapones de oído DEUS/s, 'el cliente tiene que ver su regalo');
-  assert.doesNotMatch(cap.enviados[2].html, /Regalo Cyber/, 'un pedido sin regalo no lo menciona');
+  assert.strictEqual(cap.enviados.length, 5);
+  const [nuevo, despacho, cliente, despachoNormal, clienteNormal] = cap.enviados;
+  assert.match(nuevo.html, /\+ Tapones de oído DEUS GRATIS/, 'el aviso de pedido nuevo anota el regalo');
+  assert.match(despacho.subject, /TAPONES GRATIS/, 'el asunto del despacho avisa el regalo');
+  assert.match(despacho.html, /\+ TAPONES DE OÍDO GRATIS — INCLUIR EN EL PAQUETE/, 'el despacho tiene que ver que va el regalo');
+  assert.match(cliente.subject, /\+ tapones de oído gratis/, 'el cliente lo ve desde el asunto');
+  assert.match(cliente.html, /\+ Tapones de oído DEUS GRATIS/, 'el cliente tiene que ver su regalo');
+  for (const c of [despachoNormal, clienteNormal]) {
+    assert.doesNotMatch(c.subject + c.html, /Regalo Cyber|tapones de oído gratis|TAPONES GRATIS|Tapones de oído DEUS GRATIS|tapones de oído de regalo/, 'una compra sin regalo no lo menciona');
+  }
 });
