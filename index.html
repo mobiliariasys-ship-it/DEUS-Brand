@@ -361,6 +361,8 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
   --black:#121214; --dark:#1a1a1d; --card:#1e1e22;
   --border:#33333b; --white:#f2f2f2; --silver:#a4a4ae;
   --accent:#e8e8e8; --mint:#c0c0c0;
+  /* Cyber: celeste sobre negro y grises, sin degradados. */
+  --cy:#6fb7dd; --cy-claro:#a9d6ee; --cy-linea:rgba(111,183,221,.38);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 h1,h2{font-weight:400;font-size:inherit;}
@@ -401,33 +403,32 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 .cd-box small{font-size:.45rem;letter-spacing:1px;color:#9a9a9a;margin-top:3px;}
 @media(max-width:600px){.announce-bar{font-size:.6rem;letter-spacing:1.5px;padding:8px 12px;}}
 /* ── Cyber (html.cyber, hasta el miércoles 7-oct 23:59) ── */
-.cy-chip,.ab-chip{display:inline-block;background:linear-gradient(90deg,#22d3ee,#a855f7);color:#07070a;font-weight:800;text-transform:uppercase;border-radius:4px;line-height:1;}
+.cy-chip,.ab-chip{display:inline-block;background:var(--cy);color:#0a0a0a;font-weight:600;text-transform:uppercase;border-radius:4px;line-height:1;}
 .ab-chip{font-size:.62rem;letter-spacing:1.6px;padding:3px 7px 3px 6px;margin-right:4px;vertical-align:1px;}
 .cy-chip{font-size:.52rem;letter-spacing:1.4px;padding:3px 6px;margin-right:4px;vertical-align:1px;}
-html.cyber .announce-bar{background:linear-gradient(90deg,rgba(34,211,238,.09),rgba(8,8,8,0) 32%,rgba(8,8,8,0) 68%,rgba(168,85,247,.11)),#080808;border-bottom-color:transparent;}
-html.cyber .announce-bar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,#22d3ee,#a855f7 50%,#22d3ee);}
-html.cyber .abcd-box{border-color:rgba(168,85,247,.35);}
-html.cyber .abcd-box b{color:#67e8f9;}
-.gift-line{display:flex;align-items:center;gap:7px;font-size:.7rem;letter-spacing:1.2px;color:#d8b4fe;font-weight:700;margin:0 0 16px;}
-.gift-line svg{width:15px;height:15px;stroke:#c084fc;fill:none;stroke-width:1.9;flex-shrink:0;}
+html.cyber .announce-bar{border-bottom-color:transparent;}
+html.cyber .announce-bar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--cy-linea);}
+html.cyber .abcd-box b{color:var(--cy-claro);}
+.gift-line{display:flex;align-items:center;gap:7px;font-size:.7rem;letter-spacing:1.2px;color:var(--cy-claro);font-weight:700;margin:0 0 16px;}
+.gift-line svg{width:15px;height:15px;stroke:var(--cy);fill:none;stroke-width:1.9;flex-shrink:0;}
 html.cyber .ship-line{margin-bottom:8px;}
-.raspe{margin-top:8px;border:1px solid rgba(168,85,247,.5);background:linear-gradient(90deg,rgba(34,211,238,.07),rgba(168,85,247,.12));border-radius:10px;padding:12px 12px 8px;}
+.raspe{margin-top:8px;border:1px solid #2b2e33;background:#141417;border-radius:10px;padding:12px 12px 8px;}
 #checkout-overlay.tapones .raspe{display:none!important;}
 html.cyber #upsell-card{display:none!important;}
 .raspe-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .raspe-head .cy-chip{margin:0;flex-shrink:0;}
-.raspe-head b{font-size:.78rem;color:#e9d5ff;letter-spacing:.4px;}
+.raspe-head b{font-size:.78rem;color:var(--white);letter-spacing:.4px;}
 .raspe-head small{margin-left:auto;font-size:.62rem;color:var(--silver);white-space:nowrap;}
-.raspe-zona{position:relative;border-radius:8px;overflow:hidden;background:#0f0f12;border:1px dashed rgba(168,85,247,.45);}
+.raspe-zona{position:relative;border-radius:8px;overflow:hidden;background:#0f0f12;border:1px dashed var(--cy-linea);}
 .raspe-premio{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:92px;}
 .raspe-premio img{width:64px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0;}
 .raspe-txt b{display:block;font-size:.95rem;color:#fff;letter-spacing:.3px;}
 .raspe-txt small{display:block;font-size:.68rem;color:var(--silver);line-height:1.45;margin-top:3px;}
 .raspe-capa{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;transition:opacity .45s ease;}
 .raspe-capa:active{cursor:grabbing;}
-.raspe-capa:focus-visible{outline:2px solid #22d3ee;outline-offset:-2px;}
+.raspe-capa:focus-visible{outline:2px solid var(--cy);outline-offset:-2px;}
 .raspe.revelado .raspe-capa{opacity:0;pointer-events:none;}
-.raspe.revelado .raspe-zona{border-style:solid;border-color:rgba(34,211,238,.55);}
+.raspe.revelado .raspe-zona{border-style:solid;border-color:var(--cy);}
 .raspe.revelado .raspe-premio{animation:raspePop .55s cubic-bezier(.2,1.4,.4,1);}
 .raspe.revelado .raspe-skip,.raspe.revelado #raspe-hint{display:none;}
 @keyframes raspePop{0%{transform:scale(.92)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
@@ -1523,7 +1524,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar"><span class="ab-chip solo-cyber">⚡ Cyber</span> <span class="sin-cyber">🇨🇱 </span><b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + REGALO SORPRESA</span></b><div class="ab-plazo">1-2 días de envío</div><div class="ab-cd solo-cyber"><span class="ab-cd-lbl">Cyber termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
+<div class="announce-bar" id="offer-bar"><span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span><b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + REGALO SORPRESA</span></b><div class="ab-plazo">1-2 días de envío</div><div class="ab-cd solo-cyber"><span class="ab-cd-lbl">Cyber termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -1898,7 +1899,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
     </div>
     <div class="info">
-      <div class="hero-tag"><span class="cy-chip solo-cyber">⚡ Cyber</span> Smartband · Pulsera Inteligente</div>
+      <div class="hero-tag"><span class="cy-chip solo-cyber">Cyber</span> Smartband · Pulsera Inteligente</div>
       <h1 class="hero-name">DEUS Band</h1>
       <!-- Prueba social ARRIBA: las estrellas convencen antes del precio. -->
       <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas">
@@ -2047,7 +2048,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                  tapones") y solo mientras dure el Cyber (html.cyber). El regalo
                  NO depende de raspar: el backend marca el pedido igual. -->
             <div class="raspe solo-cyber" id="raspe">
-              <div class="raspe-head"><span class="cy-chip">⚡ Cyber</span><b>Tu regalo sorpresa</b><small id="raspe-hint">Raspa con el dedo</small></div>
+              <div class="raspe-head"><span class="cy-chip">Cyber</span><b>Tu regalo sorpresa</b><small id="raspe-hint">Raspa con el dedo</small></div>
               <div class="raspe-zona">
                 <div class="raspe-premio" id="raspe-premio" aria-hidden="true">
                   <img src="img/img-tapones-mini.webp" alt="Tapones de oído DEUS" width="64" height="64" loading="lazy" decoding="async">
@@ -2782,15 +2783,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             var g = ctx.createLinearGradient(0, 0, w, h);
             g.addColorStop(0, '#c3c8d0'); g.addColorStop(0.45, '#eef0f4'); g.addColorStop(0.55, '#d6dae0'); g.addColorStop(1, '#a9afb8');
             ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-            var g2 = ctx.createLinearGradient(0, 0, w, 0);
-            g2.addColorStop(0, 'rgba(34,211,238,.38)'); g2.addColorStop(1, 'rgba(168,85,247,.38)');
-            ctx.fillStyle = g2; ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = 'rgba(111,183,221,.20)'; ctx.fillRect(0, 0, w, h);
             ctx.fillStyle = 'rgba(255,255,255,.45)';
             for (var i = 0; i < 80; i++) ctx.fillRect((i * 97) % w, (i * 53) % h, 1.5, 1.5);
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillStyle = '#16161c';
             ctx.font = '600 15px "DM Sans", sans-serif';
-            ctx.fillText('🎁  RASPA AQUÍ', w / 2, h / 2 - 9);
+            ctx.fillText('RASPA AQUÍ', w / 2, h / 2 - 9);
             ctx.fillStyle = 'rgba(22,22,28,.72)';
             ctx.font = '400 11px "DM Sans", sans-serif';
             ctx.fillText('y descubre tu regalo Cyber', w / 2, h / 2 + 12);
@@ -3798,7 +3797,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <thead>
               <tr>
                 <th scope="col"><span class="vh">Característica</span></th>
-                <th scope="col" class="c-deus">DEUS Band<span class="cy-chip solo-cyber">⚡ Cyber</span></th>
+                <th scope="col" class="c-deus">DEUS Band<span class="cy-chip solo-cyber">Cyber</span></th>
                 <th scope="col">Smartwatch</th>
                 <th scope="col">Bandas con suscripción</th>
               </tr>
@@ -3816,7 +3815,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="soft-cta">
           <button class="soft-btn" type="button" onclick="abrirCheckout()">Comprar DEUS Band</button>
           <div class="soft-cta-note">
-            <span class="solo-cyber"><span class="cy-chip">⚡ Cyber</span>Envío gratis + regalo sorpresa</span>
+            <span class="solo-cyber"><span class="cy-chip">Cyber</span>Envío gratis + regalo sorpresa</span>
             <span class="sin-cyber">Envío gratis a todo Chile</span>
             <span>Garantía de 60 días</span>
           </div>
@@ -4627,7 +4626,7 @@ function aplicarReserva() {
     // es permanente, lo que se termina con el Cyber es el regalo.
     var quedaPromo = msRestanteOferta();
     ab.innerHTML = (ofertaActiva()
-      ? '<span class="ab-chip solo-cyber">⚡ Cyber</span> <span class="sin-cyber">🇨🇱 </span>' +
+      ? '<span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span>' +
         '<b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + REGALO SORPRESA</span></b>'
       : '🔥 <b class="ab-titulo">Última unidad</b> disponible') +
       '<div class="ab-plazo">1-2 días de envío</div>' +
