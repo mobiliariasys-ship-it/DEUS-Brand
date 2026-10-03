@@ -434,66 +434,109 @@ html.cyber #upsell-card{display:none!important;}
 @keyframes raspePop{0%{transform:scale(.92)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
 .raspe-skip{display:block;margin:7px auto 0;background:none;border:none;color:#8f8f99;font-size:.62rem;text-decoration:underline;text-underline-offset:2px;cursor:pointer;font-family:inherit;padding:2px 6px;}
 @media(prefers-reduced-motion:reduce){.raspe-capa{transition:none;}.raspe.revelado .raspe-premio{animation:none;}}
-/* ── Sección "soft" (estilo claro y confiable): cómo funciona, +14 funciones,
-   batería y comparativa. Va como una hoja clara redondeada sobre el fondo
-   oscuro del sitio. ── */
+/* ── Sección "soft": cómo funciona, +14 funciones (cada una abre su
+   explicación), batería y comparativa. Con los grises del sitio: una hoja
+   redondeada apenas más clara que el fondo y tarjetas --card. ── */
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;}
 .soft{max-width:1160px;margin:34px auto;padding:0 12px;scroll-margin-top:96px;}
-.soft-in{background:#f5f5f2;border-radius:28px;padding:60px 36px;color:#1c1c1e;}
+.soft-in{background:var(--dark);border:1px solid #27272d;border-radius:28px;padding:60px 36px;color:var(--white);}
 .soft-block+.soft-block{margin-top:68px;}
 .soft-head{text-align:center;max-width:580px;margin:0 auto 30px;}
-.soft-kicker{display:inline-block;font-size:.64rem;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:#1f7a46;background:#e4f1e8;border-radius:999px;padding:6px 13px;margin-bottom:14px;}
-.soft-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:2.05rem;line-height:1.15;letter-spacing:-.6px;color:#1c1c1e;}
-.soft-sub{font-size:.9rem;line-height:1.6;color:#5c6066;margin-top:10px;}
+.soft-kicker{display:inline-block;font-size:.64rem;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:#c9c9d1;background:#25252b;border:1px solid #34343c;border-radius:999px;padding:6px 13px;margin-bottom:14px;}
+.soft-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:2.05rem;line-height:1.15;letter-spacing:-.6px;color:var(--white);}
+.soft-sub{font-size:.9rem;line-height:1.6;color:var(--silver);margin-top:10px;}
 .steps{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:0;padding:0;}
-.step{background:#fff;border:1px solid #ebebe5;border-radius:22px;padding:22px 22px 24px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 12px 30px -14px rgba(0,0,0,.10);}
+.step{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:22px 22px 24px;}
 .step-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.step-n{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#cfe5d6;letter-spacing:1px;}
-.step-ico{width:46px;height:46px;border-radius:15px;background:#eaf4ed;display:grid;place-items:center;color:#1f7a46;}
+.step-n{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#4a4a53;letter-spacing:1px;}
+.step-ico,.fi{display:grid;place-items:center;flex-shrink:0;background:#2a2a30;border:1px solid #38383f;color:#e6e6ea;}
+.step-ico{width:46px;height:46px;border-radius:15px;}
 .step-ico svg,.fi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-.step h3{font-size:1.04rem;font-weight:600;color:#1c1c1e;margin-bottom:6px;letter-spacing:-.2px;line-height:1.3;}
-.step p{font-size:.84rem;line-height:1.6;color:#5c6066;}
+.step h3{font-size:1.04rem;font-weight:600;color:var(--white);margin-bottom:6px;letter-spacing:-.2px;line-height:1.3;}
+.step p{font-size:.84rem;line-height:1.6;color:var(--silver);}
 .fgrid{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:0;padding:0;}
-.fgrid li{width:136px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;background:#fff;border:1px solid #ebebe5;border-radius:18px;padding:16px 8px 14px;font-size:.76rem;font-weight:600;color:#1c1c1e;line-height:1.25;}
-.fi{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex-shrink:0;color:var(--c);background:rgba(0,0,0,.04);background:color-mix(in srgb,var(--c) 12%,#fff);}
-.soft-note{text-align:center;font-size:.74rem;color:#7a7e84;margin-top:16px;}
-.bat-card{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:24px;background:#fff;border:1px solid #ebebe5;border-radius:26px;padding:34px 34px 34px 14px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 16px 40px -18px rgba(0,0,0,.12);}
+.fgrid li{width:136px;display:flex;}
+.fbtn{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px 8px 14px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;color:var(--white);line-height:1.25;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .2s,border-color .2s,transform .15s;}
+/* El "+" avisa que la tarjeta se puede tocar */
+.fbtn::after{content:"+";position:absolute;top:8px;right:8px;width:17px;height:17px;border:1px solid #3e3e46;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:400;line-height:1;color:#8a8a94;transition:color .2s,border-color .2s;}
+@media(hover:hover){.fbtn:hover{background:#24242a;border-color:#4b4b55;}.fbtn:hover::after{color:var(--white);border-color:#6a6a74;}}
+.fbtn:active{transform:scale(.97);}
+.fbtn:focus-visible{outline:2px solid var(--white);outline-offset:2px;}
+.fi{width:44px;height:44px;border-radius:14px;}
+.soft-note{text-align:center;font-size:.74rem;color:#8a8a94;margin-top:16px;}
+.bat-card{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:24px;background:var(--card);border:1px solid var(--border);border-radius:26px;padding:34px 34px 34px 14px;}
+/* La banda es negra: un foco gris detrás la despega del fondo oscuro */
+.bat-foto{border-radius:20px;background:radial-gradient(ellipse 62% 70% at 50% 42%,#3d3d45 0%,#2a2a30 44%,rgba(30,30,34,0) 74%);}
 .bat-card img{width:100%;height:auto;display:block;}
 .bat-txt .soft-title{font-size:1.85rem;}
-.bat-txt p{font-size:.88rem;line-height:1.6;color:#5c6066;margin-top:10px;}
+.bat-txt p{font-size:.88rem;line-height:1.6;color:var(--silver);margin-top:10px;}
 .bat-stats{list-style:none;display:flex;gap:10px;margin:20px 0 0;padding:0;}
-.bat-stats li{flex:1;background:#f5f5f2;border-radius:16px;padding:12px 6px;text-align:center;}
-.bat-stats b{display:block;font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:1.9rem;line-height:1;color:#1c1c1e;letter-spacing:.5px;}
-.bat-stats span{display:block;font-size:.64rem;color:#5c6066;margin-top:4px;line-height:1.3;}
-.cmp-wrap{background:#fff;border:1px solid #ebebe5;border-radius:24px;padding:10px 14px 4px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 16px 40px -18px rgba(0,0,0,.10);}
-.cmp{width:100%;border-collapse:separate;border-spacing:0;font-size:.82rem;color:#1c1c1e;}
-.cmp th,.cmp td{padding:15px 10px;text-align:center;border-bottom:1px solid #efefea;vertical-align:middle;}
+.bat-stats li{flex:1;background:#25252b;border:1px solid #303038;border-radius:16px;padding:12px 6px;text-align:center;}
+.bat-stats b{display:block;font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:1.9rem;line-height:1;color:var(--white);letter-spacing:.5px;}
+.bat-stats span{display:block;font-size:.64rem;color:var(--silver);margin-top:4px;line-height:1.3;}
+.cmp-wrap{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:10px 14px 4px;}
+.cmp{width:100%;border-collapse:separate;border-spacing:0;font-size:.82rem;color:var(--white);}
+.cmp th,.cmp td{padding:15px 10px;text-align:center;border-bottom:1px solid #2c2c33;vertical-align:middle;}
 .cmp tbody tr:last-child th,.cmp tbody tr:last-child td{border-bottom:none;}
-.cmp thead th{font-size:.72rem;font-weight:600;color:#6b6f75;letter-spacing:.2px;padding-top:18px;padding-bottom:14px;}
+.cmp thead th{font-size:.72rem;font-weight:600;color:#8a8a94;letter-spacing:.2px;padding-top:18px;padding-bottom:14px;}
 .cmp tbody th{text-align:left;font-weight:600;line-height:1.35;width:40%;}
-.cmp tbody th small{display:block;font-weight:400;color:#7a7e84;font-size:.7rem;margin-top:2px;}
-.cmp .c-deus{background:#f1f8f3;}
-.cmp thead .c-deus{color:#1c1c1e;font-size:.82rem;border-radius:14px 14px 0 0;}
+.cmp tbody th small{display:block;font-weight:400;color:#8a8a94;font-size:.7rem;margin-top:2px;}
+.cmp .c-deus{background:#27272d;}
+.cmp thead .c-deus{color:var(--white);font-size:.82rem;border-radius:14px 14px 0 0;}
 .cmp tbody tr:last-child .c-deus{border-radius:0 0 14px 14px;}
-.cmp thead .c-deus .cy-chip{display:block;width:max-content;margin:6px auto 0;}
 .ck,.cx{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;}
-.ck{background:#1f7a46;color:#fff;}
-.cx{background:#f0f0ec;color:#a0a3a8;}
+/* Los ✓ de DEUS Band en blanco; los de la competencia, en gris */
+.ck{background:#4a4a52;color:#f2f2f2;}
+.c-deus .ck{background:#f2f2f2;color:#121214;}
+.cx{background:#2c2c33;color:#74747e;}
 .ck svg,.cx svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
 .cv{font-weight:600;font-size:.78rem;}
-.cv.muted{font-weight:400;color:#8a8e94;}
+.cv.muted{font-weight:400;color:#8a8a94;}
 .soft-cta{text-align:center;margin-top:30px;}
-.soft-btn{display:inline-block;background:#1c1c1e;color:#fff;border:none;border-radius:999px;padding:16px 34px;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:600;letter-spacing:.4px;cursor:pointer;transition:transform .15s,background .2s;}
-.soft-btn:hover{background:#000;transform:translateY(-1px);}
-.soft-cta-note{font-size:.74rem;color:#5c6066;margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;}
+.soft-btn{display:inline-block;background:#fff;color:#000;border:none;border-radius:999px;padding:16px 34px;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:600;letter-spacing:.4px;cursor:pointer;transition:transform .15s,box-shadow .2s;}
+.soft-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,255,255,.18);}
+.soft-cta-note{font-size:.74rem;color:var(--silver);margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;}
 .soft-cta-note span{display:inline-flex;align-items:center;gap:6px;}
-.soft-cta-note .cy-chip{margin:0;}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
   .bat-card{grid-template-columns:1fr;padding:26px 18px 22px;gap:14px;}}
 @media(max-width:600px){.soft{padding:0;margin:24px -12px;}.soft-in{padding:42px 16px;border-radius:22px;}.soft-title{font-size:1.6rem;}.bat-txt .soft-title{font-size:1.5rem;}.soft-block+.soft-block{margin-top:52px;}.soft-head{margin-bottom:22px;}
-  .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);padding:14px 4px 12px;font-size:.68rem;gap:8px;border-radius:16px;}.fi{width:38px;height:38px;border-radius:12px;}.fi svg{width:19px;height:19px;}
+  .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);}.fbtn{padding:16px 4px 12px;font-size:.68rem;gap:8px;border-radius:16px;}.fbtn::after{top:6px;right:6px;width:15px;height:15px;font-size:.72rem;}.fi{width:38px;height:38px;border-radius:12px;}.fi svg{width:19px;height:19px;}
   .cmp-wrap{padding:6px 4px 2px;border-radius:20px;}.cmp{font-size:.72rem;}.cmp th,.cmp td{padding:12px 4px;}.cmp thead th{font-size:.62rem;}.cmp thead .c-deus{font-size:.7rem;}.cmp tbody th{padding-left:10px;width:38%;}.cmp tbody th small{font-size:.62rem;}.cv{font-size:.66rem;}.ck,.cx{width:22px;height:22px;}.ck svg,.cx svg{width:12px;height:12px;}
   .bat-stats b{font-size:1.6rem;}}
+/* Detalle de cada función: <dialog> nativo (capa superior; Esc y foco los
+   resuelve el navegador). En el celular sale como hoja desde abajo. */
+.fn-modal{margin:auto;padding:0;border:none;background:transparent;color:var(--white);width:calc(100% - 32px);max-width:440px;max-height:none;overflow:visible;}
+.fn-modal::backdrop{background:rgba(0,0,0,.72);}
+.fn-box{position:relative;background:#16161a;border:1px solid var(--border);border-radius:22px;padding:24px 22px 16px;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;box-shadow:0 24px 70px rgba(0,0,0,.55);}
+.fn-modal[open] .fn-box{animation:slideUp .25s ease;}
+.fn-cerrar{position:absolute;top:10px;right:10px;width:40px;height:40px;border:none;border-radius:50%;background:transparent;color:#8a8a94;font-size:1.7rem;line-height:1;cursor:pointer;display:grid;place-items:center;}
+.fn-cerrar:hover{color:var(--white);background:#232328;}
+.fn-top{display:flex;align-items:center;gap:14px;margin:0 42px 18px 0;}
+.fn-top .fi{width:52px;height:52px;border-radius:16px;}
+.fn-top .fi svg{width:25px;height:25px;}
+.fn-kicker{font-size:.6rem;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;color:#8a8a94;margin-bottom:4px;}
+.fn-t{font-family:'DM Sans',sans-serif;font-size:1.3rem;font-weight:600;line-height:1.2;letter-spacing:-.3px;color:var(--white);}
+.fn-sec{background:var(--card);border:1px solid #2c2c33;border-radius:14px;padding:13px 15px;}
+.fn-sec+.fn-sec{margin-top:10px;}
+.fn-lbl{font-size:.62rem;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#8a8a94;margin-bottom:5px;}
+.fn-sec p{font-size:.86rem;line-height:1.6;color:#d4d4da;}
+.fn-sec.fn-para{background:#202026;border-color:#3a3a42;}
+.fn-sec.fn-para p{color:var(--white);}
+.fn-aviso{font-size:.68rem;line-height:1.5;color:#74747e;margin-top:12px;}
+.fn-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #26262c;}
+.fn-nav button{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--border);border-radius:999px;background:transparent;color:#c9c9d1;font-family:'DM Sans',sans-serif;font-size:.74rem;font-weight:600;cursor:pointer;}
+.fn-nav button:hover{border-color:#55555f;color:var(--white);}
+.fn-pos{font-size:.7rem;color:#74747e;}
+.fn-modal button:focus-visible{outline:2px solid var(--white);outline-offset:2px;}
+body.fn-abierto{overflow:hidden;}
+@keyframes fnSube{from{transform:translateY(40px);opacity:.4;}to{transform:none;opacity:1;}}
+@media(max-width:600px){
+  .fn-modal{margin:auto 0 0;width:100%;max-width:100%;}
+  .fn-box{border-radius:22px 22px 0 0;border-bottom:none;padding:22px 18px calc(14px + env(safe-area-inset-bottom));max-height:90vh;max-height:90dvh;}
+  .fn-modal[open] .fn-box{animation:fnSube .28s ease;}
+  .fn-t{font-size:1.2rem;}
+}
+@media(prefers-reduced-motion:reduce){.fn-modal[open] .fn-box{animation:none;}}
 @media(max-width:600px){.ab-chip{font-size:.55rem;letter-spacing:1.3px;padding:3px 6px;margin-right:2px;}}
 
 /* HEADER */
@@ -1851,6 +1894,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if(t.closest('.hdr-cart-btn,.btn-cart')) ev('accion:carrito');
         if(t.closest('.proof-line,[onclick*="abrirResenas"]')) ev('accion:resenas');
         if(t.closest('#rot360,.hold-arrow')) ev('accion:girar');
+        if(t.closest('.fbtn')) ev('accion:funciones');
       },true);
       // Giro del 360° también por arrastre (no solo click)
       var r360=document.getElementById('rot360'); if(r360) r360.addEventListener('pointerdown',function(){ ev('accion:girar'); });
@@ -3715,16 +3759,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
   </section>
 
-  <!-- SOFT (estilo claro y confiable): cómo funciona en 3 pasos, +14
-       funciones, batería de 30 días y comparativa. Lo de Cyber va marcado
-       .solo-cyber y se apaga solo con la clase html.cyber. -->
+  <!-- SOFT: cómo funciona en 3 pasos, +14 funciones (cada tarjeta abre su
+       explicación en #fn-modal), batería de 30 días y comparativa. Con los
+       grises del sitio y sin marcas de Cyber. -->
   <section class="soft" id="simple">
     <div class="soft-in">
 
       <div class="soft-block">
         <div class="soft-head">
           <div class="soft-kicker">Así de simple</div>
-          <h2 class="soft-title">Póntela y olvídate</h2>
+          <h2 class="soft-title">Póntela y optimízate</h2>
           <p class="soft-sub">Tres pasos y tu DEUS Band empieza a entender cómo duermes, entrenas y te recuperas.</p>
         </div>
         <ol class="steps">
@@ -3750,29 +3794,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="soft-head">
           <div class="soft-kicker">App Da Halo · gratis</div>
           <h2 class="soft-title">+14 funciones en una sola app</h2>
+          <p class="soft-sub">Toca cada una para ver para qué te sirve.</p>
         </div>
         <ul class="fgrid">
-        <li><span class="fi" style="--c:#e5484d"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/></svg></span>Frecuencia cardíaca</li>
-        <li><span class="fi" style="--c:#0b7bc4"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></span>Oxígeno en sangre</li>
-        <li><span class="fi" style="--c:#1f7a46"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l2-6 4 12 3-9 2 3h5"/></svg></span>HRV</li>
-        <li><span class="fi" style="--c:#8e4ec6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/></svg></span>Estrés</li>
-        <li><span class="fi" style="--c:#1f7a46"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2"/><path d="M11 9l-2 3h3l-2 3"/></svg></span>Recuperación</li>
-        <li><span class="fi" style="--c:#3e63dd"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span>Fases del sueño</li>
-        <li><span class="fi" style="--c:#3e63dd"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Duración del sueño</li>
-        <li><span class="fi" style="--c:#d9681f"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3c1.7 0 3 2 3 5s-1 4-3 4-3-1.5-3-4 1.3-5 3-5z"/><path d="M6 15h4v1.5a2 2 0 0 1-4 0z"/><path d="M16 7c1.7 0 3 2 3 5s-1 4-3 4-3-1.5-3-4 1.3-5 3-5z"/><path d="M14 19h4v.5a2 2 0 0 1-4 0z"/></svg></span>Pasos</li>
-        <li><span class="fi" style="--c:#d9681f"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .3 2 1.5 3 2.5 3-1-3 0-6 0-8z"/></svg></span>Calorías</li>
-        <li><span class="fi" style="--c:#0f8a7e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8v8M3 10v4M18 8v8M21 10v4M6 12h12"/></svg></span>+100 deportes</li>
-        <li><span class="fi" style="--c:#0f8a7e"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h6"/></svg></span>Ritmo y cadencia</li>
-        <li><span class="fi" style="--c:#d9681f"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>Actividad diaria</li>
-        <li><span class="fi" style="--c:#8e4ec6"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 2M5 4L2 7M19 4l3 3"/></svg></span>Alarma silenciosa</li>
-        <li><span class="fi" style="--c:#5c6066"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8"/></svg></span>Avisos por vibración</li>
+        <li><button type="button" class="fbtn" data-fn="fc" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/></svg></span><span>Frecuencia cardíaca</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="spo2" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></span><span>Oxígeno en sangre</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="hrv" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l2-6 4 12 3-9 2 3h5"/></svg></span><span>HRV</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="estres" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/></svg></span><span>Estrés</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="recup" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2"/><path d="M11 9l-2 3h3l-2 3"/></svg></span><span>Recuperación</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="fases" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span>Fases del sueño</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="dur" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span>Duración del sueño</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="pasos" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3c1.7 0 3 2 3 5s-1 4-3 4-3-1.5-3-4 1.3-5 3-5z"/><path d="M6 15h4v1.5a2 2 0 0 1-4 0z"/><path d="M16 7c1.7 0 3 2 3 5s-1 4-3 4-3-1.5-3-4 1.3-5 3-5z"/><path d="M14 19h4v.5a2 2 0 0 1-4 0z"/></svg></span><span>Pasos</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="cal" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .3 2 1.5 3 2.5 3-1-3 0-6 0-8z"/></svg></span><span>Calorías</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="dep" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8v8M3 10v4M18 8v8M21 10v4M6 12h12"/></svg></span><span>+100 deportes</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="ritmo" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h6"/></svg></span><span>Ritmo y cadencia</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="act" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span><span>Actividad diaria</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="alarma" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 2M5 4L2 7M19 4l3 3"/></svg></span><span>Alarma silenciosa</span></button></li>
+        <li><button type="button" class="fbtn" data-fn="avisos" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8"/></svg></span><span>Avisos por vibración</span></button></li>
         </ul>
         <p class="soft-note">Sin suscripción: pagas la banda una vez y la app es tuya.</p>
       </div>
 
       <div class="soft-block">
         <div class="bat-card">
-          <img src="img/deus-sensor-lateral.webp" width="1100" height="311" alt="DEUS Band de perfil con el sensor óptico verde encendido" loading="lazy" decoding="async">
+          <div class="bat-foto"><img src="img/deus-sensor-lateral.webp" width="1100" height="311" alt="DEUS Band de perfil con el sensor óptico verde encendido" loading="lazy" decoding="async"></div>
           <div class="bat-txt">
             <div class="soft-kicker">Sin pantalla</div>
             <h2 class="soft-title">Hasta 30 días con una sola carga</h2>
@@ -3797,7 +3842,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <thead>
               <tr>
                 <th scope="col"><span class="vh">Característica</span></th>
-                <th scope="col" class="c-deus">DEUS Band<span class="cy-chip solo-cyber">Cyber</span></th>
+                <th scope="col" class="c-deus">DEUS Band</th>
                 <th scope="col">Smartwatch</th>
                 <th scope="col">Bandas con suscripción</th>
               </tr>
@@ -3815,8 +3860,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="soft-cta">
           <button class="soft-btn" type="button" onclick="abrirCheckout()">Comprar DEUS Band</button>
           <div class="soft-cta-note">
-            <span class="solo-cyber"><span class="cy-chip">Cyber</span>Envío gratis + regalo sorpresa</span>
-            <span class="sin-cyber">Envío gratis a todo Chile</span>
+            <span>Envío gratis a todo Chile</span>
             <span>Garantía de 60 días</span>
           </div>
         </div>
@@ -3824,6 +3868,97 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     </div>
   </section>
+
+  <dialog class="fn-modal" id="fn-modal" aria-labelledby="fn-t" aria-describedby="fn-p">
+    <div class="fn-box">
+      <button type="button" class="fn-cerrar" aria-label="Cerrar">&times;</button>
+      <div class="fn-top">
+        <span class="fi" id="fn-ico" aria-hidden="true"></span>
+        <div>
+          <div class="fn-kicker">Función de la app Da Halo</div>
+          <h3 class="fn-t" id="fn-t"></h3>
+        </div>
+      </div>
+      <div class="fn-sec"><div class="fn-lbl" id="fn-ql">Qué mide</div><p id="fn-q"></p></div>
+      <div class="fn-sec fn-para"><div class="fn-lbl">Para qué te sirve</div><p id="fn-p"></p></div>
+      <p class="fn-aviso">DEUS Band no es un dispositivo médico: sus datos te sirven para conocer tus tendencias de bienestar y entrenamiento, no para diagnosticar.</p>
+      <div class="fn-nav">
+        <button type="button" class="fn-prev" aria-label="Función anterior">&lsaquo; Anterior</button>
+        <span class="fn-pos" id="fn-pos"></span>
+        <button type="button" class="fn-next" aria-label="Función siguiente">Siguiente &rsaquo;</button>
+      </div>
+      <span class="vh" id="fn-vivo" aria-live="polite"></span>
+    </div>
+  </dialog>
+  <script>
+  // +14 funciones: cada tarjeta abre #fn-modal con qué mide y para qué le
+  // sirve a la persona. Los textos viven acá y el ícono se copia de la
+  // tarjeta, para no duplicar nada en el HTML. Anterior/Siguiente (y las
+  // flechas del teclado) recorren las 14 sin cerrar.
+  (function(){
+    var FN={
+      fc:{t:'Frecuencia cardíaca',q:'Cuántas veces late tu corazón por minuto, medido de forma automática durante el día y la noche.',p:'Te muestra cómo responde tu cuerpo al entrenamiento, al estrés y al descanso. Si tu pulso en reposo baja con las semanas, suele ser señal de que tu condición física mejora; si sube varios días seguidos, puede indicar cansancio o falta de descanso. Al entrenar ves en qué zona (1 a 5) estás, para entrenar a la intensidad justa.'},
+      spo2:{t:'Oxígeno en sangre (SpO₂)',q:'El porcentaje de oxígeno que transporta tu sangre.',p:'Te sirve para saber cómo está tu oxigenación, por ejemplo después de entrenar, al despertar o cuando subes a la montaña o viajas en altura, donde el aire tiene menos oxígeno. Lo habitual es que se mantenga estable; si ves valores bajos repetidos, coméntalo con un médico.'},
+      hrv:{t:'HRV · Variabilidad cardíaca',q:'La pequeña variación de tiempo entre un latido y el siguiente, que refleja cómo se está recuperando tu sistema nervioso.',p:'Es uno de los mejores indicadores de recuperación. Una HRV por sobre tu promedio dice que estás listo para exigirte; por debajo, que conviene bajar la intensidad, dormir más o darle un respiro al estrés.'},
+      estres:{t:'Nivel de estrés',q:'Un índice que estima tu nivel de estrés a partir de tu pulso y su variabilidad.',p:'Te ayuda a ver en qué momentos del día se acumula la tensión y a comprobar qué te sirve para bajarla: una caminata, respirar unos minutos o acostarte más temprano.'},
+      recup:{t:'Recuperación',q:'Qué tan recuperado está tu cuerpo, según cómo dormiste y cómo se comportó tu corazón.',p:'Te ayuda a decidir cada mañana si es día de entrenar fuerte, suave o descansar, en vez de adivinar. Así evitas sobreentrenarte y progresas con más constancia.'},
+      fases:{t:'Fases del sueño',q:'Cuánto tiempo pasas cada noche en sueño ligero, profundo y REM.',p:'El sueño profundo es clave para la recuperación física y el REM para la memoria y el ánimo. Verlas te explica por qué a veces despiertas cansado aunque hayas dormido ocho horas, y qué hábitos te ayudan a descansar mejor.'},
+      dur:{t:'Duración del sueño',q:'A qué hora te dormiste, a qué hora despertaste y cuánto dormiste en total.',p:'Te ayuda a mantener horarios regulares y a asegurarte de dormir lo suficiente, que es la base de tu energía, tu rendimiento y tu recuperación.'},
+      pasos:{t:'Pasos',q:'Los pasos que das a lo largo del día.',p:'Te motiva a moverte más: te pones una meta diaria en la app (por ejemplo 8.000 o 10.000 pasos) y ves tu avance día a día y semana a semana.'},
+      cal:{t:'Calorías',q:'Una estimación de las calorías que gastas en el día y en cada entrenamiento.',p:'Te sirve para saber cuánto gastas en un día normal y en uno de entrenamiento, útil si quieres bajar de peso, mantenerte o ganar masa muscular.'},
+      dep:{t:'+100 modos deportivos',l:'Qué es',q:'Más de 100 deportes para registrar tus entrenamientos: correr, gym, ciclismo, funcional y muchos más. Eliges el deporte en la app antes de empezar.',p:'Cada sesión queda guardada con su duración, pulso y calorías, así puedes comparar tus entrenamientos y ver cómo progresas.'},
+      ritmo:{t:'Ritmo y cadencia',q:'Tu ritmo (minutos por kilómetro), tu velocidad y tus pasos por minuto al correr o caminar.',p:'Te ayuda a correr de forma más eficiente y a mejorar tus tiempos. Para el mapa de la ruta y la distancia exacta, la app usa el GPS de tu celular.'},
+      act:{t:'Actividad diaria',q:'Un resumen de cuánto te moviste en el día: pasos, distancia y calorías.',p:'Te ayuda a no pasar demasiadas horas sentado y a cumplir tus metas de movimiento, incluso los días que no entrenas.'},
+      alarma:{t:'Alarma silenciosa',l:'Qué hace',q:'Una alarma que vibra en tu muñeca, sin ningún sonido.',p:'Te despierta de forma más suave que el celular y sin molestar a quien duerme contigo.'},
+      avisos:{t:'Avisos por vibración',l:'Qué hace',q:'La banda vibra cuando entra una llamada o un SMS a tu celular.',p:'Así no te pierdes una llamada importante aunque tengas el celular lejos, y sin las distracciones de una pantalla. Está pensada para concentrarte: no avisa de WhatsApp ni de redes sociales.'}
+    };
+    var dlg=document.getElementById('fn-modal');
+    var btns=[].slice.call(document.querySelectorAll('.fbtn[data-fn]'));
+    if(!dlg||!btns.length) return;
+    var ico=document.getElementById('fn-ico'), tit=document.getElementById('fn-t'),
+        ql=document.getElementById('fn-ql'), q=document.getElementById('fn-q'),
+        p=document.getElementById('fn-p'), pos=document.getElementById('fn-pos'),
+        vivo=document.getElementById('fn-vivo');
+    var actual=0, abajoFuera=false;
+    function pintar(i,anunciar){
+      actual=(i+btns.length)%btns.length;
+      var b=btns[actual], d=FN[b.getAttribute('data-fn')]; if(!d) return;
+      var svg=b.querySelector('svg'); ico.innerHTML=svg?svg.outerHTML:'';
+      tit.textContent=d.t; ql.textContent=d.l||'Qué mide';
+      q.textContent=d.q; p.textContent=d.p;
+      pos.textContent=(actual+1)+' de '+btns.length;
+      vivo.textContent=anunciar?(d.t+', '+(actual+1)+' de '+btns.length):'';
+    }
+    function alCerrar(){
+      document.body.classList.remove('fn-abierto');
+      // El foco vuelve a la tarjeta de la última función vista
+      var b=btns[actual]; if(b){ try{ b.focus({preventScroll:true}); }catch(e){ b.focus(); } }
+    }
+    function abrir(i){
+      pintar(i,false);
+      if(typeof dlg.showModal==='function'){ if(!dlg.open) dlg.showModal(); }
+      else dlg.setAttribute('open','');
+      document.body.classList.add('fn-abierto');
+    }
+    function cerrar(){
+      if(typeof dlg.close==='function'){ if(dlg.open) dlg.close(); }
+      else { dlg.removeAttribute('open'); alCerrar(); }
+    }
+    btns.forEach(function(b,i){ b.addEventListener('click',function(){ abrir(i); }); });
+    dlg.addEventListener('close',alCerrar);
+    dlg.querySelector('.fn-cerrar').addEventListener('click',cerrar);
+    dlg.querySelector('.fn-prev').addEventListener('click',function(){ pintar(actual-1,true); });
+    dlg.querySelector('.fn-next').addEventListener('click',function(){ pintar(actual+1,true); });
+    // Tocar el fondo cierra, solo si el toque también empezó afuera: así no
+    // se cierra al seleccionar texto y soltar fuera de la caja.
+    dlg.addEventListener('pointerdown',function(e){ abajoFuera=(e.target===dlg); });
+    dlg.addEventListener('click',function(e){ if(e.target===dlg && abajoFuera) cerrar(); abajoFuera=false; });
+    dlg.addEventListener('keydown',function(e){
+      if(e.key==='ArrowRight'){ e.preventDefault(); pintar(actual+1,true); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); pintar(actual-1,true); }
+    });
+  })();
+  </script>
 
   <section class="monitor" id="mide">
     <div class="monitor-head">
