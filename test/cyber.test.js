@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const { EventEmitter } = require('events');
-const { regaloCyber, CYBER_FIN_MS } = require('../services/precio');
+const { regaloCyber, CYBER_FIN_MS, TAPONES_PRICE } = require('../services/precio');
 
 const HTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
@@ -40,6 +40,13 @@ test('el checkout no ofrece tapones pagados mientras van de regalo, y el raspe n
   assert.ok(HTML.includes('html.cyber #upsell-card{display:none!important;}'), 'el upsell pagado de tapones tiene que ocultarse en Cyber');
   assert.ok(HTML.includes('#checkout-overlay.tapones .raspe{display:none!important;}'), 'el raspe no va en el checkout de solo tapones');
   assert.ok(/<div class="raspe solo-cyber" id="raspe">/.test(HTML), 'el raspe tiene que apagarse solo con html.cyber');
+});
+
+test('el raspe tacha el precio al que de verdad se venden los tapones', () => {
+  const m = HTML.match(/<s class="raspe-antes">\$([\d.]+)<\/s>/);
+  assert.ok(m, 'falta el precio tachado en el raspe');
+  assert.strictEqual(Number(m[1].replace(/\./g, '')), TAPONES_PRICE,
+    'el tachado tiene que ser el precio de la tienda (si cambia TAPONES_PRICE, cambiarlo también en el raspe)');
 });
 
 // Captura lo que se le mandaría a Resend, sin red.

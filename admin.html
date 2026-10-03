@@ -744,16 +744,17 @@
 
   // Conducta del visitante: 4 bloques de barras a partir del mapa de eventos.
   var COND_LBL={
-    'hito:precio':'1 · Vio el precio','hito:reviews':'2 · Reseñas','hito:sensor':'3 · Cómo funciona (360°)',
-    'hito:app':'4 · La app','hito:mide':'5 · Qué mide + specs','hito:diseno':'6 · Diseño',
+    'hito:precio':'1 · Vio el precio','hito:reviews':'2 · Reseñas','hito:simple':'3 · Así de simple + 14 funciones',
+    'hito:sensor':'4 · Cómo funciona (360°)','hito:app':'5 · La app','hito:diseno':'6 · Diseño',
+    'hito:mide':'Qué mide (sección retirada)',
     'hito:faq':'7 · Preguntas frecuentes','hito:final':'8 · Llegó al final',
     'accion:carrito':'Abrió carrito','accion:resenas':'Abrió reseñas','accion:girar':'Giró el 360°',
-    'accion:funciones':'Abrió una de las +14 funciones',
+    'accion:funciones':'Abrió una de las +14 funciones','accion:mas-resenas':'Tocó "Ver más reseñas"',
     'disp:movil':'📱 Móvil','disp:desktop':'💻 Escritorio'
   };
   // En ORDEN REAL de la página. Antes 'app' figuraba antes que 'reviews', pero
   // reseñas va primero: el embudo de scroll se leía al revés.
-  var ORDEN_HITO=['hito:precio','hito:reviews','hito:sensor','hito:app','hito:mide','hito:diseno','hito:faq','hito:final'];
+  var ORDEN_HITO=['hito:precio','hito:reviews','hito:simple','hito:sensor','hito:app','hito:diseno','hito:faq','hito:final'];
   function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
   // Si aparece un evento que COND_LBL todavia no conoce, se muestra
   // presentable en vez de la clave cruda ("accion:tapones" -> "Tapones").

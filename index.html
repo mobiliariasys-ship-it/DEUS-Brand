@@ -424,6 +424,10 @@ html.cyber #upsell-card{display:none!important;}
 .raspe-premio img{width:64px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0;}
 .raspe-txt b{display:block;font-size:.95rem;color:#fff;letter-spacing:.3px;}
 .raspe-txt small{display:block;font-size:.68rem;color:var(--silver);line-height:1.45;margin-top:3px;}
+/* Precio real de los tapones (el mismo de la tienda) tachado + "Gratis" */
+.raspe-precio{display:flex;align-items:center;gap:8px;margin-top:5px;}
+.raspe-antes{font-size:.82rem;color:#9a9aa4;text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:rgba(242,242,242,.6);}
+.raspe-precio em{font-style:normal;font-size:.6rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#0a0a0a;background:var(--cy);border-radius:999px;padding:3px 9px;line-height:1.3;}
 .raspe-capa{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;transition:opacity .45s ease;}
 .raspe-capa:active{cursor:grabbing;}
 .raspe-capa:focus-visible{outline:2px solid var(--cy);outline-offset:-2px;}
@@ -435,98 +439,170 @@ html.cyber #upsell-card{display:none!important;}
 .raspe-skip{display:block;margin:7px auto 0;background:none;border:none;color:#8f8f99;font-size:.62rem;text-decoration:underline;text-underline-offset:2px;cursor:pointer;font-family:inherit;padding:2px 6px;}
 @media(prefers-reduced-motion:reduce){.raspe-capa{transition:none;}.raspe.revelado .raspe-premio{animation:none;}}
 /* ── Sección "soft": cómo funciona, +14 funciones (cada una abre su
-   explicación), batería y comparativa. Con los grises del sitio: una hoja
-   redondeada apenas más clara que el fondo y tarjetas --card. ── */
+   explicación), batería y comparativa. Grises del sitio con profundidad: la
+   hoja recibe luz desde arriba y las tarjetas son de vidrio (relleno
+   translúcido, filo de luz arriba, sombra abajo). Las 14 funciones son
+   "gelatina": vidrio esmerilado sobre una trama de puntos, que se aplasta al
+   tocarlo y rebota al soltarlo. ── */
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;}
 .soft{max-width:1160px;margin:34px auto;padding:0 12px;scroll-margin-top:96px;}
-.soft-in{background:var(--dark);border:1px solid #27272d;border-radius:28px;padding:60px 36px;color:var(--white);}
-.soft-block+.soft-block{margin-top:68px;}
+.soft-in{position:relative;isolation:isolate;overflow:hidden;border-radius:28px;padding:60px 36px;color:var(--white);
+  background:radial-gradient(70% 30% at 50% 0%,rgba(255,255,255,.08),rgba(255,255,255,0) 70%),linear-gradient(180deg,#1e1e22 0%,#17171a 50%,#141417 100%);
+  border:1px solid rgba(255,255,255,.07);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 40px 90px -50px rgba(0,0,0,.9);}
+.soft-block{position:relative;}
+.soft-block+.soft-block{margin-top:72px;}
 .soft-head{text-align:center;max-width:580px;margin:0 auto 30px;}
-.soft-kicker{display:inline-block;font-size:.64rem;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:#c9c9d1;background:#25252b;border:1px solid #34343c;border-radius:999px;padding:6px 13px;margin-bottom:14px;}
+.soft-kicker{display:inline-block;font-size:.64rem;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:#d8d8e0;border-radius:999px;padding:6px 14px;margin-bottom:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.13);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 6px 16px -8px rgba(0,0,0,.7);}
 .soft-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:2.05rem;line-height:1.15;letter-spacing:-.6px;color:var(--white);}
 .soft-sub{font-size:.9rem;line-height:1.6;color:var(--silver);margin-top:10px;}
+/* Base de vidrio de las tarjetas */
+.step,.bat-card,.cmp-wrap{
+  background:radial-gradient(120% 90% at 0% 0%,rgba(255,255,255,.07),rgba(255,255,255,0) 55%),linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.3),0 26px 52px -30px rgba(0,0,0,.95);}
 .steps{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:0;padding:0;}
-.step{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:22px 22px 24px;}
+.step{border-radius:22px;padding:22px 22px 24px;}
 .step-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.step-n{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#4a4a53;letter-spacing:1px;}
-.step-ico,.fi{display:grid;place-items:center;flex-shrink:0;background:#2a2a30;border:1px solid #38383f;color:#e6e6ea;}
+.step-n{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#5a5a63;letter-spacing:1px;}
+/* Íconos: burbuja de vidrio con el brillo arriba a la izquierda */
+.step-ico,.fi{display:grid;place-items:center;flex-shrink:0;color:#fff;
+  background:radial-gradient(120% 120% at 28% 18%,rgba(255,255,255,.26),rgba(255,255,255,.07) 50%,rgba(255,255,255,.025) 100%);
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -6px 12px -6px rgba(0,0,0,.55),0 8px 16px -10px rgba(0,0,0,.9);}
 .step-ico{width:46px;height:46px;border-radius:15px;}
 .step-ico svg,.fi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 .step h3{font-size:1.04rem;font-weight:600;color:var(--white);margin-bottom:6px;letter-spacing:-.2px;line-height:1.3;}
 .step p{font-size:.84rem;line-height:1.6;color:var(--silver);}
-.fgrid{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:0;padding:0;}
+@supports (background-clip:text) or (-webkit-background-clip:text){
+  .soft-title,.bat-stats b{background:linear-gradient(180deg,#ffffff 35%,#c4c4cd 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .step-n{background:linear-gradient(180deg,#a8a8b2 0%,#45454d 92%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+}
+/* +14 funciones: luces suaves y una trama de puntos detrás, para que el
+   vidrio se note (dentro de la tarjeta la trama se ve difuminada). */
+.fn-zona::before,.fn-zona::after{content:"";position:absolute;z-index:-1;pointer-events:none;border-radius:50%;}
+.fn-zona::before{width:64%;height:80%;left:-10%;top:10%;background:radial-gradient(closest-side,rgba(210,212,224,.14),rgba(210,212,224,0));}
+.fn-zona::after{width:56%;height:72%;right:-8%;bottom:-8%;background:radial-gradient(closest-side,rgba(150,166,192,.12),rgba(150,166,192,0));}
+.fgrid{position:relative;list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:0;padding:0;}
+.fgrid::before{content:"";position:absolute;inset:-28px -16px;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,.11) 1px,transparent 1.6px);background-size:16px 16px;
+  -webkit-mask-image:radial-gradient(ellipse 72% 66% at 50% 50%,#000 35%,transparent 78%);mask-image:radial-gradient(ellipse 72% 66% at 50% 50%,#000 35%,transparent 78%);}
 .fgrid li{width:136px;display:flex;}
-.fbtn{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px 8px 14px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;color:var(--white);line-height:1.25;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .2s,border-color .2s,transform .15s;}
+.fbtn{--mx:50%;--my:-20%;position:relative;isolation:isolate;overflow:hidden;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
+  border-radius:24px;padding:18px 8px 15px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;color:var(--white);line-height:1.25;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  background:radial-gradient(150px circle at var(--mx) var(--my),rgba(255,255,255,.11),rgba(255,255,255,0) 70%),linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.13);
+  -webkit-backdrop-filter:blur(7px) saturate(140%);backdrop-filter:blur(7px) saturate(140%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 -14px 22px -16px rgba(255,255,255,.17),0 14px 30px -16px rgba(0,0,0,.85),0 2px 5px rgba(0,0,0,.22);
+  transition:border-color .25s,box-shadow .25s,translate .35s cubic-bezier(.2,.9,.3,1.3);}
+/* Brillo de gelatina: un arco de luz en la parte de arriba */
+.fbtn::before{content:"";position:absolute;z-index:-1;left:9%;right:9%;top:3px;height:40%;pointer-events:none;
+  border-radius:20px 20px 50% 50%/20px 20px 100% 100%;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0));}
 /* El "+" avisa que la tarjeta se puede tocar */
-.fbtn::after{content:"+";position:absolute;top:8px;right:8px;width:17px;height:17px;border:1px solid #3e3e46;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:400;line-height:1;color:#8a8a94;transition:color .2s,border-color .2s;}
-@media(hover:hover){.fbtn:hover{background:#24242a;border-color:#4b4b55;}.fbtn:hover::after{color:var(--white);border-color:#6a6a74;}}
-.fbtn:active{transform:scale(.97);}
-.fbtn:focus-visible{outline:2px solid var(--white);outline-offset:2px;}
-.fi{width:44px;height:44px;border-radius:14px;}
-.soft-note{text-align:center;font-size:.74rem;color:#8a8a94;margin-top:16px;}
-.bat-card{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:24px;background:var(--card);border:1px solid var(--border);border-radius:26px;padding:34px 34px 34px 14px;}
-/* La banda es negra: un foco gris detrás la despega del fondo oscuro */
-.bat-foto{border-radius:20px;background:radial-gradient(ellipse 62% 70% at 50% 42%,#3d3d45 0%,#2a2a30 44%,rgba(30,30,34,0) 74%);}
+.fbtn::after{content:"+";position:absolute;top:8px;right:8px;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:400;line-height:1;color:#c8c8d0;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.17);transition:color .2s,border-color .2s,background .2s;}
+.fbtn .fi{transition:transform .35s cubic-bezier(.2,.9,.3,1.4);}
+@media(hover:hover) and (pointer:fine){
+  .fbtn:hover{translate:0 -4px;border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -14px 22px -16px rgba(255,255,255,.24),0 22px 40px -18px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.03);}
+  .fbtn:hover .fi{transform:scale(1.08);}
+  .fbtn:hover::after{color:#fff;border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.13);}
+}
+/* Gelatina: se aplasta al tocar y rebota al soltar (sin transición de
+   transform en la base, para que no le gane a la animación del rebote) */
+.fbtn.apretado{transform:scale(.93,.9);transition:transform .12s cubic-bezier(.3,.7,.4,1),border-color .25s,box-shadow .25s;}
+.fbtn.suelta{transition:transform .28s cubic-bezier(.2,.9,.3,1.2),border-color .25s,box-shadow .25s;}
+.fbtn.rebota{animation:fnJelly .62s cubic-bezier(.25,.8,.35,1.15);}
+@keyframes fnJelly{0%{transform:scale(.93,.9);}30%{transform:scale(1.07,.95);}50%{transform:scale(.97,1.04);}70%{transform:scale(1.02,.985);}86%{transform:scale(.995,1.005);}100%{transform:none;}}
+.fbtn:focus-visible{outline:2px solid var(--white);outline-offset:3px;}
+.fi{width:44px;height:44px;border-radius:15px;}
+.soft-note{text-align:center;font-size:.74rem;color:#8a8a94;margin-top:18px;}
+.bat-card{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:24px;border-radius:26px;padding:34px 34px 34px 14px;}
+/* La banda es negra: un foco de luz detrás la despega del fondo */
+.bat-foto{border-radius:20px;background:radial-gradient(ellipse 60% 70% at 50% 44%,rgba(255,255,255,.17) 0%,rgba(255,255,255,.06) 42%,rgba(255,255,255,0) 72%);}
 .bat-card img{width:100%;height:auto;display:block;}
 .bat-txt .soft-title{font-size:1.85rem;}
 .bat-txt p{font-size:.88rem;line-height:1.6;color:var(--silver);margin-top:10px;}
 .bat-stats{list-style:none;display:flex;gap:10px;margin:20px 0 0;padding:0;}
-.bat-stats li{flex:1;background:#25252b;border:1px solid #303038;border-radius:16px;padding:12px 6px;text-align:center;}
+.bat-stats li{flex:1;border-radius:16px;padding:12px 6px;text-align:center;
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.11);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 10px 22px -14px rgba(0,0,0,.9);}
 .bat-stats b{display:block;font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:1.9rem;line-height:1;color:var(--white);letter-spacing:.5px;}
 .bat-stats span{display:block;font-size:.64rem;color:var(--silver);margin-top:4px;line-height:1.3;}
-.cmp-wrap{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:10px 14px 4px;}
+.cmp-wrap{border-radius:24px;padding:10px 14px 4px;}
 .cmp{width:100%;border-collapse:separate;border-spacing:0;font-size:.82rem;color:var(--white);}
-.cmp th,.cmp td{padding:15px 10px;text-align:center;border-bottom:1px solid #2c2c33;vertical-align:middle;}
+.cmp th,.cmp td{padding:15px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.065);vertical-align:middle;}
 .cmp tbody tr:last-child th,.cmp tbody tr:last-child td{border-bottom:none;}
 .cmp thead th{font-size:.72rem;font-weight:600;color:#8a8a94;letter-spacing:.2px;padding-top:18px;padding-bottom:14px;}
 .cmp tbody th{text-align:left;font-weight:600;line-height:1.35;width:40%;}
 .cmp tbody th small{display:block;font-weight:400;color:#8a8a94;font-size:.7rem;margin-top:2px;}
-.cmp .c-deus{background:#27272d;}
-.cmp thead .c-deus{color:var(--white);font-size:.82rem;border-radius:14px 14px 0 0;}
-.cmp tbody tr:last-child .c-deus{border-radius:0 0 14px 14px;}
+/* Columna DEUS Band: vidrio más claro con filos de luz a los lados */
+.cmp .c-deus{background:rgba(255,255,255,.055);box-shadow:inset 1px 0 0 rgba(255,255,255,.08),inset -1px 0 0 rgba(255,255,255,.08);}
+.cmp thead .c-deus{color:var(--white);font-size:.82rem;border-radius:14px 14px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.055));
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.09),inset -1px 0 0 rgba(255,255,255,.09),inset 0 1px 0 rgba(255,255,255,.18);}
+.cmp tbody tr:last-child .c-deus{border-radius:0 0 14px 14px;box-shadow:inset 1px 0 0 rgba(255,255,255,.08),inset -1px 0 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(255,255,255,.08);}
 .ck,.cx{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;}
-/* Los ✓ de DEUS Band en blanco; los de la competencia, en gris */
-.ck{background:#4a4a52;color:#f2f2f2;}
-.c-deus .ck{background:#f2f2f2;color:#121214;}
-.cx{background:#2c2c33;color:#74747e;}
+/* Los ✓ de DEUS Band en blanco perla; los de la competencia, en gris */
+.ck{background:radial-gradient(circle at 35% 28%,#7c7c86,#4c4c54 60%,#3d3d44);color:#f2f2f2;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 3px 8px -3px rgba(0,0,0,.7);}
+.c-deus .ck{background:radial-gradient(circle at 35% 28%,#ffffff,#e8e8ed 55%,#bfbfc8);color:#111114;box-shadow:inset 0 1px 0 #fff,0 0 14px -2px rgba(255,255,255,.22),0 3px 8px -3px rgba(0,0,0,.7);}
+.cx{background:rgba(255,255,255,.05);color:#6e6e78;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);}
 .ck svg,.cx svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
 .cv{font-weight:600;font-size:.78rem;}
 .cv.muted{font-weight:400;color:#8a8a94;}
 .soft-cta{text-align:center;margin-top:30px;}
-.soft-btn{display:inline-block;background:#fff;color:#000;border:none;border-radius:999px;padding:16px 34px;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:600;letter-spacing:.4px;cursor:pointer;transition:transform .15s,box-shadow .2s;}
-.soft-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,255,255,.18);}
+.soft-btn{display:inline-block;background:linear-gradient(180deg,#ffffff 0%,#e3e3e9 100%);color:#000;border:none;border-radius:999px;padding:16px 34px;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:600;letter-spacing:.4px;cursor:pointer;
+  box-shadow:inset 0 1px 0 #fff,inset 0 -2px 5px rgba(0,0,0,.1),0 14px 32px -14px rgba(255,255,255,.4),0 4px 12px rgba(0,0,0,.35);transition:transform .2s,box-shadow .25s;}
+.soft-btn:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 #fff,inset 0 -2px 5px rgba(0,0,0,.1),0 18px 40px -14px rgba(255,255,255,.5),0 6px 16px rgba(0,0,0,.4);}
+.soft-btn:focus-visible{outline:2px solid var(--white);outline-offset:3px;}
 .soft-cta-note{font-size:.74rem;color:var(--silver);margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;}
 .soft-cta-note span{display:inline-flex;align-items:center;gap:6px;}
+/* Aparición al hacer scroll (la activa el JS de la sección; sin JS o con
+   "menos movimiento" todo se ve de entrada). Las tarjetas de funciones
+   entran solo con transform: la opacidad en un ancestro le apaga el
+   difuminado (backdrop-filter) al vidrio. */
+.soft.rev .soft-head,.soft.rev .step,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
+.soft.rev .rev-on{opacity:1;transform:none;}
+@media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}.soft.rev .step:nth-child(3){transition-delay:.2s;}}
+.soft.rev .fgrid:not(.rev-on) li{transform:translateY(16px) scale(.86);}
+.soft.rev .fgrid.rev-on li{animation:fnEntra .75s cubic-bezier(.2,.9,.3,1.25) backwards;animation-delay:calc(var(--i,0) * 40ms);}
+@keyframes fnEntra{0%{transform:translateY(16px) scale(.86);}55%{transform:translateY(-3px) scale(1.04,.96);}78%{transform:scale(.985,1.015);}100%{transform:none;}}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
   .bat-card{grid-template-columns:1fr;padding:26px 18px 22px;gap:14px;}}
-@media(max-width:600px){.soft{padding:0;margin:24px -12px;}.soft-in{padding:42px 16px;border-radius:22px;}.soft-title{font-size:1.6rem;}.bat-txt .soft-title{font-size:1.5rem;}.soft-block+.soft-block{margin-top:52px;}.soft-head{margin-bottom:22px;}
-  .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);}.fbtn{padding:16px 4px 12px;font-size:.68rem;gap:8px;border-radius:16px;}.fbtn::after{top:6px;right:6px;width:15px;height:15px;font-size:.72rem;}.fi{width:38px;height:38px;border-radius:12px;}.fi svg{width:19px;height:19px;}
+@media(max-width:600px){.soft{padding:0;margin:24px -12px;}.soft-in{padding:42px 16px;border-radius:22px;}.soft-title{font-size:1.6rem;}.bat-txt .soft-title{font-size:1.5rem;}.soft-block+.soft-block{margin-top:56px;}.soft-head{margin-bottom:22px;}
+  .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);}.fbtn{padding:16px 4px 12px;font-size:.68rem;gap:8px;border-radius:20px;}.fbtn::after{top:6px;right:6px;width:15px;height:15px;font-size:.72rem;}.fi{width:38px;height:38px;border-radius:13px;}.fi svg{width:19px;height:19px;}
   .cmp-wrap{padding:6px 4px 2px;border-radius:20px;}.cmp{font-size:.72rem;}.cmp th,.cmp td{padding:12px 4px;}.cmp thead th{font-size:.62rem;}.cmp thead .c-deus{font-size:.7rem;}.cmp tbody th{padding-left:10px;width:38%;}.cmp tbody th small{font-size:.62rem;}.cv{font-size:.66rem;}.ck,.cx{width:22px;height:22px;}.ck svg,.cx svg{width:12px;height:12px;}
   .bat-stats b{font-size:1.6rem;}}
+@media(prefers-reduced-motion:reduce){.fbtn.rebota{animation:none;}.fbtn,.fbtn.apretado,.fbtn.suelta,.fbtn .fi{transition:none;}}
 /* Detalle de cada función: <dialog> nativo (capa superior; Esc y foco los
-   resuelve el navegador). En el celular sale como hoja desde abajo. */
+   resuelve el navegador), también de vidrio. En el celular sale como hoja
+   desde abajo. */
 .fn-modal{margin:auto;padding:0;border:none;background:transparent;color:var(--white);width:calc(100% - 32px);max-width:440px;max-height:none;overflow:visible;}
-.fn-modal::backdrop{background:rgba(0,0,0,.72);}
-.fn-box{position:relative;background:#16161a;border:1px solid var(--border);border-radius:22px;padding:24px 22px 16px;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;box-shadow:0 24px 70px rgba(0,0,0,.55);}
+.fn-modal::backdrop{background:rgba(6,6,8,.6);}
+.fn-box{position:relative;border-radius:22px;padding:24px 22px 16px;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;
+  background:linear-gradient(180deg,rgba(48,48,54,.82),rgba(24,24,28,.9));
+  -webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%);
+  border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 30px 80px rgba(0,0,0,.6);}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.fn-box{background:#1c1c20;}}
 .fn-modal[open] .fn-box{animation:slideUp .25s ease;}
-.fn-cerrar{position:absolute;top:10px;right:10px;width:40px;height:40px;border:none;border-radius:50%;background:transparent;color:#8a8a94;font-size:1.7rem;line-height:1;cursor:pointer;display:grid;place-items:center;}
-.fn-cerrar:hover{color:var(--white);background:#232328;}
+.fn-cerrar{position:absolute;top:10px;right:10px;width:40px;height:40px;border:none;border-radius:50%;background:transparent;color:#9a9aa4;font-size:1.7rem;line-height:1;cursor:pointer;display:grid;place-items:center;}
+.fn-cerrar:hover{color:var(--white);background:rgba(255,255,255,.08);}
 .fn-top{display:flex;align-items:center;gap:14px;margin:0 42px 18px 0;}
 .fn-top .fi{width:52px;height:52px;border-radius:16px;}
 .fn-top .fi svg{width:25px;height:25px;}
-.fn-kicker{font-size:.6rem;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;color:#8a8a94;margin-bottom:4px;}
+.fn-kicker{font-size:.6rem;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;color:#9a9aa4;margin-bottom:4px;}
 .fn-t{font-family:'DM Sans',sans-serif;font-size:1.3rem;font-weight:600;line-height:1.2;letter-spacing:-.3px;color:var(--white);}
-.fn-sec{background:var(--card);border:1px solid #2c2c33;border-radius:14px;padding:13px 15px;}
+.fn-sec{border-radius:14px;padding:13px 15px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.085);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);}
 .fn-sec+.fn-sec{margin-top:10px;}
-.fn-lbl{font-size:.62rem;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#8a8a94;margin-bottom:5px;}
-.fn-sec p{font-size:.86rem;line-height:1.6;color:#d4d4da;}
-.fn-sec.fn-para{background:#202026;border-color:#3a3a42;}
+.fn-lbl{font-size:.62rem;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#9a9aa4;margin-bottom:5px;}
+.fn-sec p{font-size:.86rem;line-height:1.6;color:#d8d8de;}
+.fn-sec.fn-para{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.1);}
 .fn-sec.fn-para p{color:var(--white);}
-.fn-aviso{font-size:.68rem;line-height:1.5;color:#74747e;margin-top:12px;}
-.fn-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #26262c;}
-.fn-nav button{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--border);border-radius:999px;background:transparent;color:#c9c9d1;font-family:'DM Sans',sans-serif;font-size:.74rem;font-weight:600;cursor:pointer;}
-.fn-nav button:hover{border-color:#55555f;color:var(--white);}
-.fn-pos{font-size:.7rem;color:#74747e;}
+.fn-aviso{font-size:.68rem;line-height:1.5;color:#7c7c86;margin-top:12px;}
+.fn-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);}
+.fn-nav button{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.05);color:#d0d0d8;font-family:'DM Sans',sans-serif;font-size:.74rem;font-weight:600;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);}
+.fn-nav button:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:var(--white);}
+.fn-pos{font-size:.7rem;color:#7c7c86;}
 .fn-modal button:focus-visible{outline:2px solid var(--white);outline-offset:2px;}
 body.fn-abierto{overflow:hidden;}
 @keyframes fnSube{from{transform:translateY(40px);opacity:.4;}to{transform:none;opacity:1;}}
@@ -633,47 +709,6 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .info-title{font-family:'Bebas Neue',sans-serif;font-size:3.6rem;letter-spacing:3px;line-height:.95;margin-bottom:6px;}
 .info-sub{font-size:.68rem;letter-spacing:3px;text-transform:uppercase;color:var(--silver);margin-bottom:26px;}
 
-.spec-list{list-style:none;margin-top:26px;margin-bottom:26px;display:flex;flex-direction:column;gap:8px;}
-.specs-sec{max-width:1100px;margin:0 auto;padding:10px 24px 0;}
-.specs-sec .spec-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0;}
-/* Specs ubicadas dentro de "Cómo funciona", debajo del 360°: sin doble padding
-   lateral y con aire arriba para separarlas del texto del sensor. */
-.specs-in-how{padding-left:0;padding-right:0;padding-top:0;margin-top:28px;margin-bottom:10px;}
-@media(max-width:760px){
-  .specs-sec{padding:6px 16px 0;}
-  .specs-sec .spec-list{grid-template-columns:1fr 1fr;gap:9px;}
-  .specs-sec .spec-list li{flex-direction:column;align-items:flex-start;gap:9px;padding:13px 13px;font-size:.66rem;line-height:1.45;transform:none!important;}
-  .specs-sec .spec-icon{width:34px;height:34px;}
-  .specs-sec .spec-icon svg{width:17px;height:17px;}
-  .specs-sec .spec-label{font-size:.74rem;}
-}
-.spec-list li{
-  display:flex;gap:13px;align-items:center;
-  padding:13px 15px;border:1px solid var(--border);border-radius:11px;
-  background:var(--card);
-  font-size:.8rem;color:#b8b8b8;line-height:1.45;
-  transition:border-color .2s,transform .12s;
-}
-.spec-list li:hover{border-color:#3a3a3a;transform:translateX(2px);}
-.spec-icon{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:40px;height:40px;border-radius:10px;background:#1c1c1c;border:1px solid #2d2d2d;}
-.spec-label{display:block;font-weight:700;color:var(--white);font-size:.86rem;margin-bottom:2px;letter-spacing:.2px;}
-/* Especificaciones DENTRO de la sección unificada "Lo que DEUS Band mide":
-   toman el mismo lenguaje visual que las métricas numeradas (mismo radio,
-   padding, grilla y separación) para que las dos listas se lean como un solo
-   bloque y no como dos formatos distintos pegados. */
-.monitor .specs-sec{max-width:none;padding:0;margin:0 0 8px;}
-.monitor .specs-sec .spec-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:0;}
-.monitor .specs-sec .spec-list li{display:flex;flex-direction:row;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:.7rem;line-height:1.45;color:#b8b8b8;transform:none!important;}
-.monitor .specs-sec .spec-list li:hover{border-color:#3a3a3a;}
-.monitor .specs-sec .spec-icon{width:32px;height:32px;border-radius:8px;}
-.monitor .specs-sec .spec-icon svg{width:16px;height:16px;}
-.monitor .specs-sec .spec-label{font-size:.78rem;margin-bottom:3px;}
-/* En móvil las métricas usan padding/gap más apretados: las specs los copian. */
-@media(max-width:600px){
-  .monitor .specs-sec .spec-list li{padding:11px 12px;gap:9px;}
-  .monitor .specs-sec .spec-icon{width:28px;height:28px;border-radius:7px;}
-  .monitor .specs-sec .spec-icon svg{width:15px;height:15px;}
-}
 
 .offer-kicker{font-size:.66rem;letter-spacing:2.5px;text-transform:uppercase;color:#d9bf92;margin-bottom:10px;font-weight:600;}
 .price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;color:#c9c9c9;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);text-decoration-thickness:1.5px;margin-left:8px;vertical-align:middle;}.price-save{display:inline-block;font-family:'DM Sans',sans-serif;font-size:.66rem;letter-spacing:1px;color:#d9bf92;border:1px solid rgba(217,191,146,.4);border-radius:20px;padding:3px 10px;margin-left:10px;vertical-align:middle;font-weight:600;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:2px;color:#7fd589;background:rgba(105,196,109,.12);border:1px solid rgba(105,196,109,.5);border-radius:6px;padding:4px 10px;vertical-align:middle;margin-left:8px;font-weight:600;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:22px;}
@@ -852,10 +887,15 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .review-loc{display:flex;align-items:center;gap:5px;font-size:.62rem;letter-spacing:.8px;color:#8a8a8a;margin-top:5px;}
 .review-loc svg{flex-shrink:0;opacity:.85;}
 .review-ig{color:#fff;font-weight:600;}
-/* Ya no se ocultan reseñas: en el carrusel entran todas sin costo de alto,
-   así que se fue el botón "Ver más reseñas" y su clase .review-extra queda
-   solo como marca en el HTML. */
-.reviews-cta{text-align:center;margin-top:26px;}
+/* El carrusel muestra primero las reseñas con foto o video. Las de solo
+   texto (.rv-sin-foto) entran recién al tocar "Ver más reseñas"; el modal de
+   las estrellas sigue mostrándolas todas. .review-extra queda solo como
+   marca en el HTML. */
+.reviews:not(.rv-todas) .reviews-grid .rv-sin-foto{display:none;}
+.reviews-cta{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;text-align:center;margin-top:26px;}
+.btn-review.rv-mas{background:#e8e8e8;border-color:#e8e8e8;color:#080808;}
+.btn-review.rv-mas:hover{background:transparent;color:#e8e8e8;}
+.reviews-cta .btn-review{min-width:250px;}
 /* CRO: rating + reaseguros */
 .prod-rating{display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:16px;cursor:pointer;}
 .prod-rating .stars{color:#e9c46a;font-size:.95rem;letter-spacing:2px;}
@@ -1120,7 +1160,6 @@ body.sb-on .chat-panel{bottom:82px;}
 .how-img.contain img{object-fit:contain;max-height:360px;padding:16px;width:auto;}
 .how-txt h3{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;margin-bottom:12px;}
 .how-txt p{color:var(--silver);font-size:.9rem;line-height:1.75;letter-spacing:.3px;}
-.monitor{max-width:1100px;margin:0 auto;padding:12px 24px 24px;scroll-margin-top:96px;}
 /* Beneficios */
 .benefits{max-width:1100px;margin:0 auto;padding:36px 24px 20px;}
 .benefits-head{text-align:center;margin-bottom:28px;}
@@ -1197,34 +1236,6 @@ body.sb-on .wa-float{bottom:82px;}
 .fc-price{margin:22px 0 24px;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;}
 .fc-price .fold{font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--silver);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);margin-right:10px;vertical-align:middle;}
 @media(max-width:600px){.fc-line{font-size:1.9rem;}.fc-line.strong{font-size:2.2rem;}}
-.monitor-head{text-align:center;margin-bottom:24px;}
-.monitor-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
-.monitor-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:2px;line-height:1;}
-/* Las metricas van como chips, no como tarjetas. Antes eran diez cajas con el
-   mismo fondo, borde y radio que las cuatro tarjetas de arriba: la seccion se
-   leia como diez cuadros grises iguales, sin jerarquia. Los numeros 01-06 no
-   aportaban dato y desalineaban las filas (cada etiqueta ocupa distinto alto).
-   Ademas el boton "Ver todas" caia justo debajo del boton flotante de IA DEUS
-   y quedaba tapado — y esconder 4 metricas contradice el mensaje de la
-   seccion, que es exactamente cuantas cosas mide. Ahora se muestran las 10. */
-.monitor-sub{max-width:520px;margin:12px auto 0;font-size:.82rem;line-height:1.55;color:var(--silver);}
-.mchips-lbl{text-align:left;font-size:.58rem;letter-spacing:3.5px;text-transform:uppercase;color:#7a7a7a;margin:24px 0 12px;}
-.mchips{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-start;}
-.mchip{display:inline-flex;align-items:center;gap:7px;background:#151517;border:1px solid #2b2b33;border-radius:999px;padding:8px 14px;font-size:.75rem;color:#cfcfd6;line-height:1.3;}
-.mchip::before{content:'';width:5px;height:5px;border-radius:50%;background:#d9bf92;flex:0 0 auto;}
-/* El icono se alineaba al centro vertical: en una tarjeta de tres lineas
-   quedaba flotando a media altura en vez de junto al titulo. */
-.monitor .specs-sec .spec-list li{align-items:flex-start;}
-.monitor .specs-sec .spec-icon{margin-top:1px;}
-@media(max-width:520px){
-  .monitor-sub{font-size:.78rem;}
-  .mchip{font-size:.7rem;padding:6px 11px;gap:6px;}
-  .mchips{gap:5px;}
-  .mchips-lbl{margin:20px 0 10px;}
-  .monitor .specs-sec .spec-list{grid-template-columns:1fr;gap:6px;}
-  .monitor .specs-sec .spec-list li{padding:10px 12px;font-size:.68rem;line-height:1.4;}
-  .monitor .specs-sec .spec-label{font-size:.76rem;margin-bottom:2px;}
-}
 @media(max-width:760px){.how-row{grid-template-columns:1fr;gap:18px;margin-bottom:38px;}.how-row.reverse .how-img{order:0;}.how-img{min-height:230px;}}
 .app-stores{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:6px 0 44px;}
 .store-btn{display:inline-flex;align-items:center;gap:11px;background:#161616;border:1px solid var(--border);color:#f2f2f2;padding:11px 22px;text-decoration:none;transition:border-color .2s,transform .12s;}
@@ -1872,9 +1883,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var hitos=[
         ['.price-block','precio'],   // zona de compra
         ['.reviews','reviews'],      // reseñas
+        ['#simple','simple'],        // así de simple, +14 funciones y comparativa
         ['#tecnologia','sensor'],    // cómo funciona / 360°
         ['#app','app'],              // la app
-        ['.monitor','mide'],         // qué mide + especificaciones
         ['#diseno','diseno'],        // diseño sin distracciones
         ['.faq','faq'],              // preguntas frecuentes
         ['.final-cta','final']       // CTA final
@@ -2098,6 +2109,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                   <img src="img/img-tapones-mini.webp" alt="Tapones de oído DEUS" width="64" height="64" loading="lazy" decoding="async">
                   <div class="raspe-txt">
                     <b>¡Tapones DEUS gratis!</b>
+                    <span class="raspe-precio"><span class="vh">Valor normal: </span><s class="raspe-antes">$14.990</s><em>Gratis</em></span>
                     <small>Van de regalo en tu pedido por Cyber. No tienes que hacer nada más.</small>
                   </div>
                 </div>
@@ -2809,7 +2821,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('raspe-premio').removeAttribute('aria-hidden');
             capa.setAttribute('tabindex', '-1');
             var vivo = document.getElementById('raspe-vivo');
-            if (vivo) vivo.textContent = 'Tu regalo: tapones DEUS gratis por Cyber.';
+            if (vivo) vivo.textContent = 'Tu regalo: tapones DEUS gratis por Cyber, valor normal $14.990.';
             try { sessionStorage.setItem(CLAVE, '1'); } catch (e) {}
             if (!deSesion) {
               try { if (navigator.vibrate) navigator.vibrate(30); } catch (e) {}
@@ -3627,7 +3639,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <h2 class="reviews-title">Reseñas de la comunidad</h2>
       <div class="reviews-sub">★★★★★ · Comentarios de Instagram</div>
     </div>
-    <div class="rv-hint">Desliza para verlas todas · <b id="rv-count">1 / 18</b></div>
+    <div class="rv-hint">Desliza para verlas todas · <b id="rv-count">1 / 12</b></div>
     <div class="reviews-carr">
     <div class="reviews-grid" id="reviewsCarr">
       <div class="review-card">
@@ -3713,42 +3725,42 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-author"><span class="review-ig">@andres.fuentesg</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Puerto Varas</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra rv-sin-foto">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Me encanta que no tenga pantalla, no me distrae y el diseño es elegante. Justo lo que buscaba."</p>
         <div class="review-author"><span class="review-ig">@cristian_vera.cl</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra rv-sin-foto">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Excelente producto, no solo monitorea mi sueño, sino que también me ayuda a registrar mi frecuencia cardíaca y cumplir con mis objetivos en el gimnasio."</p>
         <div class="review-author"><span class="review-ig">@sebastian.revil</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra rv-sin-foto">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Una buena compra y muy funcional."</p>
         <div class="review-author"><span class="review-ig">@william_alejandro_c</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra rv-sin-foto">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Está brutal, funciona perfecto 👌🏻"</p>
         <div class="review-author"><span class="review-ig">@clau.ossaf</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra rv-sin-foto">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Recomendadísimo!!! 🔥"</p>
         <div class="review-author"><span class="review-ig">@joaquin.pfok</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra rv-sin-foto">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Funciona perfecto! Soy de región y llegó sin problemas!!! Me gustó que no se sienta!!! La iremos probando, muchas gracias!!! 🔥🔥🔥"</p>
         <div class="review-author"><span class="review-ig">@e._maya</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra rv-sin-foto">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Masacre el producto, recomendado."</p>
         <div class="review-author"><span class="review-ig">@rodrigo.andres.cg</span> · Instagram</div>
       </div>
-      <div class="review-card">
+      <div class="review-card rv-sin-foto">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Estéticamente y en los datos es bastante parecida a las mediciones del Apple Watch. Lo mejor: mucho más cómoda para dormir que el reloj, y la batería dura muchísimo — llevo 5 días sin sacármela y aún tengo 85%."</p>
         <div class="review-author"><span class="review-ig">@kathcortes_</span> · Instagram</div>
@@ -3756,7 +3768,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <button class="rv-arrow l" type="button" onclick="scrollResenas(-1)" aria-label="Reseña anterior">‹</button>
       <button class="rv-arrow r" type="button" onclick="scrollResenas(1)" aria-label="Reseña siguiente">›</button>
     </div>
-    <div class="reviews-cta"><button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button></div>
+    <div class="reviews-cta">
+      <button class="btn-review rv-mas" id="rv-mas" type="button" aria-controls="reviewsCarr" aria-expanded="false" onclick="verMasResenas(this)">Ver más reseñas (8)</button>
+      <button class="btn-review" onclick="abrirResena()">✍️ Agregar tu reseña</button>
+    </div>
   </section>
 
   <!-- SOFT: cómo funciona en 3 pasos, +14 funciones (cada tarjeta abre su
@@ -3790,7 +3805,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </ol>
       </div>
 
-      <div class="soft-block">
+      <div class="soft-block fn-zona">
         <div class="soft-head">
           <div class="soft-kicker">App Da Halo · gratis</div>
           <h2 class="soft-title">+14 funciones en una sola app</h2>
@@ -3958,23 +3973,54 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       else if(e.key==='ArrowLeft'){ e.preventDefault(); pintar(actual-1,true); }
     });
   })();
+  // Vidrio "gelatina" de las funciones y aparición suave de la sección.
+  (function(){
+    var sec=document.getElementById('simple'); if(!sec) return;
+    var grid=sec.querySelector('.fgrid');
+    var reducir=!!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if(grid) [].forEach.call(grid.children,function(li,i){ li.style.setProperty('--i',i); });
+    // Se aplasta al tocar y rebota al soltar. En touch espera 70 ms antes de
+    // apretar: si en ese rato empieza un scroll (pointercancel), no se aprieta.
+    [].forEach.call(sec.querySelectorAll('.fbtn'),function(b){
+      var t=null, s=null;
+      function soltar(rebotar){
+        clearTimeout(t);
+        var estaba=b.classList.contains('apretado');
+        b.classList.remove('apretado');
+        if(rebotar && !reducir){ b.classList.remove('rebota'); void b.offsetWidth; b.classList.add('rebota'); }
+        else if(estaba){ b.classList.add('suelta'); clearTimeout(s); s=setTimeout(function(){ b.classList.remove('suelta'); },300); }
+      }
+      b.addEventListener('pointerdown',function(e){
+        if(e.button>0) return;
+        clearTimeout(t);
+        t=setTimeout(function(){ b.classList.add('apretado'); }, e.pointerType==='touch'?70:0);
+      });
+      b.addEventListener('pointerup',function(){ soltar(true); });
+      b.addEventListener('pointercancel',function(){ soltar(false); });
+      b.addEventListener('pointerleave',function(){ soltar(false); });
+      b.addEventListener('animationend',function(e){ if(e.animationName==='fnJelly') b.classList.remove('rebota'); });
+    });
+    // En computador, la luz del vidrio sigue al mouse
+    if(grid && window.matchMedia && window.matchMedia('(hover:hover) and (pointer:fine)').matches){
+      grid.addEventListener('pointermove',function(e){
+        var b=e.target.closest && e.target.closest('.fbtn'); if(!b) return;
+        var r=b.getBoundingClientRect();
+        b.style.setProperty('--mx',(e.clientX-r.left)+'px');
+        b.style.setProperty('--my',(e.clientY-r.top)+'px');
+      });
+      grid.addEventListener('pointerout',function(e){
+        var b=e.target.closest && e.target.closest('.fbtn');
+        if(b && !b.contains(e.relatedTarget)){ b.style.removeProperty('--mx'); b.style.removeProperty('--my'); }
+      });
+    }
+    if(reducir || !('IntersectionObserver' in window)) return;
+    sec.classList.add('rev');
+    var io=new IntersectionObserver(function(ents){
+      ents.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('rev-on'); io.unobserve(en.target); } });
+    },{rootMargin:'0px 0px -6% 0px',threshold:0.1});
+    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fgrid,.soft-note,.bat-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
+  })();
   </script>
-
-  <section class="monitor" id="mide">
-    <div class="monitor-head">
-      <div class="monitor-kicker">Monitoreo 24/7</div>
-      <h2 class="monitor-title">Lo que DEUS Band mide</h2>
-      <p class="monitor-sub">Sensores que trabajan todo el día y te dicen cómo estás, no solo cuánto te moviste.</p>
-    </div>
-    <div class="specs-sec specs-in-how">
-      <ul class="spec-list">
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#3949ab" stroke="#3949ab" stroke-width="1.5" width="20" height="20"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span><div><span class="spec-label">Monitor de Sueño</span>Seguimiento de fases y calidad de descanso para una recuperación óptima.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1.5" width="20" height="20"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><span class="spec-label">Actividad en Tiempo Real</span>Ritmo cardíaco, oxígeno en sangre, pasos y calorías — analiza tu rendimiento y optimiza cada entrenamiento.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.5" width="20" height="20"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="10" y1="11" x2="14" y2="11"/><circle cx="12" cy="16" r="1"/></svg></span><div><span class="spec-label">Batería de hasta 30 Días</span>Al no tener pantalla, la batería rinde mucho más: una sola carga al mes para usarla 24/7.</div></li>
-      <li><span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6fb7dd" stroke-width="1.5" width="20" height="20"><path d="M12 2.7c0 0-6 6.3-6 10.8a6 6 0 0 0 12 0c0-4.5-6-10.8-6-10.8z"/><path d="M9.5 14.2a2.5 2.5 0 0 0 2.5 2.5" stroke-width="1.2" stroke-linecap="round"/></svg></span><div><span class="spec-label">Resistente al Agua 1ATM</span>Apto para entrenamiento, lluvia y uso diario.</div></li>
-    </ul>
-    </div>
-  </section>
 
   <!-- COMO FUNCIONA -->
   <section class="how" id="tecnologia">
@@ -3994,10 +4040,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="rot-finger" id="rot360-finger" aria-hidden="true">👆</div>
       </div>
       <div class="rot-hint-wrap"><span class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor</span></div>
-      <div class="how-txt">
-        <h3>Sensor de alta precisión</h3>
-        <p>Sensor óptico de alta sensibilidad que mide tu frecuencia cardíaca, oxígeno en sangre y variabilidad en tiempo real, día y noche. Precisión constante en cada latido.</p>
-      </div>
     </div>
 
   </section>
@@ -5393,9 +5435,10 @@ function scrollResenas(dir){
 (function(){
   var c=document.getElementById('reviewsCarr'), lbl=document.getElementById('rv-count');
   if(!c||!lbl) return;
-  var total=c.querySelectorAll('.review-card').length;
   function pintar(){
-    var card=c.querySelector('.review-card');
+    // Solo cuentan las visibles: las sin foto no están hasta "Ver más".
+    var cards=[].filter.call(c.querySelectorAll('.review-card'),function(x){ return x.offsetWidth>0; });
+    var card=cards[0], total=cards.length;
     if(!card) return;
     // +12 del gap. Se redondea al más cercano: con scroll-snap el centro de la
     // tarjeta activa siempre cae sobre un múltiplo exacto.
@@ -5404,8 +5447,26 @@ function scrollResenas(dir){
   }
   var t=null;
   c.addEventListener('scroll',function(){ clearTimeout(t); t=setTimeout(pintar,60); },{passive:true});
+  window.pintarContadorResenas=pintar;
+  var mas=document.getElementById('rv-mas'), n=c.querySelectorAll('.rv-sin-foto').length;
+  if(mas){ if(n) mas.textContent='Ver más reseñas ('+n+')'; else mas.hidden=true; }
   pintar();
 })();
+// Suma al carrusel las reseñas de solo texto y lleva a la primera de ellas.
+function verMasResenas(btn){
+  var sec=document.querySelector('.reviews');
+  if(!sec || sec.classList.contains('rv-todas')) return;
+  sec.classList.add('rv-todas');
+  var primera=document.querySelector('#reviewsCarr .rv-sin-foto');
+  if(btn){ btn.setAttribute('aria-expanded','true'); btn.hidden=true; }
+  if(primera){
+    primera.setAttribute('tabindex','-1');
+    try{ primera.focus({preventScroll:true}); }catch(e){}
+    try{ primera.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}); }catch(e){ primera.scrollIntoView(); }
+  }
+  if(window.pintarContadorResenas) setTimeout(window.pintarContadorResenas,450);
+  if(window.deusEvento) window.deusEvento('accion:mas-resenas');
+}
 function abrirResenasModal(){
   var grid=document.querySelector('.reviews-grid');
   var body=document.getElementById('reviews-modal-body');
