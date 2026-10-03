@@ -500,19 +500,15 @@ html.cyber #upsell-card{display:none!important;}
 /* Brillo de gelatina: un arco de luz en la parte de arriba */
 .fbtn::before{content:"";position:absolute;z-index:-1;left:9%;right:9%;top:3px;height:40%;pointer-events:none;
   border-radius:20px 20px 50% 50%/20px 20px 100% 100%;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0));}
-/* El "+" avisa que la tarjeta se puede tocar */
-.fbtn::after{content:"+";position:absolute;top:8px;right:8px;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:400;line-height:1;color:#c8c8d0;
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.17);transition:color .2s,border-color .2s,background .2s;}
 .fbtn .fi{transition:transform .35s cubic-bezier(.2,.9,.3,1.4);}
 @media(hover:hover) and (pointer:fine){
   .fbtn:hover{translate:0 -4px;border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -14px 22px -16px rgba(255,255,255,.24),0 22px 40px -18px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.03);}
   .fbtn:hover .fi{transform:scale(1.08);}
-  .fbtn:hover::after{color:#fff;border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.13);}
 }
 /* Gelatina: se aplasta al tocar y rebota al soltar (sin transición de
    transform en la base, para que no le gane a la animación del rebote) */
 .fbtn.apretado{transform:scale(.93,.9);transition:transform .12s cubic-bezier(.3,.7,.4,1),border-color .25s,box-shadow .25s;}
-.fbtn.suelta{transition:transform .28s cubic-bezier(.2,.9,.3,1.2),border-color .25s,box-shadow .25s;}
+.fbtn.suelta{transition:transform .25s cubic-bezier(.2,.8,.2,1),border-color .25s,box-shadow .25s;}
 .fbtn.rebota{animation:fnJelly .62s cubic-bezier(.25,.8,.35,1.15);}
 @keyframes fnJelly{0%{transform:scale(.93,.9);}30%{transform:scale(1.07,.95);}50%{transform:scale(.97,1.04);}70%{transform:scale(1.02,.985);}86%{transform:scale(.995,1.005);}100%{transform:none;}}
 .fbtn:focus-visible{outline:2px solid var(--white);outline-offset:3px;}
@@ -557,20 +553,16 @@ html.cyber #upsell-card{display:none!important;}
 .soft-btn:focus-visible{outline:2px solid var(--white);outline-offset:3px;}
 .soft-cta-note{font-size:.74rem;color:var(--silver);margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;}
 .soft-cta-note span{display:inline-flex;align-items:center;gap:6px;}
-/* Aparición al hacer scroll (la activa el JS de la sección; sin JS o con
-   "menos movimiento" todo se ve de entrada). Las tarjetas de funciones
-   entran solo con transform: la opacidad en un ancestro le apaga el
-   difuminado (backdrop-filter) al vidrio. */
-.soft.rev .soft-head,.soft.rev .step,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
+/* Aparición al hacer scroll: un fundido suave, el mismo para todo (la
+   grilla de funciones entra entera, sin rebote). La activa el JS de la
+   sección; sin JS o con "menos movimiento" todo se ve de entrada. */
+.soft.rev .soft-head,.soft.rev .step,.soft.rev .fgrid,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
 .soft.rev .rev-on{opacity:1;transform:none;}
 @media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}.soft.rev .step:nth-child(3){transition-delay:.2s;}}
-.soft.rev .fgrid:not(.rev-on) li{transform:translateY(16px) scale(.86);}
-.soft.rev .fgrid.rev-on li{animation:fnEntra .75s cubic-bezier(.2,.9,.3,1.25) backwards;animation-delay:calc(var(--i,0) * 40ms);}
-@keyframes fnEntra{0%{transform:translateY(16px) scale(.86);}55%{transform:translateY(-3px) scale(1.04,.96);}78%{transform:scale(.985,1.015);}100%{transform:none;}}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
   .bat-card{grid-template-columns:1fr;padding:26px 18px 22px;gap:14px;}}
 @media(max-width:600px){.soft{padding:0;margin:24px -12px;}.soft-in{padding:42px 16px;border-radius:22px;}.soft-title{font-size:1.6rem;}.bat-txt .soft-title{font-size:1.5rem;}.soft-block+.soft-block{margin-top:56px;}.soft-head{margin-bottom:22px;}
-  .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);}.fbtn{padding:16px 4px 12px;font-size:.68rem;gap:8px;border-radius:20px;}.fbtn::after{top:6px;right:6px;width:15px;height:15px;font-size:.72rem;}.fi{width:38px;height:38px;border-radius:13px;}.fi svg{width:19px;height:19px;}
+  .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);}.fbtn{padding:16px 4px 12px;font-size:.68rem;gap:8px;border-radius:20px;}.fi{width:38px;height:38px;border-radius:13px;}.fi svg{width:19px;height:19px;}
   .cmp-wrap{padding:6px 4px 2px;border-radius:20px;}.cmp{font-size:.72rem;}.cmp th,.cmp td{padding:12px 4px;}.cmp thead th{font-size:.62rem;}.cmp thead .c-deus{font-size:.7rem;}.cmp tbody th{padding-left:10px;width:38%;}.cmp tbody th small{font-size:.62rem;}.cv{font-size:.66rem;}.ck,.cx{width:22px;height:22px;}.ck svg,.cx svg{width:12px;height:12px;}
   .bat-stats b{font-size:1.6rem;}}
 @media(prefers-reduced-motion:reduce){.fbtn.rebota{animation:none;}.fbtn,.fbtn.apretado,.fbtn.suelta,.fbtn .fi{transition:none;}}
@@ -1060,7 +1052,7 @@ body.sb-on .chat-panel{bottom:82px;}
 .banner-claim{font-size:0.82rem;color:#444;letter-spacing:1px;font-style:italic;}
 .ig-link{display:inline-flex;align-items:center;gap:9px;margin-top:20px;color:#888;text-decoration:none;font-size:0.72rem;letter-spacing:2px;transition:color .2s;}
 .ig-link:hover{color:#f2f2f2;}
-.app-sec{max-width:1280px;margin:0 auto;padding:32px 24px 10px;text-align:center;}
+.app-sec{max-width:1280px;margin:0 auto;padding:24px 24px 10px;text-align:center;}
 .app-kicker{font-size:.6rem;letter-spacing:5px;text-transform:uppercase;color:var(--silver);margin-bottom:10px;}
 .app-title{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:3px;line-height:1;margin-bottom:12px;}
 .app-sub{font-size:.82rem;color:var(--silver);letter-spacing:.5px;line-height:1.7;margin:0 auto 26px;max-width:460px;}
@@ -1098,8 +1090,8 @@ body.sb-on .chat-panel{bottom:82px;}
 .how-vidwrap.is-playing .how-vid{opacity:1;}
 .how-play{position:absolute;bottom:12px;right:12px;width:38px;height:38px;border-radius:50%;background:rgba(8,8,8,.6);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;padding-left:2px;backdrop-filter:blur(3px);transition:opacity .25s;pointer-events:none;z-index:2;}
 .how-vidwrap.is-playing .how-play{opacity:0;}
-/* Carrusel de características (3 en el espacio de una) */
-.feat-car{position:relative;max-width:680px;margin:54px auto 0;overflow:hidden;transition:height .4s ease;}
+/* Diseño sin distracciones: una sola pieza (antes carrusel de 3) */
+.feat-car{position:relative;max-width:680px;margin:54px auto 0;overflow:hidden;}
 .feat-track{display:flex;align-items:flex-start;transition:transform .4s cubic-bezier(.22,.61,.36,1);}
 .feat-slide{min-width:100%;box-sizing:border-box;padding:0 6px;}
 /* Apila: imagen cuadrada centrada arriba, texto centrado abajo */
@@ -1109,16 +1101,6 @@ body.sb-on .chat-panel{bottom:82px;}
 .feat-slide .how-txt{max-width:520px;margin:16px auto 0;text-align:center;}
 /* Slide del ciclista en modo cine: ancho y grande, sin recortar a cuadrado */
 .feat-cine .how-row .how-img{max-width:680px!important;width:100%;aspect-ratio:960/608!important;border-radius:12px;}
-/* Slide del sueño: la foto es apaisada, se respeta su proporción para no recortarla */
-.feat-slide .how-row .how-img.sleep-fit{aspect-ratio:1/1!important;}
-.feat-arrow{position:absolute;top:210px;transform:translateY(-50%);z-index:3;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:rgba(255,255,255,.92);font-size:1.5rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding-bottom:3px;transition:background .2s;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
-.feat-arrow:hover{background:rgba(255,255,255,.28);}
-.feat-arrow.prev{left:8px;}
-.feat-arrow.next{right:8px;}
-.feat-dots{display:flex;justify-content:center;gap:8px;margin:18px 0 0;}
-.feat-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);cursor:pointer;transition:all .2s;}
-.feat-dot.active{background:#fff;width:22px;border-radius:4px;}
-@media(max-width:760px){.feat-arrow{width:34px;height:34px;font-size:1.3rem;}}
 .rot-360{position:relative;cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;}
 .rot-360:active{cursor:grabbing;}
 .rot-360 img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
@@ -1150,7 +1132,7 @@ body.sb-on .chat-panel{bottom:82px;}
 .rot-full-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:2.3rem;line-height:1;cursor:pointer;z-index:3;}
 .rot-full-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ccc;letter-spacing:1px;background:rgba(0,0,0,.6);border:1px solid #2a2a2a;padding:7px 16px;border-radius:16px;z-index:3;white-space:nowrap;}
 /* El visor 360 ocupa su propia fila centrada, más grande que las demás imágenes */
-.how-row.row-360{grid-template-columns:1fr;gap:6px;}
+.how-row.row-360{grid-template-columns:1fr;gap:6px;margin-bottom:0;}
 .row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
 .row-360 .how-txt{text-align:center;max-width:600px;margin:0 auto;}
 .bpm-heart{color:#e05555;display:inline-block;font-size:.9rem;animation:bpmBeat 1.15s ease-in-out infinite;}
@@ -3795,7 +3777,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <li class="step">
             <div class="step-top"><span class="step-n">02</span><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l2-6 4 12 3-9 2 3h5"/></svg></span></div>
             <h3>Deja que DEUS Band haga el resto</h3>
-            <p>Sus sensores siguen tu pulso, oxígeno, sueño y actividad 24/7, y lo guardan aunque no tengas el celular cerca.</p>
+            <p>Sus sensores siguen tu pulso, oxígeno y actividad 24/7, y lo guardan aunque no tengas el celular cerca.</p>
           </li>
           <li class="step">
             <div class="step-top"><span class="step-n">03</span><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M9 15l2-2 2 1.5 2-3.5"/></svg></span></div>
@@ -3978,7 +3960,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var sec=document.getElementById('simple'); if(!sec) return;
     var grid=sec.querySelector('.fgrid');
     var reducir=!!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    if(grid) [].forEach.call(grid.children,function(li,i){ li.style.setProperty('--i',i); });
     // Se aplasta al tocar y rebota al soltar. En touch espera 70 ms antes de
     // apretar: si en ese rato empieza un scroll (pointercancel), no se aprieta.
     [].forEach.call(sec.querySelectorAll('.fbtn'),function(b){
@@ -3990,10 +3971,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if(rebotar && !reducir){ b.classList.remove('rebota'); void b.offsetWidth; b.classList.add('rebota'); }
         else if(estaba){ b.classList.add('suelta'); clearTimeout(s); s=setTimeout(function(){ b.classList.remove('suelta'); },300); }
       }
+      var x0=0, y0=0;
       b.addEventListener('pointerdown',function(e){
         if(e.button>0) return;
-        clearTimeout(t);
+        clearTimeout(t); x0=e.clientX; y0=e.clientY;
         t=setTimeout(function(){ b.classList.add('apretado'); }, e.pointerType==='touch'?70:0);
+      });
+      b.addEventListener('pointermove',function(e){
+        if(e.pointerType==='touch' && !b.classList.contains('apretado') && (Math.abs(e.clientX-x0)>6 || Math.abs(e.clientY-y0)>6)) clearTimeout(t);
       });
       b.addEventListener('pointerup',function(){ soltar(true); });
       b.addEventListener('pointercancel',function(){ soltar(false); });
@@ -4389,7 +4374,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- CARACTERÍSTICAS (bajadas: las reseñas van primero) -->
   <section class="how" id="diseno">
-    <!-- Carrusel: 3 características cambiables (imagen cuadrada arriba, texto abajo) -->
+    <!-- Una sola pieza: el video del ciclista con su texto (antes era un carrusel de 3) -->
     <div class="feat-car" id="featCar">
       <div class="feat-track" id="featTrack">
         <div class="feat-slide feat-cine">
@@ -4406,117 +4391,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
           </div>
         </div>
-        <div class="feat-slide">
-          <div class="how-row reverse">
-            <div class="how-img sleep-fit">
-              <img src="img/img-c0934d38.webp" alt="DEUS Band midiendo el sueño" loading="lazy" decoding="async" style="cursor:zoom-in;" onclick="abrirFotoResena(this.src)">
-            </div>
-            <div class="how-txt">
-              <h3>Optimiza tu sueño</h3>
-              <p>Mide tus fases de sueño —profundo, ligero y REM— y la calidad de tu descanso. Despierta recuperado y mejora tus noches con datos reales.</p>
-            </div>
-          </div>
-        </div>
-        <div class="feat-slide">
-          <div class="how-row">
-            <div class="how-img"><img src="img/img-93c330d7.webp" alt="DEUS Band durante el deporte" loading="lazy" decoding="async" style="cursor:zoom-in;" onclick="abrirFotoResena(this.src)"></div>
-            <div class="how-txt">
-              <h3>Úsala 24/7</h3>
-              <p>Pensada para acompañarte siempre — al entrenar, en el trabajo y al dormir. Detecta tu actividad automáticamente: empieza y termina sin que tengas que tocar nada.</p>
-            </div>
-          </div>
-        </div>
       </div>
-      <button class="feat-arrow prev" id="featPrev" aria-label="Anterior">‹</button>
-      <button class="feat-arrow next" id="featNext" aria-label="Siguiente">›</button>
-    </div>
-    <div class="feat-dots" id="featDots">
-      <span class="feat-dot active" onclick="featGo(0)"></span>
-      <span class="feat-dot" onclick="featGo(1)"></span>
-      <span class="feat-dot" onclick="featGo(2)"></span>
     </div>
   </section>
 
-  <script>
-  (function(){
-    var car=document.getElementById('featCar'), track=document.getElementById('featTrack');
-    if(!car||!track) return;
-    var slides=track.children, dots=document.getElementById('featDots').children;
-    var n=slides.length, cur=0;
-    var prev=document.getElementById('featPrev'), next=document.getElementById('featNext');
-    function centrarFlechas(){
-      if(!prev||!next||!slides[cur]) return;
-      var img=slides[cur].querySelector('.how-img'); if(!img) return;
-      var cr=car.getBoundingClientRect(), ir=img.getBoundingClientRect();
-      var c=((ir.top-cr.top)+ir.height/2)+'px'; prev.style.top=c; next.style.top=c;
-    }
-    function setH(){ if(slides[cur]) car.style.height=slides[cur].offsetHeight+'px'; centrarFlechas(); }
-    // Si la slide activa tiene video (el ciclista), lo reinicia y reproduce
-    function reproducirActivo(){
-      var v=slides[cur]&&slides[cur].querySelector('video');
-      if(v){ try{ v.currentTime=0; }catch(e){} var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){}); }
-    }
-    function render(){
-      track.style.transform='translateX('+(-cur*100)+'%)';
-      for(var i=0;i<n;i++){ if(dots[i]) dots[i].classList.toggle('active',i===cur); }
-      setH(); reproducirActivo();
-    }
-    // Auto-rotación (se pausa al pasar el mouse; se reinicia al interactuar)
-    var timer=null, hover=false;
-    function pararAuto(){ if(timer){ clearTimeout(timer); timer=null; } }
-    function iniciarAuto(){ pararAuto(); if(hover) return; timer=setTimeout(function(){ featGo(cur+1); }, 5000); }
-    window.featGo=function(i){ cur=(i+n)%n; render(); iniciarAuto(); };
-    // Recalcular la altura cuando cargan las imágenes/el video o cambia el tamaño
-    window.addEventListener('load',setH);
-    window.addEventListener('resize',setH);
-    track.querySelectorAll('img,video').forEach(function(m){
-      m.addEventListener('load',setH); m.addEventListener('loadeddata',setH);
-    });
-    setTimeout(setH,300);
-    if(prev) prev.onclick=function(){ featGo(cur-1); };
-    if(next) next.onclick=function(){ featGo(cur+1); };
-    // Arrastre orgánico: la slide sigue el dedo/cursor y al soltar decide
-    var x0=null,y0=null,drag=false,horiz=null,w=1;
-    function pos(){ return -cur*100; }
-    function down(x,y){ x0=x; y0=y; drag=true; horiz=null; w=car.clientWidth||1; pararAuto(); }
-    function move(x,y){
-      if(!drag||x0===null) return;
-      var dx=x-x0, dy=y-y0;
-      if(horiz===null && (Math.abs(dx)>6||Math.abs(dy)>6)) horiz=Math.abs(dx)>Math.abs(dy);
-      if(!horiz) return;
-      var off=dx/w*100;
-      // resistencia en los extremos (primera y última slide)
-      if((cur===0&&off>0)||(cur===n-1&&off<0)) off*=0.35;
-      track.style.transition='none';
-      track.style.transform='translateX('+(pos()+off)+'%)';
-    }
-    function up(x){
-      if(!drag||x0===null) return; drag=false;
-      var dx=x-x0;
-      track.style.transition='';
-      if(horiz && Math.abs(dx)>w*0.18) featGo(cur+(dx<0?1:-1));
-      else { render(); iniciarAuto(); }
-      x0=y0=null; horiz=null;
-    }
-    car.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
-    car.addEventListener('touchmove',function(e){ move(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
-    car.addEventListener('touchend',function(e){ up(e.changedTouches[0].clientX); },{passive:true});
-    car.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
-    window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
-    window.addEventListener('mouseup',function(e){ up(e.clientX); });
-    car.addEventListener('mouseenter',function(){ hover=true; pararAuto(); });
-    car.addEventListener('mouseleave',function(){ hover=false; iniciarAuto(); });
-    render();
-    // La auto-rotación parte recién cuando el carrusel entra en pantalla,
-    // así siempre se ve primero la slide del ciclista.
-    if('IntersectionObserver' in window){
-      var io=new IntersectionObserver(function(entradas){
-        entradas.forEach(function(x){ if(x.isIntersecting) iniciarAuto(); else pararAuto(); });
-      },{threshold:0.35});
-      io.observe(car);
-    } else { iniciarAuto(); }
-  })();
-  </script>
 
 
 
