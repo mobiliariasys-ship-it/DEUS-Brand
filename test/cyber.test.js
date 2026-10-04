@@ -59,6 +59,8 @@ test('el precio tachado y el % son los mismos en el backend y en el sitio', () =
   assert.deepStrictEqual(arranque.slice(1).map(Number), [DESPUES.precio, DESPUES.ancla, DESPUES.off], 'el sitio arranca con otro precio que el backend');
   assert.ok(HTML.includes('<span class="price-was">' + clp(DESPUES.ancla) + '</span> <span class="price-save">-' + DESPUES.off + '%</span>'),
     'el bloque de precio del HTML tiene otro tachado que el backend');
+  assert.ok(HTML.includes('<span class="co-price-old">' + clp(DESPUES.ancla) + '</span>'),
+    'el checkout tiene otro tachado que el backend');
 });
 
 // Captura lo que se le mandaría a Resend, sin red.

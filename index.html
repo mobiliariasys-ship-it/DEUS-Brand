@@ -1354,7 +1354,7 @@ body.sb-on .wa-float{bottom:82px;}
 .co-prod img{width:64px;height:64px;border-radius:8px;object-fit:cover;background:#1e1e1e;border:1px solid var(--border);flex-shrink:0;}
 .co-prod-name{font-size:.82rem;font-weight:700;color:#f2f2f2;}
 .co-prod-color{font-size:.82rem;letter-spacing:1px;text-transform:uppercase;color:#fff;font-weight:700;margin-top:3px;}
-.co-prod-price{margin-top:4px;display:flex;align-items:baseline;gap:8px;}
+.co-prod-price{margin-top:4px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;}
 .co-price-old{font-size:.72rem;color:#888;text-decoration:line-through;}
 .co-price-now{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;line-height:1;}
 /* Precio "normal" tachado que acompaña al precio actual */
@@ -2068,7 +2068,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                      solo se MUESTRA, para que igual quede a la vista qué se
                      está comprando. -->
                 <div class="co-prod-color" id="co-prod-color">Color negro</div>
-                <div class="co-prod-price" id="co-prod-price"><span class="co-price-now">$68.990</span></div>
+                <div class="co-prod-price" id="co-prod-price"><span class="co-price-now">$68.990</span> <span class="co-price-old">$78.990</span></div>
                 <div class="co-cuotas">Hasta 3 cuotas sin interés pagando con Mercado Pago</div>
               </div>
             </div>
@@ -2968,12 +2968,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               `<span class="co-price-now">$${(TAPONES_PRICE * checkoutQty).toLocaleString('es-CL')}</span>`;
             return;
           }
-          // Sin ancla tachada: mostramos solo el precio real. Cuando corre la
-          // oferta de envío gratis, un badge verde al lado. RESERVA_ANCLA queda
-          // solo como referencia interna, ya no se pinta.
+          // Precio real + el tachado (ancla × cantidad, igual que en el bloque
+          // de precio desde el 4-oct-2026). Lo que se cobra sigue siendo
+          // bandTotal. Con la oferta de envío gratis, un badge verde al lado.
+          const anclaTotal = PRECIO.ancla > PRECIO.precio ? PRECIO.ancla * checkoutQty : 0;
+          const tachado = anclaTotal ? ` <span class="co-price-old">$${anclaTotal.toLocaleString('es-CL')}</span>` : '';
           document.getElementById('co-prod-price').innerHTML = ofertaActiva()
-            ? `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span> <span class="pb-off" style="background:rgba(105,196,109,.12);border-color:rgba(105,196,109,.5);color:#7fd589;">ENVÍO GRATIS</span>`
-            : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`;
+            ? `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>${tachado} <span class="pb-off" style="background:rgba(105,196,109,.12);border-color:rgba(105,196,109,.5);color:#7fd589;">ENVÍO GRATIS</span>`
+            : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>${tachado}`;
         }
 
         // ── CARRITO ──
