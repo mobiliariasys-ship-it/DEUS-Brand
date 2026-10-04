@@ -353,4 +353,47 @@ async function getGastoDiarioCuenta(dias = 14) {
   return { mapa, via: 'campañas', campanas: campanas.length, errorCuenta };
 }
 
-module.exports = { listCampaigns, listAds, getInsights, getInsightsDiarios, getCtrHorario, getGastoDiarioCuenta, setStatus, updateBudget, duplicateCampaign };
+// Gasto POR HORA de la cuenta, para la sección "en vivo" del panel. Mismo
+// esquema que getGastoDiarioCuenta: primero UNA llamada a nivel cuenta y, si
+// Meta la bloquea (pasa en esta cuenta), campaña por campaña sumando hora a
+// hora. Trae también impresiones y clics en el enlace, que son el "por qué"
+// de cada hora: gasto = impresiones × CPM, así que una hora gasta más porque
+// Meta mostró más el anuncio, porque cada impresión salió más cara, o ambas.
+// Las horas vienen en el huso de la CUENTA (America/Santiago).
+async function getGastoHorario(desde, hasta, { campanas } = {}) {
+  const params = {
+    fields: 'spend,impressions,inline_link_clicks',
+    breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+    time_increment: 1,
+    time_range: JSON.stringify({ since: desde, until: hasta })
+  };
+  const sumar = (mapa, filas) => {
+    for (const r of filas) {
+      const hora = Number(String(r.hourly_stats_aggregated_by_advertiser_time_zone || '0').slice(0, 2)) || 0;
+      const k = r.date_start + '|' + hora;
+      const a = mapa[k] || (mapa[k] = { fecha: r.date_start, hora, gasto: 0, impresiones: 0, clics: 0 });
+      a.gasto += Number(r.spend || 0);
+      a.impresiones += Number(r.impressions || 0);
+      a.clics += Number(r.inline_link_clicks || 0);
+    }
+  };
+  let errorCuenta = '';
+  try {
+    const { adAccountId } = creds();
+    const filas = await insightsCompletos(`/${adAccountId}/insights`, params);
+    if (filas.length) { const mapa = {}; sumar(mapa, filas); return { filas: Object.values(mapa), via: 'cuenta' }; }
+  } catch (e) {
+    errorCuenta = e.message || String(e);
+  }
+  const lista = campanas || await listCampaigns();
+  const res = await Promise.all(lista.map(c => insightsCompletos(`/${c.id}/insights`, params).catch(() => null)));
+  const mapa = {};
+  let ok = 0;
+  for (const filas of res) if (filas) { ok++; sumar(mapa, filas); }
+  if (lista.length && !ok) {
+    throw new Error('ninguna campaña devolvió el gasto por hora. Nivel cuenta: ' + (errorCuenta || 'sin datos'));
+  }
+  return { filas: Object.values(mapa), via: 'campañas', errorCuenta };
+}
+
+module.exports = { listCampaigns, listAds, getInsights, getInsightsDiarios, getCtrHorario, getGastoDiarioCuenta, getGastoHorario, setStatus, updateBudget, duplicateCampaign };

@@ -64,6 +64,16 @@
   .sec-h h2{font-size:1rem;letter-spacing:.2px;color:#fff;margin:0;font-weight:700;}
   .sec-act{font-size:.7rem;color:#8a8a8a;margin:-10px 0 14px;}
   .sec-act b{color:#cfcfcf;font-weight:600;}
+  /* Gasto por hora (en vivo) */
+  #chartGastoH{display:block;width:100%;cursor:crosshair;}
+  .gh-ley{display:flex;gap:14px;flex-wrap:wrap;font-size:.68rem;color:#9a9a9a;margin-bottom:10px;}
+  .gh-ley span{display:inline-flex;align-items:center;gap:6px;}
+  .gh-sw{display:inline-block;width:10px;height:10px;border-radius:2px;}
+  .gh-sw.prom{height:2px;border-radius:0;background:repeating-linear-gradient(90deg,#9a9a9a 0 4px,transparent 4px 7px);}
+  .gh-sw.venta{border-radius:50%;}
+  .gh-porque{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.8rem;line-height:1.6;color:#d6d6d6;margin-bottom:6px;}
+  .gh-porque b{color:#fff;}
+  .gh-porque:empty{display:none;}
   .pill{font-size:.62rem;padding:4px 11px;border-radius:20px;border:none;color:#fff;letter-spacing:.3px;background:var(--pill);font-variant-numeric:tabular-nums;font-weight:600;}
 
   /* Funnel bars */
@@ -511,6 +521,24 @@
       <div class="sec-h"><h2>📦 Pedidos recientes</h2></div>
       <div class="scroll"><table id="t-pedidos"><thead><tr><th>Fecha</th><th>Cliente</th><th>Comuna</th><th>Color</th><th>Total</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
       <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
+    </section>
+
+    <section id="sec-gastoh">
+      <div class="sec-h"><h2>⏱️ Gasto por hora · en vivo</h2><button class="btn ghost" onclick="cargarGastoHora(true)">Actualizar</button></div>
+      <div class="sec-act" id="gh-act"></div>
+      <div class="util-kpis" id="gh-kpis"></div>
+      <div class="ctr-wrap" id="gh-wrap" style="display:none;position:relative;">
+        <div class="gh-ley">
+          <span><i class="gh-sw" style="background:#1ec8f0"></i>Gasto de hoy</span>
+          <span><i class="gh-sw prom"></i>Promedio de los 7 días anteriores</span>
+          <span><i class="gh-sw venta" style="background:#8fce4a"></i>Venta del sitio</span>
+        </div>
+        <canvas id="chartGastoH"></canvas>
+        <div class="ctr-tip" id="gh-tip"></div>
+      </div>
+      <div class="gh-porque" id="gh-porque"></div>
+      <div class="util-nota" id="gh-nota"></div>
+      <div class="empty" id="gh-off" style="display:none"></div>
     </section>
 
     <section id="sec-ads">
@@ -1478,7 +1506,7 @@
       if(r.status===403||r.status===404){ throw new Error('clave'); }
       return r.json();
     }).then(function(d){
-      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); }
+      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); }
       pintar(d);
       cargarChats();
     }).catch(function(e){
@@ -2192,6 +2220,156 @@
     tip.style.top = (cv.offsetTop + 10) + 'px';
   }
 
+  // ── Gasto por hora (en vivo) ─────────────────────────────────────────────
+  // Hoy hora a hora contra el promedio de los 7 días anteriores, con lo que
+  // explica cada hora: impresiones (cuánto mostró Meta el anuncio), CPM (cuánto
+  // costó cada mil), clics al sitio y ventas. Se relee cada minuto con el panel
+  // a la vista; el servidor guarda la lectura 55 s, así que más pestañas no
+  // significan más llamadas a Meta.
+  var ghSt = { d: null, hover: null, leido: 0 };
+  var GH_HOY = '#1ec8f0', GH_PROM = '#9a9a9a', GH_VENTA = '#8fce4a';
+  function pad2(n){ return (n < 10 ? '0' : '') + n; }
+  function cpmDe(g, i){ return i ? g / i * 1000 : 0; }
+  function moneyK(n){ n = Number(n) || 0; return n >= 1000 ? '$' + (Math.round(n / 100) / 10).toLocaleString('es-CL') + 'k' : '$' + Math.round(n); }
+  function sumaDe(l, k){ return l.reduce(function(a, x){ return a + (Number(x[k]) || 0); }, 0); }
+
+  function cargarGastoHora(forzar){
+    ghSt.leido = Date.now();
+    fetch(BASE + '/admin/ads/gasto-horario?clave=' + encodeURIComponent(clave) + (forzar ? '&forzar=1' : ''))
+      .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d && d.error ? d.error : 'Meta respondió ' + r.status); return d; }); })
+      .then(function(d){ ghSt.d = d; pintarGastoHora(); })
+      .catch(function(e){
+        var off = document.getElementById('gh-off');
+        off.textContent = /no configurad/i.test(e.message || '') ? 'Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID en Render).'
+          : '⚠️ Meta no respondió: ' + (e.message || 'error desconocido') + '. Se vuelve a intentar en un minuto.';
+        off.style.display = 'block';
+      });
+  }
+
+  function pintarGastoHora(){
+    var d = ghSt.d; if(!d) return;
+    document.getElementById('gh-off').style.display = 'none';
+    var hoy = d.horasHoy, prom = d.promedio7, ah = d.horaActual;
+    var ventasHoy = (d.ventas && d.ventas.hoy) || [];
+    var total = sumaDe(hoy, 'gasto'), nVentas = ventasHoy.reduce(function(a, x){ return a + x; }, 0);
+    var top = hoy.reduce(function(b, x){ return x.gasto > b.gasto ? x : b; }, hoy[0]);
+    var aEstaHora = sumaDe(prom.slice(0, ah + 1), 'gasto');
+    document.getElementById('gh-kpis').innerHTML =
+      kpi('Gasto de hoy', money0(total)) +
+      kpi('A esta hora se solía llevar', money0(aEstaHora)) +
+      kpi('Hora de más gasto hoy', top.gasto > 0 ? pad2(top.hora) + ':00 · ' + money0(top.gasto) : '—') +
+      kpi('Ventas de hoy', nVentas ? nVentas + ' · ' + money0(total / nVentas) + ' de ads c/u' : '0');
+    var hh = new Date(d.leidoHoy || Date.now()).toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone:'America/Santiago' });
+    document.getElementById('gh-act').innerHTML = 'Última lectura de Meta a las <b>' + hh + '</b> (hora de Chile) · se actualiza sola cada minuto';
+    document.getElementById('gh-wrap').style.display = '';
+    dibujarGastoHora();
+    document.getElementById('gh-porque').innerHTML = textoPorque(d);
+    document.getElementById('gh-nota').textContent =
+      'Meta publica el gasto con unos minutos de atraso, así que la hora en curso siempre queda corta y sube después. ' +
+      'Gasto = impresiones × CPM: una hora gasta más porque Meta mostró más el anuncio, porque cada impresión salió más cara, o las dos. ' +
+      (d.histError ? '⚠️ No se pudo leer el historial de 7 días: ' + d.histError + '.' : '');
+  }
+
+  // La explicación sale del promedio de 7 días (un solo día es ruido).
+  function textoPorque(d){
+    var prom = d.promedio7, tot = sumaDe(prom, 'gasto'), totImp = sumaDe(prom, 'impresiones');
+    if(!tot || !totImp) return '';
+    var cpmProm = cpmDe(tot, totImp);
+    var top = prom.reduce(function(b, x){ return x.gasto > b.gasto ? x : b; }, prom[0]);
+    var cpmTop = cpmDe(top.gasto, top.impresiones);
+    var shareG = Math.round(top.gasto / tot * 100), shareI = Math.round(top.impresiones / totImp * 100);
+    // La impresión más cara, entre las horas con entrega que pesa (≥2% del día)
+    var caras = prom.filter(function(x){ return x.impresiones >= totImp * 0.02; });
+    var cara = caras.reduce(function(b, x){ return cpmDe(x.gasto, x.impresiones) > cpmDe(b.gasto, b.impresiones) ? x : b; }, caras[0] || top);
+    var v7 = (d.ventas && d.ventas.ultimos7) || [];
+    var maxV = Math.max.apply(null, v7.concat([0])), horaV = v7.indexOf(maxV);
+    var t = 'En los últimos 7 días la hora que más gasta es las <b>' + pad2(top.hora) + ':00</b> (' + money0(top.gasto) + ' en promedio, el ' + shareG + '% del gasto del día). ';
+    if(cpmTop > cpmProm * 1.15){
+      t += 'Gasta más porque Meta muestra más el anuncio a esa hora (el ' + shareI + '% de las impresiones del día) <b>y además cada impresión sale más cara</b>: CPM ' + money0(cpmTop) + ' contra ' + money0(cpmProm) + ' de promedio, hay más avisadores compitiendo por el mismo público. ';
+    } else {
+      t += 'No es que ahí cueste más (CPM ' + money0(cpmTop) + ', parecido al promedio de ' + money0(cpmProm) + '): Meta reparte el presupuesto donde espera más resultados y a esa hora <b>muestra más el anuncio</b> (el ' + shareI + '% de las impresiones del día), porque hay más gente conectada. ';
+    }
+    if(cara && cara.hora !== top.hora) t += 'La impresión más cara es a las <b>' + pad2(cara.hora) + ':00</b> (CPM ' + money0(cpmDe(cara.gasto, cara.impresiones)) + '). ';
+    if(maxV > 0){
+      t += 'La hora con más ventas del sitio en esos días es las <b>' + pad2(horaV) + ':00</b> (' + maxV + (maxV === 1 ? ' venta' : ' ventas') + ')';
+      var dist = Math.min(Math.abs(horaV - top.hora), 24 - Math.abs(horaV - top.hora));
+      t += dist >= 3 ? ': si el gasto fuerte no coincide con las horas en que se vende, conviene programar el anuncio para esas horas.' : ', cerca de la hora de más gasto: el presupuesto está cayendo donde se vende.';
+    }
+    return t;
+  }
+
+  function dibujarGastoHora(){
+    var d = ghSt.d, cv = document.getElementById('chartGastoH'); if(!d || !cv) return;
+    var wrap = document.getElementById('gh-wrap');
+    var W = Math.max(320, wrap.clientWidth - 28), H = 230, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)){ cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px'; }
+    var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    var g = { padL: 44, padR: 10, padT: 18, padB: 24 }, aw = W - g.padL - g.padR, ah = H - g.padT - g.padB;
+    var hoy = d.horasHoy, prom = d.promedio7, ventas = (d.ventas && d.ventas.hoy) || [], hA = d.horaActual;
+    var max = 0; for(var i = 0; i < 24; i++){ max = Math.max(max, hoy[i].gasto, prom[i].gasto); }
+    max = max > 0 ? max * 1.18 : 1000;
+    var slot = aw / 24, bw = Math.max(4, slot * 0.62);
+    var xC = function(h){ return g.padL + slot * h + slot / 2; }, yV = function(v){ return g.padT + ah - (v / max) * ah; };
+    ctx.font = '9px monospace'; ctx.textAlign = 'right'; ctx.strokeStyle = '#1c1c1c'; ctx.fillStyle = '#6a6a6a'; ctx.lineWidth = 1;
+    for(var l = 0; l <= 4; l++){
+      var gy = g.padT + ah * l / 4;
+      ctx.beginPath(); ctx.moveTo(g.padL, gy + .5); ctx.lineTo(W - g.padR, gy + .5); ctx.stroke();
+      ctx.fillText(moneyK(max * (1 - l / 4)), g.padL - 6, gy + 3);
+    }
+    if(ghSt.hover !== null){ ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fillRect(g.padL + slot * ghSt.hover, g.padT, slot, ah); }
+    for(var h = 0; h < 24; h++){
+      if(h > hA) continue;   // horas que todavía no pasan
+      var v = hoy[h].gasto; if(!v) continue;
+      var y = yV(v);
+      ctx.fillStyle = h === hA ? 'rgba(30,200,240,.45)' : GH_HOY;   // la hora en curso, más clara: todavía no cierra
+      ctx.fillRect(xC(h) - bw / 2, y, bw, g.padT + ah - y);
+    }
+    // Promedio de los 7 días: línea punteada
+    ctx.save(); ctx.setLineDash([4, 3]); ctx.strokeStyle = GH_PROM; ctx.lineWidth = 1.5; ctx.beginPath();
+    for(var p = 0; p < 24; p++){ var py = yV(prom[p].gasto); if(p === 0) ctx.moveTo(xC(p), py); else ctx.lineTo(xC(p), py); }
+    ctx.stroke(); ctx.restore();
+    // Ventas de hoy: punto verde sobre la hora, con la cantidad si es más de una
+    for(var s = 0; s < 24; s++){
+      if(!ventas[s]) continue;
+      var vy = Math.min(yV(hoy[s].gasto), yV(prom[s].gasto)) - 9;
+      ctx.beginPath(); ctx.arc(xC(s), Math.max(g.padT - 6, vy), 4, 0, Math.PI * 2); ctx.fillStyle = GH_VENTA; ctx.fill();
+      if(ventas[s] > 1){ ctx.fillStyle = '#cfe8b4'; ctx.textAlign = 'center'; ctx.fillText(String(ventas[s]), xC(s), Math.max(g.padT - 6, vy) - 7); }
+    }
+    ctx.fillStyle = '#7a7a7a'; ctx.textAlign = 'center';
+    for(var x = 0; x < 24; x += 3){ ctx.fillText(pad2(x) + 'h', xC(x), H - 8); }
+  }
+
+  function tipGastoHora(h){
+    var d = ghSt.d, tip = document.getElementById('gh-tip'); if(!d){ return; }
+    if(h === null){ tip.style.display = 'none'; return; }
+    var x = d.horasHoy[h], p = d.promedio7[h], vh = (d.ventas.hoy || [])[h] || 0, v7 = (d.ventas.ultimos7 || [])[h] || 0;
+    var futura = h > d.horaActual;
+    var html = '<b>' + pad2(h) + ':00 – ' + pad2((h + 1) % 24) + ':00</b>' + (h === d.horaActual ? ' · en curso' : '');
+    html += futura ? '<div class="ctr-tip-row" style="color:#999">Todavía no llega esta hora</div>'
+      : '<div class="ctr-tip-row">Gasto <b>' + money0(x.gasto) + '</b> (promedio ' + money0(p.gasto) + ')</div>' +
+        '<div class="ctr-tip-row">' + Math.round(x.impresiones).toLocaleString('es-CL') + ' impresiones · CPM ' + money0(cpmDe(x.gasto, x.impresiones)) + '</div>' +
+        '<div class="ctr-tip-row">' + Math.round(x.clics) + ' clics al sitio' + (x.impresiones ? ' (CTR ' + (x.clics / x.impresiones * 100).toFixed(2).replace('.', ',') + '%)' : '') + '</div>';
+    html += '<div class="ctr-tip-row" style="color:#8fce4a">' + vh + (vh === 1 ? ' venta' : ' ventas') + ' hoy · ' + v7 + ' en los 7 días anteriores</div>';
+    tip.innerHTML = html; tip.style.display = 'block';
+    var cv = document.getElementById('chartGastoH'), wrap = document.getElementById('gh-wrap');
+    var slot = (cv.clientWidth - 54) / 24, left = cv.offsetLeft + 44 + slot * h + slot / 2 - tip.offsetWidth / 2;
+    tip.style.left = Math.max(4, Math.min(wrap.clientWidth - tip.offsetWidth - 4, left)) + 'px';
+    tip.style.top = (cv.offsetTop + 6) + 'px';
+  }
+  (function(){
+    var cv = document.getElementById('chartGastoH'); if(!cv) return;
+    function horaDe(e){
+      var r = cv.getBoundingClientRect(), x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      var h = Math.floor((x - 44) / ((r.width - 54) / 24));
+      return (h >= 0 && h < 24) ? h : null;
+    }
+    function mover(e){ var h = horaDe(e); if(h !== ghSt.hover){ ghSt.hover = h; dibujarGastoHora(); tipGastoHora(h); } }
+    cv.addEventListener('mousemove', mover);
+    cv.addEventListener('touchstart', mover, { passive: true });
+    cv.addEventListener('mouseleave', function(){ ghSt.hover = null; dibujarGastoHora(); tipGastoHora(null); });
+    window.addEventListener('resize', function(){ if(ghSt.d) dibujarGastoHora(); });
+  })();
+
   // Ads Manager (Meta): se actualiza solo cada UNA HORA (ver el setInterval al
   // final) y con el botón "Actualizar"; no cada 5s como el resto del panel,
   // para no gastar el rate limit de Meta.
@@ -2200,7 +2378,7 @@
   function marcarAct(id){
     var el = document.getElementById(id); if(!el) return;
     var hh = new Date().toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/Santiago' });
-    el.innerHTML = 'Actualizado a las <b>'+hh+'</b> (hora de Chile) · se actualiza solo cada hora';
+    el.innerHTML = 'Actualizado a las <b>'+hh+'</b> (hora de Chile) · se actualiza solo cada ' + (id === 'util-act' ? '5 minutos' : 'hora');
   }
   function cargarAds(){
     adsLeido = Date.now();
@@ -2329,8 +2507,16 @@
   var HORA_MS = 3600000;
   function panelAbierto(){ return clave && document.getElementById('panel').style.display!=='none'; }
   setInterval(function(){ if(panelAbierto()) cargarAds(); }, HORA_MS);
+  // El gasto en vivo va más rápido: cada minuto el gasto por hora y cada 5 la
+  // utilidad (su gasto de hoy), solo con el panel a la vista. El servidor
+  // guarda la lectura de Meta 55 s, así que esto no multiplica las llamadas.
+  var MIN_MS = 60000, utilLeido = 0;
+  setInterval(function(){ if(panelAbierto() && !document.hidden) cargarGastoHora(); }, MIN_MS);
+  setInterval(function(){ if(panelAbierto() && !document.hidden){ utilLeido = Date.now(); cargarUtilidad(); } }, 5 * MIN_MS);
   document.addEventListener('visibilitychange', function(){
-    if(!document.hidden && panelAbierto() && adsLeido && Date.now() - adsLeido >= HORA_MS) cargarAds();
+    if(document.hidden || !panelAbierto()) return;
+    if(adsLeido && Date.now() - adsLeido >= HORA_MS) cargarAds();
+    if(Date.now() - ghSt.leido >= MIN_MS) cargarGastoHora();
   });
 </script>
 </body>

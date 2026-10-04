@@ -744,6 +744,67 @@ app.get('/admin/ads/ctr-horario', async (req, res) => {
   }
 });
 
+// Gasto POR HORA de la cuenta — la sección "en vivo" del panel.
+//
+// Hoy se relee como mucho cada 55 s (15 s si se aprieta "Actualizar") y los 7
+// días anteriores, que dan el promedio de cada hora, cada 15 min. La caché vive
+// en el servidor: dos pestañas abiertas, o el panel en el celular y en el
+// computador a la vez, no multiplican las llamadas a Meta. Meta igual publica
+// el gasto con unos minutos de atraso, así que leer más seguido no traería
+// nada más nuevo y sí gastaría el rate limit de la cuenta.
+const gastoHoraCache = { hoy: null, hoyClave: '', tHoy: 0, hist: null, histClave: '', tHist: 0, campanas: null, tCamp: 0 };
+function diaChileStr(atras) {
+  return new Date(Date.now() - atras * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+}
+app.get('/admin/ads/gasto-horario', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const c = gastoHoraCache, ahora = Date.now();
+    const hoy = diaChileStr(0), desde = diaChileStr(7), ayer = diaChileStr(1);
+    // Campañas para el camino campaña por campaña: la lista se renueva cada
+    // 10 min. Las archivadas y borradas ya no gastan.
+    if (!c.campanas || ahora - c.tCamp > 10 * 60000) {
+      try {
+        c.campanas = (await metaAds.listCampaigns()).filter(x => x.status !== 'ARCHIVED' && x.status !== 'DELETED');
+        c.tCamp = ahora;
+      } catch (e) { c.campanas = null; }
+    }
+    const opts = c.campanas ? { campanas: c.campanas } : {};
+    const vence = req.query.forzar === '1' ? 15000 : 55000;
+    if (!c.hoy || c.hoyClave !== hoy || ahora - c.tHoy > vence) {
+      c.hoy = await metaAds.getGastoHorario(hoy, hoy, opts);
+      c.hoyClave = hoy; c.tHoy = ahora;
+    }
+    let histError = '';
+    if (!c.hist || c.histClave !== ayer || ahora - c.tHist > 15 * 60000) {
+      try {
+        c.hist = await metaAds.getGastoHorario(desde, ayer, opts);
+        c.histClave = ayer; c.tHist = ahora;
+      } catch (e) { histError = e.message || 'Meta no respondió'; }
+    }
+    const vacias = () => Array.from({ length: 24 }, (_, h) => ({ hora: h, gasto: 0, impresiones: 0, clics: 0 }));
+    const horasHoy = vacias(), promedio7 = vacias();
+    for (const f of c.hoy.filas) {
+      if (f.fecha !== hoy) continue;
+      const x = horasHoy[f.hora]; x.gasto += f.gasto; x.impresiones += f.impresiones; x.clics += f.clics;
+    }
+    // Promedio POR DÍA de los 7 anteriores (se divide por 7 aunque algún día
+    // no haya gastado: un día con los anuncios apagados también es un dato).
+    for (const f of (c.hist ? c.hist.filas : [])) {
+      const x = promedio7[f.hora]; x.gasto += f.gasto / 7; x.impresiones += f.impresiones / 7; x.clics += f.clics / 7;
+    }
+    res.json({
+      hoy,
+      horaActual: Number(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false })) % 24,
+      horasHoy, promedio7,
+      ventas: metrics.ventasPorHora(),
+      leidoHoy: c.tHoy, leidoHist: c.tHist, via: c.hoy.via, histError
+    });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
 // Utilidad diaria: cruza las ventas del panel con el gasto real en Meta.
 //
 // Costos por venta, en orden de tamaño:

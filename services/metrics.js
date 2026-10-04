@@ -437,6 +437,25 @@ function ventasPorMomento() {
   return { horas, dias };
 }
 
+// Ventas por HORA (hora de Chile): las de hoy y las de los 7 días anteriores
+// sumadas. El panel las cruza con el gasto por hora de Meta para ver si las
+// horas en que más se gasta son las mismas en que se vende.
+function ventasPorHora() {
+  const dia = n => new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+  const hoyStr = dia(0), desde = dia(7), hasta = dia(1);
+  const hoy = new Array(24).fill(0), ultimos7 = new Array(24).fill(0);
+  for (const v of ventas) {
+    const f = new Date(v.fecha);
+    if (isNaN(f)) continue;
+    const d = f.toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    const h = Number(f.toLocaleString('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false })) % 24;
+    if (isNaN(h)) continue;
+    if (d === hoyStr) hoy[h]++;
+    else if (d >= desde && d <= hasta) ultimos7[h]++;
+  }
+  return { hoy, ultimos7 };
+}
+
 // Cuántas ventas cerró cada medio de pago. Cruzado con los co:m-* (por dónde
 // INTENTARON pagar) muestra qué pasarela se cae más.
 function ventasPorMetodo() {
@@ -516,5 +535,5 @@ module.exports = {
   init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo, ventasPorDia,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
   resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
-  registrarFalloChat
+  registrarFalloChat, ventasPorHora
 };
