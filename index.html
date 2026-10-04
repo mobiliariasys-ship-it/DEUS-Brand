@@ -6,8 +6,8 @@
      modo normal ni un instante. El CSS oculta el contenido normal hasta que el
      JS pone el de reserva (evita el flash de "última unidad"/precio). -->
 <script>try{if(localStorage.getItem('deus-reserva')==='1')document.documentElement.classList.add('reserva');}catch(e){}</script>
-<!-- Cyber de octubre: la clase html.cyber prende el branding (chip, regalo
-     sorpresa, contador) y se apaga sola a las 00:00 del jueves 8-oct de Chile
+<!-- Cyber de octubre: la clase html.cyber prende el branding (chip, "+ tapones
+     de oído gratis", contador) y se apaga sola a las 00:00 del jueves 8-oct de Chile
      (03:00 UTC, horario de verano). Va antes de pintar para que no parpadee.
      La misma hora está en FIN_PROMO_DIA: si se cambia una, cambiar la otra. -->
 <script>try{if(Date.now()<Date.UTC(2026,9,8,3,0,0))document.documentElement.classList.add('cyber');}catch(e){}</script>
@@ -1581,7 +1581,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar"><span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span><b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + REGALO SORPRESA</span></b><div class="ab-plazo">1-2 días de envío</div><div class="ab-cd solo-cyber"><span class="ab-cd-lbl">Cyber termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
+<div class="announce-bar" id="offer-bar"><span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span><b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + TAPONES DE OÍDO GRATIS</span></b><div class="ab-plazo">1-2 días de envío</div><div class="ab-cd solo-cyber"><span class="ab-cd-lbl">Cyber termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -1985,7 +1985,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="price-block"><span class="pb-main"><sup>$</sup>68.990 <span class="price-was">$78.990</span> <span class="price-save">-12%</span></span></div>
         <div class="cuotas-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><div><div class="cq-main">Paga en <b>3 cuotas</b> de <b class="cuota-monto">$22.990</b></div><div class="cq-sub">Sin interés · con Mercado Pago</div></div></div>
         <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
-        <div class="gift-line solo-cyber"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4.5 6 4.5 6 7c0 1.2 1.6 1 6 1zM12 8c1.5-3.5 6-3.5 6-1 0 1.2-1.6 1-6 1z"/></svg>+ REGALO SORPRESA EN TU PEDIDO</div>
+        <div class="gift-line solo-cyber"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4.5 6 4.5 6 7c0 1.2 1.6 1 6 1zM12 8c1.5-3.5 6-3.5 6-1 0 1.2-1.6 1-6 1z"/></svg>+ TAPONES DE OÍDO GRATIS POR CYBER</div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
           <button class="btn-p" data-buy="Comprar ahora" data-reserve="Comprar ahora" onclick="abrirCheckout()">Comprar ahora</button>
@@ -2107,7 +2107,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                  tapones") y solo mientras dure el Cyber (html.cyber). El regalo
                  NO depende de raspar: el backend marca el pedido igual. -->
             <div class="raspe solo-cyber" id="raspe">
-              <div class="raspe-head"><span class="cy-chip">Cyber</span><b>Tu regalo sorpresa</b><small id="raspe-hint">Raspa con el dedo</small></div>
+              <div class="raspe-head"><span class="cy-chip">Cyber</span><b>Tu regalo Cyber</b><small id="raspe-hint">Raspa con el dedo</small></div>
               <div class="raspe-zona">
                 <div class="raspe-premio" id="raspe-premio" aria-hidden="true">
                   <img src="img/img-tapones-mini.webp" alt="Tapones de oído DEUS" width="64" height="64" loading="lazy" decoding="async">
@@ -2956,10 +2956,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const nota = document.getElementById('total-nota');
           if (nota) {
             const faltaEnvio = !ofertaActiva() && !selectedShipping;
-            // Con el raspe ya descubierto se suma el regalo a la nota. Antes de
-            // raspar no se nombra, para no arruinar la sorpresa.
-            const conRegalo = !checkoutTapones && document.documentElement.classList.contains('cyber') &&
-              !!document.querySelector('#raspe.revelado');
+            // En Cyber la nota nombra el regalo: ya se anuncia en la barra y
+            // junto al precio, así que no hay sorpresa que cuidar.
+            const conRegalo = !checkoutTapones && document.documentElement.classList.contains('cyber');
             nota.textContent = faltaEnvio ? 'Falta sumar el envío, se calcula más abajo'
               : (conRegalo ? 'Envío gratis + tapones DEUS de regalo incluidos' : 'Envío gratis incluido');
             nota.style.color = faltaEnvio ? '#c9a227' : '#7fc9a0';
@@ -4728,7 +4727,7 @@ function aplicarReserva() {
   // Top bar: solo "ENVÍO GRATIS", SIN contador (se retiró a pedido).
   if (ab) {
     ab.classList.remove('reserva');
-    // Cyber (hasta el miércoles 7-oct 23:59): chip, "+ REGALO SORPRESA" y el
+    // Cyber (hasta el miércoles 7-oct 23:59): chip, "+ TAPONES DE OÍDO GRATIS" y el
     // contador hasta el cierre. Lo marcado .solo-cyber / .sin-cyber lo prende
     // y lo apaga la clase html.cyber (ver <head>). Pasado el cierre el banner
     // cae solo a "🇨🇱 ENVÍO GRATIS", que sigue siendo cierto: el envío gratis
@@ -4736,7 +4735,7 @@ function aplicarReserva() {
     var quedaPromo = msRestanteOferta();
     ab.innerHTML = (ofertaActiva()
       ? '<span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span>' +
-        '<b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + REGALO SORPRESA</span></b>'
+        '<b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + TAPONES DE OÍDO GRATIS</span></b>'
       : '🔥 <b class="ab-titulo">Última unidad</b> disponible') +
       '<div class="ab-plazo">1-2 días de envío</div>' +
       (quedaPromo > 0
@@ -4845,8 +4844,8 @@ var OFERTA_SITIOS = [['cd-ofcd', 'ofcd', 'abcd-box']];
 
 // Se llama cada segundo, así que también sirve de red para el cierre del
 // Cyber: aunque /stock no responda y aplicarReserva() no llegue a correr, a la
-// medianoche del 7 al 8 de octubre se apaga todo lo de Cyber (chip, regalo
-// sorpresa, contador) sin tener que recargar la página.
+// medianoche del 7 al 8 de octubre se apaga todo lo de Cyber (chip, tapones
+// de regalo, contador) sin tener que recargar la página.
 function apagarPromoVencida() {
   document.documentElement.classList.remove('cyber');
   Array.prototype.forEach.call(document.querySelectorAll('.announce-bar .ab-cd'), function (e) {
