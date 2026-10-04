@@ -11,6 +11,7 @@
      (03:00 UTC, horario de verano). Va antes de pintar para que no parpadee.
      La misma hora está en FIN_PROMO_DIA: si se cambia una, cambiar la otra. -->
 <script>try{if(Date.now()<Date.UTC(2026,9,8,3,0,0))document.documentElement.classList.add('cyber');}catch(e){}</script>
+<script>document.documentElement.classList.add('js');</script>
 <style>
 html:not(.cyber) .solo-cyber{display:none!important;}
 html.cyber .sin-cyber{display:none!important;}
@@ -490,6 +491,24 @@ html.cyber #upsell-card{display:none!important;}
   background-image:radial-gradient(rgba(255,255,255,.11) 1px,transparent 1.6px);background-size:16px 16px;
   -webkit-mask-image:radial-gradient(ellipse 72% 66% at 50% 50%,#000 35%,transparent 78%);mask-image:radial-gradient(ellipse 72% 66% at 50% 50%,#000 35%,transparent 78%);}
 .fgrid li{width:136px;display:flex;}
+/* Las 14 funciones parten guardadas y se despliegan con "Ver las 14
+   funciones". Solo con JS (html.js): sin JS se ven de entrada. La altura
+   anima con grid-template-rows 0fr→1fr; al terminar de abrir, .listo deja
+   ver lo que sobresale (brillo, foco, la trama de puntos). */
+.fn-ver{display:flex;width:fit-content;align-items:center;gap:10px;margin:0 auto;padding:13px 22px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.035));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 10px 24px -14px rgba(0,0,0,.9);
+  color:var(--white);font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;letter-spacing:.3px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s,background .2s;}
+.fn-ver svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .35s ease;}
+.fn-ver[aria-expanded="true"] svg{transform:rotate(180deg);}
+@media(hover:hover){.fn-ver:hover{border-color:rgba(255,255,255,.3);background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.05));}}
+.fn-ver:focus-visible{outline:2px solid var(--white);outline-offset:3px;}
+html:not(.js) .fn-ver{display:none;}
+.fn-plegable{display:grid;grid-template-rows:1fr;margin-top:24px;transition:grid-template-rows .55s cubic-bezier(.2,.8,.2,1),margin-top .55s cubic-bezier(.2,.8,.2,1),visibility 0s linear 0s;}
+.fn-plegable-in{min-height:0;overflow:hidden;transition:opacity .45s ease .1s;}
+html:not(.js) .fn-plegable-in,.fn-plegable.abierto.listo .fn-plegable-in{overflow:visible;}
+html.js .fn-plegable:not(.abierto){grid-template-rows:0fr;margin-top:0;visibility:hidden;transition:grid-template-rows .45s cubic-bezier(.4,0,.2,1),margin-top .45s cubic-bezier(.4,0,.2,1),visibility 0s linear .45s;}
+html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity .2s ease;}
+@media(prefers-reduced-motion:reduce){.fn-plegable,.fn-plegable-in,.fn-ver svg{transition:none!important;}}
 .fbtn{--mx:50%;--my:-20%;position:relative;isolation:isolate;overflow:hidden;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
   border-radius:24px;padding:18px 8px 15px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;color:var(--white);line-height:1.25;cursor:pointer;-webkit-tap-highlight-color:transparent;
   background:radial-gradient(150px circle at var(--mx) var(--my),rgba(255,255,255,.11),rgba(255,255,255,0) 70%),linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
@@ -555,9 +574,10 @@ html.cyber #upsell-card{display:none!important;}
 .soft-cta-note{font-size:.74rem;color:var(--silver);margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;}
 .soft-cta-note span{display:inline-flex;align-items:center;gap:6px;}
 /* Aparición al hacer scroll: un fundido suave, el mismo para todo (la
-   grilla de funciones entra entera, sin rebote). La activa el JS de la
-   sección; sin JS o con "menos movimiento" todo se ve de entrada. */
-.soft.rev .soft-head,.soft.rev .step,.soft.rev .fgrid,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
+   grilla de funciones no: esa la despliega "Ver las 14 funciones"). La
+   activa el JS de la sección; sin JS o con "menos movimiento" todo se ve de
+   entrada. */
+.soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
 .soft.rev .rev-on{opacity:1;transform:none;}
 @media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}.soft.rev .step:nth-child(3){transition-delay:.2s;}}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
@@ -1889,6 +1909,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if(t.closest('.proof-line,[onclick*="abrirResenas"]')) ev('accion:resenas');
         if(t.closest('#rot360,.hold-arrow')) ev('accion:girar');
         if(t.closest('.fbtn')) ev('accion:funciones');
+        if(t.closest('#fn-ver')) ev('accion:ver-funciones');
       },true);
       // Giro del 360° también por arrastre (no solo click)
       var r360=document.getElementById('rot360'); if(r360) r360.addEventListener('pointerdown',function(){ ev('accion:girar'); });
@@ -3791,6 +3812,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <h2 class="soft-title">+14 funciones en una sola app</h2>
           <p class="soft-sub">Toca cada una para ver para qué te sirve.</p>
         </div>
+        <button type="button" class="fn-ver" id="fn-ver" aria-expanded="false" aria-controls="fn-lista"><span>Ver las 14 funciones</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="fn-plegable" id="fn-lista">
+        <div class="fn-plegable-in">
         <ul class="fgrid">
         <li><button type="button" class="fbtn" data-fn="fc" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/></svg></span><span>Frecuencia cardíaca</span></button></li>
         <li><button type="button" class="fbtn" data-fn="spo2" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></span><span>Oxígeno en sangre</span></button></li>
@@ -3807,6 +3831,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <li><button type="button" class="fbtn" data-fn="alarma" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 2M5 4L2 7M19 4l3 3"/></svg></span><span>Alarma silenciosa</span></button></li>
         <li><button type="button" class="fbtn" data-fn="avisos" aria-haspopup="dialog"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8"/></svg></span><span>Avisos por vibración</span></button></li>
         </ul>
+        </div>
+        </div>
         <p class="soft-note">Sin suscripción: pagas la banda una vez y la app es tuya.</p>
       </div>
 
@@ -3996,12 +4022,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if(b && !b.contains(e.relatedTarget)){ b.style.removeProperty('--mx'); b.style.removeProperty('--my'); }
       });
     }
+    // "Ver las 14 funciones": despliega la grilla y la vuelve a guardar
+    var ver=document.getElementById('fn-ver'), caja=document.getElementById('fn-lista');
+    if(ver && caja){
+      var rotulo=ver.querySelector('span'), listoT=null;
+      caja.addEventListener('transitionend',function(e){
+        if(e.target===caja && e.propertyName==='grid-template-rows' && caja.classList.contains('abierto')) caja.classList.add('listo');
+      });
+      ver.addEventListener('click',function(){
+        var abrir=!caja.classList.contains('abierto');
+        clearTimeout(listoT);
+        caja.classList.remove('listo');
+        caja.classList.toggle('abierto',abrir);
+        ver.setAttribute('aria-expanded',abrir?'true':'false');
+        if(rotulo) rotulo.textContent=abrir?'Ocultar funciones':'Ver las 14 funciones';
+        // Sin animación (navegador viejo o "menos movimiento") no llega el transitionend
+        if(abrir) listoT=setTimeout(function(){ if(caja.classList.contains('abierto')) caja.classList.add('listo'); },700);
+      });
+    }
     if(reducir || !('IntersectionObserver' in window)) return;
     sec.classList.add('rev');
     var io=new IntersectionObserver(function(ents){
       ents.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('rev-on'); io.unobserve(en.target); } });
     },{rootMargin:'0px 0px -6% 0px',threshold:0.1});
-    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fgrid,.soft-note,.bat-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
+    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fn-ver,.soft-note,.bat-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
   })();
   </script>
 
