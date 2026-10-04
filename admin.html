@@ -62,6 +62,8 @@
   section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:15px;}
   .sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;}
   .sec-h h2{font-size:1rem;letter-spacing:.2px;color:#fff;margin:0;font-weight:700;}
+  .sec-act{font-size:.7rem;color:#8a8a8a;margin:-10px 0 14px;}
+  .sec-act b{color:#cfcfcf;font-weight:600;}
   .pill{font-size:.62rem;padding:4px 11px;border-radius:20px;border:none;color:#fff;letter-spacing:.3px;background:var(--pill);font-variant-numeric:tabular-nums;font-weight:600;}
 
   /* Funnel bars */
@@ -359,6 +361,7 @@
 
     <section id="sec-utilidad">
       <div class="sec-h"><h2>💰 Utilidad diaria</h2><button class="btn ghost" onclick="cargarUtilidad()">Actualizar</button></div>
+      <div class="sec-act" id="util-act"></div>
       <div class="ctr-rango">
         <button data-udias="7" onclick="cargarUtilidad(7)">7 días</button>
         <button data-udias="14" class="on" onclick="cargarUtilidad(14)">14 días</button>
@@ -512,6 +515,7 @@
 
     <section id="sec-ads">
       <div class="sec-h"><h2>📣 Ads Manager (Meta) · últimos 7 días</h2><button class="btn ghost" onclick="cargarAds()">Actualizar</button></div>
+      <div class="sec-act" id="ads-act"></div>
       <div class="empty" id="ads-off" style="display:none">Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID).</div>
       <div class="empty" id="ads-empty" style="display:none">Sin campañas.</div>
       <!-- CTR diario por campaña activa. El CTR es de clics en el ENLACE: el
@@ -1589,6 +1593,7 @@
   }
 
   function pintarUtilidad(d){
+    marcarAct('util-act');
     document.getElementById('util-off').style.display='none';
     var t = d.total, f = d.filas || [];
     var dias = f.length || 1;
@@ -2187,10 +2192,18 @@
     tip.style.top = (cv.offsetTop + 10) + 'px';
   }
 
-  // Ads Manager (Meta): carga manual (botón "Actualizar"), no auto-refresh
-  // cada 5s como el resto del panel, para no gastar el rate limit de Meta.
+  // Ads Manager (Meta): se actualiza solo cada UNA HORA (ver el setInterval al
+  // final) y con el botón "Actualizar"; no cada 5s como el resto del panel,
+  // para no gastar el rate limit de Meta.
   function money0(n){ return '$'+Math.round(Number(n)||0).toLocaleString('es-CL'); }
+  var adsLeido = 0;   // cuándo se pidió por última vez todo lo de Meta
+  function marcarAct(id){
+    var el = document.getElementById(id); if(!el) return;
+    var hh = new Date().toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/Santiago' });
+    el.innerHTML = 'Actualizado a las <b>'+hh+'</b> (hora de Chile) · se actualiza solo cada hora';
+  }
   function cargarAds(){
+    adsLeido = Date.now();
     // El .catch vacío que había acá se tragaba TODO: con el token de Meta
     // caído, la sección quedaba en blanco como si no hubiera campañas, y no
     // había forma de saber desde el panel que el problema era el token. Es el
@@ -2205,6 +2218,7 @@
     }).then(function(d){
       off.style.display='none';
       pintarAds(d.campaigns||[]);
+      marcarAct('ads-act');
     }).catch(function(e){
       if(e && e.message==='off') return;
       off.textContent='⚠️ Meta no respondió: '+(e && e.message ? e.message : 'error desconocido')+'. Si dice que el acceso está bloqueado, hay que regenerar META_ADS_ACCESS_TOKEN en Render.';
@@ -2306,10 +2320,18 @@
   document.getElementById('key').addEventListener('keydown',function(e){ if(e.key==='Enter') entrar(); });
   // Refresco en vivo
   setInterval(function(){ if(clave && document.getElementById('panel').style.display!=='none') cargar(false); }, 5000);
-  // El CTR horario va aparte y MUCHO más lento: Meta publica cada hora con
-  // atraso, así que pedirlo cada 5s no traería nada nuevo y quemaría el
-  // rate limit de la cuenta para todo lo demás.
-  setInterval(function(){ if(clave && document.getElementById('panel').style.display!=='none') cargarHora(); }, 3600000);
+  // Lo de Meta va aparte y MUCHO más lento: cada una hora se vuelve a pedir
+  // el gasto por campaña, el CTR diario y horario, y la utilidad con el gasto
+  // real del día (cargarAds() llama a los cuatro). Meta publica con atraso,
+  // así que pedirlo cada 5s no traería nada nuevo y quemaría el rate limit.
+  // Si la pestaña estuvo en segundo plano más de una hora, se pone al día
+  // apenas se vuelve a mirar, sin esperar al próximo turno.
+  var HORA_MS = 3600000;
+  function panelAbierto(){ return clave && document.getElementById('panel').style.display!=='none'; }
+  setInterval(function(){ if(panelAbierto()) cargarAds(); }, HORA_MS);
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && panelAbierto() && adsLeido && Date.now() - adsLeido >= HORA_MS) cargarAds();
+  });
 </script>
 </body>
 </html>
