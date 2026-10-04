@@ -533,6 +533,7 @@ html.cyber #upsell-card{display:none!important;}
 .cmp thead th{font-size:.72rem;font-weight:600;color:#8a8a94;letter-spacing:.2px;padding-top:18px;padding-bottom:14px;}
 .cmp tbody th{text-align:left;font-weight:600;line-height:1.35;width:40%;}
 .cmp tbody th small{display:block;font-weight:400;color:#8a8a94;font-size:.7rem;margin-top:2px;}
+.cmp thead th small{display:block;font-weight:400;color:#74747e;font-size:.64rem;margin-top:3px;letter-spacing:0;line-height:1.3;}
 /* Columna DEUS Band: vidrio más claro con filos de luz a los lados */
 .cmp .c-deus{background:rgba(255,255,255,.055);box-shadow:inset 1px 0 0 rgba(255,255,255,.08),inset -1px 0 0 rgba(255,255,255,.08);}
 .cmp thead .c-deus{color:var(--white);font-size:.82rem;border-radius:14px 14px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.055));
@@ -563,7 +564,7 @@ html.cyber #upsell-card{display:none!important;}
   .bat-card{grid-template-columns:1fr;padding:26px 18px 22px;gap:14px;}}
 @media(max-width:600px){.soft{padding:0;margin:24px -12px;}.soft-in{padding:42px 16px;border-radius:22px;}.soft-title{font-size:1.6rem;}.bat-txt .soft-title{font-size:1.5rem;}.soft-block+.soft-block{margin-top:56px;}.soft-head{margin-bottom:22px;}
   .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);}.fbtn{padding:16px 4px 12px;font-size:.68rem;gap:8px;border-radius:20px;}.fi{width:38px;height:38px;border-radius:13px;}.fi svg{width:19px;height:19px;}
-  .cmp-wrap{padding:6px 4px 2px;border-radius:20px;}.cmp{font-size:.72rem;}.cmp th,.cmp td{padding:12px 4px;}.cmp thead th{font-size:.62rem;}.cmp thead .c-deus{font-size:.7rem;}.cmp tbody th{padding-left:10px;width:38%;}.cmp tbody th small{font-size:.62rem;}.cv{font-size:.66rem;}.ck,.cx{width:22px;height:22px;}.ck svg,.cx svg{width:12px;height:12px;}
+  .cmp-wrap{padding:6px 4px 2px;border-radius:20px;}.cmp{font-size:.72rem;}.cmp th,.cmp td{padding:12px 4px;}.cmp thead th{font-size:.62rem;}.cmp thead th small{font-size:.56rem;}.cmp thead .c-deus{font-size:.7rem;}.cmp tbody th{padding-left:10px;width:38%;}.cmp tbody th small{font-size:.62rem;}.cv{font-size:.66rem;}.ck,.cx{width:22px;height:22px;}.ck svg,.cx svg{width:12px;height:12px;}
   .bat-stats b{font-size:1.6rem;}}
 @media(prefers-reduced-motion:reduce){.fbtn.rebota{animation:none;}.fbtn,.fbtn.apretado,.fbtn.suelta,.fbtn .fi{transition:none;}}
 /* Detalle de cada función: <dialog> nativo (capa superior; Esc y foco los
@@ -3772,7 +3773,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <li class="step">
             <div class="step-top"><span class="step-n">01</span><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9 6V3h6v3M9 18v3h6v-3"/></svg></span></div>
             <h3>Póntela</h3>
-            <p>En la muñeca, en el brazo que prefieras. Pesa 24 g: la llevas todo el día, incluso para dormir, y sigues con tu rutina.</p>
+            <p>En la muñeca, en el brazo que prefieras. Pesa solo 24 g: la llevas todo el día e incluso para dormir, cómoda y ligera, sin luces que interrumpan tu sueño.</p>
           </li>
           <li class="step">
             <div class="step-top"><span class="step-n">02</span><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l2-6 4 12 3-9 2 3h5"/></svg></span></div>
@@ -3835,22 +3836,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div class="cmp-wrap">
           <table class="cmp">
-            <caption class="vh">Comparación entre DEUS Band, un smartwatch con pantalla y las bandas con suscripción</caption>
+            <caption class="vh">Comparación entre DEUS Band, otras smartbands (Whoop, Polar, Garmin) y un smartwatch</caption>
             <thead>
               <tr>
                 <th scope="col"><span class="vh">Característica</span></th>
                 <th scope="col" class="c-deus">DEUS Band</th>
+                <th scope="col">Smartband<small>Whoop, Polar, Garmin</small></th>
                 <th scope="col">Smartwatch</th>
-                <th scope="col">Bandas con suscripción</th>
               </tr>
             </thead>
             <tbody>
-              <tr><th scope="row">Sin pantalla<small>Cero distracciones</small></th><td class="c-deus"><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="cx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="vh">No</span></td><td><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td></tr>
-              <tr><th scope="row">Batería<small>Por carga</small></th><td class="c-deus"><span class="cv">Hasta 30 días</span></td><td><span class="cv muted">Pocos días</span></td><td><span class="cv muted">Menos de 30</span></td></tr>
-              <tr><th scope="row">Pago único<small>Sin mensualidad</small></th><td class="c-deus"><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="cx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="vh">No</span></td></tr>
+              <tr><th scope="row">Sin pantalla<small>Cero distracciones</small></th><td class="c-deus"><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="cx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="vh">No</span></td></tr>
+              <tr><th scope="row">Batería<small>Por carga</small></th><td class="c-deus"><span class="cv">Hasta 30 días</span></td><td><span class="cv muted">5 a 7 días</span></td><td><span class="cv muted">1 a 2 días</span></td></tr>
+              <tr><th scope="row">Pago único<small>Sin mensualidad</small></th><td class="c-deus"><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="cv muted">Depende</span></td><td><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td></tr>
               <tr><th scope="row">Sueño, HRV y recuperación</th><td class="c-deus"><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td></tr>
-              <tr><th scope="row">App sin costo<small>En español</small></th><td class="c-deus"><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="cx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="vh">No</span></td></tr>
-              <tr><th scope="row">Garantía y soporte en Chile<small>60 días · WhatsApp</small></th><td class="c-deus"><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="cv muted">Depende</span></td><td><span class="cv muted">Depende</span></td></tr>
+              <tr><th scope="row">App sin costo<small>En español</small></th><td class="c-deus"><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="cv muted">Depende</span></td><td><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td></tr>
+              <tr><th scope="row">Dos correas incluidas</th><td class="c-deus"><span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="vh">Sí</span></td><td><span class="cx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="vh">No</span></td><td><span class="cx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="vh">No</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -4245,63 +4246,71 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if(!stage) return;
       var phones=[].slice.call(stage.querySelectorAll('.fan-ph'));
       var n=phones.length, pos=0, target=0, anim=null;
+      // En círculo: después de la última viene la primera, siempre hacia el
+      // mismo lado (antes volvía de golpe de la 4 a la 1). La pantalla que da
+      // la vuelta lo hace invisible, en el extremo (opacidad 0).
+      function circ(off){ off=((off%n)+n)%n; return off>=n/2 ? off-n : off; }
       function render(){
         var w=stage.clientWidth;
         phones.forEach(function(ph,i){
-          var off=i-pos;
+          var off=circ(i-pos), a=Math.abs(off);
           var x=off*w*0.26;
-          var sc=Math.max(.5,1-Math.abs(off)*.16);
-          var op=Math.max(0,1-Math.abs(off)*.32);
+          var sc=Math.max(.5,1-a*.16);
+          var op=a<=1.4 ? 1-a*.32 : Math.max(0,(1-1.4*.32)*(2-a)/0.6);
           ph.style.transform='translate(calc(-50% + '+x+'px),-50%) rotateY('+(-off*24)+'deg) scale('+sc+')';
-          ph.style.zIndex=String(100-Math.round(Math.abs(off)*10));
+          ph.style.zIndex=String(100-Math.round(a*10));
           ph.style.opacity=op;
         });
       }
+      // Lleva a una pantalla con freno suave (al soltar o con las flechas)
       function animateTo(t){
-        target=Math.max(0,Math.min(n-1,t));
+        target=t;
         cancelAnimationFrame(anim);
         (function step(){
-          pos+=(target-pos)*0.16;
-          if(Math.abs(target-pos)<0.004){ pos=target; render(); return; }
+          pos+=(target-pos)*0.09;
+          if(Math.abs(target-pos)<0.003){ pos=target; render(); return; }
           render(); anim=requestAnimationFrame(step);
         })();
       }
-      // Auto-rotación: avanza sola, con vuelta al inicio. Se pausa al
-      // interactuar y retoma sola un rato después de soltar.
+      // Giro solo: avanza siempre, sin detenerse ni saltar. Va más lento cuando
+      // una pantalla está al centro (para alcanzar a verla) y un poco más
+      // rápido entre una y otra: pos(u) = u - A·sen(2πu)/2π, con u = tiempo/T.
       var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var autoIv=null, reanudarTimer=null;
-      function pararAuto(){ if(autoIv){ clearInterval(autoIv); autoIv=null; } }
+      var T=4200, A=0.55, autoOn=false, rafAuto=null, u0=0, t0=0, reanudarTimer=null;
+      function posDe(u){ return u-A*Math.sin(2*Math.PI*u)/(2*Math.PI); }
+      function uDe(p){ var u=p; for(var k=0;k<5;k++){ u-=(posDe(u)-p)/(1-A*Math.cos(2*Math.PI*u)); } return u; }
+      function tick(ahora){
+        if(!autoOn) return;
+        pos=target=posDe(u0+(ahora-t0)/T);
+        render();
+        rafAuto=requestAnimationFrame(tick);
+      }
+      function pararAuto(){ autoOn=false; cancelAnimationFrame(rafAuto); }
       function iniciarAuto(){
-        if(reduceMotion || autoIv) return;
-        autoIv=setInterval(function(){
-          var next=Math.round(target)+1;
-          if(next>n-1) next=0;
-          animateTo(next);
-        },3200);
+        if(reduceMotion || autoOn) return;
+        cancelAnimationFrame(anim);
+        autoOn=true; u0=uDe(pos); t0=performance.now();   // sigue desde donde quedó
+        rafAuto=requestAnimationFrame(tick);
       }
       function reanudarPronto(){ clearTimeout(reanudarTimer); reanudarTimer=setTimeout(iniciarAuto,1800); }
 
       var x0=null,y0=null,p0=0,drag=false,horiz=null;
-      function down(x,y){ x0=x; y0=y; p0=pos; drag=true; horiz=null; pararAuto(); cancelAnimationFrame(anim); }
+      function down(x,y){ x0=x; y0=y; p0=pos; drag=true; horiz=null; pararAuto(); cancelAnimationFrame(anim); clearTimeout(reanudarTimer); }
       function move(x,y){
         if(!drag) return;
         var dx=x-x0, dy=y-y0;
         if(horiz===null && (Math.abs(dx)>8||Math.abs(dy)>8)) horiz=Math.abs(dx)>Math.abs(dy);
         if(!horiz) return;
         var paso=stage.clientWidth*0.26;
-        pos=Math.max(-0.35,Math.min(n-0.65,p0-dx/paso));
+        pos=p0-dx/paso;
         render();
       }
-      function up(){ if(!drag) return; drag=false; if(horiz) animateTo(Math.round(pos)); horiz=null; reanudarPronto(); }
+      function up(){ if(!drag) return; drag=false; animateTo(Math.round(pos)); horiz=null; reanudarPronto(); }
 
-      // Flechas: mantener presionada avanza pantalla por pantalla (con vuelta al inicio)
+      // Flechas: mantener presionada avanza pantalla por pantalla (en círculo)
       var holdIv=null;
-      function holdStep(dir){
-        var next=Math.round(target)+dir;
-        if(next<0) next=n-1; else if(next>n-1) next=0;
-        animateTo(next);
-      }
-      function holdStart(dir){ pararAuto(); cancelAnimationFrame(anim); holdStep(dir); clearInterval(holdIv); holdIv=setInterval(function(){ holdStep(dir); },520); }
+      function holdStep(dir){ animateTo(Math.round(target)+dir); }
+      function holdStart(dir){ pararAuto(); clearTimeout(reanudarTimer); cancelAnimationFrame(anim); holdStep(dir); clearInterval(holdIv); holdIv=setInterval(function(){ holdStep(dir); },650); }
       function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } reanudarPronto(); }
       function bindHold(btn,dir){
         if(!btn) return;
@@ -4324,7 +4333,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       stage.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
       window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
       window.addEventListener('mouseup',up);
-      stage.addEventListener('mouseenter',pararAuto);
+      stage.addEventListener('mouseenter',function(){ pararAuto(); animateTo(Math.round(pos)); });
       stage.addEventListener('mouseleave',reanudarPronto);
       window.addEventListener('resize',render);
       render();
