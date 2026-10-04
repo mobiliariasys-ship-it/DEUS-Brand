@@ -142,9 +142,20 @@ function extraerCompras(insights) {
   return { resultados: 0, costoPorResultado: null };
 }
 
-async function getInsights(campaignId, datePreset = 'last_7d') {
+// Ventana de N días QUE INCLUYE HOY (fechas de Chile, el huso de la cuenta).
+// NO se usan los date_preset last_7d / last_14d / last_30d: son los N días
+// CERRADOS anteriores y dejan HOY afuera, así que el gasto del día recién
+// aparecía en el panel cuando el día terminaba (la utilidad de hoy salía con
+// publicidad en cero y las tarjetas no se movían en todo el día).
+const DIAS_VALIDOS = [7, 14, 30];
+function rangoHastaHoy(dias, porDefecto) {
+  const n = DIAS_VALIDOS.includes(Number(dias)) ? Number(dias) : porDefecto;
+  return JSON.stringify({ since: diaChile(n - 1), until: diaChile(0) });
+}
+
+async function getInsights(campaignId, dias = 7) {
   const data = await llamar(`/${campaignId}/insights`, {
-    params: { fields: INSIGHTS_FIELDS, date_preset: datePreset }
+    params: { fields: INSIGHTS_FIELDS, time_range: rangoHastaHoy(dias, 7) }
   });
   const row = data.data?.[0] || {};
   const { resultados, costoPorResultado } = extraerCompras(row);
@@ -173,16 +184,13 @@ async function getInsights(campaignId, datePreset = 'last_7d') {
 // no el ctr "de todos los clics": ese último infla con likes, comentarios y
 // despliegues del texto, así que sube sin que nadie haya entrado al sitio.
 //
-// date_preset solo acepta valores de su enum, no un número arbitrario de días,
-// así que la ventana viene de una lista blanca.
-const VENTANAS_DIARIAS = { 7: 'last_7d', 14: 'last_14d', 30: 'last_30d' };
-
+// La ventana termina HOY (ver rangoHastaHoy): el último punto es el día en
+// curso, todavía incompleto.
 async function getInsightsDiarios(campaignId, dias = 14) {
-  const preset = VENTANAS_DIARIAS[dias] || VENTANAS_DIARIAS[14];
   const filas = await insightsCompletos(`/${campaignId}/insights`, {
     fields: 'spend,impressions,clicks,ctr,inline_link_clicks,inline_link_click_ctr,actions',
     time_increment: 1,
-    date_preset: preset
+    time_range: rangoHastaHoy(dias, 14)
   });
   // Meta devuelve los días en orden ascendente, pero no lo promete: se ordena
   // acá para que el gráfico no dependa de eso.
@@ -294,7 +302,6 @@ async function duplicateCampaign(campaignId, overrides = {}) {
 // diaria hay que restar todo lo gastado en publicidad ese día, incluidas las
 // campañas pausadas después, que igual consumieron plata mientras corrían.
 async function getGastoDiarioCuenta(dias = 14) {
-  const preset = VENTANAS_DIARIAS[dias] || VENTANAS_DIARIAS[14];
 
   // Camino 1: una sola llamada a nivel de CUENTA. Es lo barato — un request
   // trae todo. En esta cuenta Meta lo rechaza con "API access blocked": el
@@ -303,7 +310,7 @@ async function getGastoDiarioCuenta(dias = 14) {
   try {
     const { adAccountId } = creds();
     const filas = await insightsCompletos(`/${adAccountId}/insights`, {
-      fields: 'spend', time_increment: 1, date_preset: preset
+      fields: 'spend', time_increment: 1, time_range: rangoHastaHoy(dias, 14)
     });
     if (filas.length) {
       const mapa = {};

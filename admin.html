@@ -542,7 +542,7 @@
     </section>
 
     <section id="sec-ads">
-      <div class="sec-h"><h2>📣 Ads Manager (Meta) · últimos 7 días</h2><button class="btn ghost" onclick="cargarAds()">Actualizar</button></div>
+      <div class="sec-h"><h2>📣 Ads Manager (Meta) · últimos 7 días, con hoy</h2><button class="btn ghost" onclick="cargarAds()">Actualizar</button></div>
       <div class="sec-act" id="ads-act"></div>
       <div class="empty" id="ads-off" style="display:none">Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID).</div>
       <div class="empty" id="ads-empty" style="display:none">Sin campañas.</div>
@@ -2378,10 +2378,12 @@
   function marcarAct(id){
     var el = document.getElementById(id); if(!el) return;
     var hh = new Date().toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/Santiago' });
-    el.innerHTML = 'Actualizado a las <b>'+hh+'</b> (hora de Chile) · se actualiza solo cada ' + (id === 'util-act' ? '5 minutos' : 'hora');
+    el.innerHTML = 'Actualizado a las <b>'+hh+'</b> (hora de Chile) · incluye el gasto de hoy · se actualiza solo cada 5 minutos';
   }
-  function cargarAds(){
-    adsLeido = Date.now();
+  // soloTarjetas = solo las tarjetas de campañas (el refresco de cada 5 min);
+  // sin él se recarga además el CTR diario y horario y la utilidad (cada hora).
+  function cargarAds(soloTarjetas){
+    if(!soloTarjetas) adsLeido = Date.now();
     // El .catch vacío que había acá se tragaba TODO: con el token de Meta
     // caído, la sección quedaba en blanco como si no hubiera campañas, y no
     // había forma de saber desde el panel que el problema era el token. Es el
@@ -2403,6 +2405,7 @@
       off.style.display='block';
       document.getElementById('ads-grid').style.display='none';
     });
+    if(soloTarjetas) return;
     cargarCtr();
     cargarHora();
     // La utilidad no depende de que Meta Ads este configurado: si no responde,
@@ -2508,11 +2511,11 @@
   function panelAbierto(){ return clave && document.getElementById('panel').style.display!=='none'; }
   setInterval(function(){ if(panelAbierto()) cargarAds(); }, HORA_MS);
   // El gasto en vivo va más rápido: cada minuto el gasto por hora y cada 5 la
-  // utilidad (su gasto de hoy), solo con el panel a la vista. El servidor
+  // utilidad y las tarjetas de campañas, solo con el panel a la vista. El servidor
   // guarda la lectura de Meta 55 s, así que esto no multiplica las llamadas.
   var MIN_MS = 60000, utilLeido = 0;
   setInterval(function(){ if(panelAbierto() && !document.hidden) cargarGastoHora(); }, MIN_MS);
-  setInterval(function(){ if(panelAbierto() && !document.hidden){ utilLeido = Date.now(); cargarUtilidad(); } }, 5 * MIN_MS);
+  setInterval(function(){ if(panelAbierto() && !document.hidden){ utilLeido = Date.now(); cargarUtilidad(); cargarAds(true); } }, 5 * MIN_MS);
   document.addEventListener('visibilitychange', function(){
     if(document.hidden || !panelAbierto()) return;
     if(adsLeido && Date.now() - adsLeido >= HORA_MS) cargarAds();

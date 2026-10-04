@@ -102,3 +102,26 @@ test('un cursor que se repite no deja el request colgado', async () => {
   assert.ok(vueltas <= 20, 'se pasó del tope de páginas: ' + vueltas);
   assert.strictEqual(filas.length, 20);
 });
+
+// last_7d / last_14d / last_30d de Meta son los N días CERRADOS: dejan HOY
+// afuera, y el gasto del día recién aparecía en el panel al terminar el día.
+test('todas las ventanas terminan HOY (hora de Chile), sin date_preset', async () => {
+  const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+  const revisar = (u, n, que) => {
+    const p = new URL(u).searchParams;
+    assert.strictEqual(p.get('date_preset'), null, que + ': no debe usar date_preset');
+    const r = JSON.parse(p.get('time_range'));
+    assert.strictEqual(r.until, hoy, que + ': la ventana tiene que terminar hoy');
+    const dias = Math.round((Date.parse(r.until) - Date.parse(r.since)) / 86400000) + 1;
+    assert.strictEqual(dias, n, que + ': ventana de ' + n + ' días contando hoy');
+  };
+  let pedidas = fingirMeta([[dia(0, 100)]]);
+  await meta.getInsightsDiarios('123', 14);
+  revisar(pedidas[0], 14, 'serie diaria');
+  pedidas = fingirMeta([[dia(0, 100)]]);
+  await meta.getInsights('123');
+  revisar(pedidas[0], 7, 'tarjeta de campaña');
+  pedidas = fingirMeta([[dia(0, 100)]]);
+  await meta.getGastoDiarioCuenta(30);
+  revisar(pedidas[0], 30, 'gasto de la cuenta');
+});
