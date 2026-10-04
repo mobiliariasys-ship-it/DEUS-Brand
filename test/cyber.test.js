@@ -49,6 +49,18 @@ test('el raspe tacha el precio al que de verdad se venden los tapones', () => {
     'el tachado tiene que ser el precio de la tienda (si cambia TAPONES_PRICE, cambiarlo también en el raspe)');
 });
 
+test('el precio tachado y el % son los mismos en el backend y en el sitio', () => {
+  const { DESPUES } = require('../services/precio');
+  const real = Math.floor((DESPUES.ancla - DESPUES.precio) / DESPUES.ancla * 100);
+  assert.ok(DESPUES.off <= real, 'el sello no puede prometer más descuento que el real');
+  const clp = n => '$' + n.toLocaleString('es-CL');
+  const arranque = HTML.match(/: \{ precio: (\d+), ancla: (\d+), off: (\d+) \};/);
+  assert.ok(arranque, 'falta el PRECIO de arranque del sitio');
+  assert.deepStrictEqual(arranque.slice(1).map(Number), [DESPUES.precio, DESPUES.ancla, DESPUES.off], 'el sitio arranca con otro precio que el backend');
+  assert.ok(HTML.includes('<span class="price-was">' + clp(DESPUES.ancla) + '</span> <span class="price-save">-' + DESPUES.off + '%</span>'),
+    'el bloque de precio del HTML tiene otro tachado que el backend');
+});
+
 // Captura lo que se le mandaría a Resend, sin red.
 function capturarCorreos() {
   const enviados = [];
