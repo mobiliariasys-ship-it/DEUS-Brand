@@ -419,23 +419,6 @@ html.cyber .benef-head{display:flex;align-items:center;gap:8px;font-size:.6rem;l
 html.cyber .beneficios .ship-line,html.cyber .beneficios .gift-line{color:var(--cy-claro);margin:0;}
 html.cyber .beneficios .ship-line svg,html.cyber .beneficios .gift-line svg{stroke:var(--cy);}
 html.cyber .beneficios .ship-line+.gift-line{margin-top:8px;}
-/* Promo Cyber "2 x $119.990". NUNCA "2x1": el par cuesta más que una sola. */
-.ab-par{display:block;margin-top:3px;font-size:.8rem;letter-spacing:2px;color:var(--cy-claro);font-weight:700;}
-.ab-par b{color:#fff;}
-.pb-par{display:flex;align-items:center;gap:10px;width:100%;margin:4px 0 14px;padding:10px 12px;border:1px solid var(--cy-linea);background:rgba(111,183,221,.06);border-radius:10px;color:var(--cy-claro);font-family:'DM Sans',sans-serif;text-align:left;cursor:pointer;transition:background .2s,border-color .2s;}
-.pb-par:hover{background:rgba(111,183,221,.12);border-color:var(--cy);}
-.pb-par .cy-chip{margin:0;flex-shrink:0;}
-.pb-par-t{flex:1;display:flex;flex-direction:column;gap:3px;line-height:1.2;}
-.pb-par-t b{font-size:1rem;letter-spacing:.4px;color:#fff;}
-.pb-par-t small{font-size:.7rem;color:#8fb8cf;}
-.pb-par-go{flex-shrink:0;font-size:.62rem;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;color:var(--cy-claro);white-space:nowrap;}
-.co-par{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;flex-wrap:wrap;margin-top:12px;padding:9px 12px;border:1px solid var(--cy-linea);background:rgba(111,183,221,.06);border-radius:8px;font-size:.78rem;color:var(--cy-claro);}
-.co-par b{color:#fff;}
-.co-par-ah{font-size:.74rem;color:#7fd589;font-weight:600;}
-.co-par-btn{background:var(--cy);color:#0a0a0a;border:none;border-radius:6px;padding:7px 12px;font-weight:700;font-size:.64rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.fc-par{margin:-12px 0 22px;font-size:.82rem;color:var(--cy-claro);}
-.fc-par b{color:#fff;}
-.sb-par{display:block;font-size:.52rem;color:var(--cy-claro);letter-spacing:1px;margin-top:2px;font-weight:600;}
 .raspe{margin-top:8px;border:1px solid #2b2e33;background:#141417;border-radius:10px;padding:12px 12px 8px;}
 #checkout-overlay.tapones .raspe{display:none!important;}
 html.cyber #upsell-card{display:none!important;}
@@ -1604,7 +1587,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar"><span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span><b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-par solo-cyber par-promo">2 x <b class="par-monto">$119.990</b></span><div class="ab-plazo">1-2 días de envío</div><div class="ab-cd solo-cyber"><span class="ab-cd-lbl">Cyber termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
+<div class="announce-bar" id="offer-bar"><span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span><b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + TAPONES DE OÍDO GRATIS</span></b><div class="ab-plazo">1-2 días de envío</div><div class="ab-cd solo-cyber"><span class="ab-cd-lbl">Cyber termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -1933,8 +1916,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if(t.closest('#rot360,.hold-arrow')) ev('accion:girar');
         if(t.closest('.fbtn')) ev('accion:funciones');
         if(t.closest('#fn-ver')) ev('accion:ver-funciones');
-        if(t.closest('.pb-par')) ev('accion:llevar-2');
-        if(t.closest('.co-par-btn')) ev('accion:agregar-par');
       },true);
       // Giro del 360° también por arrastre (no solo click)
       var r360=document.getElementById('rot360'); if(r360) r360.addEventListener('pointerdown',function(){ ev('accion:girar'); });
@@ -2008,9 +1989,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              corre después del fetch de /stock, así que si el backend tarda el
              precio igual se ve completo (ancla + descuento + envío gratis). -->
         <div class="price-block"><span class="pb-main"><sup>$</sup>68.990 <span class="price-was">$78.990</span> <span class="price-save">-12%</span></span></div>
-        <!-- Promo Cyber del par: abre el checkout ya con 2 bandas. Los montos
-             los repinta aplicarReserva() con lo que manda /stock. -->
-        <button type="button" class="pb-par solo-cyber par-promo" onclick="abrirCheckout(null, 2)"><span class="cy-chip">Cyber</span><span class="pb-par-t"><b>2 x <span class="par-monto">$119.990</span></b><small>Ahorras <span class="par-ahorro">$17.990</span></small></span><span class="pb-par-go">Llevar 2 →</span></button>
         <div class="cuotas-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><div><div class="cq-main">Paga en <b>3 cuotas</b> de <b class="cuota-monto">$22.990</b></div><div class="cq-sub">Sin interés · con Mercado Pago</div></div></div>
         <!-- Beneficios bajo el precio. En Cyber van juntos en un solo recuadro
              celeste ("Cyber · Tu compra incluye") para que se lean como una
@@ -2114,8 +2092,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <span style="width:32px;text-align:center;font-size:.95rem;font-weight:600;" id="co-qty-display">1</span>
               <button class="cart-qty-btn" id="co-qty-plus" onclick="cambiarCantidadCheckout(1)">+</button>
             </div>
-            <!-- Promo Cyber "2 x $119.990": lo pinta pintarPromoPar(). -->
-            <div class="co-par solo-cyber" id="co-par" style="display:none;"></div>
             <!-- Selector de color POR UNIDAD. Antes, llevar 2 bandas obligaba a
                  que las dos fueran del mismo color: quien quería una negra y
                  una rosada tenía que hacer dos compras (dos envíos) o escribir
@@ -2310,10 +2286,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let PRECIO = Date.now() < SUBIDA_PRECIO_MS
           ? { precio: 54990, ancla: 62990, off: 12 }
           : { precio: 68990, ancla: 78990, off: 12 };
-        // Promo Cyber "2 x $119.990": precio de DOS bandas (0 = sin promo). Lo
-        // manda /stock como `par`; esto es solo el arranque, con el mismo
-        // corte que html.cyber. Ver subtotalBandas() en services/precio.js.
-        PRECIO.par = document.documentElement.classList.contains('cyber') ? 119990 : 0;
         const clp = n => '$' + Number(n).toLocaleString('es-CL');
         // Valor de cada una de las 3 cuotas sin interés. Se redondea hacia
         // abajo a la decena: 68.990/3 = 22.996,67 -> $22.990. El $22.997 exacto
@@ -2326,12 +2298,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // (3 x $9,99), así que no puede crecer aunque cambie el precio.
         const cuota3 = () => clp(Math.floor(PRECIO.precio / 3 / 10) * 10);
         const precioBanda = () => PRECIO.precio;
-        // Subtotal de N bandas: con la promo, cada par a PRECIO.par y la impar
-        // a precio de lista. Copia de subtotalBandas() de services/precio.js,
-        // que es la que cobra: si se cambia una, cambiar la otra.
-        const subtotalBandas = q => PRECIO.par > 0
-          ? Math.floor(q / 2) * Math.min(PRECIO.par, 2 * PRECIO.precio) + (q % 2) * PRECIO.precio
-          : PRECIO.precio * q;
         const envioGratis = () => ofertaActiva();
 
         // ── Regiones y comunas de Chile ──
@@ -2737,7 +2703,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           ultimoAddToCart = clave;
           if (!window.fbq) return;
           fbq('track', 'AddToCart', {
-            value: id === 'tapones' ? precio * cantidad : subtotalBandas(cantidad),
+            value: precio * cantidad,
             currency: 'CLP',
             content_ids: [id],
             content_name: nombre,
@@ -2977,7 +2943,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
         function subtotalCheckout() {
           if (checkoutTapones) return TAPONES_PRICE * checkoutQty;
-          return subtotalBandas(checkoutQty) + (upsellTapones ? UPSELL_PRICE : 0);
+          return precioBanda() * checkoutQty + (upsellTapones ? UPSELL_PRICE : 0);
         }
         function cambiarCantidadCheckout(delta) {
           const color = (typeof checkoutColor !== 'undefined' && checkoutColor) ? checkoutColor : 'negra';
@@ -2990,7 +2956,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           actualizarTotalCheckout();
         }
         function actualizarTotalCheckout() {
-          const bandTotal = subtotalBandas(checkoutQty);
+          const bandTotal = precioBanda() * checkoutQty;
           const total = subtotalCheckout() + (selectedShipping?.price || 0);
           if (document.getElementById('total-display')) {
             document.getElementById('total-display').textContent = '$' + total.toLocaleString('es-CL');
@@ -3009,7 +2975,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               : (conRegalo ? 'Envío gratis + tapones DEUS de regalo incluidos' : 'Envío gratis incluido');
             nota.style.color = faltaEnvio ? '#c9a227' : '#7fc9a0';
           }
-          pintarPromoPar();
           if (checkoutTapones) {
             document.getElementById('co-prod-price').innerHTML =
               `<span class="co-price-now">$${(TAPONES_PRICE * checkoutQty).toLocaleString('es-CL')}</span>`;
@@ -3018,33 +2983,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // Precio real + el tachado (ancla × cantidad, igual que en el bloque
           // de precio desde el 4-oct-2026). Lo que se cobra sigue siendo
           // bandTotal. Con la oferta de envío gratis, un badge verde al lado.
-          // Con la promo del par (2 o más bandas) se tacha lo que costarían
-          // esas mismas bandas sueltas a precio de lista: es la comparación
-          // real y la que calza con el "Ahorras $..." del aviso de la promo.
-          const conPar = bandTotal < PRECIO.precio * checkoutQty;
-          const anclaTotal = conPar ? PRECIO.precio * checkoutQty
-            : (PRECIO.ancla > PRECIO.precio ? PRECIO.ancla * checkoutQty : 0);
+          const anclaTotal = PRECIO.ancla > PRECIO.precio ? PRECIO.ancla * checkoutQty : 0;
           const tachado = anclaTotal ? ` <span class="co-price-old">$${anclaTotal.toLocaleString('es-CL')}</span>` : '';
           document.getElementById('co-prod-price').innerHTML = ofertaActiva()
             ? `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>${tachado} <span class="pb-off" style="background:rgba(105,196,109,.12);border-color:rgba(105,196,109,.5);color:#7fd589;">ENVÍO GRATIS</span>`
             : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>${tachado}`;
-        }
-
-        // Promo Cyber "2 x $119.990" en el checkout: con 1 banda invita a
-        // sumar otra; con 2 o más confirma que se aplicó y cuánto se ahorra
-        // frente a las mismas bandas a precio de lista.
-        function pintarPromoPar() {
-          const el = document.getElementById('co-par');
-          if (!el) return;
-          const ahorroPar = 2 * PRECIO.precio - subtotalBandas(2);
-          const activa = PRECIO.par > 0 && ahorroPar > 0 && !checkoutTapones;
-          el.style.display = activa ? '' : 'none';
-          if (!activa) return;
-          el.innerHTML = checkoutQty < 2
-            ? '<span><span class="cy-chip">Cyber</span> <b>2 x ' + clp(PRECIO.par) + '</b> · ahorras ' + clp(ahorroPar) + '</span>' +
-              '<button type="button" class="co-par-btn" onclick="cambiarCantidadCheckout(1)">+ Agregar otra</button>'
-            : '<span><span class="cy-chip">Cyber</span> <b>2 x ' + clp(PRECIO.par) + '</b> aplicado</span>' +
-              '<span class="co-par-ah">Ahorras ' + clp(PRECIO.precio * checkoutQty - subtotalBandas(checkoutQty)) + '</span>';
         }
 
         // ── CARRITO ──
@@ -3215,9 +3158,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               btn.addEventListener('click', () => removerDelCarrito(btn.dataset.id));
             });
 
-            // Mismo cálculo que el checkout y el backend: con la promo Cyber
-            // cada par va a precio de par (y siempre al precio vigente).
-            const total = subtotalBandas(cart.reduce((sum, item) => sum + (item.cantidad || 1), 0));
+            const total = cart.reduce((sum, item) => {
+              const qty = item.cantidad || 1;
+              const price = item.precio || 0;
+              return sum + (price * qty);
+            }, 0);
             document.getElementById('cart-total-price').textContent = '$' + total.toLocaleString('es-CL');
             footer.style.display = 'block';
           }
@@ -4619,7 +4564,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
     <div class="fc-price">$68.990 <span class="fold">$78.990</span> <span class="price-save">-12%</span></div>
     <div class="fc-cuotas">o <b>3 cuotas sin interés</b> de <b class="cuota-monto">$22.990</b></div>
-    <div class="fc-par solo-cyber par-promo">Cyber: <b>2 x <span class="par-monto">$119.990</span></b> · ahorras <span class="par-ahorro">$17.990</span></div>
     <button class="btn-p" data-buy="Quiero mi DEUS Band" data-reserve="Asegura tu DEUS Band" onclick="abrirCheckout()">Quiero mi DEUS Band</button>
   </section>
 
@@ -4737,8 +4681,6 @@ function cargarStock() {
         precio: d.precio,
         ancla: (typeof d.ancla === 'number' && d.ancla > d.precio) ? d.ancla : PRECIO.ancla,
         off: (typeof d.off === 'number' && d.off > 0) ? d.off : PRECIO.off,
-        // 0 si el backend no lo manda: sin `par` el backend no lo cobra.
-        par: (typeof d.par === 'number' && d.par > 0) ? d.par : 0,
       };
       aplicarReserva();
       if (typeof actualizarTotales === 'function') actualizarTotales();
@@ -4789,19 +4731,9 @@ function aplicarReserva() {
     : clp(PRECIO.precio) + fcAncla;
   // El monto de las cuotas sale del precio real (backend), no del HTML.
   document.querySelectorAll('.cuota-monto').forEach(el => { el.textContent = cuota3(); });
-  // Promo Cyber del par: montos desde el backend y, si /stock dice que ya no
-  // corre, se esconde todo lo que la anuncia.
-  document.querySelectorAll('.par-monto').forEach(el => { el.textContent = clp(PRECIO.par); });
-  document.querySelectorAll('.par-ahorro').forEach(el => { el.textContent = clp(2 * PRECIO.precio - PRECIO.par); });
-  document.querySelectorAll('.par-promo').forEach(el => { el.style.display = PRECIO.par > 0 ? '' : 'none'; });
   const sb = document.querySelector('.sb-price');
-  // En Cyber, bajo el precio va la promo del par (el envío gratis ya lo dice
-  // el top bar); fuera de Cyber, el ENVÍO GRATIS de siempre.
-  const sbPar = PRECIO.par > 0 && document.documentElement.classList.contains('cyber');
   if (sb) sb.innerHTML = on
     ? '<b>' + clp(PRECIO.precio) + '</b>'
-    : sbPar
-    ? '<b>' + clp(PRECIO.precio) + '</b><small class="sb-par solo-cyber">2 x ' + clp(PRECIO.par) + '</small>'
     : oferta
     ? '<b>' + clp(PRECIO.precio) + '</b><small style="display:block;font-size:.52rem;color:#69c46d;letter-spacing:1px;margin-top:2px;">ENVÍO GRATIS</small>'
     : '<b>' + clp(PRECIO.precio) + '</b>';
@@ -4817,8 +4749,7 @@ function aplicarReserva() {
     var quedaPromo = msRestanteOferta();
     ab.innerHTML = (ofertaActiva()
       ? '<span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span>' +
-        '<b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + TAPONES DE OÍDO GRATIS</span></b>' +
-        (PRECIO.par > 0 ? '<span class="ab-par solo-cyber par-promo">2 x <b class="par-monto">' + clp(PRECIO.par) + '</b></span>' : '')
+        '<b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + TAPONES DE OÍDO GRATIS</span></b>'
       : '🔥 <b class="ab-titulo">Última unidad</b> disponible') +
       '<div class="ab-plazo">1-2 días de envío</div>' +
       (quedaPromo > 0
@@ -4931,13 +4862,6 @@ var OFERTA_SITIOS = [['cd-ofcd', 'ofcd', 'abcd-box']];
 // de regalo, contador) sin tener que recargar la página.
 function apagarPromoVencida() {
   document.documentElement.classList.remove('cyber');
-  // La promo del par corta a la misma hora que el backend deja de cobrarla:
-  // el checkout abierto vuelve a precio de lista antes de que se pague.
-  if (typeof PRECIO !== 'undefined' && PRECIO.par) {
-    PRECIO.par = 0;
-    if (typeof actualizarTotalCheckout === 'function') { try { actualizarTotalCheckout(); } catch (e) {} }
-    if (typeof renderizarCarrito === 'function') { try { renderizarCarrito(); } catch (e) {} }
-  }
   Array.prototype.forEach.call(document.querySelectorAll('.announce-bar .ab-cd'), function (e) {
     e.parentNode.removeChild(e);
   });
@@ -5508,7 +5432,7 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
 
 <!-- Barra de compra fija -->
 <div class="sticky-buy" id="stickyBuy">
-  <div class="sb-price"><b>$68.990</b><small class="sb-par solo-cyber">2 x $119.990</small></div>
+  <div class="sb-price"><b>$68.990</b></div>
   <div style="display:flex;gap:8px;">
     <button class="sb-btn" data-buy="Comprar ahora" data-reserve="Comprar ahora" onclick="abrirCheckout()">Comprar ahora</button>
     <button class="sb-btn" style="background:transparent;border:1px solid var(--border);" onclick="agregarAlCarrito()">🛒</button>
