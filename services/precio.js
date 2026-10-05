@@ -45,17 +45,23 @@ const UPSELL_TAPONES = 12990;   // agregados a la compra de una banda
 // transbank.js, mas TAPONES_PRICE declarado tres veces y el 12990 del upsell
 // escrito a mano en seis. Copias asi son las que terminan cobrando distinto
 // segun la pasarela por la que entro el cliente. Las tres llaman a esta.
-function calcularMonto({ cantidad, tapones, soloTapones, shippingCost } = {}) {
+//
+// `ahora` solo existe para los tests: en producción manda el reloj del servidor.
+function calcularMonto({ cantidad, tapones, soloTapones, shippingCost, ahora = Date.now() } = {}) {
   const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
   const envio = Math.max(0, Number(shippingCost) || 0);
+  const bandas = soloTapones ? 0 : subtotalBandas(qty, ahora);
   const productos = soloTapones
     ? TAPONES_PRICE * qty
-    : precioBanda() * qty + (tapones ? UPSELL_TAPONES : 0);
+    : bandas + (tapones ? UPSELL_TAPONES : 0);
   return {
     qty,
     productos,                                 // subtotal de productos, sin envío
     envio,
     total: productos + envio,                  // lo que se cobra
+    bandas,                                    // subtotal de las bandas (con la promo del par)
+    unitario: precioBanda(ahora),              // precio de lista de UNA banda
+    par: soloTapones ? 0 : precioPar(ahora),   // precio del par si la promo corre, si no 0
   };
 }
 
@@ -71,8 +77,31 @@ function regaloCyber({ soloTapones } = {}, ahora = Date.now()) {
   return !soloTapones && ahora < CYBER_FIN_MS;
 }
 
+// Promo Cyber "2 x $119.990": cada PAR de bandas cuesta $119.990 y la que
+// queda impar va a precio de lista (3 = $119.990 + $68.990). Corta junto con
+// el regalo de tapones, a la misma hora (CYBER_FIN_MS).
+//
+// Se anuncia "2 x $119.990" y NUNCA "2x1": en Chile "2x1" se lee como
+// "llevas 2 y pagas 1", y acá el par cuesta más que una sola banda. Anunciarlo
+// así sería publicidad engañosa (y el dueño lo pidió corregir por confuso).
+const PRECIO_PAR = 119990;
+
+function precioPar(ahora = Date.now()) {
+  return ahora < CYBER_FIN_MS ? PRECIO_PAR : 0;
+}
+
+// El subtotal de N bandas. Math.min: si algún día sube el precio de lista y el
+// par queda más caro que dos sueltas, se cobra lo más barato — una promo nunca
+// puede encarecer la compra.
+function subtotalBandas(qty, ahora = Date.now()) {
+  const una = precioBanda(ahora);
+  const par = Math.min(precioPar(ahora) || Infinity, 2 * una);
+  return Math.floor(qty / 2) * par + (qty % 2) * una;
+}
+
 module.exports = {
   SUBIDA_MS, precios, precioBanda, ANTES, DESPUES,
   TAPONES_PRICE, UPSELL_TAPONES, calcularMonto,
   CYBER_FIN_MS, regaloCyber,
+  PRECIO_PAR, precioPar, subtotalBandas,
 };

@@ -21,7 +21,7 @@ const metaAds = require('./services/meta-ads');
 // Precio AUTORITATIVO: es el que se cobra, con stock y en modo reserva. El
 // sitio lo lee de /stock y muestra exactamente esto, así no puede pasar que la
 // página diga un precio y la pasarela cobre otro. Ver services/precio.js.
-const { precioBanda, precios, TAPONES_PRICE, UPSELL_TAPONES, calcularMonto, regaloCyber } = require('./services/precio');
+const { precioBanda, precios, precioPar, TAPONES_PRICE, UPSELL_TAPONES, calcularMonto, regaloCyber } = require('./services/precio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -190,6 +190,11 @@ app.post('/crear-preferencia', async (req, res) => {
     const qty = m.qty;
 
     // Compra de SOLO tapones (sin banda): el único ítem es el estuche de tapones.
+    // Con la promo Cyber del par, los pares van como un ítem a precio de par y
+    // la impar (si hay) a precio de lista: los ítems tienen que sumar lo mismo
+    // que calcularMonto(), que es lo que cobran Flow y Transbank.
+    const pares = m.par ? Math.floor(qty / 2) : 0;
+    const sueltas = qty - pares * 2;
     const items = soloTapones
       ? [
           {
@@ -201,13 +206,20 @@ app.post('/crear-preferencia', async (req, res) => {
           }
         ]
       : [
-          {
+          ...(pares ? [{
+            title: 'DEUS Band x2 (Cyber 2 x $' + m.par.toLocaleString('es-CL') + ')',
+            description: 'Smart Band — 2 unidades',
+            unit_price: (m.bandas - sueltas * m.unitario) / pares,
+            quantity: pares,
+            currency_id: 'CLP'
+          }] : []),
+          ...(sueltas ? [{
             title: 'DEUS Band',
             description: 'Smart Band — Monitor de salud y bienestar',
-            unit_price: precioBanda(),
-            quantity: qty,
+            unit_price: m.unitario,
+            quantity: sueltas,
             currency_id: 'CLP'
-          }
+          }] : [])
         ];
 
     if (!soloTapones && tapones) {
@@ -962,7 +974,10 @@ app.post('/envio/despachado', async (req, res) => {
 app.get('/stock', (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   const p = precios();
-  res.json({ remaining: getStock(), precio: p.precio, ancla: p.ancla, off: p.off });
+  // par: precio de 2 bandas con la promo Cyber (0 = sin promo). El sitio
+  // muestra "2 x $..." solo si viene > 0, así que se apaga a la hora exacta
+  // en que el backend deja de cobrarlo.
+  res.json({ remaining: getStock(), precio: p.precio, ancla: p.ancla, off: p.off, par: precioPar() });
 });
 
 // Ajuste manual del stock, protegido con la clave STOCK_KEY de Render.

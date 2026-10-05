@@ -9,7 +9,7 @@ const { getStock } = require('../services/stock');
 // Precio único: el MISMO que cobran server.js, flow.js y transbank.js. Si algún
 // día cambia, cambia acá también — el bot nunca debe decir un precio distinto
 // al que se cobra en la pasarela.
-const { precioBanda } = require('../services/precio');
+const { precioBanda, precioPar } = require('../services/precio');
 
 function ipDe(req) {
   const fwd = req.headers['x-forwarded-for'];
@@ -30,6 +30,7 @@ router.post('/chat', async (req, res) => {
   const resultado = await chat.responder({
     historial,
     precio: precioBanda(),
+    par: precioPar(),
     stock: getStock(),
     ip: ipDe(req)
   });

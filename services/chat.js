@@ -52,7 +52,7 @@ function getCliente() {
 // El prompt se arma con los datos EN VIVO del backend. `precio` y `stock` los
 // inyecta server.js desde precioBanda() y getStock(), que son las mismas
 // funciones con las que se cobra.
-function construirPrompt({ precio, stock }) {
+function construirPrompt({ precio, stock, par = 0 }) {
   const miles = n => n.toLocaleString('es-CL');
   return `Eres el asistente de DEUS Band, una tienda chilena que vende una smartband de salud y recuperación. Atiendes a clientes que están mirando la página, en español de Chile. Tuteas, eres cercano pero directo.
 
@@ -63,7 +63,8 @@ function construirPrompt({ precio, stock }) {
 - Envío: GRATIS a todo Chile, lo paga la tienda. Sin monto mínimo y sin excepciones por comuna. Si preguntan cuánto sale el envío a cualquier parte, la respuesta es "gratis", nunca "depende". Plazo por zona: en Santiago / Región Metropolitana, 1 a 2 días hábiles; en regiones más lejanas a la Metropolitana, 2 a 3 días hábiles. Se despacha por Chilexpress, Starken o Bluexpress — el courier se elige en el checkout — y va con seguimiento.
 - Pago: Webpay (procesado por Flow) y Mercado Pago. Débito o crédito. Hasta 3 cuotas SIN INTERÉS pagando con Mercado Pago — Webpay no las ofrece, así que si preguntan por cuotas nombra Mercado Pago.
 - Garantía: 60 días de satisfacción, más la garantía legal por fallas.${regaloCyber() ? `
-- CYBER (hasta el miércoles 7 de octubre a las 23:59): toda compra de la banda lleva de REGALO los Tapones de oído DEUS, sin costo y sin hacer nada extra. En la web se anuncia como "+ tapones de oído gratis por Cyber" (en la barra de arriba y bajo el precio), y en el checkout hay una tarjeta para raspar que los muestra. Si preguntan cuál es el regalo, dilo directo: son los tapones DEUS. Una compra de solo tapones no trae otros tapones de regalo.` : ''}
+- CYBER (hasta el miércoles 7 de octubre a las 23:59): toda compra de la banda lleva de REGALO los Tapones de oído DEUS, sin costo y sin hacer nada extra. En la web se anuncia como "+ tapones de oído gratis por Cyber" (en la barra de arriba y bajo el precio), y en el checkout hay una tarjeta para raspar que los muestra. Si preguntan cuál es el regalo, dilo directo: son los tapones DEUS. Una compra de solo tapones no trae otros tapones de regalo.` : ''}${par > 0 ? `
+- PROMO CYBER "2 x $${miles(par)}" (hasta el miércoles 7 de octubre a las 23:59): dos bandas cuestan $${miles(par)} en total, en vez de $${miles(precio * 2)} — ahorran $${miles(precio * 2 - par)}. Va por cada par: 3 bandas = $${miles(par + precio)}, 4 bandas = $${miles(par * 2)}. Se aplica sola en el checkout al poner cantidad 2, y cada banda puede ser de un color distinto. NUNCA la llames "2x1": no es "lleva 2 y paga 1", y decirlo así confunde.` : ''}
 
 # El producto (todo esto está en la página deusbrand.cl — no agregues nada)
 - Smartband SIN pantalla.
@@ -327,7 +328,7 @@ Todo lo que hay en este prompt está tomado literal de la página deusbrand.cl. 
  * @param {{historial: Array<{rol: string, texto: string}>, precio: number, stock: number, ip: string}} params
  * @returns {Promise<{texto: string} | {error: string}>}
  */
-async function responder({ historial, precio, stock, ip }) {
+async function responder({ historial, precio, stock, ip, par }) {
   const api = getCliente();
   if (!api) {
     console.log('[chat] ANTHROPIC_API_KEY no configurada — se deriva a WhatsApp');
@@ -361,7 +362,7 @@ async function responder({ historial, precio, stock, ip }) {
       // precio ni el stock, así que se cachea y las siguientes cuestan ~10x menos.
       system: [{
         type: 'text',
-        text: construirPrompt({ precio, stock }),
+        text: construirPrompt({ precio, stock, par }),
         cache_control: { type: 'ephemeral' }
       }],
       messages: mensajes

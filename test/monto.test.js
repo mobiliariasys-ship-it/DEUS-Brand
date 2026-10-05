@@ -12,7 +12,10 @@ const path = require('path');
 const p = require('../services/precio');
 
 const PRECIO = p.DESPUES.precio;          // $68.990 hoy
-const m = (o) => p.calcularMonto(o);
+// Precio de lista: con el reloj pasado el Cyber, para que la promo "2 x
+// $119.990" no cambie estos totales (la promo tiene sus tests en
+// promo-par.test.js).
+const m = (o) => p.calcularMonto({ ahora: p.CYBER_FIN_MS, ...o });
 
 test('una banda sin envío cobra el precio de lista', () => {
   const r = m({ cantidad: 1 });
