@@ -1640,6 +1640,7 @@
     // Costo por venta de los ANUNCIOS: las bandas vendidas por Mercado Libre no
     // vinieron de un anuncio, así que no entran en la división.
     var unidadesAds = t.unidades - (t.unidadesExternas || 0);
+    var pedidosWeb = t.pedidos - (t.pedidosExternos || 0);
     var cpa = unidadesAds ? t.ads / unidadesAds : 0;
 
     document.getElementById('util-kpis').innerHTML =
@@ -1653,8 +1654,10 @@
       // Attach del upsell de tapones. Se mide para saber si mover su precio
       // sirve de algo: con un attach bajo, el upsell casi no mueve la
       // contribución por pedido y bajarle el precio es pelear por migajas.
-      kpi('Pedidos con tapones', t.pedidos
-            ? (t.conTapones || 0) + ' de ' + t.pedidos + ' · ' + Math.round(((t.conTapones || 0) / t.pedidos) * 100) + '%'
+      // Solo pedidos de la web: el upsell se ofrece en el checkout del sitio, y
+      // las ventas de Mercado Libre no pasan por ahí (bajarían el % sin razón).
+      kpi('Pedidos con tapones', pedidosWeb
+            ? (t.conTapones || 0) + ' de ' + pedidosWeb + ' · ' + Math.round(((t.conTapones || 0) / pedidosWeb) * 100) + '%'
             : '—', '');
 
     var hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });

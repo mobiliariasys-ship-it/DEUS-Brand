@@ -35,7 +35,7 @@ test('en un día mixto, envío y pasarela se restan solo a las ventas de la web'
 test('cargada desde el panel, suma en la utilidad del día y no en las métricas de la web', () => {
   const ORD = 'ml-' + Date.now();
   const antes = metrics.snapshot();
-  const fecha = '2026-10-05';
+  const fecha = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
   const diaAntes = metrics.ventasPorDia(30).find(d => d.fecha === fecha) || { pedidos: 0, ingresos: 0, pedidosExternos: 0 };
   const ticket = metrics.registrarVenta({ monto: 57000, metodo: 'Mercado Libre', orden: ORD,
                                           fecha: fecha + 'T12:00:00-03:00', unidades: 1 });
@@ -49,6 +49,16 @@ test('cargada desde el panel, suma en la utilidad del día y no en las métricas
   assert.strictEqual(despues.ventas.total.count, antes.ventas.total.count, 'no cuenta como venta de la web');
   assert.strictEqual(despues.ticketsTotal, antes.ticketsTotal, 'no entra al sorteo');
   assert.strictEqual(despues.conducta['co:5pago'] || 0, antes.conducta['co:5pago'] || 0, 'no pasó por el checkout');
+  // Ninguna métrica de conversión se mueve: ni la histórica ni la de hoy, ni
+  // el embudo, ni las ventas por día/periodo con que el panel calcula las
+  // conversiones de hoy, semana, mes y el gráfico diario.
+  assert.strictEqual(despues.conversion, antes.conversion, 'conversión histórica');
+  assert.strictEqual(despues.conversionHoy, antes.conversionHoy, 'conversión de hoy');
+  assert.deepStrictEqual(despues.embudo, antes.embudo, 'embudo');
+  assert.strictEqual(despues.ventasRecientes.length, antes.ventasRecientes.length, 'ventas del periodo (conversión semana/mes)');
+  const suma30 = s => s.ventas30.reduce((x, d) => x + (d.ventas || 0), 0);
+  assert.strictEqual(suma30(despues), suma30(antes), 'gráfico de conversión diaria');
+  assert.strictEqual(despues.ticketPromedio, antes.ticketPromedio, 'ticket promedio de la web');
   assert.ok(metrics.ventaYaRegistrada(ORD), 'la orden queda registrada');
   // Cargarla dos veces no la suma dos veces.
   metrics.registrarVenta({ monto: 57000, metodo: 'Mercado Libre', orden: ORD, fecha: fecha + 'T12:00:00-03:00', unidades: 1 });
@@ -62,6 +72,8 @@ test('el panel ofrece Mercado Libre y no lo cuenta en el costo por venta de los 
     'falta el botón de un toque "Venta de Mercado Libre"');
   assert.ok(/var unidadesAds = t\.unidades - \(t\.unidadesExternas \|\| 0\);/.test(html),
     'el costo por venta tiene que dividir solo por las bandas vendidas por la web');
+  assert.ok(/var pedidosWeb = t\.pedidos - \(t\.pedidosExternos \|\| 0\);/.test(html) && html.includes("' de ' + pedidosWeb"),
+    'el % de pedidos con tapones tiene que contar solo pedidos de la web');
   const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
   assert.ok(srv.includes('metrics.ventaYaRegistrada('), '/admin/venta tiene que reconocer también las de Mercado Libre como ya cargadas');
 });
