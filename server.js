@@ -629,6 +629,10 @@ app.post('/admin/reset-tiempo', (req, res) => {
 // `orden` es obligatoria porque es la llave de idempotencia: si la mandás dos
 // veces, la segunda no suma. Para una presencial sirve cualquier referencia
 // estable, ej. "presencial-2026-09-27-1".
+//
+// Mercado Libre (metodo "Mercado Libre"): el monto es lo que DEPOSITA ML, ya
+// sin su envío ni su comisión. metrics la guarda aparte: entra en la utilidad
+// (solo se le resta el costo de la banda) pero no en las métricas de la web.
 app.post('/admin/venta', (req, res) => {
   const clave = (process.env.STOCK_KEY || '').trim();
   if (!clave) return res.status(404).json({ error: 'No disponible' });
@@ -640,7 +644,7 @@ app.post('/admin/venta', (req, res) => {
   if (!orden || !String(orden).trim()) return res.status(400).json({ error: 'orden es obligatoria (llave de idempotencia)' });
   if (fecha && isNaN(new Date(fecha))) return res.status(400).json({ error: 'fecha inválida — usá ISO, ej. 2026-09-27T20:00:00-03:00' });
 
-  const yaEstaba = !!metrics.buscarTicketPorOrden(String(orden).trim());
+  const yaEstaba = metrics.ventaYaRegistrada(String(orden).trim());
   const ticket = metrics.registrarVenta({
     monto: m, fecha, metodo: metodo || 'Manual', nombre: nombre || '',
     orden: String(orden).trim(), email: email || '',
@@ -811,6 +815,8 @@ app.get('/admin/ads/gasto-horario', async (req, res) => {
 //   - banda      $17.000 por UNIDAD (un pedido de 3 cuesta el triple)
 //   - envío       $4.000 por PEDIDO (uno de 3 bandas se despacha una vez)
 //   - pasarela      3,5% del monto (Webpay/Flow/MercadoPago)
+//   - Mercado Libre se carga con lo que deposita ML (ya sin su envío ni su
+//     comisión), así que a esas ventas solo se les resta la banda
 //   - publicidad  el gasto REAL del día en la cuenta de Meta, no el presupuesto
 //
 // El gasto de Meta es de la cuenta completa, no de una campaña: una campaña

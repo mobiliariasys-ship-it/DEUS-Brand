@@ -43,6 +43,15 @@ const ventas = [];         // { monto, fecha, metodo, nombre, orden }
 // Tickets del sorteo. Se asigna 1 por compra confirmada (número correlativo),
 // automáticamente. { numero, nombre, orden, email, instagram, verificado, automatico, fecha }
 const tickets = [];
+// Ventas por FUERA de la web (hoy: Mercado Libre). Van en su propia lista a
+// propósito: son plata real y entran en la utilidad diaria, pero no pasaron
+// por el sitio ni por un anuncio. Mezcladas con `ventas` inflarían la
+// conversión, el embudo del checkout, el ticket promedio y los horarios de
+// compra de la web, y le darían un ticket del sorteo a alguien que no compró
+// en el sitio. El monto es lo que DEPOSITA el canal, ya sin su envío ni su
+// comisión. { monto, fecha, metodo, nombre, orden, unidades, soloTapones, externo: true }
+const ventasExternas = [];
+const esCanalExterno = metodo => /mercado\s*libre/i.test(String(metodo || ''));
 
 // Carga lo guardado (disco o base de datos) antes de que el servidor empiece
 // a recibir tráfico. server.js hace `await metrics.init()` al arrancar.
@@ -61,10 +70,11 @@ async function init() {
   conversionesOrdenes.push(...(guardado.conversionesOrdenes || []));
   ventas.push(...(guardado.ventas || []));
   tickets.push(...(guardado.tickets || []));
+  ventasExternas.push(...(guardado.ventasExternas || []));
 }
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, eventosPorDia, conversiones, conversionesPorDia, conversionesN, conversionesOrdenes, ventas, tickets })
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, eventosPorDia, conversiones, conversionesPorDia, conversionesN, conversionesOrdenes, ventas, tickets, ventasExternas })
     .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
@@ -219,6 +229,7 @@ function registrarConversion(acciones, orden, esOwner) {
 // sorteo (1 por compra). Devuelve el ticket asignado (con su número) para
 // poder mostrárselo al cliente en el correo de confirmación.
 function registrarVenta(v) {
+  if (esCanalExterno(v && v.metodo)) return registrarVentaExterna(v);
   // El paso final del embudo del checkout se cuenta como un evento más
   // (co:5pago) en vez de leer el total histórico de ventas: ese total incluye
   // compras anteriores a que existieran los eventos co:, y daba porcentajes
@@ -262,6 +273,35 @@ function registrarVenta(v) {
   sumarEvento('co:5pago');
   guardar();
   return ticket;
+}
+
+// Venta de Mercado Libre (u otro canal externo), cargada a mano desde el panel.
+// Idempotente por n° de orden, igual que las de la web. No suma el paso final
+// del embudo (co:5pago) ni da ticket del sorteo: no pasó por el checkout.
+function registrarVentaExterna(v) {
+  const orden = String(v.orden || '').trim();
+  if (orden && ventasExternas.some(x => x.orden === orden)) return null;
+  const cuando = v.fecha ? new Date(v.fecha) : null;
+  ventasExternas.push({
+    monto: Number(v.monto) || 0,
+    fecha: (cuando && !isNaN(cuando)) ? cuando.toISOString() : new Date().toISOString(),
+    metodo: v.metodo || '',
+    nombre: v.nombre || '',
+    orden,
+    unidades: Number(v.unidades) > 0 ? Number(v.unidades) : 1,
+    soloTapones: !!v.soloTapones,
+    externo: true
+  });
+  guardar();
+  return null;
+}
+
+// ¿Esta orden ya está cargada? Mira las ventas de la web (por su ticket) y las
+// de canales externos. Es lo que usa la carga manual para no sumar dos veces.
+function ventaYaRegistrada(orden) {
+  const o = String(orden || '').trim();
+  if (!o) return false;
+  return !!buscarTicketPorOrden(o) || ventasExternas.some(x => x.orden === o);
 }
 
 // Busca un ticket por n° de orden (calce exacto o por sufijo, como en
@@ -359,14 +399,25 @@ function resumenVentas() {
 // Ventas agrupadas por día de Chile, para la utilidad diaria del panel.
 // Devuelve SIEMPRE los últimos `dias` días, con ceros incluidos: un día sin
 // ventas igual gastó en publicidad y tiene que aparecer en rojo, no faltar.
+//
+// Incluye las ventas de canales externos (Mercado Libre), marcadas aparte:
+// su monto ya viene sin envío ni comisión, así que la utilidad no les vuelve a
+// restar envío ni pasarela, y el costo por venta de los anuncios no las cuenta.
 function ventasPorDia(dias = 14) {
   const precio = require('./precio').precioBanda();
+  const vacio = d => ({ fecha: d, pedidos: 0, unidades: 0, ingresos: 0, conTapones: 0, estimado: false,
+                        pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0 });
   const mapa = {};
-  for (const v of ventas) {
+  for (const v of ventas.concat(ventasExternas)) {
     const d = new Date(v.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
-    if (!mapa[d]) mapa[d] = { fecha: d, pedidos: 0, unidades: 0, ingresos: 0, conTapones: 0, estimado: false };
+    if (!mapa[d]) mapa[d] = vacio(d);
     mapa[d].pedidos += 1;
     mapa[d].ingresos += v.monto;
+    if (v.externo) {
+      mapa[d].pedidosExternos += 1;
+      mapa[d].ingresosExternos += v.monto;
+      if (!v.soloTapones) mapa[d].unidadesExternas += v.unidades || 1;
+    }
     if (v.tapones) mapa[d].conTapones += 1;
     if (v.soloTapones) {
       // Pedido de tapones: no lleva banda, así que no suma costo de banda.
@@ -382,7 +433,7 @@ function ventasPorDia(dias = 14) {
   const ahora = Date.now();
   for (let i = dias - 1; i >= 0; i--) {
     const d = new Date(ahora - i * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
-    salida.push(mapa[d] || { fecha: d, pedidos: 0, unidades: 0, ingresos: 0, conTapones: 0, estimado: false });
+    salida.push(mapa[d] || vacio(d));
   }
   return salida;
 }
@@ -533,7 +584,7 @@ function snapshot() {
 
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo, ventasPorDia,
-  asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
+  asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden, ventaYaRegistrada,
   resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
   registrarFalloChat, ventasPorHora
 };
