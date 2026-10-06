@@ -1138,7 +1138,7 @@ body.sb-on .chat-panel{bottom:82px;}
 .how-play{position:absolute;bottom:12px;right:12px;width:38px;height:38px;border-radius:50%;background:rgba(8,8,8,.6);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;padding-left:2px;backdrop-filter:blur(3px);transition:opacity .25s;pointer-events:none;z-index:2;}
 .how-vidwrap.is-playing .how-play{opacity:0;}
 /* Diseño sin distracciones: una sola pieza (antes carrusel de 3) */
-.feat-car{position:relative;max-width:680px;margin:54px auto 0;overflow:hidden;}
+.feat-car{position:relative;max-width:680px;margin:20px auto 0;overflow:hidden;}
 .feat-track{display:flex;align-items:flex-start;transition:transform .4s cubic-bezier(.22,.61,.36,1);}
 .feat-slide{min-width:100%;box-sizing:border-box;padding:0 6px;}
 /* Apila: imagen cuadrada centrada arriba, texto centrado abajo */
@@ -1146,6 +1146,8 @@ body.sb-on .chat-panel{bottom:82px;}
 .feat-slide .how-row .how-img{order:0;width:100%;max-width:420px;aspect-ratio:1/1!important;min-height:0!important;margin:0 auto;}
 .feat-slide .how-img video,.feat-slide .how-img img{width:100%;height:100%;object-fit:cover;}
 .feat-slide .how-txt{max-width:520px;margin:16px auto 0;text-align:center;}
+.feat-slide .how-txt.feat-top{margin:0 auto 18px;}
+.feat-slide .how-txt.feat-top h3{margin-bottom:0;}
 /* Slide del ciclista en modo cine: ancho y grande, sin recortar a cuadrado */
 .feat-cine .how-row .how-img{max-width:680px!important;width:100%;aspect-ratio:960/608!important;border-radius:12px;}
 .rot-360{position:relative;cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;}
@@ -4460,9 +4462,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      Y el video (1,2 MB) ya no se descarga en cada visita: solo ~1 de cada 8
      visitantes baja hasta esta sección, así que se carga cuando se acerca
      (data-lazy-src). Se conserva el poster para que el hueco no quede vacío. -->
+<!-- El título va arriba del video (pedido del dueño); el texto queda abajo. -->
+            <div class="how-txt feat-top"><h3>Diseño sin distracciones</h3></div>
 <div class="how-img natural"><video muted loop playsinline autoplay preload="none" poster="img/diseno-poster.webp" data-lazy-src="img/diseno-video.mp4" aria-label="DEUS Band ciclista"></video></div>
             <div class="how-txt">
-              <h3>Diseño sin distracciones</h3>
               <p>Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
             </div>
           </div>
