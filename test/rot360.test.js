@@ -1,5 +1,5 @@
 'use strict';
-// Visor 360° dentro de la tarjeta de vidrio. Los cuadros (img/rot360-v2) no traen
+// Visor 360° dentro de la tarjeta de vidrio. Los cuadros (la carpeta que pide src()) no traen
 // fondo: la banda queda sobre el gris de la tarjeta. Si alguien vuelve a subir
 // cuadros con fondo negro, o se pierde el clearRect del canvas, el sitio se ve
 // mal sin que nada falle — por eso se prueba acá.

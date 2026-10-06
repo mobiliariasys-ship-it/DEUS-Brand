@@ -4128,12 +4128,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if(!wrap||!canvas) return;
     var ctx=canvas.getContext('2d');
     ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
-    // Cuadros sin fondo en carpeta propia (rot360-v2). img/rot360 conserva los de
-    // fondo negro: una página cargada antes del cambio sigue pidiendo esa ruta y
-    // los dibuja sin limpiar el canvas; con cuadros transparentes la banda dejaba
-    // estela. Si se cambian los cuadros otra vez, van en una carpeta nueva (las
-    // imágenes además se cachean 7 días, ver netlify.toml).
-    function src(i){ return 'img/rot360-v2/f_'+String(i+1).padStart(3,'0')+'.webp'; }
+    // Cuadros sin fondo (scripts/recortar-fondo-360.js), también el espacio que se
+    // ve a través del aro. Cada versión de cuadros va en carpeta nueva, nunca
+    // encima de una publicada: las imágenes se cachean 7 días (netlify.toml) y una
+    // página abierta antes del cambio sigue pidiendo su carpeta. img/rot360 (fondo
+    // negro) la piden las páginas sin clearRect: con cuadros transparentes la banda
+    // dejaba estela. rot360-v2 (el aro todavía negro) queda para las páginas
+    // abiertas con esa versión; se puede borrar pasada una semana.
+    function src(i){ return 'img/rot360-v3/f_'+String(i+1).padStart(3,'0')+'.webp'; }
     var frames=new Array(N), pendientes=N, idx=BLUE, auto=null;
     var HERO=0;               // ángulo de reposo: frente, con el sensor apagado
     var interactuado=false;   // el visitante ya tomó la banda al menos una vez
