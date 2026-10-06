@@ -4203,7 +4203,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       io.observe(wrap);
     } else { cargarCuadros(); }
     var dragging=false, startX=0, startIdx=0, firstTouch=true, movido=0;
+    // Mouse y lápiz. El dedo va aparte (más abajo, con eventos touch).
     wrap.addEventListener('pointerdown',function(e){
+      if(e.pointerType==='touch') return;
       dragging=true; movido=0; stopAuto();             // frena la demo; NO esconde la pista todavía
       if(firstTouch){ firstTouch=false; show(BLUE); }  // al primer toque enciende el sensor azul
       startX=e.clientX; startIdx=idx;
@@ -4217,11 +4219,49 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
     ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
       wrap.addEventListener(ev,function(){
-        if(ev==='pointerup' && movido<8) abrirFull(); // toque sin arrastrar = abrir grande
+        if(!dragging) return;
+        if(ev==='pointerup' && movido<8) abrirFull(); // clic sin arrastrar = abrir grande
         dragging=false;
         reanudarPronto(); // vuelve a girar sola tras soltar
       });
     });
+
+    // ── Dedo: girar o bajar la página ──
+    // Con solo touch-action:pan-y el navegador decide apenas empieza el gesto, y
+    // un arrastre en diagonal se lo quedaba el scroll: la banda no giraba. Ahora
+    // se mira la dirección de los primeros px: si es más horizontal que vertical
+    // (hasta ~53° de inclinación) gira y la página no se mueve; si no, se deja
+    // bajar la página. Se decide antes de que el navegador empiece a desplazar
+    // (umbral ~8px), por eso el preventDefault alcanza a frenar el scroll.
+    var tModo=null, tx0=0, ty0=0; // tModo: null (sin decidir) | 'girar' | 'scroll' | 'fuera'
+    wrap.addEventListener('touchstart',function(e){
+      if(e.touches.length!==1 || (e.target.closest && e.target.closest('.hold-arrow'))){ tModo='fuera'; return; }
+      tModo=null; movido=0; tx0=e.touches[0].clientX; ty0=e.touches[0].clientY;
+      stopAuto();                                      // frena la demo; NO esconde la pista todavía
+      if(firstTouch){ firstTouch=false; show(BLUE); }  // al primer toque enciende el sensor azul
+      startIdx=idx;
+    },{passive:true});
+    wrap.addEventListener('touchmove',function(e){
+      if(tModo==='fuera' || tModo==='scroll') return;
+      var t=e.touches[0], dx=t.clientX-tx0, dy=t.clientY-ty0;
+      if(!tModo){
+        if(Math.abs(dx)+Math.abs(dy)<6) return;        // todavía no se sabe hacia dónde va
+        // cancelable=false: el navegador ya está desplazando, no se le puede quitar
+        tModo=(Math.abs(dx)>=Math.abs(dy)*0.75 && e.cancelable) ? 'girar' : 'scroll';
+        if(tModo==='scroll') return;
+      }
+      e.preventDefault();                              // girando: la página se queda quieta
+      movido=Math.max(movido,Math.abs(dx));
+      if(movido>8) marcarRotacion();                   // recién al GIRAR desaparece la pista, no al tocar
+      show(startIdx + Math.round(dx/6));
+    },{passive:false});
+    wrap.addEventListener('touchend',function(e){
+      // toque sin arrastrar = abrir grande (sin el clic que el navegador manda
+      // después, que caería sobre el visor recién abierto y lo cerraría)
+      if(tModo===null){ e.preventDefault(); abrirFull(); }
+      tModo=null;
+    });
+    wrap.addEventListener('touchcancel',function(){ tModo=null; });
 
     // ── Flechas: mantener presionada gira la banda mientras se sostiene ──
     var holdIv=null;
