@@ -1184,7 +1184,8 @@ body.sb-on .chat-panel{bottom:82px;}
 .how-row.row-360{grid-template-columns:1fr;gap:6px;margin-bottom:0;}
 /* 360° dentro de una tarjeta de vidrio, como la de "Hasta 30 días": arriba la
    etiqueta, "DEUS BAND" con la letra ancha de la marca y el texto; abajo la banda
-   girando, sin fondo, sobre un foco de luz que la despega del gris. */
+   girando, sin fondo, directo sobre el gris de la tarjeta (con un foco de luz
+   detrás se veía como neblina). */
 .r360-card{max-width:640px;margin:0 auto;border-radius:26px;padding:22px 18px 20px;
   background:radial-gradient(120% 90% at 0% 0%,rgba(255,255,255,.07),rgba(255,255,255,0) 55%),linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
   border:1px solid rgba(255,255,255,.09);
@@ -1194,8 +1195,7 @@ body.sb-on .chat-panel{bottom:82px;}
 .r360-marca{font-family:'Michroma','DM Sans',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.06em;
   -webkit-text-stroke:.5px currentColor;color:var(--white);font-size:1.45rem;line-height:1.25;margin:2px 0 8px;}
 .r360-txt{max-width:420px;margin:0 auto;font-size:.88rem;line-height:1.6;color:var(--silver);}
-.r360-card .row-360 .how-img{max-width:100%;border-radius:20px;
-  background:radial-gradient(ellipse 58% 62% at 50% 50%,rgba(255,255,255,.15) 0%,rgba(255,255,255,.05) 45%,rgba(255,255,255,0) 72%);}
+.r360-card .row-360 .how-img{max-width:100%;border-radius:20px;background:transparent;}
 @media(min-width:861px){.r360-card{padding:30px 34px 26px;}.r360-marca{font-size:2rem;}}
 /* En celular la de batería se sale 12px del margen de la página (.soft): la del
    360° se estira lo mismo para que las dos tarjetas queden del mismo ancho. */
@@ -4098,7 +4098,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- COMO FUNCIONA: todo dentro de una tarjeta de vidrio, como la de "Hasta 30
        días". Los cuadros del 360° no tienen fondo (scripts/recortar-fondo-360.js):
-       la banda queda sobre el gris de la tarjeta, con un foco de luz detrás. -->
+       la banda queda directo sobre el gris de la tarjeta. -->
   <section class="how" id="tecnologia">
     <div class="r360-card">
       <div class="r360-head">
