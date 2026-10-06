@@ -60,13 +60,30 @@ test('el canvas se limpia antes de dibujar cada cuadro (si no, la banda deja est
   }
 });
 
-test('la sección 360° va en la tarjeta, con "DEUS BAND" y el visor adentro', () => {
-  const ini = html.indexOf('<section class="how" id="tecnologia">');
-  assert.ok(ini !== -1, 'falta la sección #tecnologia');
-  const seccion = html.slice(ini, html.indexOf('</section>', ini));
-  assert.match(seccion, /<div class="r360-card">/);
-  assert.match(seccion, /<h2 class="r360-marca">DEUS BAND<\/h2>/);
-  assert.ok(seccion.indexOf('r360-marca') < seccion.indexOf('id="rot360"'), 'el título va arriba del visor');
-  assert.ok(seccion.indexOf('id="rot360"') < seccion.indexOf('<!-- /r360-card -->'), 'el visor va dentro de la tarjeta');
+test('la tarjeta 360° va en la tarjeta de vidrio, con "DEUS BAND" y el visor adentro', () => {
+  const ini = html.indexOf('<div class="soft-block" id="tecnologia">');
+  assert.ok(ini !== -1, 'falta el bloque #tecnologia');
+  const fin = html.indexOf('<!-- /r360-card -->', ini);
+  assert.ok(fin !== -1, 'falta el cierre de la tarjeta');
+  const bloque = html.slice(ini, fin);
+  assert.match(bloque, /<div class="r360-card">/);
+  assert.match(bloque, /<h2 class="r360-marca">DEUS BAND<\/h2>/);
+  assert.ok(bloque.indexOf('r360-marca') < bloque.indexOf('id="rot360"'), 'el título va arriba del visor');
+  assert.ok(bloque.includes('id="rot360"'), 'el visor va dentro de la tarjeta');
   assert.match(html, /\.r360-marca\{font-family:'Michroma'/, 'el título usa la letra ancha de la marca');
+});
+
+test('el 360° va en "Así de simple", entre los pasos y las funciones de la app', () => {
+  const simple = html.indexOf('<section class="soft" id="simple">');
+  const finSimple = html.indexOf('</section>', simple);
+  const pasos = html.indexOf('Póntela y optimízate', simple);
+  const tarjeta = html.indexOf('<div class="soft-block" id="tecnologia">');
+  const app = html.indexOf('App Da Halo · gratis', simple);
+  assert.ok(simple !== -1 && pasos !== -1 && app !== -1, 'faltan los bloques de #simple');
+  assert.ok(simple < pasos && pasos < tarjeta && tarjeta < app && app < finSimple,
+    'el 360° va dentro de #simple, después de los pasos y arriba de "App Da Halo · gratis"');
+  // El script del visor busca el canvas apenas carga: si quedara antes de la
+  // tarjeta no lo encontraría y la banda no giraría.
+  const script = html.indexOf("document.getElementById('rot360-canvas')");
+  assert.ok(script > html.indexOf('<!-- /r360-card -->'), 'el script del visor tiene que ir después de la tarjeta');
 });

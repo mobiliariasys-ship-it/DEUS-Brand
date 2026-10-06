@@ -599,7 +599,7 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
    grilla de funciones no: esa la despliega "Ver las 14 funciones"). La
    activa el JS de la sección; sin JS o con "menos movimiento" todo se ve de
    entrada. */
-.soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
+.soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .r360-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
 .soft.rev .rev-on{opacity:1;transform:none;}
 @media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}.soft.rev .step:nth-child(3){transition-delay:.2s;}}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
@@ -1207,9 +1207,8 @@ body.sb-on .chat-panel{bottom:82px;}
 .r360-txt{max-width:420px;margin:0 auto;font-size:.88rem;line-height:1.6;color:var(--silver);}
 .r360-card .row-360 .how-img{max-width:100%;border-radius:20px;background:transparent;}
 @media(min-width:861px){.r360-card{padding:30px 34px 26px;}.r360-marca{font-size:2rem;}}
-/* En celular la de batería se sale 12px del margen de la página (.soft): la del
-   360° se estira lo mismo para que las dos tarjetas queden del mismo ancho. */
-@media(max-width:600px){.r360-card{margin:0 -19px;}}
+/* Va dentro de #simple (entre los pasos y las funciones de la app): ahí ya queda
+   del mismo ancho que la tarjeta de batería, sin estirarla. */
 .row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
 .row-360 .how-txt{text-align:center;max-width:600px;margin:0 auto;}
 .bpm-heart{color:#e05555;display:inline-block;font-size:.9rem;animation:bpmBeat 1.15s ease-in-out infinite;}
@@ -3871,6 +3870,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </ol>
       </div>
 
+      <!-- COMO FUNCIONA: todo dentro de una tarjeta de vidrio, como la de "Hasta 30
+           días". Los cuadros del 360° no tienen fondo (scripts/recortar-fondo-360.js):
+           la banda queda directo sobre el gris de la tarjeta. -->
+      <div class="soft-block" id="tecnologia">
+        <div class="r360-card">
+          <div class="r360-head">
+            <div class="soft-kicker">Cómo funciona · 360°</div>
+            <h2 class="r360-marca">DEUS BAND</h2>
+            <p class="r360-txt">Girá la banda y descubre la tecnología detrás de cada pulsación.</p>
+          </div>
+          <div class="how-row row-360">
+          <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra o mantén una flecha para girar">
+            <canvas id="rot360-canvas" width="900" height="900" style="width:100%;height:100%;display:block;"></canvas>
+            <div class="rot-vignette"></div>
+            <div class="rot-badge">360°</div>
+            <button class="hold-arrow l" id="rot360-arrow-l" type="button" aria-label="Girar a la izquierda">‹</button>
+            <button class="hold-arrow r" id="rot360-arrow-r" type="button" aria-label="Girar a la derecha">›</button>
+            <div class="rot-finger" id="rot360-finger" aria-hidden="true">👆</div>
+          </div>
+          <div class="rot-hint-wrap"><span class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor</span></div>
+        </div>
+        </div><!-- /r360-card -->
+
+      </div>
+
       <div class="soft-block fn-zona">
         <div class="soft-head">
           <div class="soft-kicker">App Da Halo · gratis</div>
@@ -3955,189 +3979,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <dialog class="fn-modal" id="fn-modal" aria-labelledby="fn-t" aria-describedby="fn-p">
-    <div class="fn-box">
-      <button type="button" class="fn-cerrar" aria-label="Cerrar">&times;</button>
-      <div class="fn-top">
-        <span class="fi" id="fn-ico" aria-hidden="true"></span>
-        <div>
-          <div class="fn-kicker">Función de la app Da Halo</div>
-          <h3 class="fn-t" id="fn-t"></h3>
-        </div>
-      </div>
-      <div class="fn-sec"><div class="fn-lbl" id="fn-ql">Qué mide</div><p id="fn-q"></p></div>
-      <div class="fn-sec fn-para"><div class="fn-lbl">Para qué te sirve</div><p id="fn-p"></p></div>
-      <p class="fn-aviso">DEUS Band no es un dispositivo médico: sus datos te sirven para conocer tus tendencias de bienestar y entrenamiento, no para diagnosticar.</p>
-      <div class="fn-nav">
-        <button type="button" class="fn-prev" aria-label="Función anterior">&lsaquo; Anterior</button>
-        <span class="fn-pos" id="fn-pos"></span>
-        <button type="button" class="fn-next" aria-label="Función siguiente">Siguiente &rsaquo;</button>
-      </div>
-      <span class="vh" id="fn-vivo" aria-live="polite"></span>
-    </div>
-  </dialog>
-  <script>
-  // +14 funciones: cada tarjeta abre #fn-modal con qué mide y para qué le
-  // sirve a la persona. Los textos viven acá y el ícono se copia de la
-  // tarjeta, para no duplicar nada en el HTML. Anterior/Siguiente (y las
-  // flechas del teclado) recorren las 14 sin cerrar.
-  (function(){
-    var FN={
-      fc:{t:'Frecuencia cardíaca',q:'Cuántas veces late tu corazón por minuto, medido de forma automática durante el día y la noche.',p:'Te muestra cómo responde tu cuerpo al entrenamiento, al estrés y al descanso. Si tu pulso en reposo baja con las semanas, suele ser señal de que tu condición física mejora; si sube varios días seguidos, puede indicar cansancio o falta de descanso. Al entrenar ves en qué zona (1 a 5) estás, para entrenar a la intensidad justa.'},
-      spo2:{t:'Oxígeno en sangre (SpO₂)',q:'El porcentaje de oxígeno que transporta tu sangre.',p:'Te sirve para saber cómo está tu oxigenación, por ejemplo después de entrenar, al despertar o cuando subes a la montaña o viajas en altura, donde el aire tiene menos oxígeno. Lo habitual es que se mantenga estable; si ves valores bajos repetidos, coméntalo con un médico.'},
-      hrv:{t:'HRV · Variabilidad cardíaca',q:'La pequeña variación de tiempo entre un latido y el siguiente, que refleja cómo se está recuperando tu sistema nervioso.',p:'Es uno de los mejores indicadores de recuperación. Una HRV por sobre tu promedio dice que estás listo para exigirte; por debajo, que conviene bajar la intensidad, dormir más o darle un respiro al estrés.'},
-      estres:{t:'Nivel de estrés',q:'Un índice que estima tu nivel de estrés a partir de tu pulso y su variabilidad.',p:'Te ayuda a ver en qué momentos del día se acumula la tensión y a comprobar qué te sirve para bajarla: una caminata, respirar unos minutos o acostarte más temprano.'},
-      recup:{t:'Recuperación',q:'Qué tan recuperado está tu cuerpo, según cómo dormiste y cómo se comportó tu corazón.',p:'Te ayuda a decidir cada mañana si es día de entrenar fuerte, suave o descansar, en vez de adivinar. Así evitas sobreentrenarte y progresas con más constancia.'},
-      fases:{t:'Fases del sueño',q:'Cuánto tiempo pasas cada noche en sueño ligero, profundo y REM.',p:'El sueño profundo es clave para la recuperación física y el REM para la memoria y el ánimo. Verlas te explica por qué a veces despiertas cansado aunque hayas dormido ocho horas, y qué hábitos te ayudan a descansar mejor.'},
-      dur:{t:'Duración del sueño',q:'A qué hora te dormiste, a qué hora despertaste y cuánto dormiste en total.',p:'Te ayuda a mantener horarios regulares y a asegurarte de dormir lo suficiente, que es la base de tu energía, tu rendimiento y tu recuperación.'},
-      pasos:{t:'Pasos',q:'Los pasos que das a lo largo del día.',p:'Te motiva a moverte más: te pones una meta diaria en la app (por ejemplo 8.000 o 10.000 pasos) y ves tu avance día a día y semana a semana.'},
-      cal:{t:'Calorías',q:'Una estimación de las calorías que gastas en el día y en cada entrenamiento.',p:'Te sirve para saber cuánto gastas en un día normal y en uno de entrenamiento, útil si quieres bajar de peso, mantenerte o ganar masa muscular.'},
-      dep:{t:'+100 modos deportivos',l:'Qué es',q:'Más de 100 deportes para registrar tus entrenamientos: correr, gym, ciclismo, funcional y muchos más. Eliges el deporte en la app antes de empezar.',p:'Cada sesión queda guardada con su duración, pulso y calorías, así puedes comparar tus entrenamientos y ver cómo progresas.'},
-      ritmo:{t:'Ritmo y cadencia',q:'Tu ritmo (minutos por kilómetro), tu velocidad y tus pasos por minuto al correr o caminar.',p:'Te ayuda a correr de forma más eficiente y a mejorar tus tiempos. Para el mapa de la ruta y la distancia exacta, la app usa el GPS de tu celular.'},
-      act:{t:'Actividad diaria',q:'Un resumen de cuánto te moviste en el día: pasos, distancia y calorías.',p:'Te ayuda a no pasar demasiadas horas sentado y a cumplir tus metas de movimiento, incluso los días que no entrenas.'},
-      alarma:{t:'Alarma silenciosa',l:'Qué hace',q:'Una alarma que vibra en tu muñeca, sin ningún sonido.',p:'Te despierta de forma más suave que el celular y sin molestar a quien duerme contigo.'},
-      avisos:{t:'Avisos por vibración',l:'Qué hace',q:'La banda vibra cuando entra una llamada o un SMS a tu celular.',p:'Así no te pierdes una llamada importante aunque tengas el celular lejos, y sin las distracciones de una pantalla. Está pensada para concentrarte: no avisa de WhatsApp ni de redes sociales.'}
-    };
-    var dlg=document.getElementById('fn-modal');
-    var btns=[].slice.call(document.querySelectorAll('.fbtn[data-fn]'));
-    if(!dlg||!btns.length) return;
-    var ico=document.getElementById('fn-ico'), tit=document.getElementById('fn-t'),
-        ql=document.getElementById('fn-ql'), q=document.getElementById('fn-q'),
-        p=document.getElementById('fn-p'), pos=document.getElementById('fn-pos'),
-        vivo=document.getElementById('fn-vivo');
-    var actual=0, abajoFuera=false;
-    function pintar(i,anunciar){
-      actual=(i+btns.length)%btns.length;
-      var b=btns[actual], d=FN[b.getAttribute('data-fn')]; if(!d) return;
-      var svg=b.querySelector('svg'); ico.innerHTML=svg?svg.outerHTML:'';
-      tit.textContent=d.t; ql.textContent=d.l||'Qué mide';
-      q.textContent=d.q; p.textContent=d.p;
-      pos.textContent=(actual+1)+' de '+btns.length;
-      vivo.textContent=anunciar?(d.t+', '+(actual+1)+' de '+btns.length):'';
-    }
-    function alCerrar(){
-      document.body.classList.remove('fn-abierto');
-      // El foco vuelve a la tarjeta de la última función vista
-      var b=btns[actual]; if(b){ try{ b.focus({preventScroll:true}); }catch(e){ b.focus(); } }
-    }
-    function abrir(i){
-      pintar(i,false);
-      if(typeof dlg.showModal==='function'){ if(!dlg.open) dlg.showModal(); }
-      else dlg.setAttribute('open','');
-      document.body.classList.add('fn-abierto');
-    }
-    function cerrar(){
-      if(typeof dlg.close==='function'){ if(dlg.open) dlg.close(); }
-      else { dlg.removeAttribute('open'); alCerrar(); }
-    }
-    btns.forEach(function(b,i){ b.addEventListener('click',function(){ abrir(i); }); });
-    dlg.addEventListener('close',alCerrar);
-    dlg.querySelector('.fn-cerrar').addEventListener('click',cerrar);
-    dlg.querySelector('.fn-prev').addEventListener('click',function(){ pintar(actual-1,true); });
-    dlg.querySelector('.fn-next').addEventListener('click',function(){ pintar(actual+1,true); });
-    // Tocar el fondo cierra, solo si el toque también empezó afuera: así no
-    // se cierra al seleccionar texto y soltar fuera de la caja.
-    dlg.addEventListener('pointerdown',function(e){ abajoFuera=(e.target===dlg); });
-    dlg.addEventListener('click',function(e){ if(e.target===dlg && abajoFuera) cerrar(); abajoFuera=false; });
-    dlg.addEventListener('keydown',function(e){
-      if(e.key==='ArrowRight'){ e.preventDefault(); pintar(actual+1,true); }
-      else if(e.key==='ArrowLeft'){ e.preventDefault(); pintar(actual-1,true); }
-    });
-  })();
-  // Vidrio "gelatina" de las funciones y aparición suave de la sección.
-  (function(){
-    var sec=document.getElementById('simple'); if(!sec) return;
-    var grid=sec.querySelector('.fgrid');
-    var reducir=!!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    // Se aplasta al tocar y rebota al soltar. En touch espera 70 ms antes de
-    // apretar: si en ese rato empieza un scroll (pointercancel), no se aprieta.
-    [].forEach.call(sec.querySelectorAll('.fbtn'),function(b){
-      var t=null, s=null;
-      function soltar(rebotar){
-        clearTimeout(t);
-        var estaba=b.classList.contains('apretado');
-        b.classList.remove('apretado');
-        if(rebotar && !reducir){ b.classList.remove('rebota'); void b.offsetWidth; b.classList.add('rebota'); }
-        else if(estaba){ b.classList.add('suelta'); clearTimeout(s); s=setTimeout(function(){ b.classList.remove('suelta'); },300); }
-      }
-      var x0=0, y0=0;
-      b.addEventListener('pointerdown',function(e){
-        if(e.button>0) return;
-        clearTimeout(t); x0=e.clientX; y0=e.clientY;
-        t=setTimeout(function(){ b.classList.add('apretado'); }, e.pointerType==='touch'?70:0);
-      });
-      b.addEventListener('pointermove',function(e){
-        if(e.pointerType==='touch' && !b.classList.contains('apretado') && (Math.abs(e.clientX-x0)>6 || Math.abs(e.clientY-y0)>6)) clearTimeout(t);
-      });
-      b.addEventListener('pointerup',function(){ soltar(true); });
-      b.addEventListener('pointercancel',function(){ soltar(false); });
-      b.addEventListener('pointerleave',function(){ soltar(false); });
-      b.addEventListener('animationend',function(e){ if(e.animationName==='fnJelly') b.classList.remove('rebota'); });
-    });
-    // En computador, la luz del vidrio sigue al mouse
-    if(grid && window.matchMedia && window.matchMedia('(hover:hover) and (pointer:fine)').matches){
-      grid.addEventListener('pointermove',function(e){
-        var b=e.target.closest && e.target.closest('.fbtn'); if(!b) return;
-        var r=b.getBoundingClientRect();
-        b.style.setProperty('--mx',(e.clientX-r.left)+'px');
-        b.style.setProperty('--my',(e.clientY-r.top)+'px');
-      });
-      grid.addEventListener('pointerout',function(e){
-        var b=e.target.closest && e.target.closest('.fbtn');
-        if(b && !b.contains(e.relatedTarget)){ b.style.removeProperty('--mx'); b.style.removeProperty('--my'); }
-      });
-    }
-    // "Ver las 14 funciones": despliega la grilla y la vuelve a guardar
-    var ver=document.getElementById('fn-ver'), caja=document.getElementById('fn-lista');
-    if(ver && caja){
-      var rotulo=ver.querySelector('span'), listoT=null;
-      caja.addEventListener('transitionend',function(e){
-        if(e.target===caja && e.propertyName==='grid-template-rows' && caja.classList.contains('abierto')) caja.classList.add('listo');
-      });
-      ver.addEventListener('click',function(){
-        var abrir=!caja.classList.contains('abierto');
-        clearTimeout(listoT);
-        caja.classList.remove('listo');
-        caja.classList.toggle('abierto',abrir);
-        ver.setAttribute('aria-expanded',abrir?'true':'false');
-        if(rotulo) rotulo.textContent=abrir?'Ocultar funciones':'Ver las 14 funciones';
-        // Sin animación (navegador viejo o "menos movimiento") no llega el transitionend
-        if(abrir) listoT=setTimeout(function(){ if(caja.classList.contains('abierto')) caja.classList.add('listo'); },700);
-      });
-    }
-    if(reducir || !('IntersectionObserver' in window)) return;
-    sec.classList.add('rev');
-    var io=new IntersectionObserver(function(ents){
-      ents.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('rev-on'); io.unobserve(en.target); } });
-    },{rootMargin:'0px 0px -6% 0px',threshold:0.1});
-    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fn-ver,.soft-note,.bat-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
-  })();
-  </script>
-
-  <!-- COMO FUNCIONA: todo dentro de una tarjeta de vidrio, como la de "Hasta 30
-       días". Los cuadros del 360° no tienen fondo (scripts/recortar-fondo-360.js):
-       la banda queda directo sobre el gris de la tarjeta. -->
-  <section class="how" id="tecnologia">
-    <div class="r360-card">
-      <div class="r360-head">
-        <div class="soft-kicker">Cómo funciona · 360°</div>
-        <h2 class="r360-marca">DEUS BAND</h2>
-        <p class="r360-txt">Girá la banda y descubre la tecnología detrás de cada pulsación.</p>
-      </div>
-      <div class="how-row row-360">
-      <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra o mantén una flecha para girar">
-        <canvas id="rot360-canvas" width="900" height="900" style="width:100%;height:100%;display:block;"></canvas>
-        <div class="rot-vignette"></div>
-        <div class="rot-badge">360°</div>
-        <button class="hold-arrow l" id="rot360-arrow-l" type="button" aria-label="Girar a la izquierda">‹</button>
-        <button class="hold-arrow r" id="rot360-arrow-r" type="button" aria-label="Girar a la derecha">›</button>
-        <div class="rot-finger" id="rot360-finger" aria-hidden="true">👆</div>
-      </div>
-      <div class="rot-hint-wrap"><span class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor</span></div>
-    </div>
-    </div><!-- /r360-card -->
-
-  </section>
+  <!-- Visor 360°: la tarjeta está dentro de #simple (arriba de las funciones
+       de la app). El script va después de la sección para que ya exista. -->
   <script>
   (function(){
     var N=85, BLUE=72; // f_073: cuadro del sensor azul; f_074-085: fundido que cierra la vuelta
@@ -4375,6 +4218,165 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
     function cerrarFull(){ if(full) full.classList.remove('show'); document.body.style.overflow=''; resetZoom(); }
     document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarFull(); });
+  })();
+  </script>
+
+  <dialog class="fn-modal" id="fn-modal" aria-labelledby="fn-t" aria-describedby="fn-p">
+    <div class="fn-box">
+      <button type="button" class="fn-cerrar" aria-label="Cerrar">&times;</button>
+      <div class="fn-top">
+        <span class="fi" id="fn-ico" aria-hidden="true"></span>
+        <div>
+          <div class="fn-kicker">Función de la app Da Halo</div>
+          <h3 class="fn-t" id="fn-t"></h3>
+        </div>
+      </div>
+      <div class="fn-sec"><div class="fn-lbl" id="fn-ql">Qué mide</div><p id="fn-q"></p></div>
+      <div class="fn-sec fn-para"><div class="fn-lbl">Para qué te sirve</div><p id="fn-p"></p></div>
+      <p class="fn-aviso">DEUS Band no es un dispositivo médico: sus datos te sirven para conocer tus tendencias de bienestar y entrenamiento, no para diagnosticar.</p>
+      <div class="fn-nav">
+        <button type="button" class="fn-prev" aria-label="Función anterior">&lsaquo; Anterior</button>
+        <span class="fn-pos" id="fn-pos"></span>
+        <button type="button" class="fn-next" aria-label="Función siguiente">Siguiente &rsaquo;</button>
+      </div>
+      <span class="vh" id="fn-vivo" aria-live="polite"></span>
+    </div>
+  </dialog>
+  <script>
+  // +14 funciones: cada tarjeta abre #fn-modal con qué mide y para qué le
+  // sirve a la persona. Los textos viven acá y el ícono se copia de la
+  // tarjeta, para no duplicar nada en el HTML. Anterior/Siguiente (y las
+  // flechas del teclado) recorren las 14 sin cerrar.
+  (function(){
+    var FN={
+      fc:{t:'Frecuencia cardíaca',q:'Cuántas veces late tu corazón por minuto, medido de forma automática durante el día y la noche.',p:'Te muestra cómo responde tu cuerpo al entrenamiento, al estrés y al descanso. Si tu pulso en reposo baja con las semanas, suele ser señal de que tu condición física mejora; si sube varios días seguidos, puede indicar cansancio o falta de descanso. Al entrenar ves en qué zona (1 a 5) estás, para entrenar a la intensidad justa.'},
+      spo2:{t:'Oxígeno en sangre (SpO₂)',q:'El porcentaje de oxígeno que transporta tu sangre.',p:'Te sirve para saber cómo está tu oxigenación, por ejemplo después de entrenar, al despertar o cuando subes a la montaña o viajas en altura, donde el aire tiene menos oxígeno. Lo habitual es que se mantenga estable; si ves valores bajos repetidos, coméntalo con un médico.'},
+      hrv:{t:'HRV · Variabilidad cardíaca',q:'La pequeña variación de tiempo entre un latido y el siguiente, que refleja cómo se está recuperando tu sistema nervioso.',p:'Es uno de los mejores indicadores de recuperación. Una HRV por sobre tu promedio dice que estás listo para exigirte; por debajo, que conviene bajar la intensidad, dormir más o darle un respiro al estrés.'},
+      estres:{t:'Nivel de estrés',q:'Un índice que estima tu nivel de estrés a partir de tu pulso y su variabilidad.',p:'Te ayuda a ver en qué momentos del día se acumula la tensión y a comprobar qué te sirve para bajarla: una caminata, respirar unos minutos o acostarte más temprano.'},
+      recup:{t:'Recuperación',q:'Qué tan recuperado está tu cuerpo, según cómo dormiste y cómo se comportó tu corazón.',p:'Te ayuda a decidir cada mañana si es día de entrenar fuerte, suave o descansar, en vez de adivinar. Así evitas sobreentrenarte y progresas con más constancia.'},
+      fases:{t:'Fases del sueño',q:'Cuánto tiempo pasas cada noche en sueño ligero, profundo y REM.',p:'El sueño profundo es clave para la recuperación física y el REM para la memoria y el ánimo. Verlas te explica por qué a veces despiertas cansado aunque hayas dormido ocho horas, y qué hábitos te ayudan a descansar mejor.'},
+      dur:{t:'Duración del sueño',q:'A qué hora te dormiste, a qué hora despertaste y cuánto dormiste en total.',p:'Te ayuda a mantener horarios regulares y a asegurarte de dormir lo suficiente, que es la base de tu energía, tu rendimiento y tu recuperación.'},
+      pasos:{t:'Pasos',q:'Los pasos que das a lo largo del día.',p:'Te motiva a moverte más: te pones una meta diaria en la app (por ejemplo 8.000 o 10.000 pasos) y ves tu avance día a día y semana a semana.'},
+      cal:{t:'Calorías',q:'Una estimación de las calorías que gastas en el día y en cada entrenamiento.',p:'Te sirve para saber cuánto gastas en un día normal y en uno de entrenamiento, útil si quieres bajar de peso, mantenerte o ganar masa muscular.'},
+      dep:{t:'+100 modos deportivos',l:'Qué es',q:'Más de 100 deportes para registrar tus entrenamientos: correr, gym, ciclismo, funcional y muchos más. Eliges el deporte en la app antes de empezar.',p:'Cada sesión queda guardada con su duración, pulso y calorías, así puedes comparar tus entrenamientos y ver cómo progresas.'},
+      ritmo:{t:'Ritmo y cadencia',q:'Tu ritmo (minutos por kilómetro), tu velocidad y tus pasos por minuto al correr o caminar.',p:'Te ayuda a correr de forma más eficiente y a mejorar tus tiempos. Para el mapa de la ruta y la distancia exacta, la app usa el GPS de tu celular.'},
+      act:{t:'Actividad diaria',q:'Un resumen de cuánto te moviste en el día: pasos, distancia y calorías.',p:'Te ayuda a no pasar demasiadas horas sentado y a cumplir tus metas de movimiento, incluso los días que no entrenas.'},
+      alarma:{t:'Alarma silenciosa',l:'Qué hace',q:'Una alarma que vibra en tu muñeca, sin ningún sonido.',p:'Te despierta de forma más suave que el celular y sin molestar a quien duerme contigo.'},
+      avisos:{t:'Avisos por vibración',l:'Qué hace',q:'La banda vibra cuando entra una llamada o un SMS a tu celular.',p:'Así no te pierdes una llamada importante aunque tengas el celular lejos, y sin las distracciones de una pantalla. Está pensada para concentrarte: no avisa de WhatsApp ni de redes sociales.'}
+    };
+    var dlg=document.getElementById('fn-modal');
+    var btns=[].slice.call(document.querySelectorAll('.fbtn[data-fn]'));
+    if(!dlg||!btns.length) return;
+    var ico=document.getElementById('fn-ico'), tit=document.getElementById('fn-t'),
+        ql=document.getElementById('fn-ql'), q=document.getElementById('fn-q'),
+        p=document.getElementById('fn-p'), pos=document.getElementById('fn-pos'),
+        vivo=document.getElementById('fn-vivo');
+    var actual=0, abajoFuera=false;
+    function pintar(i,anunciar){
+      actual=(i+btns.length)%btns.length;
+      var b=btns[actual], d=FN[b.getAttribute('data-fn')]; if(!d) return;
+      var svg=b.querySelector('svg'); ico.innerHTML=svg?svg.outerHTML:'';
+      tit.textContent=d.t; ql.textContent=d.l||'Qué mide';
+      q.textContent=d.q; p.textContent=d.p;
+      pos.textContent=(actual+1)+' de '+btns.length;
+      vivo.textContent=anunciar?(d.t+', '+(actual+1)+' de '+btns.length):'';
+    }
+    function alCerrar(){
+      document.body.classList.remove('fn-abierto');
+      // El foco vuelve a la tarjeta de la última función vista
+      var b=btns[actual]; if(b){ try{ b.focus({preventScroll:true}); }catch(e){ b.focus(); } }
+    }
+    function abrir(i){
+      pintar(i,false);
+      if(typeof dlg.showModal==='function'){ if(!dlg.open) dlg.showModal(); }
+      else dlg.setAttribute('open','');
+      document.body.classList.add('fn-abierto');
+    }
+    function cerrar(){
+      if(typeof dlg.close==='function'){ if(dlg.open) dlg.close(); }
+      else { dlg.removeAttribute('open'); alCerrar(); }
+    }
+    btns.forEach(function(b,i){ b.addEventListener('click',function(){ abrir(i); }); });
+    dlg.addEventListener('close',alCerrar);
+    dlg.querySelector('.fn-cerrar').addEventListener('click',cerrar);
+    dlg.querySelector('.fn-prev').addEventListener('click',function(){ pintar(actual-1,true); });
+    dlg.querySelector('.fn-next').addEventListener('click',function(){ pintar(actual+1,true); });
+    // Tocar el fondo cierra, solo si el toque también empezó afuera: así no
+    // se cierra al seleccionar texto y soltar fuera de la caja.
+    dlg.addEventListener('pointerdown',function(e){ abajoFuera=(e.target===dlg); });
+    dlg.addEventListener('click',function(e){ if(e.target===dlg && abajoFuera) cerrar(); abajoFuera=false; });
+    dlg.addEventListener('keydown',function(e){
+      if(e.key==='ArrowRight'){ e.preventDefault(); pintar(actual+1,true); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); pintar(actual-1,true); }
+    });
+  })();
+  // Vidrio "gelatina" de las funciones y aparición suave de la sección.
+  (function(){
+    var sec=document.getElementById('simple'); if(!sec) return;
+    var grid=sec.querySelector('.fgrid');
+    var reducir=!!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // Se aplasta al tocar y rebota al soltar. En touch espera 70 ms antes de
+    // apretar: si en ese rato empieza un scroll (pointercancel), no se aprieta.
+    [].forEach.call(sec.querySelectorAll('.fbtn'),function(b){
+      var t=null, s=null;
+      function soltar(rebotar){
+        clearTimeout(t);
+        var estaba=b.classList.contains('apretado');
+        b.classList.remove('apretado');
+        if(rebotar && !reducir){ b.classList.remove('rebota'); void b.offsetWidth; b.classList.add('rebota'); }
+        else if(estaba){ b.classList.add('suelta'); clearTimeout(s); s=setTimeout(function(){ b.classList.remove('suelta'); },300); }
+      }
+      var x0=0, y0=0;
+      b.addEventListener('pointerdown',function(e){
+        if(e.button>0) return;
+        clearTimeout(t); x0=e.clientX; y0=e.clientY;
+        t=setTimeout(function(){ b.classList.add('apretado'); }, e.pointerType==='touch'?70:0);
+      });
+      b.addEventListener('pointermove',function(e){
+        if(e.pointerType==='touch' && !b.classList.contains('apretado') && (Math.abs(e.clientX-x0)>6 || Math.abs(e.clientY-y0)>6)) clearTimeout(t);
+      });
+      b.addEventListener('pointerup',function(){ soltar(true); });
+      b.addEventListener('pointercancel',function(){ soltar(false); });
+      b.addEventListener('pointerleave',function(){ soltar(false); });
+      b.addEventListener('animationend',function(e){ if(e.animationName==='fnJelly') b.classList.remove('rebota'); });
+    });
+    // En computador, la luz del vidrio sigue al mouse
+    if(grid && window.matchMedia && window.matchMedia('(hover:hover) and (pointer:fine)').matches){
+      grid.addEventListener('pointermove',function(e){
+        var b=e.target.closest && e.target.closest('.fbtn'); if(!b) return;
+        var r=b.getBoundingClientRect();
+        b.style.setProperty('--mx',(e.clientX-r.left)+'px');
+        b.style.setProperty('--my',(e.clientY-r.top)+'px');
+      });
+      grid.addEventListener('pointerout',function(e){
+        var b=e.target.closest && e.target.closest('.fbtn');
+        if(b && !b.contains(e.relatedTarget)){ b.style.removeProperty('--mx'); b.style.removeProperty('--my'); }
+      });
+    }
+    // "Ver las 14 funciones": despliega la grilla y la vuelve a guardar
+    var ver=document.getElementById('fn-ver'), caja=document.getElementById('fn-lista');
+    if(ver && caja){
+      var rotulo=ver.querySelector('span'), listoT=null;
+      caja.addEventListener('transitionend',function(e){
+        if(e.target===caja && e.propertyName==='grid-template-rows' && caja.classList.contains('abierto')) caja.classList.add('listo');
+      });
+      ver.addEventListener('click',function(){
+        var abrir=!caja.classList.contains('abierto');
+        clearTimeout(listoT);
+        caja.classList.remove('listo');
+        caja.classList.toggle('abierto',abrir);
+        ver.setAttribute('aria-expanded',abrir?'true':'false');
+        if(rotulo) rotulo.textContent=abrir?'Ocultar funciones':'Ver las 14 funciones';
+        // Sin animación (navegador viejo o "menos movimiento") no llega el transitionend
+        if(abrir) listoT=setTimeout(function(){ if(caja.classList.contains('abierto')) caja.classList.add('listo'); },700);
+      });
+    }
+    if(reducir || !('IntersectionObserver' in window)) return;
+    sec.classList.add('rev');
+    var io=new IntersectionObserver(function(ents){
+      ents.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('rev-on'); io.unobserve(en.target); } });
+    },{rootMargin:'0px 0px -6% 0px',threshold:0.1});
+    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fn-ver,.soft-note,.bat-card,.r360-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
   })();
   </script>
 
