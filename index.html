@@ -859,12 +859,21 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
      ese recorte es lo que le avisa al visitante que se desliza. */
   padding:4px 24px 14px;margin:0 -24px;scroll-padding-inline:24px;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;
-  /* Cada tarjeta con su propio alto. Estiradas al alto de la más larga
-     quedaba un hueco muerto abajo de las reseñas cortas, y en un carrusel
-     donde se ve una a la vez ese desnivel no se nota. */
-  align-items:flex-start;}
+  /* Todas las tarjetas del mismo alto (pedido del dueño: con alturas
+     distintas se veían desparejas, sobre todo en escritorio y con la
+     siguiente asomando en el celular). El autor y la comuna van abajo en
+     todas, así el pie queda alineado; el texto sigue acotado a 5 líneas. */
+  align-items:stretch;}
 .reviews-grid::-webkit-scrollbar{display:none;}
-.reviews-grid>.review-card{flex:0 0 86%;max-width:340px;scroll-snap-align:center;}
+.reviews-grid>.review-card{flex:0 0 86%;max-width:340px;scroll-snap-align:center;display:flex;flex-direction:column;}
+.reviews-grid .review-author{margin-top:auto;}
+/* Reseñas sin foto: estiradas al alto de las con foto quedaban con un hueco
+   enorme. Van como tarjeta de cita: comillas grandes arriba, estrellas y
+   texto centrados en el espacio (dos márgenes auto lo reparten) y el autor
+   abajo, alineado con el resto. Pueden mostrar más texto porque sobra lugar. */
+.reviews-grid .rv-sin-foto::before{content:"\201C";font-family:Georgia,'Times New Roman',serif;font-size:5.5rem;line-height:.8;color:rgba(233,196,106,.28);height:46px;}
+.reviews-grid .rv-sin-foto .review-stars{margin-top:auto;}
+.reviews-grid .rv-sin-foto .review-text{font-size:1.28rem;line-height:1.55;color:#e6e6e6;-webkit-line-clamp:10;}
 @media(min-width:900px){.reviews-grid>.review-card{flex-basis:320px;}}
 /* Flechas: solo en escritorio. En celular el deslizamiento es el gesto natural
    y las flechas taparían la foto. */
