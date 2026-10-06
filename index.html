@@ -124,6 +124,10 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
 @font-face{font-family:'DM Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/dm-sans-400-lat.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 @font-face{font-family:'DM Sans';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/dm-sans-600-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;}
 @font-face{font-family:'DM Sans';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/dm-sans-600-lat.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+/* Michroma (licencia OFL, ver fonts/OFL-Michroma.txt): la alternativa libre más
+   parecida a Eurostile Bold Extended, la letra de la marca. Eurostile es de
+   pago y no se puede servir sin licencia. Se usa en "DEUS BAND" de la tabla. */
+@font-face{font-family:'Michroma';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/michroma-400-lat.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 </style>
 
 <!-- Datos estructurados para Google (producto con precio, stock, reseñas y valoración) -->
@@ -563,6 +567,8 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
 .cmp .c-deus{background:rgba(255,255,255,.055);box-shadow:inset 1px 0 0 rgba(255,255,255,.08),inset -1px 0 0 rgba(255,255,255,.08);}
 .cmp thead .c-deus{color:var(--white);font-size:.82rem;border-radius:14px 14px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.055));
   box-shadow:inset 1px 0 0 rgba(255,255,255,.09),inset -1px 0 0 rgba(255,255,255,.09),inset 0 1px 0 rgba(255,255,255,.18);}
+.cmp thead th.c-deus{font-family:'Michroma','DM Sans',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.04em;line-height:1.45;font-size:.74rem;
+  -webkit-text-stroke:.4px currentColor;}  /* el trazo le da el grosor "Bold" que Michroma no trae */
 .cmp tbody tr:last-child .c-deus{border-radius:0 0 14px 14px;box-shadow:inset 1px 0 0 rgba(255,255,255,.08),inset -1px 0 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(255,255,255,.08);}
 .ck,.cx{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;}
 /* Los ✓ de DEUS Band en blanco perla; los de la competencia, en gris */
@@ -590,7 +596,7 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
   .bat-card{grid-template-columns:1fr;padding:26px 18px 22px;gap:14px;}}
 @media(max-width:600px){.soft{padding:0;margin:24px -12px;}.soft-in{padding:42px 16px;border-radius:22px;}.soft-title{font-size:1.6rem;}.bat-txt .soft-title{font-size:1.5rem;}.soft-block+.soft-block{margin-top:56px;}.soft-head{margin-bottom:22px;}
   .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);}.fbtn{padding:16px 4px 12px;font-size:.68rem;gap:8px;border-radius:20px;}.fi{width:38px;height:38px;border-radius:13px;}.fi svg{width:19px;height:19px;}
-  .cmp-wrap{padding:6px 4px 2px;border-radius:20px;}.cmp{font-size:.72rem;}.cmp th,.cmp td{padding:12px 4px;}.cmp thead th{font-size:.62rem;}.cmp thead th small{font-size:.56rem;}.cmp thead .c-deus{font-size:.7rem;}.cmp tbody th{padding-left:10px;width:38%;}.cmp tbody th small{font-size:.62rem;}.cv{font-size:.66rem;}.ck,.cx{width:22px;height:22px;}.ck svg,.cx svg{width:12px;height:12px;}
+  .cmp-wrap{padding:6px 4px 2px;border-radius:20px;}.cmp{font-size:.72rem;}.cmp th,.cmp td{padding:12px 4px;}.cmp thead th{font-size:.62rem;}.cmp thead th small{font-size:.56rem;}.cmp thead .c-deus{font-size:.7rem;}.cmp thead th.c-deus{font-size:.6rem;letter-spacing:.02em;}.cmp tbody th{padding-left:10px;width:38%;}.cmp tbody th small{font-size:.62rem;}.cv{font-size:.66rem;}.ck,.cx{width:22px;height:22px;}.ck svg,.cx svg{width:12px;height:12px;}
   .bat-stats b{font-size:1.6rem;}}
 @media(prefers-reduced-motion:reduce){.fbtn.rebota{animation:none;}.fbtn,.fbtn.apretado,.fbtn.suelta,.fbtn .fi{transition:none;}}
 /* Detalle de cada función: <dialog> nativo (capa superior; Esc y foco los
