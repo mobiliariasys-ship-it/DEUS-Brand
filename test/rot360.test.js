@@ -1,5 +1,5 @@
 'use strict';
-// Visor 360° dentro de la tarjeta de vidrio. Los cuadros (img/rot360) no traen
+// Visor 360° dentro de la tarjeta de vidrio. Los cuadros (img/rot360-v2) no traen
 // fondo: la banda queda sobre el gris de la tarjeta. Si alguien vuelve a subir
 // cuadros con fondo negro, o se pierde el clearRect del canvas, el sitio se ve
 // mal sin que nada falle — por eso se prueba acá.
@@ -27,11 +27,25 @@ function tieneAlfa(buf) {
   return false;
 }
 
-test('los 85 cuadros del 360° tienen fondo transparente', () => {
+const cuadro = k => 'f_' + String(k).padStart(3, '0') + '.webp';
+// La carpeta sale del propio index.html: se prueba lo que de verdad carga la web.
+const usada = (html.match(/function src\(i\)\{ return '([^']+)\/f_'/) || [])[1];
+
+test('los 85 cuadros que carga la web tienen fondo transparente', () => {
+  assert.ok(usada, 'no se encontró la carpeta de cuadros en src()');
   for (let k = 1; k <= N_CUADROS; k++) {
-    const n = 'f_' + String(k).padStart(3, '0') + '.webp';
-    const buf = fs.readFileSync(path.join(RAIZ, 'img', 'rot360', n));
-    assert.ok(tieneAlfa(buf), n + ' no tiene canal alfa (¿se subió con el fondo negro?)');
+    const buf = fs.readFileSync(path.join(RAIZ, usada, cuadro(k)));
+    assert.ok(tieneAlfa(buf), usada + '/' + cuadro(k) + ' no tiene canal alfa (¿se subió con el fondo negro?)');
+  }
+});
+
+test('img/rot360 conserva los cuadros con fondo para las páginas cargadas antes del cambio', () => {
+  // Esas páginas piden img/rot360 y dibujan sin limpiar el canvas: con cuadros
+  // transparentes en esa ruta la banda queda con estela (pasó en producción).
+  assert.notStrictEqual(usada, 'img/rot360', 'los cuadros sin fondo van en una carpeta nueva, no en img/rot360');
+  for (let k = 1; k <= N_CUADROS; k++) {
+    const buf = fs.readFileSync(path.join(RAIZ, 'img', 'rot360', cuadro(k)));
+    assert.ok(!tieneAlfa(buf), 'img/rot360/' + cuadro(k) + ' tiene que seguir con su fondo negro');
   }
 });
 

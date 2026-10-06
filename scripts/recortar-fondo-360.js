@@ -1,7 +1,12 @@
-// Quita el fondo negro de los cuadros del visor 360° (img/rot360/f_001..f_085).
+// Quita el fondo negro de los cuadros del visor 360° (f_001..f_085).
 //
 // Los cuadros vienen de un render con fondo #080808 parejo. En la web van sobre
 // una tarjeta gris de vidrio, así que el fondo tiene que ser transparente.
+//
+// Originales con fondo: img/rot360. Recortados: img/rot360-v2 (lo que usa la
+// web). Nunca escribir los recortados encima de img/rot360: las páginas cargadas
+// antes del cambio piden esa ruta y dibujan sin limpiar el canvas, así que con
+// cuadros transparentes la banda queda con estela.
 //
 // Ojo: la banda tiene sombras del MISMO negro que el fondo (la cara interior
 // de la correa y el fondo de las perforaciones). Por eso no sirve "todo lo
@@ -11,10 +16,9 @@
 // antialias pasan a alfa parcial (y se les saca la parte de fondo que traían),
 // para que el borde no quede serruchado ni con halo negro.
 //
-// Los originales con fondo negro están en el historial de git (antes de este
-// script). Para regenerar desde ellos:
+// Para regenerar:
 //   npm i sharp --no-save
-//   node scripts/recortar-fondo-360.js <carpeta-originales> img/rot360
+//   node scripts/recortar-fondo-360.js img/rot360 img/rot360-v2
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
