@@ -605,7 +605,7 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
    grilla de funciones no: esa la despliega "Ver las 14 funciones"). La
    activa el JS de la sección; sin JS o con "menos movimiento" todo se ve de
    entrada. */
-.soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .r360-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
+.soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .r360-card,.soft.rev .vidrio-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
 .soft.rev .rev-on{opacity:1;transform:none;}
 @media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}.soft.rev .step:nth-child(3){transition-delay:.2s;}}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
@@ -1202,17 +1202,29 @@ body.sb-on .chat-panel{bottom:82px;}
    etiqueta, "DEUS BAND" con la letra ancha de la marca y el texto; abajo la banda
    girando, sin fondo, directo sobre el gris de la tarjeta (con un foco de luz
    detrás se veía como neblina). */
-.r360-card{max-width:640px;margin:0 auto;border-radius:26px;padding:22px 18px 20px;
+.r360-card,.vidrio-card{border-radius:26px;padding:22px 18px 20px;
   background:radial-gradient(120% 90% at 0% 0%,rgba(255,255,255,.07),rgba(255,255,255,0) 55%),linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
   border:1px solid rgba(255,255,255,.09);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.3),0 26px 52px -30px rgba(0,0,0,.95);}
+.r360-card{max-width:640px;margin:0 auto;}
+/* La app y "Diseño sin distracciones" van en la misma tarjeta de vidrio, dentro
+   de #simple (antes eran secciones sueltas sobre el fondo, bajo la tabla). */
+.app-card{text-align:center;}
+.app-card .soft-kicker{margin-bottom:4px;}
+.app-card .app-stores{margin-bottom:4px;}
+@media(max-width:640px){.app-card .app-stage{margin-left:-18px;margin-right:-18px;}}
+.diseno-card{max-width:760px;margin:0 auto;text-align:center;}
+.diseno-card .soft-title{margin-bottom:0;}
+.diseno-video{max-width:680px;margin:20px auto 0;aspect-ratio:960/608;border-radius:18px;overflow:hidden;background:#0d0d0d;}
+.diseno-video video{width:100%;height:100%;object-fit:cover;display:block;}
+.diseno-txt{max-width:460px;margin:16px auto 0;font-size:.88rem;line-height:1.6;color:var(--silver);}
 .r360-head{text-align:center;padding:4px 6px 8px;}
 .r360-head .soft-kicker{margin-bottom:12px;}
 .r360-marca{font-family:'Michroma','DM Sans',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.06em;
   -webkit-text-stroke:.5px currentColor;color:var(--white);font-size:1.45rem;line-height:1.25;margin:2px 0 8px;}
 .r360-txt{max-width:420px;margin:0 auto;font-size:.88rem;line-height:1.6;color:var(--silver);}
 .r360-card .row-360 .how-img{max-width:100%;border-radius:20px;background:transparent;}
-@media(min-width:861px){.r360-card{padding:30px 34px 26px;}.r360-marca{font-size:2rem;}}
+@media(min-width:861px){.r360-card,.vidrio-card{padding:30px 34px 26px;}.r360-marca{font-size:2rem;}}
 /* Va dentro de #simple (entre los pasos y las funciones de la app): ahí ya queda
    del mismo ancho que la tarjeta de materiales y sensor, sin estirarla. */
 .row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
@@ -3937,6 +3949,164 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p class="soft-note">Sin suscripción: pagas la banda una vez y la app es tuya.</p>
       </div>
 
+      <div class="soft-block" id="app">
+        <!-- La app: antes era una sección suelta bajo la tabla; ahora va en la misma
+             tarjeta de vidrio que el 360°, dentro de #simple. -->
+        <div class="vidrio-card app-card">
+          <!-- 1. La App + 100% gratis (arriba de la imagen) -->
+          <div class="soft-kicker">La app</div>
+          <!-- Logo Da Halo debajo del texto "La App", y el "100% gratis" bajo el logo -->
+          <div style="text-align:center;margin:12px auto 10px;">
+            <img src="img/img-c9eeead6.webp" alt="Da Halo" width="72" height="72" loading="lazy" decoding="async" style="width:72px;height:72px;border-radius:16px;box-shadow:0 6px 22px rgba(0,0,0,.45);object-fit:cover;display:inline-block;">
+          </div>
+          <div class="app-free">✓ 100% gratis · Sin suscripciones</div>
+
+          <!-- 2. Pantallas de la app: carrusel 3D flotante -->
+          <div class="app-stage" id="appStage">
+            <img class="fan-ph" src="img/app-rot-1.webp" alt="App Da Halo — resumen del día" loading="lazy" decoding="async">
+            <img class="fan-ph" src="img/app-rot-2.webp" alt="App Da Halo — análisis del sueño" loading="lazy" decoding="async">
+            <img class="fan-ph" src="img/app-rot-3.webp" alt="App Da Halo — actividad y pasos" loading="lazy" decoding="async">
+            <img class="fan-ph" src="img/app-rot-4.webp" alt="App Da Halo — entrenamiento con GPS" loading="lazy" decoding="async">
+            <button class="hold-arrow l" id="appArrowL" type="button" aria-label="Pantalla anterior">‹</button>
+            <button class="hold-arrow r" id="appArrowR" type="button" aria-label="Pantalla siguiente">›</button>
+          </div>
+          <div class="app-shot-hint">Desliza para rotar las pantallas</div>
+          <script>
+          (function(){
+            var stage=document.getElementById('appStage');
+            if(!stage) return;
+            var phones=[].slice.call(stage.querySelectorAll('.fan-ph'));
+            var n=phones.length, pos=0, target=0, anim=null;
+            // En círculo: después de la última viene la primera, siempre hacia el
+            // mismo lado (antes volvía de golpe de la 4 a la 1). La pantalla que da
+            // la vuelta lo hace invisible, en el extremo (opacidad 0).
+            function circ(off){ off=((off%n)+n)%n; return off>=n/2 ? off-n : off; }
+            function render(){
+              var w=stage.clientWidth;
+              phones.forEach(function(ph,i){
+                var off=circ(i-pos), a=Math.abs(off);
+                var x=off*w*0.26;
+                var sc=Math.max(.5,1-a*.16);
+                var op=a<=1.4 ? 1-a*.32 : Math.max(0,(1-1.4*.32)*(2-a)/0.6);
+                ph.style.transform='translate(calc(-50% + '+x+'px),-50%) rotateY('+(-off*24)+'deg) scale('+sc+')';
+                ph.style.zIndex=String(100-Math.round(a*10));
+                ph.style.opacity=op;
+              });
+            }
+            // Lleva a una pantalla con freno suave (al soltar o con las flechas)
+            function animateTo(t){
+              target=t;
+              cancelAnimationFrame(anim);
+              (function step(){
+                pos+=(target-pos)*0.09;
+                if(Math.abs(target-pos)<0.003){ pos=target; render(); return; }
+                render(); anim=requestAnimationFrame(step);
+              })();
+            }
+            // Giro solo: avanza siempre, sin detenerse ni saltar. Va más lento cuando
+            // una pantalla está al centro (para alcanzar a verla) y un poco más
+            // rápido entre una y otra: pos(u) = u - A·sen(2πu)/2π, con u = tiempo/T.
+            var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var T=4200, A=0.55, autoOn=false, rafAuto=null, u0=0, t0=0, reanudarTimer=null;
+            function posDe(u){ return u-A*Math.sin(2*Math.PI*u)/(2*Math.PI); }
+            function uDe(p){ var u=p; for(var k=0;k<5;k++){ u-=(posDe(u)-p)/(1-A*Math.cos(2*Math.PI*u)); } return u; }
+            function tick(ahora){
+              if(!autoOn) return;
+              pos=target=posDe(u0+(ahora-t0)/T);
+              render();
+              rafAuto=requestAnimationFrame(tick);
+            }
+            function pararAuto(){ autoOn=false; cancelAnimationFrame(rafAuto); }
+            function iniciarAuto(){
+              if(reduceMotion || autoOn) return;
+              cancelAnimationFrame(anim);
+              autoOn=true; u0=uDe(pos); t0=performance.now();   // sigue desde donde quedó
+              rafAuto=requestAnimationFrame(tick);
+            }
+            function reanudarPronto(){ clearTimeout(reanudarTimer); reanudarTimer=setTimeout(iniciarAuto,1800); }
+
+            var x0=null,y0=null,p0=0,drag=false,horiz=null;
+            function down(x,y){ x0=x; y0=y; p0=pos; drag=true; horiz=null; pararAuto(); cancelAnimationFrame(anim); clearTimeout(reanudarTimer); }
+            function move(x,y){
+              if(!drag) return;
+              var dx=x-x0, dy=y-y0;
+              if(horiz===null && (Math.abs(dx)>8||Math.abs(dy)>8)) horiz=Math.abs(dx)>Math.abs(dy);
+              if(!horiz) return;
+              var paso=stage.clientWidth*0.26;
+              pos=p0-dx/paso;
+              render();
+            }
+            function up(){ if(!drag) return; drag=false; animateTo(Math.round(pos)); horiz=null; reanudarPronto(); }
+
+            // Flechas: mantener presionada avanza pantalla por pantalla (en círculo)
+            var holdIv=null;
+            function holdStep(dir){ animateTo(Math.round(target)+dir); }
+            function holdStart(dir){ pararAuto(); clearTimeout(reanudarTimer); cancelAnimationFrame(anim); holdStep(dir); clearInterval(holdIv); holdIv=setInterval(function(){ holdStep(dir); },650); }
+            function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } reanudarPronto(); }
+            function bindHold(btn,dir){
+              if(!btn) return;
+              var start=function(e){ e.stopPropagation(); e.preventDefault(); holdStart(dir); };
+              btn.addEventListener('mousedown',start);
+              btn.addEventListener('touchstart',start,{passive:false});
+              ['mouseup','mouseleave','touchend','touchcancel'].forEach(function(ev){ btn.addEventListener(ev,function(e){ e.stopPropagation(); holdStop(); }); });
+            }
+            bindHold(document.getElementById('appArrowL'),-1);
+            bindHold(document.getElementById('appArrowR'), 1);
+            window.addEventListener('mouseup',holdStop);
+
+            stage.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+            // passive:false para poder frenar el scroll vertical de la página mientras rotan
+            stage.addEventListener('touchmove',function(e){
+              move(e.touches[0].clientX,e.touches[0].clientY);
+              if(horiz) e.preventDefault();
+            },{passive:false});
+            stage.addEventListener('touchend',up,{passive:true});
+            stage.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
+            window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
+            window.addEventListener('mouseup',up);
+            stage.addEventListener('mouseenter',function(){ pararAuto(); animateTo(Math.round(pos)); });
+            stage.addEventListener('mouseleave',reanudarPronto);
+            window.addEventListener('resize',render);
+            render();
+
+            // Arranca sola apenas el carrusel entra en pantalla
+            if('IntersectionObserver' in window){
+              var io=new IntersectionObserver(function(entradas){
+                entradas.forEach(function(en){ if(en.isIntersecting) iniciarAuto(); else pararAuto(); });
+              },{threshold:0.35});
+              io.observe(stage);
+            } else { iniciarAuto(); }
+          })();
+          </script>
+
+          <!-- El logo Da Halo subió arriba del título "La App". Acá queda solo
+               "se conecta con" + Strava y Apple Health, debajo del carrusel. -->
+          <div class="app-tri">
+            <div class="tri-connect">se conecta con</div>
+            <div class="tri-base">
+              <div class="compat-pill">
+                <span class="compat-icon" style="background:#FC4C02"><svg width="44" height="44" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0 3.46 13.828h4.169"/></svg></span>
+                <small>Strava</small>
+              </div>
+              <div class="compat-pill">
+                <span class="compat-icon" style="background:#fff"><svg width="46" height="46" viewBox="0 0 24 24" fill="#FA3E5D" aria-hidden="true"><path d="M12 21s-6.55-4.27-9.2-7.4C.83 11.3 1.2 8.2 3.4 6.74c1.94-1.28 4.36-.74 5.62.98L12 11.3l2.98-3.58c1.26-1.72 3.68-2.26 5.62-.98 2.2 1.46 2.57 4.56.6 6.86C18.55 16.73 12 21 12 21z"/></svg></span>
+                <small>Apple Health</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="stores-k">Descárgala gratis</div>
+          <div class="app-stores">
+            <a class="store-logo" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer" aria-label="Descargar Da Halo en App Store" title="App Store">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M17.05 12.04c-.03-2.85 2.33-4.22 2.43-4.29-1.32-1.94-3.38-2.2-4.11-2.23-1.75-.18-3.41 1.03-4.3 1.03-.88 0-2.25-1.01-3.7-.98-1.9.03-3.66 1.11-4.64 2.81-1.98 3.44-.51 8.53 1.42 11.32.94 1.37 2.06 2.9 3.53 2.85 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.4 3.43-2.78 1.08-1.59 1.53-3.13 1.55-3.21-.03-.01-2.98-1.14-3.01-4.52zM14.6 4.2c.78-.95 1.31-2.27 1.16-3.58-1.13.05-2.49.75-3.3 1.7-.72.84-1.36 2.18-1.19 3.46 1.26.1 2.55-.64 3.33-1.58z"/></svg>
+            </a>
+            <a class="store-logo" href="https://play.google.com/store/apps/details?id=com.moyoung.dahalo&hl=es_CL" target="_blank" rel="noopener noreferrer" aria-label="Descargar Da Halo en Google Play" title="Google Play">
+              <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="#00D7FE" d="M3.6 1.8c-.3.3-.5.8-.5 1.4v17.6c0 .6.2 1.1.5 1.4l.1.1 9.9-9.9v-.2L3.7 1.7z"/><path fill="#FFCE00" d="M16.9 15.6l-3.3-3.3v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.7 0 2.3l-3.9 2.2z"/><path fill="#FF3A44" d="M17 15.5l-3.4-3.4L3.6 22.2c.4.4 1 .4 1.7.1L17 15.5"/><path fill="#00F076" d="M17 8.8L5.3 2.1c-.7-.4-1.3-.3-1.7.1l10 10L17 8.8z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div class="soft-block">
         <div class="bat-card">
           <div class="bat-foto"><img src="img/deus-sensor-celeste.webp" width="1100" height="311" alt="DEUS Band de perfil con el sensor óptico encendido en celeste" loading="lazy" decoding="async"></div>
@@ -3950,6 +4120,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <li><b>24/7</b><span>sensor óptico</span></li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      <div class="soft-block" id="diseno">
+        <!-- Diseño sin distracciones: el video del ciclista en la misma tarjeta de
+             vidrio. El video (1,2 MB) se carga recién cuando se acerca
+             (data-lazy-src); el poster evita que el hueco quede vacío. -->
+        <div class="vidrio-card diseno-card">
+          <div class="soft-kicker">En movimiento</div>
+          <h2 class="soft-title">Diseño sin distracciones</h2>
+          <div class="diseno-video"><video muted loop playsinline autoplay preload="none" poster="img/diseno-poster.webp" data-lazy-src="img/diseno-video.mp4" aria-label="DEUS Band ciclista"></video></div>
+          <p class="diseno-txt">Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
         </div>
       </div>
 
@@ -4388,197 +4570,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var io=new IntersectionObserver(function(ents){
       ents.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('rev-on'); io.unobserve(en.target); } });
     },{rootMargin:'0px 0px -6% 0px',threshold:0.1});
-    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fn-ver,.soft-note,.bat-card,.r360-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
+    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fn-ver,.soft-note,.bat-card,.r360-card,.vidrio-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
   })();
   </script>
-
-  <!-- APP -->
-  <section class="app-sec" id="app">
-    <!-- 1. La App + 100% gratis (arriba de la imagen) -->
-    <div class="app-kicker">La App</div>
-    <!-- Logo Da Halo debajo del texto "La App", y el "100% gratis" bajo el logo -->
-    <div style="text-align:center;margin:12px auto 10px;">
-      <img src="img/img-c9eeead6.webp" alt="Da Halo" width="72" height="72" loading="lazy" decoding="async" style="width:72px;height:72px;border-radius:16px;box-shadow:0 6px 22px rgba(0,0,0,.45);object-fit:cover;display:inline-block;">
-    </div>
-    <div class="app-free">✓ 100% gratis · Sin suscripciones</div>
-
-    <!-- 2. Pantallas de la app: carrusel 3D flotante -->
-    <div class="app-stage" id="appStage">
-      <img class="fan-ph" src="img/app-rot-1.webp" alt="App Da Halo — resumen del día" loading="lazy" decoding="async">
-      <img class="fan-ph" src="img/app-rot-2.webp" alt="App Da Halo — análisis del sueño" loading="lazy" decoding="async">
-      <img class="fan-ph" src="img/app-rot-3.webp" alt="App Da Halo — actividad y pasos" loading="lazy" decoding="async">
-      <img class="fan-ph" src="img/app-rot-4.webp" alt="App Da Halo — entrenamiento con GPS" loading="lazy" decoding="async">
-      <button class="hold-arrow l" id="appArrowL" type="button" aria-label="Pantalla anterior">‹</button>
-      <button class="hold-arrow r" id="appArrowR" type="button" aria-label="Pantalla siguiente">›</button>
-    </div>
-    <div class="app-shot-hint">Desliza para rotar las pantallas</div>
-    <script>
-    (function(){
-      var stage=document.getElementById('appStage');
-      if(!stage) return;
-      var phones=[].slice.call(stage.querySelectorAll('.fan-ph'));
-      var n=phones.length, pos=0, target=0, anim=null;
-      // En círculo: después de la última viene la primera, siempre hacia el
-      // mismo lado (antes volvía de golpe de la 4 a la 1). La pantalla que da
-      // la vuelta lo hace invisible, en el extremo (opacidad 0).
-      function circ(off){ off=((off%n)+n)%n; return off>=n/2 ? off-n : off; }
-      function render(){
-        var w=stage.clientWidth;
-        phones.forEach(function(ph,i){
-          var off=circ(i-pos), a=Math.abs(off);
-          var x=off*w*0.26;
-          var sc=Math.max(.5,1-a*.16);
-          var op=a<=1.4 ? 1-a*.32 : Math.max(0,(1-1.4*.32)*(2-a)/0.6);
-          ph.style.transform='translate(calc(-50% + '+x+'px),-50%) rotateY('+(-off*24)+'deg) scale('+sc+')';
-          ph.style.zIndex=String(100-Math.round(a*10));
-          ph.style.opacity=op;
-        });
-      }
-      // Lleva a una pantalla con freno suave (al soltar o con las flechas)
-      function animateTo(t){
-        target=t;
-        cancelAnimationFrame(anim);
-        (function step(){
-          pos+=(target-pos)*0.09;
-          if(Math.abs(target-pos)<0.003){ pos=target; render(); return; }
-          render(); anim=requestAnimationFrame(step);
-        })();
-      }
-      // Giro solo: avanza siempre, sin detenerse ni saltar. Va más lento cuando
-      // una pantalla está al centro (para alcanzar a verla) y un poco más
-      // rápido entre una y otra: pos(u) = u - A·sen(2πu)/2π, con u = tiempo/T.
-      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var T=4200, A=0.55, autoOn=false, rafAuto=null, u0=0, t0=0, reanudarTimer=null;
-      function posDe(u){ return u-A*Math.sin(2*Math.PI*u)/(2*Math.PI); }
-      function uDe(p){ var u=p; for(var k=0;k<5;k++){ u-=(posDe(u)-p)/(1-A*Math.cos(2*Math.PI*u)); } return u; }
-      function tick(ahora){
-        if(!autoOn) return;
-        pos=target=posDe(u0+(ahora-t0)/T);
-        render();
-        rafAuto=requestAnimationFrame(tick);
-      }
-      function pararAuto(){ autoOn=false; cancelAnimationFrame(rafAuto); }
-      function iniciarAuto(){
-        if(reduceMotion || autoOn) return;
-        cancelAnimationFrame(anim);
-        autoOn=true; u0=uDe(pos); t0=performance.now();   // sigue desde donde quedó
-        rafAuto=requestAnimationFrame(tick);
-      }
-      function reanudarPronto(){ clearTimeout(reanudarTimer); reanudarTimer=setTimeout(iniciarAuto,1800); }
-
-      var x0=null,y0=null,p0=0,drag=false,horiz=null;
-      function down(x,y){ x0=x; y0=y; p0=pos; drag=true; horiz=null; pararAuto(); cancelAnimationFrame(anim); clearTimeout(reanudarTimer); }
-      function move(x,y){
-        if(!drag) return;
-        var dx=x-x0, dy=y-y0;
-        if(horiz===null && (Math.abs(dx)>8||Math.abs(dy)>8)) horiz=Math.abs(dx)>Math.abs(dy);
-        if(!horiz) return;
-        var paso=stage.clientWidth*0.26;
-        pos=p0-dx/paso;
-        render();
-      }
-      function up(){ if(!drag) return; drag=false; animateTo(Math.round(pos)); horiz=null; reanudarPronto(); }
-
-      // Flechas: mantener presionada avanza pantalla por pantalla (en círculo)
-      var holdIv=null;
-      function holdStep(dir){ animateTo(Math.round(target)+dir); }
-      function holdStart(dir){ pararAuto(); clearTimeout(reanudarTimer); cancelAnimationFrame(anim); holdStep(dir); clearInterval(holdIv); holdIv=setInterval(function(){ holdStep(dir); },650); }
-      function holdStop(){ if(holdIv){ clearInterval(holdIv); holdIv=null; } reanudarPronto(); }
-      function bindHold(btn,dir){
-        if(!btn) return;
-        var start=function(e){ e.stopPropagation(); e.preventDefault(); holdStart(dir); };
-        btn.addEventListener('mousedown',start);
-        btn.addEventListener('touchstart',start,{passive:false});
-        ['mouseup','mouseleave','touchend','touchcancel'].forEach(function(ev){ btn.addEventListener(ev,function(e){ e.stopPropagation(); holdStop(); }); });
-      }
-      bindHold(document.getElementById('appArrowL'),-1);
-      bindHold(document.getElementById('appArrowR'), 1);
-      window.addEventListener('mouseup',holdStop);
-
-      stage.addEventListener('touchstart',function(e){ down(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
-      // passive:false para poder frenar el scroll vertical de la página mientras rotan
-      stage.addEventListener('touchmove',function(e){
-        move(e.touches[0].clientX,e.touches[0].clientY);
-        if(horiz) e.preventDefault();
-      },{passive:false});
-      stage.addEventListener('touchend',up,{passive:true});
-      stage.addEventListener('mousedown',function(e){ e.preventDefault(); down(e.clientX,e.clientY); });
-      window.addEventListener('mousemove',function(e){ move(e.clientX,e.clientY); });
-      window.addEventListener('mouseup',up);
-      stage.addEventListener('mouseenter',function(){ pararAuto(); animateTo(Math.round(pos)); });
-      stage.addEventListener('mouseleave',reanudarPronto);
-      window.addEventListener('resize',render);
-      render();
-
-      // Arranca sola apenas el carrusel entra en pantalla
-      if('IntersectionObserver' in window){
-        var io=new IntersectionObserver(function(entradas){
-          entradas.forEach(function(en){ if(en.isIntersecting) iniciarAuto(); else pararAuto(); });
-        },{threshold:0.35});
-        io.observe(stage);
-      } else { iniciarAuto(); }
-    })();
-    </script>
-
-    <!-- El logo Da Halo subió arriba del título "La App". Acá queda solo
-         "se conecta con" + Strava y Apple Health, debajo del carrusel. -->
-    <div class="app-tri">
-      <div class="tri-connect">se conecta con</div>
-      <div class="tri-base">
-        <div class="compat-pill">
-          <span class="compat-icon" style="background:#FC4C02"><svg width="44" height="44" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0 3.46 13.828h4.169"/></svg></span>
-          <small>Strava</small>
-        </div>
-        <div class="compat-pill">
-          <span class="compat-icon" style="background:#fff"><svg width="46" height="46" viewBox="0 0 24 24" fill="#FA3E5D" aria-hidden="true"><path d="M12 21s-6.55-4.27-9.2-7.4C.83 11.3 1.2 8.2 3.4 6.74c1.94-1.28 4.36-.74 5.62.98L12 11.3l2.98-3.58c1.26-1.72 3.68-2.26 5.62-.98 2.2 1.46 2.57 4.56.6 6.86C18.55 16.73 12 21 12 21z"/></svg></span>
-          <small>Apple Health</small>
-        </div>
-      </div>
-    </div>
-
-    <div class="stores-k">Descárgala gratis</div>
-    <div class="app-stores">
-      <a class="store-logo" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer" aria-label="Descargar Da Halo en App Store" title="App Store">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M17.05 12.04c-.03-2.85 2.33-4.22 2.43-4.29-1.32-1.94-3.38-2.2-4.11-2.23-1.75-.18-3.41 1.03-4.3 1.03-.88 0-2.25-1.01-3.7-.98-1.9.03-3.66 1.11-4.64 2.81-1.98 3.44-.51 8.53 1.42 11.32.94 1.37 2.06 2.9 3.53 2.85 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.4 3.43-2.78 1.08-1.59 1.53-3.13 1.55-3.21-.03-.01-2.98-1.14-3.01-4.52zM14.6 4.2c.78-.95 1.31-2.27 1.16-3.58-1.13.05-2.49.75-3.3 1.7-.72.84-1.36 2.18-1.19 3.46 1.26.1 2.55-.64 3.33-1.58z"/></svg>
-      </a>
-      <a class="store-logo" href="https://play.google.com/store/apps/details?id=com.moyoung.dahalo&hl=es_CL" target="_blank" rel="noopener noreferrer" aria-label="Descargar Da Halo en Google Play" title="Google Play">
-        <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="#00D7FE" d="M3.6 1.8c-.3.3-.5.8-.5 1.4v17.6c0 .6.2 1.1.5 1.4l.1.1 9.9-9.9v-.2L3.7 1.7z"/><path fill="#FFCE00" d="M16.9 15.6l-3.3-3.3v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.7 0 2.3l-3.9 2.2z"/><path fill="#FF3A44" d="M17 15.5l-3.4-3.4L3.6 22.2c.4.4 1 .4 1.7.1L17 15.5"/><path fill="#00F076" d="M17 8.8L5.3 2.1c-.7-.4-1.3-.3-1.7.1l10 10L17 8.8z"/></svg>
-      </a>
-    </div>
-
-  </section>
-
-  <!-- MONITOREO 24/7 + ESPECIFICACIONES (unificadas, bajo los botones de descarga) -->
-
-
-
-  <!-- CARACTERÍSTICAS (bajadas: las reseñas van primero) -->
-  <section class="how" id="diseno">
-    <!-- Una sola pieza: el video del ciclista con su texto (antes era un carrusel de 3) -->
-    <div class="feat-car" id="featCar">
-      <div class="feat-track" id="featTrack">
-        <div class="feat-slide feat-cine">
-          <div class="how-row">
-            <!-- El .webm declarado acá NO existe en el repo: el navegador lo pedía, se
-     comía un 404 y recién después bajaba el .mp4. Se deja solo el mp4.
-     Y el video (1,2 MB) ya no se descarga en cada visita: solo ~1 de cada 8
-     visitantes baja hasta esta sección, así que se carga cuando se acerca
-     (data-lazy-src). Se conserva el poster para que el hueco no quede vacío. -->
-<!-- El título va arriba del video (pedido del dueño); el texto queda abajo. -->
-            <div class="how-txt feat-top"><h3>Diseño sin distracciones</h3></div>
-<div class="how-img natural"><video muted loop playsinline autoplay preload="none" poster="img/diseno-poster.webp" data-lazy-src="img/diseno-video.mp4" aria-label="DEUS Band ciclista"></video></div>
-            <div class="how-txt">
-              <p>Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-
-
 
   <!-- MODAL RESEÑA -->
   <div class="resena-overlay" id="resenaOverlay">
