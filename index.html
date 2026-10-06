@@ -604,8 +604,10 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
 /* Aparición al hacer scroll: un fundido suave, el mismo para todo (la
    grilla de funciones no: esa la despliega "Ver las 14 funciones"). La
    activa el JS de la sección; sin JS o con "menos movimiento" todo se ve de
-   entrada. */
-.soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .r360-card,.soft.rev .vidrio-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
+   entrada. La tarjeta del video del ciclista (.diseno-card) NO entra así: en
+   iPhone un video que arranca dentro de algo con opacidad 0 queda congelado en
+   la primera imagen. */
+.soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .r360-card,.soft.rev .app-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
 .soft.rev .rev-on{opacity:1;transform:none;}
 @media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}.soft.rev .step:nth-child(3){transition-delay:.2s;}}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
@@ -4570,7 +4572,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var io=new IntersectionObserver(function(ents){
       ents.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('rev-on'); io.unobserve(en.target); } });
     },{rootMargin:'0px 0px -6% 0px',threshold:0.1});
-    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fn-ver,.soft-note,.bat-card,.r360-card,.vidrio-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
+    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fn-ver,.soft-note,.bat-card,.r360-card,.app-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
   })();
   </script>
 
@@ -5601,20 +5603,32 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
 
 // Refuerzo de autoplay: iPhone en ahorro de batería (y algunos Android)
 // bloquean la reproducción automática y muestran un botón de play. Aquí
-// reintentamos al quedar visible el video y al primer gesto del usuario.
+// reintentamos al quedar visible el video, cuando termina de cargar y con cada
+// toque. Antes solo con el PRIMER gesto de la visita: a esa altura el video del
+// ciclista (carga diferida) todavía no tenía archivo y quedaba congelado.
 (function(){
   var vids=document.querySelectorAll('video[autoplay]');
   if(!vids.length) return;
+  var visibles=[];
+  function esVisible(v){ return visibles.indexOf(v)!==-1; }
   function reproducir(v){ v.muted=true; if(v.paused) v.play().catch(function(){}); }
-  function intentarTodos(){ vids.forEach(reproducir); }
+  function intentarVisibles(){ visibles.forEach(reproducir); }
   if('IntersectionObserver' in window){
     var io=new IntersectionObserver(function(es){
-      es.forEach(function(e){ if(e.isIntersecting) reproducir(e.target); });
+      es.forEach(function(e){
+        var i=visibles.indexOf(e.target);
+        if(e.isIntersecting){ if(i===-1) visibles.push(e.target); reproducir(e.target); }
+        else if(i!==-1) visibles.splice(i,1);
+      });
     },{threshold:.15});
     vids.forEach(function(v){ io.observe(v); });
+  } else {
+    vids.forEach(function(v){ visibles.push(v); });
   }
-  ['touchstart','scroll','click'].forEach(function(ev){
-    window.addEventListener(ev, intentarTodos, { once:true, passive:true });
+  vids.forEach(function(v){ v.addEventListener('canplay',function(){ if(esVisible(v)) reproducir(v); }); });
+  // touchend y click: los gestos que el navegador acepta para dar play
+  ['touchend','click'].forEach(function(ev){
+    window.addEventListener(ev, intentarVisibles, { passive:true });
   });
 })();
 

@@ -41,3 +41,20 @@ test('La app y Diseño usan la tarjeta de vidrio del 360° y no pierden su funci
   assert.ok(html.indexOf("getElementById('appStage')") > html.indexOf('id="appStage"'),
     'el script del carrusel de la app tiene que ir después del carrusel');
 });
+
+test('el video del ciclista no parte invisible y se reintenta con cada toque', () => {
+  // En iPhone, un video que arranca dentro de algo con opacidad 0 (la animación
+  // de aparición del panel) queda congelado en la primera imagen. Pasó.
+  const css = html.match(/\.soft\.rev \.soft-head,[^{]*\{opacity:0;/);
+  const js = html.match(/querySelectorAll\('(\.soft-head,[^']+)'\)/);
+  assert.ok(css && js, 'no se encontró la animación de aparición de #simple');
+  for (const lista of [css[0], js[1]]) {
+    assert.ok(!/vidrio-card|diseno-card/.test(lista), 'la tarjeta del video no puede entrar con la animación de aparición');
+  }
+  // El refuerzo de autoplay no puede ser de un solo gesto: el primer toque de la
+  // visita llega antes de que el video (carga diferida) tenga archivo.
+  const refuerzo = html.slice(html.indexOf('// Refuerzo de autoplay'), html.indexOf('// Pulso "en vivo"'));
+  assert.ok(refuerzo.length > 0, 'falta el refuerzo de autoplay');
+  assert.ok(!/once:\s*true/.test(refuerzo), 'el reintento con toque tiene que valer para cada toque');
+  assert.match(refuerzo, /'canplay'/, 'se reintenta cuando el video termina de cargar');
+});
