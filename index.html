@@ -167,7 +167,7 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
       "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
       "merchantReturnDays": 30,
       "returnMethod": "https://schema.org/ReturnByMail",
-      "returnFees": "https://schema.org/FreeReturn"
+      "returnFees": "https://schema.org/ReturnFeesCustomerResponsibility"
     }
   },
   "aggregateRating": {
@@ -658,7 +658,7 @@ body.fn-abierto{overflow:hidden;}
 @media(prefers-reduced-motion:reduce){.fn-modal[open] .fn-box{animation:none;}}
 @media(max-width:600px){.ab-chip{font-size:.55rem;letter-spacing:1.3px;padding:3px 6px;margin-right:2px;}}
 
-/* HEADER: cápsula flotante (estilo Wellband) con el logo y el pulso en vivo.
+/* HEADER: cápsula flotante con el logo y el pulso en vivo.
    Sin carrito ni Instagram: el carrito se abre desde la barra de compra y el
    Instagram está al final de la página. */
 header{display:flex;align-items:center;justify-content:space-between;max-width:1180px;height:76px;margin:0 auto;padding:10px 22px;
@@ -2094,7 +2094,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="reassure">
         <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><b>Pago 100% seguro</b><small>Webpay · Mercado Pago</small></div>
         <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg><b>Envío a todo Chile</b><small>Seguimiento Starken</small></div>
-        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><b>Garantía 60 días</b><small>Devolución por satisfacción</small></div>
+        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><b>Garantía 30 días</b><small>Satisfacción · 60 días por fallas</small></div>
       </div>
 
       <div class="resist-badge app-badge">
@@ -4167,7 +4167,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <button class="soft-btn" type="button" onclick="abrirCheckout()">Comprar DEUS Band</button>
           <div class="soft-cta-note">
             <span>Envío gratis a todo Chile</span>
-            <span>Garantía de 60 días</span>
+            <span>30 días de satisfacción</span>
+            <span>60 días por fallas técnicas</span>
           </div>
         </div>
       </div>
@@ -4642,6 +4643,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="faq-kicker">Compra sin miedo</div>
       <h2 class="faq-title">Preguntas frecuentes</h2>
     </div>
+    <!-- Políticas: 30 días de satisfacción y 60 ante fallas técnicas (decisión del
+         dueño). La garantía legal de 6 meses va igual: es la que da la ley en
+         Chile y no se puede acortar. Mismos datos que el chatbot (services/chat.js). -->
+    <details>
+      <summary>Envíos, garantías y devoluciones</summary>
+      <p><b>Envíos:</b> todos los pedidos cuentan con envío express gratis a todo Chile, con un plazo estimado de 1 a 3 días hábiles. Recibirás información de seguimiento para que puedas revisar el estado de tu pedido.</p>
+      <p><b>Garantía de satisfacción · 30 días:</b> tienes 30 días desde que recibes tu DEUS Band para probarla. Si no quedas satisfecho, puedes solicitar el reembolso de tu compra.</p>
+      <p><b>Garantía técnica · 60 días:</b> si tu DEUS Band presenta cualquier falla técnica en los primeros 60 días, te la cambiamos y el envío corre por nuestra cuenta. No cubre daños por golpes, caídas ni mal uso.</p>
+      <p><b>Garantía legal · 6 meses:</b> si tu DEUS Band presenta una falla o defecto de fábrica, cuentas con 6 meses de garantía legal, pudiendo solicitar cambio, reparación gratuita o devolución del dinero, según corresponda.</p>
+      <p><b>Devoluciones:</b> para recibir el reembolso por satisfacción, deberás devolver tu DEUS Band en buen estado, sin daños, junto con sus accesorios y embalaje original; el envío de vuelta corre por tu cuenta. Por una falla técnica basta la banda y tu número de pedido o boleta, sin necesidad de la caja. Escríbenos por WhatsApp y te acompañamos en todo el proceso.</p>
+    </details>
     <details>
       <summary>¿Funciona con iPhone y con Android?</summary>
       <p>Sí. La app Da Halo es gratis y está disponible en App Store y Google Play. Además se conecta con Strava y Apple Health.</p>
@@ -4672,8 +4684,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="guarantee" style="margin:24px auto;text-align:left;">
       <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
       <div>
-        <b>Garantía de satisfacción · 60 días</b>
-        <p>Si la DEUS Band no es para ti, te devolvemos tu dinero. Además cuentas con la garantía legal por fallas de fábrica. Te acompañamos por WhatsApp en todo el proceso.</p>
+        <b>Garantía de satisfacción · 30 días</b>
+        <p>Si la DEUS Band no es para ti, te devolvemos tu dinero. Además tienes 60 días de garantía ante cualquier falla técnica y la garantía legal de 6 meses por fallas de fábrica. Te acompañamos por WhatsApp en todo el proceso.</p>
       </div>
     </div>
     <div class="fc-price">$68.990 <span class="fold">$78.990</span> <span class="price-save">-12%</span></div>
@@ -4686,7 +4698,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <h2>DEUS Band — Smartband y pulsera inteligente en Chile</h2>
     <p>DEUS Band es una <b>smartband de salud y fitness</b> diseñada para quienes quieren entender su cuerpo con datos reales. Esta <b>pulsera inteligente sin pantalla</b> mide tu <b>sueño</b> (fases profunda, ligera y REM), <b>ritmo cardíaco</b> continuo, <b>variabilidad cardíaca (HRV)</b>, oxígeno en sangre, nivel de estrés y más de 100 modos deportivos — sin notificaciones que te distraigan.</p>
     <p>A diferencia de un smartwatch tradicional, esta <b>banda deportiva minimalista</b> está pensada para usarse 24/7: entrena, duerme y recupérate con hasta <b>30 días de batería</b>: al no tener pantalla, se carga una vez al mes. Es compatible con iPhone y Android a través de la app gratuita Da Halo, y se sincroniza con <b>Strava y Apple Health</b>. Una <b>alternativa accesible a las bandas de recuperación con suscripción mensual</b> como Whoop, a los anillos tipo Oura o a las pulseras Polar y Garmin: aquí pagas una sola vez, sin cuotas ni membresías.</p>
-    <p><b>Compra online con envío a todo Chile</b> (1 a 3 días hábiles vía Starken), pago seguro con Webpay, Flow o Mercado Pago, hasta 3 cuotas sin interés con Mercado Pago, y garantía de satisfacción de 60 días.</p>
+    <p><b>Compra online con envío a todo Chile</b> (1 a 3 días hábiles vía Starken), pago seguro con Webpay, Flow o Mercado Pago, hasta 3 cuotas sin interés con Mercado Pago, garantía de satisfacción de 30 días y 60 días de garantía ante cualquier falla técnica.</p>
   </section>
 
   <!-- BANNER -->
