@@ -1260,12 +1260,13 @@ body.sb-on .wa-float{bottom:82px;}
 .fc-price .fold{font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--silver);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);margin-right:10px;vertical-align:middle;}
 @media(max-width:600px){.fc-line{font-size:1.9rem;}.fc-line.strong{font-size:2.2rem;}}
 @media(max-width:760px){.how-row{grid-template-columns:1fr;gap:18px;margin-bottom:38px;}.how-row.reverse .how-img{order:0;}.how-img{min-height:230px;}}
-.app-stores{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:6px 0 44px;}
-.store-btn{display:inline-flex;align-items:center;gap:11px;background:#161616;border:1px solid var(--border);color:#f2f2f2;padding:11px 22px;text-decoration:none;transition:border-color .2s,transform .12s;}
-.store-btn:hover{border-color:#e8e8e8;transform:translateY(-1px);}
-.store-btn svg{flex-shrink:0;}
-.store-btn .st-small{font-size:.52rem;color:var(--silver);letter-spacing:1.5px;text-transform:uppercase;display:block;}
-.store-btn .st-big{font-size:1rem;font-weight:600;line-height:1.15;letter-spacing:.5px;}
+/* Tiendas: solo los logos, uno al lado del otro (antes eran dos botones
+   grandes apilados con texto). El nombre de cada tienda va en aria-label. */
+.stores-k{text-align:center;font-size:.55rem;letter-spacing:3px;text-transform:uppercase;color:#777;margin:30px 0 14px;}
+.app-stores{display:flex;gap:22px;justify-content:center;flex-wrap:nowrap;margin:0 0 44px;}
+.store-logo{width:64px;height:64px;border-radius:16px;background:#161616;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 22px rgba(0,0,0,.45);transition:border-color .2s,transform .12s;}
+.store-logo:hover{border-color:#e8e8e8;transform:translateY(-1px);}
 .compat-caption{font-size:.55rem;letter-spacing:3px;text-transform:uppercase;color:#777;margin:18px 0 12px;}
 .compat-row{display:flex;gap:26px;justify-content:center;align-items:flex-start;flex-wrap:wrap;}
 .compat-pill{display:flex;flex-direction:column;align-items:center;gap:8px;}
@@ -4425,14 +4426,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
     </div>
 
-    <div class="app-stores" style="margin-top:24px;">
-      <a class="store-btn" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M17.05 12.04c-.03-2.85 2.33-4.22 2.43-4.29-1.32-1.94-3.38-2.2-4.11-2.23-1.75-.18-3.41 1.03-4.3 1.03-.88 0-2.25-1.01-3.7-.98-1.9.03-3.66 1.11-4.64 2.81-1.98 3.44-.51 8.53 1.42 11.32.94 1.37 2.06 2.9 3.53 2.85 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.4 3.43-2.78 1.08-1.59 1.53-3.13 1.55-3.21-.03-.01-2.98-1.14-3.01-4.52zM14.6 4.2c.78-.95 1.31-2.27 1.16-3.58-1.13.05-2.49.75-3.3 1.7-.72.84-1.36 2.18-1.19 3.46 1.26.1 2.55-.64 3.33-1.58z"/></svg>
-        <span><span class="st-small">Descárgala en</span><span class="st-big">App Store</span></span>
+    <div class="stores-k">Descárgala gratis</div>
+    <div class="app-stores">
+      <a class="store-logo" href="https://apps.apple.com/cl/app/da-halo/id6757172047" target="_blank" rel="noopener noreferrer" aria-label="Descargar Da Halo en App Store" title="App Store">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M17.05 12.04c-.03-2.85 2.33-4.22 2.43-4.29-1.32-1.94-3.38-2.2-4.11-2.23-1.75-.18-3.41 1.03-4.3 1.03-.88 0-2.25-1.01-3.7-.98-1.9.03-3.66 1.11-4.64 2.81-1.98 3.44-.51 8.53 1.42 11.32.94 1.37 2.06 2.9 3.53 2.85 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.4 3.43-2.78 1.08-1.59 1.53-3.13 1.55-3.21-.03-.01-2.98-1.14-3.01-4.52zM14.6 4.2c.78-.95 1.31-2.27 1.16-3.58-1.13.05-2.49.75-3.3 1.7-.72.84-1.36 2.18-1.19 3.46 1.26.1 2.55-.64 3.33-1.58z"/></svg>
       </a>
-      <a class="store-btn" href="https://play.google.com/store/apps/details?id=com.moyoung.dahalo&hl=es_CL" target="_blank" rel="noopener noreferrer">
-        <svg width="20" height="22" viewBox="0 0 24 24" fill="#f2f2f2" aria-hidden="true"><path d="M4 2.5v19c0 .6.7 1 1.2.6l14.6-9.5c.5-.3.5-1.1 0-1.4L5.2 1.9C4.7 1.6 4 1.9 4 2.5z"/></svg>
-        <span><span class="st-small">Disponible en</span><span class="st-big">Google Play</span></span>
+      <a class="store-logo" href="https://play.google.com/store/apps/details?id=com.moyoung.dahalo&hl=es_CL" target="_blank" rel="noopener noreferrer" aria-label="Descargar Da Halo en Google Play" title="Google Play">
+        <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="#00D7FE" d="M3.6 1.8c-.3.3-.5.8-.5 1.4v17.6c0 .6.2 1.1.5 1.4l.1.1 9.9-9.9v-.2L3.7 1.7z"/><path fill="#FFCE00" d="M16.9 15.6l-3.3-3.3v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.7 0 2.3l-3.9 2.2z"/><path fill="#FF3A44" d="M17 15.5l-3.4-3.4L3.6 22.2c.4.4 1 .4 1.7.1L17 15.5"/><path fill="#00F076" d="M17 8.8L5.3 2.1c-.7-.4-1.3-.3-1.7.1l10 10L17 8.8z"/></svg>
       </a>
     </div>
 
