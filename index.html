@@ -1192,7 +1192,7 @@ body.sb-on .chat-panel{bottom:82px;}
 .rot-full-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-size:.7rem;color:#ccc;letter-spacing:1px;background:rgba(0,0,0,.6);border:1px solid #2a2a2a;padding:7px 16px;border-radius:16px;z-index:3;white-space:nowrap;}
 /* El visor 360 ocupa su propia fila centrada, más grande que las demás imágenes */
 .how-row.row-360{grid-template-columns:1fr;gap:6px;margin-bottom:0;}
-/* 360° dentro de una tarjeta de vidrio, como la de "Hasta 30 días": arriba la
+/* 360° dentro de una tarjeta de vidrio, como la de materiales y sensor: arriba la
    etiqueta, "DEUS BAND" con la letra ancha de la marca y el texto; abajo la banda
    girando, sin fondo, directo sobre el gris de la tarjeta (con un foco de luz
    detrás se veía como neblina). */
@@ -1208,7 +1208,7 @@ body.sb-on .chat-panel{bottom:82px;}
 .r360-card .row-360 .how-img{max-width:100%;border-radius:20px;background:transparent;}
 @media(min-width:861px){.r360-card{padding:30px 34px 26px;}.r360-marca{font-size:2rem;}}
 /* Va dentro de #simple (entre los pasos y las funciones de la app): ahí ya queda
-   del mismo ancho que la tarjeta de batería, sin estirarla. */
+   del mismo ancho que la tarjeta de materiales y sensor, sin estirarla. */
 .row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
 .row-360 .how-txt{text-align:center;max-width:600px;margin:0 auto;}
 .bpm-heart{color:#e05555;display:inline-block;font-size:.9rem;animation:bpmBeat 1.15s ease-in-out infinite;}
@@ -3870,8 +3870,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </ol>
       </div>
 
-      <!-- COMO FUNCIONA: todo dentro de una tarjeta de vidrio, como la de "Hasta 30
-           días". Los cuadros del 360° no tienen fondo (scripts/recortar-fondo-360.js):
+      <!-- COMO FUNCIONA: todo dentro de una tarjeta de vidrio, como la de materiales
+           y sensor. Los cuadros del 360° no tienen fondo (scripts/recortar-fondo-360.js):
            la banda queda directo sobre el gris de la tarjeta. -->
       <div class="soft-block" id="tecnologia">
         <div class="r360-card">
@@ -3929,13 +3929,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="bat-card">
           <div class="bat-foto"><img src="img/deus-sensor-celeste.webp" width="1100" height="311" alt="DEUS Band de perfil con el sensor óptico encendido en celeste" loading="lazy" decoding="async"></div>
           <div class="bat-txt">
-            <div class="soft-kicker">Sin pantalla</div>
-            <h2 class="soft-title">Hasta 30 días con una sola carga</h2>
-            <p>Como no tiene pantalla, la energía se va a los sensores y no a iluminar números. La cargas una vez al mes y la usas 24/7, también para dormir.</p>
+            <div class="soft-kicker">Materiales y sensor</div>
+            <h2 class="soft-title">Ligera, resistente y con sensor de alta calidad</h2>
+            <p>Pesa solo 24 gramos con la correa: no la sientes ni al dormir. Estructura de aleación de zinc, correas de silicona de grado médico y nylon respirable, y metal libre de níquel donde toca tu piel. Atrás, un sensor óptico de alta calidad lee tu pulso con luz, las 24 horas.</p>
             <ul class="bat-stats">
-              <li><b>30</b><span>días de batería</span></li>
-              <li><b>24</b><span>gramos de peso</span></li>
-              <li><b>24/7</b><span>monitoreo</span></li>
+              <li><b>24</b><span>gramos con correa</span></li>
+              <li><b>Zinc</b><span>estructura de aleación</span></li>
+              <li><b>24/7</b><span>sensor óptico</span></li>
             </ul>
           </div>
         </div>
