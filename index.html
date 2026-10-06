@@ -2022,10 +2022,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              el escritorio pide la de 1200px. Antes el HTML traía una foto y
              initSlides() la reemplazaba por otra más pesada: se descargaban
              las DOS, ~130 KB tirados en cada visita. Ahora el src ya es el
-             definitivo y initSlides quedó sin nada que corregir. -->
+             definitivo y initSlides quedó sin nada que corregir.
+             Gris y rosada traen data-srcset/data-src: las carga
+             cargarFotosCarrusel() al terminar la página o al cambiar de foto. -->
         <img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/slide-negra-800.webp 800w, img/img-afadcb86.webp 1200w" src="img/slide-negra-800.webp" data-color="negra" alt="DEUS Band negra — smartband de salud color negro">
-        <img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/slide-gris-800.webp 800w, img/img-80cd4240.webp 1200w" src="img/slide-gris-800.webp" data-color="gris" alt="DEUS Band gris">
-        <img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/slide-rosada-800.webp 800w, img/img-rosada.webp 1178w" src="img/slide-rosada-800.webp" data-color="rosada" alt="DEUS Band rosada">
+        <img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/slide-gris-800.webp 800w, img/img-80cd4240.webp 1200w" data-src="img/slide-gris-800.webp" data-color="gris" alt="DEUS Band gris">
+        <img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/slide-rosada-800.webp 800w, img/img-rosada.webp 1178w" data-src="img/slide-rosada-800.webp" data-color="rosada" alt="DEUS Band rosada">
       </div>
       <div class="slider-dots">
         <span class="sdot active" onclick="goSlide(0,true)"></span>
@@ -3728,7 +3730,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="reviews-carr">
     <div class="reviews-grid" id="reviewsCarr">
       <div class="review-card">
-        <video class="review-photo review-video" src="img/resena-marcelo.mp4" poster="img/resena-marcelo-poster.webp"
+        <video class="review-photo review-video" src="img/resena-marcelo.mp4" data-poster="img/resena-marcelo-poster.webp"
                muted loop playsinline preload="none" disablepictureinpicture
                aria-label="DEUS Band con correa de nylon en la muñeca, en un parque — reseña de Marcelo"></video>
         <div class="review-stars">★★★★★</div>
@@ -4132,7 +4134,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="vidrio-card diseno-card">
           <div class="soft-kicker">En movimiento</div>
           <h2 class="soft-title">Diseño sin distracciones</h2>
-          <div class="diseno-video"><video muted loop playsinline autoplay preload="none" poster="img/diseno-poster.webp" data-lazy-src="img/diseno-video.mp4" aria-label="DEUS Band ciclista"></video></div>
+          <div class="diseno-video"><video muted loop playsinline autoplay preload="none" data-poster="img/diseno-poster.webp" data-lazy-src="img/diseno-video.mp4" aria-label="DEUS Band ciclista"></video></div>
           <p class="diseno-txt">Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
         </div>
       </div>
@@ -5071,12 +5073,28 @@ pintarContadorSorteo();
 // desde varios lados.
 function initSlides() { /* nada que hacer: el HTML ya trae src + srcset */ }
 
+// Fotos gris y rosada del carrusel: se cargan al terminar la página o apenas
+// alguien cambia de foto. Antes Chrome las bajaba al abrir (por estar al lado
+// de la negra, "lazy" no las frenaba) y en 4G competían con la foto principal:
+// la gris sola pesa 117 KB en un iPhone. El carrusel no avanza solo, así que
+// nadie las alcanza a ver antes.
+function cargarFotosCarrusel() {
+  document.querySelectorAll('#slides img[data-srcset]').forEach(function (im) {
+    im.srcset = im.dataset.srcset;   // primero srcset: así no baja dos veces
+    im.src = im.dataset.src;
+    im.removeAttribute('data-srcset'); im.removeAttribute('data-src');
+  });
+}
+if (document.readyState === 'complete') setTimeout(cargarFotosCarrusel, 300);
+else window.addEventListener('load', function () { setTimeout(cargarFotosCarrusel, 300); });
+
 // elegir=true → además de mover la galería, deja ELEGIDO ese color.
 // Lo mandan los gestos deliberados: deslizar, las flechas y los puntitos. Así
 // el cliente no tiene que confirmar de nuevo el color en el checkout.
 // Lo que NO lo manda es el scroll vertical: ese era el origen de las compras
 // con el color equivocado (ver el detector de swipe más abajo).
 function goSlide(i, elegir) {
+  cargarFotosCarrusel();
   currentSlide = (i + colorOrder.length) % colorOrder.length;
   if (elegir) selectedColor = colorOrder[currentSlide];
   const slides = document.getElementById('slides');
@@ -5356,9 +5374,25 @@ function activarVideosResena(raiz){
     // muted por PROPIEDAD, no solo por atributo: Safari bloquea el autoplay si
     // evalúa el elemento antes de que el atributo surta efecto.
     v.muted = true;
+    if (raiz && raiz !== document) ponerPoster(v); // el modal se ve al tiro
     if (ioVideosResena) ioVideosResena.observe(v);
   });
 }
+// Portadas de video (data-poster): se ponen recién cuando el video se acerca a
+// la pantalla. Con poster="" en el HTML el navegador las bajaba al abrir la
+// página aunque estén muy abajo (reseña de Marcelo y el ciclista: ~70 KB que en
+// 4G competían con la foto principal).
+function ponerPoster(v){
+  if (v.dataset.poster && !v.getAttribute('poster')) v.setAttribute('poster', v.dataset.poster);
+}
+(function(){
+  var vids = document.querySelectorAll('video[data-poster]');
+  if (!('IntersectionObserver' in window)) { Array.prototype.forEach.call(vids, ponerPoster); return; }
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if (e.isIntersecting){ ponerPoster(e.target); io.unobserve(e.target); } });
+  }, { rootMargin: '800px' });
+  Array.prototype.forEach.call(vids, function(v){ io.observe(v); });
+})();
 activarVideosResena(document);
 
 function abrirFotoResena(src){
@@ -5439,8 +5473,8 @@ document.addEventListener('keydown',function(e){
     <button class="tapones-card-close" onclick="cerrarTaponesMenu()" aria-label="Cerrar">&times;</button>
     <div class="tapones-gallery">
       <div class="tapones-track" id="tapones-track">
-        <img class="tapones-slide" src="img/img-tapones-2.webp" alt="Estuche DEUS de tapones de oído" onclick="abrirFotoResena(this.src)" title="Toca para ver en grande">
-        <img class="tapones-slide" src="img/img-tapones.webp" alt="Tapones de oído DEUS abiertos" onclick="abrirFotoResena(this.src)" title="Toca para ver en grande">
+        <img class="tapones-slide" loading="lazy" decoding="async" src="img/img-tapones-2.webp" alt="Estuche DEUS de tapones de oído" onclick="abrirFotoResena(this.src)" title="Toca para ver en grande">
+        <img class="tapones-slide" loading="lazy" decoding="async" src="img/img-tapones.webp" alt="Tapones de oído DEUS abiertos" onclick="abrirFotoResena(this.src)" title="Toca para ver en grande">
       </div>
       <button class="tap-arrow tap-prev" onclick="taponesMover(-1)" aria-label="Foto anterior">‹</button>
       <button class="tap-arrow tap-next" onclick="taponesMover(1)" aria-label="Foto siguiente">›</button>
