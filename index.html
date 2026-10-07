@@ -1219,8 +1219,19 @@ body.sb-on .chat-panel{bottom:82px;}
 @media(max-width:640px){.app-card .app-stage{margin-left:-18px;margin-right:-18px;}}
 .diseno-card{max-width:760px;margin:0 auto;text-align:center;}
 .diseno-card .soft-title{margin-bottom:0;}
-.diseno-video{max-width:680px;margin:20px auto 0;aspect-ratio:960/608;border-radius:18px;overflow:hidden;background:#0d0d0d;}
-.diseno-video video{width:100%;height:100%;object-fit:cover;display:block;}
+/* Las esquinas redondeadas van en el propio <video>, sin un contenedor con
+   overflow:hidden, como estaba cuando funcionaba: en iPhone un video recortado
+   por dos esquinas redondeadas a la vez (este cuadro y el panel) puede quedarse
+   en una imagen fija. */
+.diseno-video{position:relative;max-width:680px;margin:20px auto 0;}
+.diseno-video video{display:block;width:100%;height:auto;aspect-ratio:960/608;border-radius:18px;background:#0d0d0d;}
+/* Play de respaldo: solo aparece si el iPhone no deja reproducir solo (modo
+   ahorro de batería). Con el toque arranca. */
+.vid-play{display:none;position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;padding:0 0 0 4px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.5);background:rgba(10,10,10,.6);color:#fff;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 10px 26px -8px rgba(0,0,0,.8);}
+.vid-bloqueado .vid-play{display:flex;}
+.vid-bloqueado video{cursor:pointer;}
 .diseno-txt{max-width:460px;margin:16px auto 0;font-size:.88rem;line-height:1.6;color:var(--silver);}
 .r360-head{text-align:center;padding:4px 6px 8px;}
 .r360-head .soft-kicker{margin-bottom:12px;}
@@ -4131,12 +4142,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <div class="soft-block" id="diseno">
         <!-- Diseño sin distracciones: el video del ciclista en la misma tarjeta de
-             vidrio. El video (1,2 MB) se carga recién cuando se acerca
-             (data-lazy-src); el poster evita que el hueco quede vacío. -->
+             vidrio. El video (585 KB; antes 1,2 MB, que en 4G tardaba en
+             arrancar) se carga recién cuando se acerca (data-lazy-src) y lo
+             reproduce el script "Video del ciclista", sin el atributo autoplay.
+             La portada es el primer cuadro del video: al arrancar no salta. -->
         <div class="vidrio-card diseno-card">
           <div class="soft-kicker">En movimiento</div>
           <h2 class="soft-title">Diseño sin distracciones</h2>
-          <div class="diseno-video"><video muted loop playsinline autoplay preload="none" data-poster="img/diseno-poster.webp" data-lazy-src="img/diseno-video.mp4" aria-label="DEUS Band ciclista"></video></div>
+          <div class="diseno-video"><video muted loop playsinline preload="none" disablepictureinpicture data-poster="img/diseno-poster-v2.webp" data-lazy-src="img/diseno-video-v2.mp4" aria-label="DEUS Band ciclista"></video><button type="button" class="vid-play" aria-label="Reproducir el video"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button></div>
           <p class="diseno-txt">Diseño minimalista y sin pantalla para que te concentres en lo que importa. Tu bienestar, en datos.</p>
         </div>
       </div>
@@ -5625,59 +5638,81 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   setTimeout(mostrar,1500);
 })();
 
-// Carga diferida del video: el archivo (1,2 MB) solo se descarga cuando el
-// visitante se acerca a esa sección. Antes bajaba en toda visita, aunque los
-// datos muestran que apenas ~1 de cada 8 llega hasta ahí.
+// Video del ciclista ("Diseño sin distracciones"). Se maneja como el de la
+// reseña de Marcelo, que en iPhone anda bien: sin el atributo autoplay (con él
+// Safari suma su propia regla de "autoplay fuera de pantalla", una pieza más
+// que puede dejarlo en la portada) y con play()/pause() por código:
+//  - Cerca (a 1.200 px): baja el archivo (585 KB) y empieza a correr, así al
+//    llegar ya se mueve. Antes partía a 600 px con 1,2 MB: en 4G lento uno
+//    llegaba antes que el video y veía la portada fija.
+//  - Lejos: se pausa, para no gastar batería ni datos.
+//  - Se reintenta al terminar de cargar, con cada toque, al volver a la
+//    pestaña y cada 2 s mientras está cerca y quedó pausado.
+//  - Si el iPhone no deja reproducir solo (ahorro de batería) aparece un botón
+//    de play; con el toque arranca.
 (function(){
   var vids=document.querySelectorAll('video[data-lazy-src]');
   if(!vids.length) return;
+  var cerca=[], vigia=null;
   function cargar(v){
     if(v.dataset.cargado) return;
     v.dataset.cargado='1';
+    ponerPoster(v);
+    v.preload='auto';
     v.src=v.dataset.lazySrc;
     v.load();
+  }
+  function reproducir(v){
+    cargar(v);
     v.muted=true;
-    v.play().catch(function(){});
+    if(!v.paused) return;
+    var p=v.play();
+    if(p && p.then) p.then(function(){
+      v.parentNode.classList.remove('vid-bloqueado');
+    }, function(err){
+      if(err && err.name==='NotAllowedError') v.parentNode.classList.add('vid-bloqueado');
+    });
   }
-  if('IntersectionObserver' in window){
-    var io=new IntersectionObserver(function(es){
-      es.forEach(function(e){ if(e.isIntersecting){ cargar(e.target); io.unobserve(e.target); } });
-    },{rootMargin:'600px'});
-    vids.forEach(function(v){ io.observe(v); });
-  } else {
-    vids.forEach(cargar);
+  // gesto: viene de un toque, que sí puede destrabar un video bloqueado. El
+  // vigía no insiste con esos (fallaría cada 2 s); espera el toque.
+  function revisar(gesto){
+    cerca.forEach(function(v){
+      if(gesto===true || !v.parentNode.classList.contains('vid-bloqueado')) reproducir(v);
+    });
   }
-})();
-
-// Refuerzo de autoplay: iPhone en ahorro de batería (y algunos Android)
-// bloquean la reproducción automática y muestran un botón de play. Aquí
-// reintentamos al quedar visible el video, cuando termina de cargar y con cada
-// toque. Antes solo con el PRIMER gesto de la visita: a esa altura el video del
-// ciclista (carga diferida) todavía no tenía archivo y quedaba congelado.
-(function(){
-  var vids=document.querySelectorAll('video[autoplay]');
-  if(!vids.length) return;
-  var visibles=[];
-  function esVisible(v){ return visibles.indexOf(v)!==-1; }
-  function reproducir(v){ v.muted=true; if(v.paused) v.play().catch(function(){}); }
-  function intentarVisibles(){ visibles.forEach(reproducir); }
+  function armarVigia(){
+    if(cerca.length && !vigia) vigia=setInterval(revisar,2000);
+    else if(!cerca.length && vigia){ clearInterval(vigia); vigia=null; }
+  }
+  vids.forEach(function(v){
+    v.muted=true;
+    v.addEventListener('canplay',function(){ if(cerca.indexOf(v)!==-1) reproducir(v); });
+    v.addEventListener('playing',function(){ v.parentNode.classList.remove('vid-bloqueado'); });
+    // Un listener propio hace "tocable" el video en iPhone (si no, el toque no
+    // genera click) y el botón de play cae aquí mismo.
+    v.parentNode.addEventListener('click',function(){ reproducir(v); });
+  });
   if('IntersectionObserver' in window){
     var io=new IntersectionObserver(function(es){
       es.forEach(function(e){
-        var i=visibles.indexOf(e.target);
-        if(e.isIntersecting){ if(i===-1) visibles.push(e.target); reproducir(e.target); }
-        else if(i!==-1) visibles.splice(i,1);
+        var v=e.target, i=cerca.indexOf(v);
+        if(e.isIntersecting){ if(i===-1) cerca.push(v); reproducir(v); }
+        else { if(i!==-1) cerca.splice(i,1); if(!v.paused) v.pause(); }
       });
-    },{threshold:.15});
+      armarVigia();
+    },{rootMargin:'1200px 0px'});
     vids.forEach(function(v){ io.observe(v); });
   } else {
-    vids.forEach(function(v){ visibles.push(v); });
+    vids.forEach(function(v){ cerca.push(v); reproducir(v); });
+    armarVigia();
   }
-  vids.forEach(function(v){ v.addEventListener('canplay',function(){ if(esVisible(v)) reproducir(v); }); });
   // touchend y click: los gestos que el navegador acepta para dar play
   ['touchend','click'].forEach(function(ev){
-    window.addEventListener(ev, intentarVisibles, { passive:true });
+    window.addEventListener(ev, function(){ revisar(true); }, { passive:true });
   });
+  // Al volver a la pestaña o desde el historial, iOS puede dejarlo pausado
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) revisar(); });
+  window.addEventListener('pageshow',function(){ revisar(); });
 })();
 
 // Pulso "en vivo": el bpm sigue el ritmo real del día según la hora local.
