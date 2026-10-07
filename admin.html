@@ -179,6 +179,17 @@
   .util-kpi .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;color:#e8e8ee;}
   .util-kpi.bien .v{color:#69c46d;} .util-kpi.mal .v{color:#e07a6a;}
   .util-tabla{overflow-x:auto;}
+  /* Días elegidos en el gráfico de Conversión: mismo violeta que esa selección,
+     para que se lea que una manda sobre la otra. */
+  .util-sel{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0 0 12px;padding:10px 14px;
+    background:#17162a;border:1px solid #3a3466;border-radius:10px;font-size:.78rem;color:#d6d2ff;line-height:1.45;}
+  .util-sel b{color:#b3a8ff;}
+  .util-sel button{background:transparent;border:1px solid #4a4380;color:#d6d2ff;border-radius:7px;padding:5px 10px;
+    font-size:.72rem;font-weight:600;cursor:pointer;}
+  .util-sel button:hover{border-color:#9b8cff;color:#fff;}
+  .sel-res .sel-util{margin-top:10px;padding-top:10px;border-top:1px solid #2a2c33;}
+  .sel-util .pos{color:#69c46d;} .sel-util .neg{color:#e07a6a;}
+  .sel-util a{color:#9b8cff;text-decoration:none;white-space:nowrap;}
   /* Alta manual de ventas: el panel solo ve lo que pasó por una pasarela. Las
      presenciales y las que se pierden cuando persist.js cae a modo archivo hay
      que reponerlas a mano, y en el DÍA que ocurrieron. */
@@ -385,6 +396,9 @@
         <button data-udias="14" class="on" onclick="cargarUtilidad(14)">14 días</button>
         <button data-udias="30" onclick="cargarUtilidad(30)">30 días</button>
       </div>
+      <!-- Con días elegidos en el gráfico de Conversión, la utilidad muestra
+           solo esos días (ver utilidadSegunSel). -->
+      <div class="util-sel" id="util-sel" style="display:none"></div>
       <div class="util-kpis" id="util-kpis"></div>
       <div class="util-tabla" id="util-tabla"></div>
       <div class="util-nota" id="util-nota"></div>
@@ -1390,10 +1404,12 @@
         txt+='<br>Promediando los días por igual daría '+pct1(r.simple)+
              ' — los días elegidos tienen tráfico muy desparejo.';
       }
-      caja.innerHTML=txt+'</small>';
+      // Debajo, la plata de esos mismos días (ver utilidadSegunSel).
+      caja.innerHTML=txt+'</small><div class="sel-util" id="conv-sel-util"></div>';
     }
     // Repinta el grafico para que se vea que quedo elegido.
     if(charts['chartConv']) { charts['chartConv'].opts.sel=CONV_SEL; arrancarChart('chartConv'); }
+    utilidadSegunSel();
   }
 
   // Gráficos de barras (estilo ecualizador): un estado por canvas.
@@ -1614,17 +1630,90 @@
   // Lo que queda después de TODO: bandas, envíos, pasarela y publicidad. El
   // gasto de ads es el real de la cuenta de Meta, no el presupuesto puesto —
   // un día que no gastó el presupuesto completo no tiene por qué cargarlo.
-  var utilSt = { dias: 14 };
+  var utilSt = { dias: 14, ult30: null, t30: 0, pidiendo30: false, selClave: '' };
+  var UTIL30_VIGENCIA = 5 * 60000;
+
+  // ── Utilidad de los días elegidos en el gráfico de Conversión ──
+  // Si hay días elegidos ahí (barras sueltas o atajos), esta sección muestra
+  // solo esos días: cuánto se ganó en los días que uno quiera. Los 30 días se
+  // piden UNA vez y cada toque solo filtra y suma; pedirlos en cada toque sería
+  // una llamada a Meta por barra. Sin selección, vuelve a 7/14/30.
+  function diasElegidosUtil(){ return Object.keys(CONV_SEL).sort(); }
+
+  // Filas y total de esos días. Suma lo que el servidor ya calculó día por día
+  // (services/utilidad.js): acá no se recalcula ningún costo. Un test compara
+  // este total con totalizar() del servidor, campo por campo.
+  function utilDeDias(filas, fechas){
+    var set = {}; fechas.forEach(function(x){ set[x] = 1; });
+    var f = filas.filter(function(x){ return set[x.fecha]; });
+    var campos = ['pedidos','unidades','conTapones','pedidosExternos','unidadesExternas','ingresosExternos',
+      'ingresos','costoBandas','costoEnvios','pasarela','adsNeto','ivaAds','ads','utilidad'];
+    var t = {};
+    campos.forEach(function(k){ t[k] = 0; });
+    f.forEach(function(x){ campos.forEach(function(k){ t[k] += Number(x[k]) || 0; }); });
+    return { filas: f, total: t };
+  }
+
+  // Lo llama refrescarSel en cada cambio de la selección y también en cada
+  // refresco del panel: por eso compara con la selección anterior antes de
+  // pedir o repintar nada.
+  function utilidadSegunSel(){
+    var sel = diasElegidosUtil(), k = sel.join(',');
+    if (k !== utilSt.selClave) {
+      utilSt.selClave = k;
+      if (!sel.length) cargarUtilidad();
+      else {
+        if (utilSt.ult30) pintarUtilidad(utilSt.ult30);   // al toque, con lo que hay
+        if (!utilSt.ult30 || Date.now() - utilSt.t30 > UTIL30_VIGENCIA) cargarUtilidad();
+      }
+    }
+    pintarUtilSelResumen();
+  }
+
+  // La utilidad de la selección, en el mismo recuadro del promedio de conversión.
+  function pintarUtilSelResumen(){
+    var el = document.getElementById('conv-sel-util');
+    if (!el) return;
+    var sel = diasElegidosUtil();
+    if (!sel.length) { el.innerHTML = ''; return; }
+    if (!utilSt.ult30) { el.textContent = '💰 Utilidad de esos días: calculando…'; return; }
+    var t = utilDeDias(utilSt.ult30.filas || [], sel).total;
+    el.innerHTML = '💰 Utilidad de esos días: <b class="' + (t.utilidad >= 0 ? 'pos' : 'neg') + '">' +
+      (t.utilidad >= 0 ? '' : '−') + money0(Math.abs(t.utilidad)) + '</b>' +
+      ' · vendido ' + money0(t.ingresos) + ' · ads ' + money0(t.ads) +
+      ' · <a href="#sec-utilidad" onclick="irA(\'sec-utilidad\');return false;">ver día por día ↓</a>';
+  }
+
+  // Con días elegidos no queda marcado ningún 7/14/30: la tabla no es ninguno de esos.
+  function marcarRangoUtil(sel){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-udias]'), function(b){
+      b.classList.toggle('on', !sel && Number(b.getAttribute('data-udias')) === utilSt.dias);
+    });
+  }
 
   function cargarUtilidad(dias){
-    if(dias) utilSt.dias = dias;
-    Array.prototype.forEach.call(document.querySelectorAll('[data-udias]'), function(b){
-      b.classList.toggle('on', Number(b.getAttribute('data-udias')) === utilSt.dias);
-    });
-    fetch(BASE+'/admin/utilidad-diaria?dias='+utilSt.dias+'&clave='+encodeURIComponent(clave))
+    var sel = diasElegidosUtil().length > 0;
+    if(dias){
+      utilSt.dias = dias;
+      // 7/14/30 = "los últimos N días": suelta la selección del gráfico de
+      // Conversión (refrescarSel vuelve a llamar acá, ya sin selección).
+      if(sel){ CONV_SEL = {}; refrescarSel(); return; }
+    }
+    marcarRangoUtil(sel);
+    var pedir = sel ? 30 : utilSt.dias;
+    // Una sola consulta de 30 días a la vez, aunque se toquen varias barras seguidas.
+    if(pedir === 30 && utilSt.pidiendo30) return;
+    if(pedir === 30) utilSt.pidiendo30 = true;
+    fetch(BASE+'/admin/utilidad-diaria?dias='+pedir+'&clave='+encodeURIComponent(clave))
       .then(function(r){ if(!r.ok) throw new Error('sin datos'); return r.json(); })
-      .then(pintarUtilidad)
+      .then(function(d){
+        if(pedir === 30) utilSt.pidiendo30 = false;
+        if(d.dias === 30){ utilSt.ult30 = d; utilSt.t30 = Date.now(); }
+        pintarUtilidad(d);
+        pintarUtilSelResumen();
+      })
       .catch(function(){
+        if(pedir === 30) utilSt.pidiendo30 = false;
         document.getElementById('util-off').style.display='';
         document.getElementById('util-tabla').innerHTML='';
         document.getElementById('util-kpis').innerHTML='';
@@ -1632,9 +1721,28 @@
   }
 
   function pintarUtilidad(d){
+    var sel = diasElegidosUtil();
+    // Respuesta que ya no corresponde (se eligieron o soltaron días mientras
+    // viajaba): con selección hacen falta los 30 días, sin ella el rango elegido.
+    if(sel.length && d.dias !== 30){ cargarUtilidad(); return; }
+    if(!sel.length && d.dias !== utilSt.dias) return;
+    marcarRangoUtil(sel.length > 0);
     marcarAct('util-act');
     document.getElementById('util-off').style.display='none';
-    var t = d.total, f = d.filas || [];
+    var t = d.total, f = d.filas || [], titulo = 'Utilidad ' + d.dias + ' días';
+    var aviso = document.getElementById('util-sel');
+    if(sel.length){
+      var u = utilDeDias(f, sel);
+      f = u.filas; t = u.total;
+      titulo = 'Utilidad · ' + f.length + (f.length === 1 ? ' día elegido' : ' días elegidos');
+      aviso.innerHTML = '<span>📌 Mostrando <b>' + (f.length === 1 ? 'el día elegido' : 'los ' + f.length + ' días elegidos') +
+        '</b> en el gráfico de Conversión.</span>' +
+        '<button onclick="cargarUtilidad(utilSt.dias)">Ver últimos ' + utilSt.dias + ' días</button>';
+      aviso.style.display = '';
+    } else {
+      aviso.style.display = 'none';
+      aviso.innerHTML = '';
+    }
     var dias = f.length || 1;
     var conVenta = f.filter(function(x){ return x.pedidos > 0; }).length;
     // Costo por venta de los ANUNCIOS: las bandas vendidas por Mercado Libre no
@@ -1644,7 +1752,7 @@
     var cpa = unidadesAds ? t.ads / unidadesAds : 0;
 
     document.getElementById('util-kpis').innerHTML =
-      kpi('Utilidad ' + d.dias + ' días', money0(t.utilidad), t.utilidad >= 0 ? 'bien' : 'mal') +
+      kpi(titulo, money0(t.utilidad), t.utilidad >= 0 ? 'bien' : 'mal') +
       kpi('Promedio por día', money0(t.utilidad / dias), t.utilidad >= 0 ? 'bien' : 'mal') +
       kpi('Vendido', money0(t.ingresos), '') +
       kpi('Gastado en ads', money0(t.ads), '') +
