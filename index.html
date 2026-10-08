@@ -429,7 +429,7 @@ html.cyber .benef-head{display:flex;align-items:center;gap:8px;font-size:.6rem;l
 html.cyber .beneficios .ship-line,html.cyber .beneficios .gift-line{color:var(--cy-claro);margin:0;}
 html.cyber .beneficios .ship-line svg,html.cyber .beneficios .gift-line svg{stroke:var(--cy);}
 html.cyber .beneficios .ship-line+.gift-line{margin-top:8px;}
-/* Tapones: "Últimos 3 tapones" bajo la línea del regalo. Dorado (el color de los
+/* Tapones: "Tapón · última unidad" bajo la línea del regalo. Dorado (el color de los
    destacados del sitio) con punto rojo que late y un brillo suave: en celeste se
    perdía dentro del recuadro, que también es celeste. El número es fijo: el
    sistema no lleva stock de tapones. */
@@ -1597,7 +1597,7 @@ body.sb-on .wa-float{bottom:82px;}
 .upsell-info{flex:1;min-width:0;}
 .upsell-name{font-size:.8rem;font-weight:700;color:var(--white);}
 .upsell-desc{font-size:.64rem;color:#888;margin-top:2px;}
-/* "Últimos 3 tapones": pestaña sobre el borde de arriba de la tarjeta (en la
+/* "Tapón · última unidad": pestaña sobre el borde de arriba de la tarjeta (en la
    columna de texto no cabe en una línea), en el mismo dorado */
 .upsell-card{position:relative;}
 .upsell-tags{position:absolute;top:-13px;left:10px;display:flex;align-items:center;background:#131313;border:1px solid #3a3226;border-radius:7px;padding:2px;font-size:.62rem;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;white-space:nowrap;line-height:1;}
@@ -2081,7 +2081,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="beneficios">
           <div class="benef-head solo-cyber"><span class="cy-chip">Cyber</span>Tu compra incluye</div>
           <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
-          <div class="gift-line con-extra solo-cyber"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4.5 6 4.5 6 7c0 1.2 1.6 1 6 1zM12 8c1.5-3.5 6-3.5 6-1 0 1.2-1.6 1-6 1z"/></svg><span class="gl-txt">+ TAPONES DE OÍDO GRATIS<span class="gl-extra"><span class="gl-ultimos">Últimos 3 tapones</span></span></span></div>
+          <div class="gift-line con-extra solo-cyber"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4.5 6 4.5 6 7c0 1.2 1.6 1 6 1zM12 8c1.5-3.5 6-3.5 6-1 0 1.2-1.6 1-6 1z"/></svg><span class="gl-txt">+ TAPONES DE OÍDO GRATIS<span class="gl-extra"><span class="gl-ultimos">Tapón · última unidad</span></span></span></div>
         </div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
@@ -2253,7 +2253,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                  de "solo tapones" (no tiene sentido sumar tapones a un pedido
                  de tapones). El JS que ya existe gestiona el toggle. -->
             <div class="upsell-card" id="upsell-card" onclick="toggleUpsell()" style="cursor:pointer;">
-              <div class="upsell-tags"><span class="up-ultimos">Últimos 3 tapones</span></div>
+              <div class="upsell-tags"><span class="up-ultimos">Tapón · última unidad</span></div>
               <button type="button" class="upsell-zoom" onclick="verFotosTapones(event)" aria-label="Ver fotos de los tapones en grande">
                 <img src="img/img-tapones-mini.webp" alt="Tapones de oído DEUS" class="upsell-img" loading="lazy" decoding="async">
                 <span class="upsell-lupa" aria-hidden="true">⤢</span>
