@@ -154,7 +154,7 @@ async function enviarPedidoNuevo(pedido) {
         <h3 style="margin:20px 0 12px">Producto</h3>
         <p>${pedido.product || 'DEUS Band'} — ${money(pedido.product_price)}</p>
         <p style="margin-top:6px"><b>Color elegido: ${(pedido.color || '—').toUpperCase()}</b></p>
-        ${pedido.regaloTapones ? '<p style="margin-top:6px;color:#0a7d2c"><b>🎁 + Tapones de oído DEUS GRATIS (regalo Cyber)</b></p>' : ''}
+        ${pedido.regaloTapones ? '<p style="margin-top:6px;color:#0a7d2c"><b>🎁 + Tapones de oído DEUS GRATIS (regalo)</b></p>' : ''}
         <h3 style="margin:20px 0 12px">Envío</h3>
         <table style="width:100%;border-collapse:collapse;font-size:14px">
           <tr><td style="padding:6px 0;color:#888">Empresa</td><td style="text-align:right"><b>${pedido.shipping.carrier || '—'}</b></td></tr>
@@ -194,7 +194,7 @@ async function enviarPagoConfirmado(payment, pedido) {
       <div style="background:#0a7d2c;color:#fff;padding:20px 24px">
         <h2 style="margin:0">✅ PAGO CONFIRMADO — DESPACHAR</h2>
       </div>
-      ${pedido?.regaloTapones ? '<div style="background:#fff4d6;border-bottom:2px solid #e0a800;color:#5c4400;padding:12px 24px;font-size:15px;font-weight:bold">🎁 CYBER: + TAPONES DE OÍDO GRATIS — INCLUIR EN EL PAQUETE</div>' : ''}
+      ${pedido?.regaloTapones ? '<div style="background:#fff4d6;border-bottom:2px solid #e0a800;color:#5c4400;padding:12px 24px;font-size:15px;font-weight:bold">🎁 REGALO: + TAPONES DE OÍDO GRATIS — INCLUIR EN EL PAQUETE</div>' : ''}
       <div style="padding:24px;font-size:14px">
         <h3 style="margin:0 0 12px">Quien recibe</h3>
         <table style="width:100%;border-collapse:collapse">
@@ -210,7 +210,7 @@ async function enviarPagoConfirmado(payment, pedido) {
           ${fila('Color', (pedido?.color || '').toString().toUpperCase())}
           ${pedido?.cantidad ? fila('Cantidad', pedido.cantidad) : ''}
           ${pedido?.tapones ? fila('Extra', 'Tapones de oído DEUS') : ''}
-          ${pedido?.regaloTapones ? fila('🎁 Regalo Cyber', '+ Tapones de oído DEUS GRATIS — INCLUIR EN EL PAQUETE') : ''}
+          ${pedido?.regaloTapones ? fila('🎁 Regalo', '+ Tapones de oído DEUS GRATIS — INCLUIR EN EL PAQUETE') : ''}
         </table>
 
         <h3 style="margin:20px 0 12px">Dirección de envío</h3>
@@ -261,12 +261,12 @@ async function enviarConfirmacionCliente(datos) {
         ${datos.regaloTapones ? `<div style="margin:18px 0 0;background:#eef8f1;border:1px solid #b9e0c5;border-radius:10px;padding:14px 16px;text-align:center">
           <div style="font-size:24px;line-height:1;margin-bottom:6px">🎁</div>
           <b style="color:#0a7d2c;font-size:16px">+ Tapones de oído DEUS GRATIS</b>
-          <div style="font-size:13px;color:#3d6b4b;margin-top:4px">Son tu regalo por comprar en Cyber. Van en el mismo paquete que tu DEUS Band, no tienes que hacer nada más.</div>
+          <div style="font-size:13px;color:#3d6b4b;margin-top:4px">Son tu regalo por tu compra. Van en el mismo paquete que tu DEUS Band, no tienes que hacer nada más.</div>
         </div>` : ''}
         <div style="background:#f7f7f7;border-radius:10px;padding:18px 20px;margin:22px 0">
           <table style="width:100%;border-collapse:collapse;font-size:14px">
             <tr><td style="padding:5px 0;color:#888">Producto</td><td style="text-align:right"><b>DEUS Band${datos.color ? ' — ' + String(datos.color).toUpperCase() : ''}</b></td></tr>
-            ${datos.regaloTapones ? `<tr><td style="padding:5px 0;color:#888">🎁 Regalo Cyber</td><td style="text-align:right"><b>+ Tapones de oído DEUS</b> <span style="display:inline-block;background:#0a7d2c;color:#ffffff;font-size:11px;font-weight:bold;letter-spacing:1px;border-radius:10px;padding:2px 8px;margin-left:4px">GRATIS</span></td></tr>` : ''}
+            ${datos.regaloTapones ? `<tr><td style="padding:5px 0;color:#888">🎁 Regalo</td><td style="text-align:right"><b>+ Tapones de oído DEUS</b> <span style="display:inline-block;background:#0a7d2c;color:#ffffff;font-size:11px;font-weight:bold;letter-spacing:1px;border-radius:10px;padding:2px 8px;margin-left:4px">GRATIS</span></td></tr>` : ''}
             ${datos.carrier ? `<tr><td style="padding:5px 0;color:#888">Envío</td><td style="text-align:right">${datos.carrier}</td></tr>` : ''}
             ${lugar ? `<tr><td style="padding:5px 0;color:#888">Dirección</td><td style="text-align:right">${lugar}</td></tr>` : ''}
             <tr><td style="padding:10px 0 0;color:#888;border-top:1px solid #e2e2e2">Total pagado</td><td style="text-align:right;padding-top:10px;border-top:1px solid #e2e2e2"><b style="font-size:16px">${money(datos.monto)}</b></td></tr>

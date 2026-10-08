@@ -1,45 +1,44 @@
 'use strict';
-// Cyber de octubre (lunes 5 a miércoles 7, 23:59 de Chile): toda compra con
-// banda lleva de regalo los tapones DEUS. El sitio lo muestra (clase
-// html.cyber + raspe en el checkout) y el backend lo anota en el pedido para
-// que el despacho no se olvide de meterlos en el paquete.
+// Promo de tapones: toda compra con banda lleva de regalo los tapones DEUS. El
+// sitio lo muestra (clase html.promo + raspe en el checkout) y el backend lo
+// anota en el pedido para que el despacho no se olvide de meterlos en el
+// paquete. Nació como el Cyber de octubre (5 al 7); el dueño la dejó corriendo
+// después, sin la marca Cyber y sin fecha de término.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const { EventEmitter } = require('events');
-const { regaloCyber, CYBER_FIN_MS, TAPONES_PRICE } = require('../services/precio');
+const { llevaRegaloTapones, PROMO_TAPONES, TAPONES_PRICE } = require('../services/precio');
 
 const HTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-test('el regalo corre hasta el jueves 8-oct 00:00 de Chile y ni un minuto más', () => {
-  assert.strictEqual(new Date(CYBER_FIN_MS).toISOString(), '2026-10-08T03:00:00.000Z');
-  assert.strictEqual(regaloCyber({}, CYBER_FIN_MS - 60000), true, 'miércoles 7, 23:59: todavía va');
-  assert.strictEqual(regaloCyber({}, CYBER_FIN_MS), false, 'jueves 8, 00:00: ya no');
-  assert.strictEqual(regaloCyber({}, Date.UTC(2026, 9, 3, 15, 0)), true, 'antes del lunes 5 ya está activo');
+test('el regalo de tapones sigue después del Cyber, sin fecha de término', () => {
+  assert.strictEqual(PROMO_TAPONES, true);
+  assert.strictEqual(llevaRegaloTapones({}), true);
+  assert.strictEqual(llevaRegaloTapones({ soloTapones: false }), true);
 });
 
 test('una compra de solo tapones no suma otros tapones de regalo', () => {
-  assert.strictEqual(regaloCyber({ soloTapones: true }, CYBER_FIN_MS - 60000), false);
-  assert.strictEqual(regaloCyber({ soloTapones: false }, CYBER_FIN_MS - 60000), true);
+  assert.strictEqual(llevaRegaloTapones({ soloTapones: true }), false);
 });
 
-test('el sitio y el backend cortan a la misma hora (las tres copias del fin)', () => {
-  // <head>: la clase html.cyber
-  const m = HTML.match(/Date\.now\(\)<Date\.UTC\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)\)\)document\.documentElement\.classList\.add\('cyber'\)/);
-  assert.ok(m, 'falta el script del <head> que pone html.cyber');
-  assert.strictEqual(Date.UTC(+m[1], +m[2], +m[3], +m[4], +m[5], +m[6]), CYBER_FIN_MS, 'html.cyber corta a otra hora que el backend');
-  // Contador del top bar: FIN_PROMO_DIA es el día (medianoche de Chile) del corte
-  const d = HTML.match(/var FIN_PROMO_DIA = Date\.UTC\((\d+), (\d+), (\d+)\) \/ 86400000;/);
-  assert.ok(d, 'falta FIN_PROMO_DIA');
-  assert.strictEqual(Date.UTC(+d[1], +d[2], +d[3]) + 3 * 3600000, CYBER_FIN_MS, 'el contador llega a cero a otra hora');
+test('el sitio muestra la promo cuando el backend la aplica, y el contador vencido no la apaga', () => {
+  // <head>: la clase html.promo, sin fecha de corte
+  assert.ok(HTML.includes("<script>document.documentElement.classList.add('promo');</script>"),
+    'falta el script del <head> que pone html.promo');
+  assert.strictEqual(PROMO_TAPONES, true, 'si se apaga la promo en el backend, sacar también html.promo del <head>');
+  assert.ok(!/classList\.remove\('promo'\)/.test(HTML), 'nada en la página puede apagar la promo por su cuenta');
+  // El contador del top bar ya pasó su plazo: la barra llega sin él
+  assert.ok(HTML.includes('<div class="announce-bar" id="offer-bar">🇨🇱 <b class="ab-titulo">ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><div class="ab-plazo">1-2 días de envío</div></div>'),
+    'la barra de arriba tiene que llegar con la promo y sin contador');
 });
 
 test('el checkout no ofrece tapones pagados mientras van de regalo, y el raspe no sale en "solo tapones"', () => {
-  assert.ok(HTML.includes('html.cyber #upsell-card{display:none!important;}'), 'el upsell pagado de tapones tiene que ocultarse en Cyber');
+  assert.ok(HTML.includes('html.promo #upsell-card{display:none!important;}'), 'el upsell pagado de tapones tiene que ocultarse con la promo');
   assert.ok(HTML.includes('#checkout-overlay.tapones .raspe{display:none!important;}'), 'el raspe no va en el checkout de solo tapones');
-  assert.ok(/<div class="raspe solo-cyber" id="raspe">/.test(HTML), 'el raspe tiene que apagarse solo con html.cyber');
+  assert.ok(/<div class="raspe solo-promo" id="raspe">/.test(HTML), 'el raspe tiene que apagarse solo con html.promo');
 });
 
 test('el raspe tacha el precio al que de verdad se venden los tapones', () => {
@@ -96,14 +95,14 @@ function capturarCorreos() {
   };
 }
 
-test('los correos de una compra Cyber dicen "+ Tapones de oído DEUS GRATIS"', async () => {
+test('los correos de una compra con la promo dicen "+ Tapones de oído DEUS GRATIS", sin "Cyber"', async () => {
   const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente } = require('../services/email');
   const cap = capturarCorreos();
   try {
-    const pedido = { preference_id: 'deus-1', created_at: new Date().toISOString(), product: 'DEUS Band', product_price: 68990, total: 68990, color: 'negra', cantidad: 1, regaloTapones: true, customer: { name: 'Prueba Cyber' }, shipping: { carrier: 'Starken', cost: 0, address: {} } };
+    const pedido = { preference_id: 'deus-1', created_at: new Date().toISOString(), product: 'DEUS Band', product_price: 68990, total: 68990, color: 'negra', cantidad: 1, regaloTapones: true, customer: { name: 'Prueba Promo' }, shipping: { carrier: 'Starken', cost: 0, address: {} } };
     await enviarPedidoNuevo(pedido);
-    await enviarPagoConfirmado({ id: 'cyber-1', transaction_amount: 68990 }, pedido);
-    await enviarConfirmacionCliente({ email: 'cliente@ejemplo.com', name: 'Prueba', monto: 68990, id: 'cyber-1', color: 'negra', regaloTapones: true });
+    await enviarPagoConfirmado({ id: 'promo-1', transaction_amount: 68990 }, pedido);
+    await enviarConfirmacionCliente({ email: 'cliente@ejemplo.com', name: 'Prueba', monto: 68990, id: 'promo-1', color: 'negra', regaloTapones: true });
     await enviarPagoConfirmado({ id: 'normal-1', transaction_amount: 68990 }, { ...pedido, regaloTapones: false });
     await enviarConfirmacionCliente({ email: 'cliente@ejemplo.com', name: 'Prueba', monto: 68990, id: 'normal-1', color: 'negra', regaloTapones: false });
   } finally { cap.restaurar(); }
@@ -115,6 +114,17 @@ test('los correos de una compra Cyber dicen "+ Tapones de oído DEUS GRATIS"', a
   assert.match(cliente.subject, /\+ tapones de oído gratis/, 'el cliente lo ve desde el asunto');
   assert.match(cliente.html, /\+ Tapones de oído DEUS GRATIS/, 'el cliente tiene que ver su regalo');
   for (const c of [despachoNormal, clienteNormal]) {
-    assert.doesNotMatch(c.subject + c.html, /Regalo Cyber|tapones de oído gratis|TAPONES GRATIS|Tapones de oído DEUS GRATIS|tapones de oído de regalo/, 'una compra sin regalo no lo menciona');
+    assert.doesNotMatch(c.subject + c.html, /🎁 Regalo|tapones de oído gratis|TAPONES GRATIS|Tapones de oído DEUS GRATIS|tapones de oído de regalo/, 'una compra sin regalo no lo menciona');
   }
+  for (const c of cap.enviados) assert.doesNotMatch(c.subject + c.html, /cyber/i, 'el Cyber terminó: ningún correo lo nombra');
+});
+
+test('la página y el chatbot ya no dicen "Cyber" (la promo sigue, la marca no)', () => {
+  // Solo lo que ve el cliente: sin comentarios de HTML, CSS ni JS.
+  const visible = HTML.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  assert.doesNotMatch(visible, /cyber/i);
+  assert.match(visible, /\+ TAPONES DE OÍDO GRATIS/, 'la promo se sigue anunciando en la barra');
+  const chat = fs.readFileSync(path.join(__dirname, '..', 'services', 'chat.js'), 'utf8');
+  assert.doesNotMatch(chat, /por Cyber|CYBER \(hasta/, 'el chatbot no puede seguir ofreciendo el regalo "por Cyber" con fecha');
+  assert.match(chat, /PROMOCIÓN VIGENTE: toda compra de la banda lleva de REGALO los Tapones de oído DEUS/);
 });

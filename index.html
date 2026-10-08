@@ -6,15 +6,16 @@
      modo normal ni un instante. El CSS oculta el contenido normal hasta que el
      JS pone el de reserva (evita el flash de "última unidad"/precio). -->
 <script>try{if(localStorage.getItem('deus-reserva')==='1')document.documentElement.classList.add('reserva');}catch(e){}</script>
-<!-- Cyber de octubre: la clase html.cyber prende el branding (chip, "+ tapones
-     de oído gratis", contador) y se apaga sola a las 00:00 del jueves 8-oct de Chile
-     (03:00 UTC, horario de verano). Va antes de pintar para que no parpadee.
-     La misma hora está en FIN_PROMO_DIA: si se cambia una, cambiar la otra. -->
-<script>try{if(Date.now()<Date.UTC(2026,9,8,3,0,0))document.documentElement.classList.add('cyber');}catch(e){}</script>
+<!-- Promoción de tapones: la clase html.promo prende el regalo ("+ tapones de
+     oído gratis", recuadro de beneficios y raspe en el checkout). Nació como el
+     Cyber de octubre y el dueño la dejó corriendo sin la marca Cyber y sin fecha
+     de término. Va antes de pintar para que no parpadee. Para terminarla, sacar
+     esta clase Y poner PROMO_TAPONES en false en services/precio.js. -->
+<script>document.documentElement.classList.add('promo');</script>
 <script>document.documentElement.classList.add('js');</script>
 <style>
-html:not(.cyber) .solo-cyber{display:none!important;}
-html.cyber .sin-cyber{display:none!important;}
+html:not(.promo) .solo-promo{display:none!important;}
+html.promo .sin-promo{display:none!important;}
 html.reserva:not(.reserva-ready) #offer-bar,
 html.reserva:not(.reserva-ready) .price-block,
 html.reserva:not(.reserva-ready) .sb-price,
@@ -372,7 +373,7 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
   --black:#121214; --dark:#1a1a1d; --card:#1e1e22;
   --border:#33333b; --white:#f2f2f2; --silver:#a4a4ae;
   --accent:#e8e8e8; --mint:#c0c0c0;
-  /* Cyber: celeste sobre negro y grises, sin degradados. */
+  /* Promo: celeste sobre negro y grises, sin degradados. */
   --cy:#6fb7dd; --cy-claro:#a9d6ee; --cy-linea:rgba(111,183,221,.38);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -413,22 +414,18 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 .cd-box b{font-size:1rem;font-weight:700;letter-spacing:1px;line-height:1;}
 .cd-box small{font-size:.45rem;letter-spacing:1px;color:#9a9a9a;margin-top:3px;}
 @media(max-width:600px){.announce-bar{font-size:.6rem;letter-spacing:1.5px;padding:8px 12px;}}
-/* ── Cyber (html.cyber, hasta el miércoles 7-oct 23:59) ── */
-.cy-chip,.ab-chip{display:inline-block;background:var(--cy);color:#0a0a0a;font-weight:600;text-transform:uppercase;border-radius:4px;line-height:1;}
-.ab-chip{font-size:.62rem;letter-spacing:1.6px;padding:3px 7px 3px 6px;margin-right:4px;vertical-align:1px;}
-.cy-chip{font-size:.52rem;letter-spacing:1.4px;padding:3px 6px;margin-right:4px;vertical-align:1px;}
-html.cyber .announce-bar{border-bottom-color:transparent;}
-html.cyber .announce-bar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--cy-linea);}
-html.cyber .abcd-box b{color:var(--cy-claro);}
+/* ── Promo de tapones (html.promo, ver <head>). Celeste: el color del Cyber de octubre, donde nació. ── */
+html.promo .announce-bar{border-bottom-color:transparent;}
+html.promo .announce-bar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--cy-linea);}
+html.promo .abcd-box b{color:var(--cy-claro);}
 .gift-line{display:flex;align-items:center;gap:7px;font-size:.7rem;letter-spacing:1.2px;color:var(--cy-claro);font-weight:700;margin:0 0 16px;}
 .gift-line svg{width:15px;height:15px;stroke:var(--cy);fill:none;stroke-width:1.9;flex-shrink:0;}
-/* Beneficios en Cyber: un solo recuadro celeste con las dos líneas */
-html.cyber .beneficios{border:1px solid var(--cy-linea);background:rgba(111,183,221,.06);border-radius:10px;padding:11px 14px 12px;margin:0 0 16px;}
-html.cyber .benef-head{display:flex;align-items:center;gap:8px;font-size:.6rem;letter-spacing:1.6px;text-transform:uppercase;color:#8fb8cf;font-weight:600;margin-bottom:9px;}
-.benef-head .cy-chip{margin:0;}
-html.cyber .beneficios .ship-line,html.cyber .beneficios .gift-line{color:var(--cy-claro);margin:0;}
-html.cyber .beneficios .ship-line svg,html.cyber .beneficios .gift-line svg{stroke:var(--cy);}
-html.cyber .beneficios .ship-line+.gift-line{margin-top:8px;}
+/* Beneficios con la promo: un solo recuadro celeste con las dos líneas */
+html.promo .beneficios{border:1px solid var(--cy-linea);background:rgba(111,183,221,.06);border-radius:10px;padding:11px 14px 12px;margin:0 0 16px;}
+html.promo .benef-head{display:flex;align-items:center;gap:8px;font-size:.6rem;letter-spacing:1.6px;text-transform:uppercase;color:#8fb8cf;font-weight:600;margin-bottom:9px;}
+html.promo .beneficios .ship-line,html.promo .beneficios .gift-line{color:var(--cy-claro);margin:0;}
+html.promo .beneficios .ship-line svg,html.promo .beneficios .gift-line svg{stroke:var(--cy);}
+html.promo .beneficios .ship-line+.gift-line{margin-top:8px;}
 /* Tapones: "Tapón · última unidad" bajo la línea del regalo. Dorado (el color de los
    destacados del sitio) con punto rojo que late y un brillo suave: en celeste se
    perdía dentro del recuadro, que también es celeste. El número es fijo: el
@@ -443,9 +440,8 @@ html.cyber .beneficios .ship-line+.gift-line{margin-top:8px;}
 @media(prefers-reduced-motion:reduce){.gl-ultimos,.up-ultimos,.gl-ultimos::before,.up-ultimos::before{animation:none;}}
 .raspe{margin-top:8px;border:1px solid #2b2e33;background:#141417;border-radius:10px;padding:12px 12px 8px;}
 #checkout-overlay.tapones .raspe{display:none!important;}
-html.cyber #upsell-card{display:none!important;}
+html.promo #upsell-card{display:none!important;}
 .raspe-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.raspe-head .cy-chip{margin:0;flex-shrink:0;}
 .raspe-head b{font-size:.78rem;color:var(--white);letter-spacing:.4px;}
 .raspe-head small{margin-left:auto;font-size:.62rem;color:var(--silver);white-space:nowrap;}
 .raspe-zona{position:relative;border-radius:8px;overflow:hidden;background:#0f0f12;border:1px dashed var(--cy-linea);}
@@ -658,7 +654,6 @@ body.fn-abierto{overflow:hidden;}
   .fn-t{font-size:1.2rem;}
 }
 @media(prefers-reduced-motion:reduce){.fn-modal[open] .fn-box{animation:none;}}
-@media(max-width:600px){.ab-chip{font-size:.55rem;letter-spacing:1.3px;padding:3px 6px;margin-right:2px;}}
 
 /* HEADER: cápsula flotante con el logo y el pulso en vivo.
    Sin carrito ni Instagram: el carrito se abre desde la barra de compra y el
@@ -1677,7 +1672,7 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="announce-bar" id="offer-bar"><span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span><b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + TAPONES DE OÍDO GRATIS</span></b><div class="ab-plazo">1-2 días de envío</div><div class="ab-cd solo-cyber"><span class="ab-cd-lbl">Cyber termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
+<div class="announce-bar" id="offer-bar">🇨🇱 <b class="ab-titulo">ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><div class="ab-plazo">1-2 días de envío</div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -2049,7 +2044,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
     </div>
     <div class="info">
-      <div class="hero-tag"><span class="cy-chip solo-cyber">Cyber</span> Smartband · Pulsera Inteligente</div>
+      <div class="hero-tag">Smartband · Pulsera Inteligente</div>
       <h1 class="hero-name">DEUS Band</h1>
       <!-- Prueba social ARRIBA: las estrellas convencen antes del precio. -->
       <div class="proof-line" onclick="abrirResenasModal()" role="button" tabindex="0" aria-label="Ver reseñas">
@@ -2075,13 +2070,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              precio igual se ve completo (ancla + descuento + envío gratis). -->
         <div class="price-block"><span class="pb-main"><sup>$</sup>68.990 <span class="price-was">$78.990</span> <span class="price-save">-12%</span></span></div>
         <div class="cuotas-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><div><div class="cq-main">Paga en <b>3 cuotas</b> de <b class="cuota-monto">$22.990</b></div><div class="cq-sub">Sin interés · con Mercado Pago</div></div></div>
-        <!-- Beneficios bajo el precio. En Cyber van juntos en un solo recuadro
-             celeste ("Cyber · Tu compra incluye") para que se lean como una
-             sola oferta; fuera de Cyber queda la línea verde de envío gratis. -->
+        <!-- Beneficios bajo el precio. Con la promo van juntos en un solo
+             recuadro celeste ("Tu compra incluye") para que se lean como una
+             sola oferta; sin promo queda la línea verde de envío gratis. -->
         <div class="beneficios">
-          <div class="benef-head solo-cyber"><span class="cy-chip">Cyber</span>Tu compra incluye</div>
+          <div class="benef-head solo-promo">Tu compra incluye</div>
           <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
-          <div class="gift-line con-extra solo-cyber"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4.5 6 4.5 6 7c0 1.2 1.6 1 6 1zM12 8c1.5-3.5 6-3.5 6-1 0 1.2-1.6 1-6 1z"/></svg><span class="gl-txt">+ TAPONES DE OÍDO GRATIS<span class="gl-extra"><span class="gl-ultimos">Tapón · última unidad</span></span></span></div>
+          <div class="gift-line con-extra solo-promo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4.5 6 4.5 6 7c0 1.2 1.6 1 6 1zM12 8c1.5-3.5 6-3.5 6-1 0 1.2-1.6 1-6 1z"/></svg><span class="gl-txt">+ TAPONES DE OÍDO GRATIS<span class="gl-extra"><span class="gl-ultimos">Tapón · última unidad</span></span></span></div>
         </div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
@@ -2199,19 +2194,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <small id="envio-free-sub" style="display:none;"></small>
               </div>
             </div>
-            <!-- Regalo Cyber: tarjeta para raspar que descubre los tapones DEUS
-                 de regalo. Solo en el checkout de la banda (se oculta en "solo
-                 tapones") y solo mientras dure el Cyber (html.cyber). El regalo
+            <!-- Regalo de la promo: tarjeta para raspar que descubre los tapones
+                 DEUS de regalo. Solo en el checkout de la banda (se oculta en "solo
+                 tapones") y solo mientras dure la promo (html.promo). El regalo
                  NO depende de raspar: el backend marca el pedido igual. -->
-            <div class="raspe solo-cyber" id="raspe">
-              <div class="raspe-head"><span class="cy-chip">Cyber</span><b>Tu regalo Cyber</b><small id="raspe-hint">Raspa con el dedo</small></div>
+            <div class="raspe solo-promo" id="raspe">
+              <div class="raspe-head"><b>Tu regalo</b><small id="raspe-hint">Raspa con el dedo</small></div>
               <div class="raspe-zona">
                 <div class="raspe-premio" id="raspe-premio" aria-hidden="true">
                   <img src="img/img-tapones-mini.webp" alt="Tapones de oído DEUS" width="64" height="64" loading="lazy" decoding="async">
                   <div class="raspe-txt">
                     <b>¡Tapones DEUS gratis!</b>
                     <span class="raspe-precio"><span class="vh">Valor normal: </span><s class="raspe-antes">$14.990</s><em>Gratis</em></span>
-                    <small>Van de regalo en tu pedido por Cyber. No tienes que hacer nada más.</small>
+                    <small>Van de regalo en tu pedido. No tienes que hacer nada más.</small>
                   </div>
                 </div>
                 <canvas class="raspe-capa" id="raspe-capa" role="button" tabindex="0" aria-label="Raspar para descubrir tu regalo. Con Enter se descubre de una vez."></canvas>
@@ -2901,7 +2896,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let upsellTapones = false;
         let checkoutTapones = false; // true = comprando SOLO tapones (sin banda)
 
-        // ── Raspe del Cyber: descubre los tapones DEUS de regalo ──
+        // ── Raspe de la promo: descubre los tapones DEUS de regalo ──
         // Capa de canvas sobre el premio. Se borra con el dedo o el mouse y, al
         // cubrir el 60 %, se descubre entera. Accesible: Enter/Espacio o
         // "Descubrir sin raspar". Una vez descubierto queda así en la sesión.
@@ -2920,7 +2915,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('raspe-premio').removeAttribute('aria-hidden');
             capa.setAttribute('tabindex', '-1');
             var vivo = document.getElementById('raspe-vivo');
-            if (vivo) vivo.textContent = 'Tu regalo: tapones DEUS gratis por Cyber, valor normal $14.990.';
+            if (vivo) vivo.textContent = 'Tu regalo: tapones DEUS gratis, valor normal $14.990.';
             try { sessionStorage.setItem(CLAVE, '1'); } catch (e) {}
             if (!deSesion) {
               try { if (navigator.vibrate) navigator.vibrate(30); } catch (e) {}
@@ -2947,7 +2942,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             ctx.fillText('RASPA AQUÍ', w / 2, h / 2 - 9);
             ctx.fillStyle = 'rgba(22,22,28,.72)';
             ctx.font = '400 11px "DM Sans", sans-serif';
-            ctx.fillText('y descubre tu regalo Cyber', w / 2, h / 2 + 12);
+            ctx.fillText('y descubre tu regalo', w / 2, h / 2 + 12);
             ctx.globalCompositeOperation = 'destination-out';
             ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
             ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = RADIO * 2;
@@ -3054,9 +3049,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const nota = document.getElementById('total-nota');
           if (nota) {
             const faltaEnvio = !ofertaActiva() && !selectedShipping;
-            // En Cyber la nota nombra el regalo: ya se anuncia en la barra y
+            // Con la promo la nota nombra el regalo: ya se anuncia en la barra y
             // junto al precio, así que no hay sorpresa que cuidar.
-            const conRegalo = !checkoutTapones && document.documentElement.classList.contains('cyber');
+            const conRegalo = !checkoutTapones && document.documentElement.classList.contains('promo');
             nota.textContent = faltaEnvio ? 'Falta sumar el envío, se calcula más abajo'
               : (conRegalo ? 'Envío gratis + tapones DEUS de regalo incluidos' : 'Envío gratis incluido');
             nota.style.color = faltaEnvio ? '#c9a227' : '#7fc9a0';
@@ -3882,7 +3877,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- SOFT: cómo funciona en 3 pasos, +14 funciones (cada tarjeta abre su
        explicación en #fn-modal), batería de 30 días y comparativa. Con los
-       grises del sitio y sin marcas de Cyber. -->
+       grises del sitio y sin el celeste de la promo. -->
   <section class="soft" id="simple">
     <div class="soft-in">
 
@@ -4884,19 +4879,17 @@ function aplicarReserva() {
   // Top bar: solo "ENVÍO GRATIS", SIN contador (se retiró a pedido).
   if (ab) {
     ab.classList.remove('reserva');
-    // Cyber (hasta el miércoles 7-oct 23:59): chip, "+ TAPONES DE OÍDO GRATIS" y el
-    // contador hasta el cierre. Lo marcado .solo-cyber / .sin-cyber lo prende
-    // y lo apaga la clase html.cyber (ver <head>). Pasado el cierre el banner
-    // cae solo a "🇨🇱 ENVÍO GRATIS", que sigue siendo cierto: el envío gratis
-    // es permanente, lo que se termina con el Cyber es el regalo.
+    // "+ TAPONES DE OÍDO GRATIS" va mientras dure la promo (.solo-promo, la
+    // prende la clase html.promo del <head>). Sin ella el banner queda en
+    // "🇨🇱 ENVÍO GRATIS", que siempre es cierto: el envío gratis es permanente.
+    // El contador solo aparece si FIN_PROMO_DIA está en el futuro.
     var quedaPromo = msRestanteOferta();
     ab.innerHTML = (ofertaActiva()
-      ? '<span class="ab-chip solo-cyber">Cyber</span> <span class="sin-cyber">🇨🇱 </span>' +
-        '<b class="ab-titulo">ENVÍO GRATIS<span class="solo-cyber"> + TAPONES DE OÍDO GRATIS</span></b>'
+      ? '🇨🇱 <b class="ab-titulo">ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b>'
       : '🔥 <b class="ab-titulo">Última unidad</b> disponible') +
       '<div class="ab-plazo">1-2 días de envío</div>' +
       (quedaPromo > 0
-        ? '<div class="ab-cd solo-cyber"><span class="ab-cd-lbl">Cyber termina en</span>' +
+        ? '<div class="ab-cd"><span class="ab-cd-lbl">Termina en</span>' +
           '<span class="ab-cd-boxes" id="cd-ofcd" data-u="' + firmaUnidadesOferta() + '">' +
           htmlCajitasOferta('ofcd', 'abcd-box') + '</span></div>'
         : '');
@@ -4930,10 +4923,10 @@ function aplicarReserva() {
 // devuelve ahoraChile().dia, así la resta no vuelve a pasar por ninguna
 // conversión de huso.
 //
-// Cyber de octubre: del lunes 5 al miércoles 7, 23:59 (fechas oficiales de la
-// Cámara de Comercio de Santiago). El contador llega a cero a las 00:00 del
-// jueves 8 de Chile. La misma hora está copiada en el <head> (clase
-// html.cyber): si se cambia una, cambiar la otra.
+// El último plazo fue el Cyber de octubre (lunes 5 al miércoles 7, 23:59). Ya
+// pasó, así que msRestanteOferta() da 0 y la barra va sin contador. La promo
+// de tapones siguió sin fecha (html.promo); para volver a mostrar un contador
+// basta poner aquí un día futuro.
 var FIN_PROMO_DIA = Date.UTC(2026, 9, 8) / 86400000;   // 8-oct-2026 00:00 de Chile
 
 // Lee el reloj de Chile una sola vez y devuelve lo que necesita el contador:
@@ -4999,12 +4992,10 @@ function htmlCajitasOferta(pre, claseCaja, unidades) {
 // acompañaba al precio se retiró.
 var OFERTA_SITIOS = [['cd-ofcd', 'ofcd', 'abcd-box']];
 
-// Se llama cada segundo, así que también sirve de red para el cierre del
-// Cyber: aunque /stock no responda y aplicarReserva() no llegue a correr, a la
-// medianoche del 7 al 8 de octubre se apaga todo lo de Cyber (chip, tapones
-// de regalo, contador) sin tener que recargar la página.
-function apagarPromoVencida() {
-  document.documentElement.classList.remove('cyber');
+// Se llama cada segundo: cuando el contador llega a cero se saca de la barra
+// sin recargar la página. NO apaga la promo de tapones (html.promo): esa ya no
+// tiene fecha de término y no depende de este contador.
+function quitarContadorVencido() {
   Array.prototype.forEach.call(document.querySelectorAll('.announce-bar .ab-cd'), function (e) {
     e.parentNode.removeChild(e);
   });
@@ -5012,7 +5003,7 @@ function apagarPromoVencida() {
 
 function pintarContadorOferta() {
   var ms = msRestanteOferta();
-  if (ms <= 0) { apagarPromoVencida(); return; }
+  if (ms <= 0) { quitarContadorVencido(); return; }
   var u = unidadesOferta(ms);
   var z = function (n) { return String(n).padStart(2, '0'); };
   // Se recalcula desde el reloj real en cada tick (no se descuenta 1 a mano),

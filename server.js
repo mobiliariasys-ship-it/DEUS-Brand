@@ -21,7 +21,7 @@ const metaAds = require('./services/meta-ads');
 // Precio AUTORITATIVO: es el que se cobra, con stock y en modo reserva. El
 // sitio lo lee de /stock y muestra exactamente esto, así no puede pasar que la
 // página diga un precio y la pasarela cobre otro. Ver services/precio.js.
-const { precioBanda, precios, TAPONES_PRICE, UPSELL_TAPONES, calcularMonto, regaloCyber } = require('./services/precio');
+const { precioBanda, precios, TAPONES_PRICE, UPSELL_TAPONES, calcularMonto, llevaRegaloTapones } = require('./services/precio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -251,9 +251,9 @@ app.post('/crear-preferencia', async (req, res) => {
         cantidad: qty,
         tapones: !!tapones,
         soloTapones: !!soloTapones,
-        // Regalo Cyber (tapones DEUS gratis). En snake_case porque así lo
+        // Regalo de la promo (tapones DEUS gratis). En snake_case porque así lo
         // devuelve MercadoPago en el webhook.
-        regalo_tapones: regaloCyber({ soloTapones }),
+        regalo_tapones: llevaRegaloTapones({ soloTapones }),
         shipping_carrier: shippingCarrier,
         shipping_cost: shippingCost,
         shipping_address: shippingAddress,
@@ -296,7 +296,7 @@ app.post('/crear-preferencia', async (req, res) => {
       cantidad: qty,
       tapones: !!tapones,
       soloTapones: !!soloTapones,
-      regaloTapones: regaloCyber({ soloTapones }),
+      regaloTapones: llevaRegaloTapones({ soloTapones }),
       color: colorPedido,
       colores: coloresPedido,
       customer: {

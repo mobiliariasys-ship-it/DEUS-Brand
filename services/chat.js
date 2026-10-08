@@ -12,7 +12,7 @@
 // Sin ANTHROPIC_API_KEY el módulo es inerte: devuelve null y la ruta le dice al
 // navegador que derive a WhatsApp. Desplegarlo sin la clave no rompe nada.
 const Anthropic = require('@anthropic-ai/sdk');
-const { regaloCyber } = require('./precio');
+const { llevaRegaloTapones } = require('./precio');
 
 const MODELO = (process.env.CHAT_MODELO || 'claude-opus-5').trim();
 const WHATSAPP = '56979777870';
@@ -62,8 +62,8 @@ function construirPrompt({ precio, stock }) {
 - Disponibilidad: la banda está disponible para compra. NUNCA digas que está agotada ni hables de "reservar" ni de "restock". Se compra en el sitio y se despacha con normalidad.
 - Envío: GRATIS a todo Chile, lo paga la tienda. Sin monto mínimo y sin excepciones por comuna. Si preguntan cuánto sale el envío a cualquier parte, la respuesta es "gratis", nunca "depende". Plazo por zona: en Santiago / Región Metropolitana, 1 a 2 días hábiles; en regiones más lejanas a la Metropolitana, 2 a 3 días hábiles. Se despacha por Chilexpress, Starken o Bluexpress — el courier se elige en el checkout — y va con seguimiento.
 - Pago: Webpay (procesado por Flow) y Mercado Pago. Débito o crédito. Hasta 3 cuotas SIN INTERÉS pagando con Mercado Pago — Webpay no las ofrece, así que si preguntan por cuotas nombra Mercado Pago.
-- Garantía: 30 días de satisfacción (si no te convence, te devolvemos el dinero) y 60 días de garantía ante cualquier falla técnica, además de la garantía legal de 6 meses por fallas de fábrica.${regaloCyber() ? `
-- CYBER (hasta el miércoles 7 de octubre a las 23:59): toda compra de la banda lleva de REGALO los Tapones de oído DEUS, sin costo y sin hacer nada extra. En la web se anuncia como "+ tapones de oído gratis por Cyber" (en la barra de arriba y bajo el precio), y en el checkout hay una tarjeta para raspar que los muestra. Si preguntan cuál es el regalo, dilo directo: son los tapones DEUS. Una compra de solo tapones no trae otros tapones de regalo.` : ''}
+- Garantía: 30 días de satisfacción (si no te convence, te devolvemos el dinero) y 60 días de garantía ante cualquier falla técnica, además de la garantía legal de 6 meses por fallas de fábrica.${llevaRegaloTapones() ? `
+- PROMOCIÓN VIGENTE: toda compra de la banda lleva de REGALO los Tapones de oído DEUS, sin costo y sin hacer nada extra. En la web se anuncia como "+ tapones de oído gratis" (en la barra de arriba y bajo el precio), y en el checkout hay una tarjeta para raspar que los muestra. Si preguntan cuál es el regalo, dilo directo: son los tapones DEUS. Una compra de solo tapones no trae otros tapones de regalo. NO la llames "Cyber" ni le inventes fecha de término: el Cyber ya terminó y esta promoción sigue sin fecha anunciada.` : ''}
 
 # El producto (todo esto está en la página deusbrand.cl — no agregues nada)
 - Smartband SIN pantalla.

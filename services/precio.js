@@ -59,20 +59,21 @@ function calcularMonto({ cantidad, tapones, soloTapones, shippingCost } = {}) {
   };
 }
 
-// Cyber de octubre: toda compra CON banda lleva de regalo los tapones DEUS
-// (en la web se descubren raspando en el checkout). Se decide al crear el
-// pedido, con el reloj del servidor: quien compra el miércoles 7 a las 23:58 y
-// paga a las 00:05 igual recibe su regalo. Una compra de solo tapones no suma
-// otros tapones. CYBER_FIN_MS es el mismo corte que la clase html.cyber del
-// sitio: jueves 8-oct 00:00 de Chile (03:00 UTC, horario de verano).
-const CYBER_FIN_MS = Date.UTC(2026, 9, 8, 3, 0, 0);
+// Promoción de tapones: toda compra CON banda lleva de regalo los tapones DEUS
+// (en la web se descubren raspando en el checkout). Nació como regalo del
+// Cyber de octubre (5 al 7) y el dueño la dejó corriendo después, sin la marca
+// Cyber y sin fecha de término. Se decide al crear el pedido. Una compra de
+// solo tapones no suma otros tapones.
+// Para terminarla, apagar las DOS cosas a la vez: PROMO_TAPONES acá y la clase
+// html.promo que pone el <head> de index.html.
+const PROMO_TAPONES = true;
 
-function regaloCyber({ soloTapones } = {}, ahora = Date.now()) {
-  return !soloTapones && ahora < CYBER_FIN_MS;
+function llevaRegaloTapones({ soloTapones } = {}) {
+  return PROMO_TAPONES && !soloTapones;
 }
 
 module.exports = {
   SUBIDA_MS, precios, precioBanda, ANTES, DESPUES,
   TAPONES_PRICE, UPSELL_TAPONES, calcularMonto,
-  CYBER_FIN_MS, regaloCyber,
+  PROMO_TAPONES, llevaRegaloTapones,
 };
