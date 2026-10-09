@@ -48,18 +48,17 @@ test('el raspe tacha el precio al que de verdad se venden los tapones', () => {
     'el tachado tiene que ser el precio de la tienda (si cambia TAPONES_PRICE, cambiarlo también en el raspe)');
 });
 
-test('el precio tachado y el % son los mismos en el backend y en el sitio', () => {
+test('sin precio tachado: ni el backend ni el sitio muestran el $78.990 ni el %', () => {
+  // El dueño sacó el tachado el 9-oct-2026. ancla 0 / off 0 = solo el precio real.
   const { DESPUES } = require('../services/precio');
-  const real = Math.floor((DESPUES.ancla - DESPUES.precio) / DESPUES.ancla * 100);
-  assert.ok(DESPUES.off <= real, 'el sello no puede prometer más descuento que el real');
-  const clp = n => '$' + n.toLocaleString('es-CL');
+  assert.strictEqual(DESPUES.ancla, 0);
+  assert.strictEqual(DESPUES.off, 0);
   const arranque = HTML.match(/: \{ precio: (\d+), ancla: (\d+), off: (\d+) \};/);
   assert.ok(arranque, 'falta el PRECIO de arranque del sitio');
-  assert.deepStrictEqual(arranque.slice(1).map(Number), [DESPUES.precio, DESPUES.ancla, DESPUES.off], 'el sitio arranca con otro precio que el backend');
-  assert.ok(HTML.includes('<span class="price-was">' + clp(DESPUES.ancla) + '</span> <span class="price-save">-' + DESPUES.off + '%</span>'),
-    'el bloque de precio del HTML tiene otro tachado que el backend');
-  assert.ok(HTML.includes('<span class="co-price-old">' + clp(DESPUES.ancla) + '</span>'),
-    'el checkout tiene otro tachado que el backend');
+  assert.deepStrictEqual(arranque.slice(1).map(Number), [DESPUES.precio, 0, 0], 'el sitio arranca con otro precio o con tachado');
+  assert.ok(!/78\.990|78990/.test(HTML.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\/[^\n]*/g, '')), 'quedó el $78.990 en la página');
+  assert.ok(HTML.includes('<div class="price-block"><span class="pb-main"><sup>$</sup>68.990</span></div>'), 'el bloque de precio llega sin tachado');
+  assert.ok(HTML.includes('<span class="co-price-now">$68.990</span></div>'), 'el checkout llega sin tachado');
 });
 
 // Captura lo que se le mandaría a Resend, sin red.

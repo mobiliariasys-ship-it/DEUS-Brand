@@ -12,17 +12,18 @@
 const SUBIDA_MS = Date.UTC(2026, 7, 27, 6, 0, 0);
 
 const ANTES   = { precio: 54990, ancla: 62990, off: 12 };
-const DESPUES = { precio: 68990, ancla: 78990, off: 12 };
+const DESPUES = { precio: 68990, ancla: 0, off: 0 };   // sin tachado (ver abajo)
 
 // El sello de descuento se redondea HACIA ABAJO a propósito: 62.990→54.990 es
 // 12,70% y se anuncia 12%; 78.990→68.990 es 12,66% y se anuncia 12%. Así lo
 // que se entrega siempre es igual o mejor que lo anunciado. Al revés sería
 // anunciar una rebaja que después no se aplica.
 //
-// Desde el 4-oct-2026 el sitio vuelve a mostrar el tachado ($78.990 → $68.990,
-// -12%) por decisión del dueño. Ojo: el SERNAC exige que el "precio anterior"
-// haya sido un precio realmente cobrado, y la banda se vendió a $54.990,
-// $62.990 y $68.990; $78.990 solo se usó antes como ancla.
+// Desde el 9-oct-2026 NO hay tachado: el dueño sacó el $78.990 (y con él el
+// -12%). ancla 0 y off 0 = el sitio muestra solo el precio real. Para volver a
+// mostrar un tachado, ojo: el SERNAC exige que el "precio anterior" haya sido
+// un precio realmente cobrado (la banda se vendió a $54.990, $62.990 y
+// $68.990; $78.990 solo se usó como ancla).
 function precios(ahora = Date.now()) {
   return ahora < SUBIDA_MS ? ANTES : DESPUES;
 }
