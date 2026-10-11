@@ -1,9 +1,9 @@
 'use strict';
-// Promo de tapones: toda compra con banda lleva de regalo los tapones DEUS. El
-// sitio lo muestra (clase html.promo + raspe en el checkout) y el backend lo
-// anota en el pedido para que el despacho no se olvide de meterlos en el
-// paquete. Nació como el Cyber de octubre (5 al 7); el dueño la dejó corriendo
-// después, sin la marca Cyber y sin fecha de término.
+// Promo de tapones: con ella, toda compra con banda lleva de regalo los tapones
+// DEUS. El sitio la muestra (clase html.promo + raspe en el checkout) y el
+// backend la anota en el pedido para el despacho. Nació como el Cyber de
+// octubre y el dueño la APAGÓ el 11-oct-2026: queda solo el envío gratis. Los
+// dos interruptores (PROMO_TAPONES y html.promo) tienen que estar iguales.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -14,25 +14,27 @@ const { llevaRegaloTapones, PROMO_TAPONES, TAPONES_PRICE } = require('../service
 
 const HTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-test('el regalo de tapones sigue después del Cyber, sin fecha de término', () => {
-  assert.strictEqual(PROMO_TAPONES, true);
-  assert.strictEqual(llevaRegaloTapones({}), true);
-  assert.strictEqual(llevaRegaloTapones({ soloTapones: false }), true);
+test('la promo de tapones está apagada: los pedidos ya no llevan tapones de regalo', () => {
+  assert.strictEqual(PROMO_TAPONES, false);
+  assert.strictEqual(llevaRegaloTapones({}), false);
+  assert.strictEqual(llevaRegaloTapones({ soloTapones: false }), false);
 });
 
 test('una compra de solo tapones no suma otros tapones de regalo', () => {
   assert.strictEqual(llevaRegaloTapones({ soloTapones: true }), false);
 });
 
-test('el sitio muestra la promo cuando el backend la aplica, y el contador vencido no la apaga', () => {
-  // <head>: la clase html.promo, sin fecha de corte
-  assert.ok(HTML.includes("<script>document.documentElement.classList.add('promo');</script>"),
-    'falta el script del <head> que pone html.promo');
-  assert.strictEqual(PROMO_TAPONES, true, 'si se apaga la promo en el backend, sacar también html.promo del <head>');
-  assert.ok(!/classList\.remove\('promo'\)/.test(HTML), 'nada en la página puede apagar la promo por su cuenta');
-  // El contador del top bar ya pasó su plazo: la barra llega sin él
-  assert.ok(HTML.includes('<div class="announce-bar" id="offer-bar">🇨🇱 <b class="ab-titulo">ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><div class="ab-plazo">1-2 días de envío</div></div>'),
-    'la barra de arriba tiene que llegar con la promo y sin contador');
+test('el sitio y el backend están de acuerdo: sin promo no hay tapones gratis ni recuadro celeste', () => {
+  // Sin comentarios: el del <head> explica cómo volver a prenderla.
+  const codigo = HTML.replace(/<!--[\s\S]*?-->/g, '');
+  const prende = /classList\.add\('promo'\)/.test(codigo);
+  assert.strictEqual(prende, PROMO_TAPONES, 'html.promo y PROMO_TAPONES tienen que estar los dos prendidos o los dos apagados');
+  // Lo que es de la promo se esconde solo sin html.promo: la línea de tapones,
+  // el encabezado del recuadro y el raspe. El recuadro celeste es html.promo .beneficios.
+  assert.ok(HTML.includes('html:not(.promo) .solo-promo{display:none!important;}'));
+  assert.ok(HTML.includes('ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span>'), 'el "+ tapones" de la barra solo con la promo');
+  assert.ok(/<div class="gift-line con-extra solo-promo">/.test(HTML), 'la línea de tapones gratis solo con la promo');
+  assert.ok(/html\.promo \.beneficios\{border:1px solid var\(--cy-linea\)/.test(HTML), 'el recuadro celeste solo con la promo');
 });
 
 test('el checkout no ofrece tapones pagados mientras van de regalo, y el raspe no sale en "solo tapones"', () => {
@@ -118,12 +120,11 @@ test('los correos de una compra con la promo dicen "+ Tapones de oído DEUS GRAT
   for (const c of cap.enviados) assert.doesNotMatch(c.subject + c.html, /cyber/i, 'el Cyber terminó: ningún correo lo nombra');
 });
 
-test('la página y el chatbot ya no dicen "Cyber" (la promo sigue, la marca no)', () => {
+test('la página y el chatbot ya no dicen "Cyber", y el bot solo ofrece tapones con la promo prendida', () => {
   // Solo lo que ve el cliente: sin comentarios de HTML, CSS ni JS.
   const visible = HTML.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   assert.doesNotMatch(visible, /cyber/i);
-  assert.match(visible, /\+ TAPONES DE OÍDO GRATIS/, 'la promo se sigue anunciando en la barra');
   const chat = fs.readFileSync(path.join(__dirname, '..', 'services', 'chat.js'), 'utf8');
   assert.doesNotMatch(chat, /por Cyber|CYBER \(hasta/, 'el chatbot no puede seguir ofreciendo el regalo "por Cyber" con fecha');
-  assert.match(chat, /PROMOCIÓN VIGENTE: toda compra de la banda lleva de REGALO los Tapones de oído DEUS/);
+  assert.match(chat, /\$\{llevaRegaloTapones\(\) \? `\n- PROMOCIÓN VIGENTE/, 'el bot ofrece tapones de regalo solo si la promo está prendida');
 });

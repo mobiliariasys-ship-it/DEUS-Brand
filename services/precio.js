@@ -60,14 +60,14 @@ function calcularMonto({ cantidad, tapones, soloTapones, shippingCost } = {}) {
   };
 }
 
-// Promoción de tapones: toda compra CON banda lleva de regalo los tapones DEUS
-// (en la web se descubren raspando en el checkout). Nació como regalo del
-// Cyber de octubre (5 al 7) y el dueño la dejó corriendo después, sin la marca
-// Cyber y sin fecha de término. Se decide al crear el pedido. Una compra de
-// solo tapones no suma otros tapones.
-// Para terminarla, apagar las DOS cosas a la vez: PROMO_TAPONES acá y la clase
-// html.promo que pone el <head> de index.html.
-const PROMO_TAPONES = true;
+// Promoción de tapones: con PROMO_TAPONES en true, toda compra CON banda lleva
+// de regalo los tapones DEUS (en la web se descubren raspando en el checkout).
+// Nació como regalo del Cyber de octubre (5 al 7) y siguió sin la marca Cyber
+// hasta el 11-oct-2026, cuando el dueño la apagó: queda solo el envío gratis.
+// Se decide al crear el pedido. Una compra de solo tapones no suma otros.
+// Para prenderla de nuevo, las DOS cosas a la vez: PROMO_TAPONES acá y la
+// clase html.promo en el <head> de index.html.
+const PROMO_TAPONES = false;
 
 function llevaRegaloTapones({ soloTapones } = {}) {
   return PROMO_TAPONES && !soloTapones;

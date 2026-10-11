@@ -7,11 +7,12 @@
      JS pone el de reserva (evita el flash de "última unidad"/precio). -->
 <script>try{if(localStorage.getItem('deus-reserva')==='1')document.documentElement.classList.add('reserva');}catch(e){}</script>
 <!-- Promoción de tapones: la clase html.promo prende el regalo ("+ tapones de
-     oído gratis", recuadro de beneficios y raspe en el checkout). Nació como el
-     Cyber de octubre y el dueño la dejó corriendo sin la marca Cyber y sin fecha
-     de término. Va antes de pintar para que no parpadee. Para terminarla, sacar
-     esta clase Y poner PROMO_TAPONES en false en services/precio.js. -->
-<script>document.documentElement.classList.add('promo');</script>
+     oído gratis", recuadro celeste de beneficios y raspe en el checkout).
+     APAGADA desde el 11-oct-2026 por decisión del dueño: queda solo el envío
+     gratis. Para volver a prenderla, poner aquí
+     <script>document.documentElement.classList.add('promo');</script>
+     (antes de pintar, para que no parpadee) Y PROMO_TAPONES en true en
+     services/precio.js: las dos cosas a la vez. -->
 <script>document.documentElement.classList.add('js');</script>
 <style>
 html:not(.promo) .solo-promo{display:none!important;}
