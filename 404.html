@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="tema-claro">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,6 +32,12 @@
     border-radius:8px;transition:transform .2s,box-shadow .2s;
   }
   a.btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,255,255,.15);}
+  /* Tema claro (html.tema-claro), igual que la tienda. Sin la clase vuelve el negro. */
+  html.tema-claro body{background:#fff;color:#141416;}
+  html.tema-claro .code{color:#141416;}
+  html.tema-claro p{color:#5d5d65;}
+  html.tema-claro a.btn{background:#0b0b0c;color:#fff;}
+  html.tema-claro a.btn:hover{box-shadow:0 8px 24px rgba(0,0,0,.18);}
 </style>
 </head>
 <body>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="tema-claro">
 <head>
 <meta charset="UTF-8">
 <!-- Estado de reserva cacheado: se marca ANTES de pintar para no mostrar el
@@ -1668,6 +1668,127 @@ body.sb-on .wa-float{bottom:82px;}
 .asb-logo{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:5px;flex-shrink:0;}
 .asb-btn{background:#0a84ff;color:#fff;border:none;border-radius:16px;padding:7px 18px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:700;text-decoration:none;flex-shrink:0;}
 @media(max-width:400px){.asb-sub{font-size:.64rem;}}
+/* ── Tema claro "blanco con negro" (html.tema-claro, desde el 11-oct-2026) ──
+   Página blanca; la barra de aviso, el encabezado, la barra de compra fija, el
+   panel "Así de simple" y el pie quedan en negro. Todo va colgado de la clase
+   html.tema-claro (ver <html>): quitándola vuelve la web oscura de antes, sin
+   tocar nada más. Muchos colores de abajo existen porque el CSS original tiene
+   hex escritos a mano pensados para fondo negro. */
+html.tema-claro{--black:#ffffff;--dark:#f5f5f3;--card:#ffffff;--border:#e4e4e0;--white:#141416;--silver:#5d5d65;--accent:#141416;--mint:#3a3a40;--cy:#2f7fae;--cy-claro:#225f86;--cy-linea:rgba(47,127,174,.32);}
+html.tema-claro body{background:#fff;color:#141416;}
+/* Zonas que siguen en negro: barra de aviso, encabezado, barra de compra fija
+   y el panel "Así de simple". Dentro de ellas vuelven los colores oscuros. */
+html.tema-claro header,html.tema-claro .sticky-buy,html.tema-claro .soft-in,html.tema-claro .announce-bar{--black:#121214;--dark:#1a1a1d;--card:#1e1e22;--border:#33333b;--white:#f2f2f2;--silver:#a4a4ae;--accent:#e8e8e8;--mint:#c0c0c0;--cy:#6fb7dd;--cy-claro:#a9d6ee;--cy-linea:rgba(111,183,221,.38);}
+html.tema-claro .announce-bar{background:#0b0b0c;}
+html.tema-claro header{background:#0d0d0f!important;border-color:#0d0d0f!important;box-shadow:0 10px 26px -14px rgba(0,0,0,.45)!important;}
+html.tema-claro .hdr-pulse{background:#17181b;}
+html.tema-claro .sticky-buy{background:rgba(12,12,13,.97);border-top-color:#222;color:#f2f2f2;}
+html.tema-claro .soft-in,html.tema-claro .fn-modal,html.tema-claro .rifa-overlay{color:#f2f2f2;}
+html.tema-claro .btn-p{background:#0b0b0c;color:#fff;}
+html.tema-claro .btn-p:hover{background:#000;box-shadow:0 10px 28px rgba(0,0,0,.2);}
+html.tema-claro .btn-cart{border-color:#d6d6d1;color:#141416;background:#fff;}
+html.tema-claro .cuotas-box{background:#f1f8f1;border-color:#cfe6cf;}
+html.tema-claro .cuotas-box,html.tema-claro .cuotas-box div,html.tema-claro .cuotas-box span{color:#2d4a2f!important;}
+html.tema-claro .cuotas-box b{color:#141416!important;}
+html.tema-claro .cuotas-box small{color:#3c7d4c!important;}
+html.tema-claro .reassure{background:#e4e4e0;}
+html.tema-claro .reassure-item{background:#f8f8f6;color:#3a3a40;}
+html.tema-claro .reassure-item b{color:#141416;}
+html.tema-claro .reassure-item small{color:#6b6b72;}
+html.tema-claro .btn-review{border-color:#cfcfca;color:#141416;}
+html.tema-claro .btn-review.rv-mas{background:#141416;border-color:#141416;color:#fff;}
+html.tema-claro .review-card{background:#fff;border-color:#e6e6e2;}
+html.tema-claro .review-text{color:#3a3a40;}
+html.tema-claro details{background:#fff;border-color:#e6e6e2;}
+html.tema-claro .diseno-video video{background:#e9e9e6;}
+/* Zonas oscuras adicionales: pie de marca, ventana de funciones (sale del panel
+   oscuro), sorteo. Mismos tokens oscuros que arriba. */
+html.tema-claro .banner,html.tema-claro .fn-modal,html.tema-claro .rifa-overlay{--black:#121214;--dark:#1a1a1d;--card:#1e1e22;--border:#33333b;--white:#f2f2f2;--silver:#a4a4ae;--accent:#e8e8e8;--mint:#c0c0c0;}
+html.tema-claro .banner{color:#f2f2f2;}
+/* Ficha del producto */
+html.tema-claro .gal-slider,html.tema-claro .gal,html.tema-claro .gal img.span2,html.tema-claro .slide{background:#f2f2f0;}
+html.tema-claro .resist-badge{background:#f6f6f4;border-color:#e4e4e0;}
+html.tema-claro .cmp-pill{background:#f6f6f4;border-color:#e4e4e0;color:#3a3a40;}
+html.tema-claro .proof-line,html.tema-claro .color-now,html.tema-claro .cmp-label,html.tema-claro .fc-cuotas{color:#6b6b72;}
+html.tema-claro .proof-line b,html.tema-claro .rv-hint b,html.tema-claro .review-ig,html.tema-claro .fc-cuotas b,html.tema-claro .day-item span b,html.tema-claro .join-line span b{color:#141416;}
+html.tema-claro .proof-stars,html.tema-claro .review-stars{color:#d9961c;}
+html.tema-claro .ship-line,html.tema-claro .day-title,html.tema-claro .fc-price small{color:#2e8b46;}
+html.tema-claro .day-item span,html.tema-claro .join-line span{color:#3a3a40;}
+html.tema-claro .reviews-sub{color:#9a7a3e;}
+html.tema-claro .guarantee p{color:#4a4a52;}
+/* Ventanas: fondo blanco, campos gris perla */
+html.tema-claro .cart-drawer,html.tema-claro .reviews-modal-box,html.tema-claro .resena-modal,html.tema-claro .qty-dialog-content,html.tema-claro .tapones-card{background:#fff;border-color:#e4e4e0;box-shadow:0 24px 70px rgba(0,0,0,.25);}
+/* el carrito cerrado queda fuera de pantalla: sin sombra para que no asome */
+html.tema-claro .cart-drawer{box-shadow:none;}
+html.tema-claro .cart-drawer.open{box-shadow:-18px 0 50px rgba(0,0,0,.18);}
+html.tema-claro .checkout-overlay,html.tema-claro .reviews-modal,html.tema-claro .resena-overlay,html.tema-claro .qty-dialog,html.tema-claro .tapones-menu{background:rgba(20,20,22,.55);}
+html.tema-claro .resena-input,html.tema-claro .qty-dialog-input{background:#f7f7f5;border-color:#dcdcd6;color:#141416;}
+html.tema-claro .tapones-gallery,html.tema-claro .tapones-slide{background:#f2f2f0;}
+html.tema-claro .tapones-title{color:#141416;}
+html.tema-claro .tapones-price .tp-now{color:#9a6a1e;}
+html.tema-claro .tapones-desc{color:#5d5d65;}
+html.tema-claro .tapones-card-close,html.tema-claro .checkout-close{color:#8a8a92;}
+html.tema-claro .tapones-card-close:hover,html.tema-claro .checkout-close:hover{color:#141416;}
+html.tema-claro .tapones-dots span{background:rgba(0,0,0,.18);}
+/* Checkout: deja la "pizarra" y pasa a blanco */
+html.tema-claro .checkout-modal{--card:#f7f7f5;--border:#e2e2dd;--silver:#5d5d65;--dark:#f5f5f3;background:#fff;border-color:#e2e2dd;}
+html.tema-claro .checkout-modal .shipping-input,html.tema-claro .checkout-modal .ac-list{background:#f7f7f5;border-color:#dcdcd6;color:#141416;}
+html.tema-claro .checkout-modal .btn-pay{background:#fff;border-color:#d6d6d1;color:#141416;}
+html.tema-claro .checkout-modal .btn-pay:hover:not(:disabled){background:#f7f7f5;border-color:#141416;}
+html.tema-claro .checkout-modal .co-prod img{background:#f2f2f0;border-color:#e2e2dd;}
+html.tema-claro .checkout-modal .rescue-bar{background:#f1f8f1;border-color:#cfe6cf;}
+html.tema-claro .co-prod-name,html.tema-claro .co-prod-color,html.tema-claro .co-price-now{color:#141416;}
+html.tema-claro .upsell-card,html.tema-claro .upsell-tags{background:#fafaf8;}
+html.tema-claro .upsell-card.added,html.tema-claro .upsell-card.added .upsell-tags{background:#f1f8f1;}
+/* Chat */
+html.tema-claro .chat-panel{background:#fff;border-color:#e2e2dd;box-shadow:0 24px 60px rgba(0,0,0,.22);}
+html.tema-claro .chat-head{background:#f5f5f3;border-bottom-color:#e4e4e0;}
+html.tema-claro .chat-msg.bot,html.tema-claro .chat-typing{background:#f1f1ee;color:#141416;}
+html.tema-claro .chat-msg.yo{background:#dcf5e3;color:#10301c;}
+html.tema-claro .chat-sug button{background:#fff;border-color:#dcdcd6;color:#3a3a40;}
+html.tema-claro .chat-foot{background:#fafaf8;border-top-color:#e4e4e0;}
+html.tema-claro .chat-input{background:#fff;border-color:#dcdcd6;color:#141416;}
+html.tema-claro .app-badge-sub{color:#2e8b46;}
+html.tema-claro .fc-price small{color:#2e8b46!important;}
+/* Checkout: textos que estaban pensados para fondo oscuro */
+html.tema-claro .checkout-modal .pb-off{background:#eaf6ec!important;border-color:#bfe0c6!important;color:#2e8b46!important;}
+html.tema-claro .co-cuotas,html.tema-claro .total-nota{color:#2e7d55;}
+html.tema-claro .envio-free .ef-txt b{color:#2e8b46;}
+html.tema-claro .checkout-head span[style*="#aaa"],html.tema-claro .total-label,html.tema-claro .secure-badges,html.tema-claro .resena-file{color:#6b6b72!important;}
+html.tema-claro .secure-badges b{color:#141416!important;}
+html.tema-claro .cart-qty-btn,html.tema-claro .qty-dialog-btn,html.tema-claro .upsell-price{color:#9a6a1e;}
+html.tema-claro .rescue-txt{color:#2d4a2f;}
+html.tema-claro .rescue-stay{border-color:#cfcfca;color:#141416;}
+html.tema-claro .resena-file{border-color:#cfcfca;}
+/* las estrellas se pintan desde JS con estilo en línea */
+html.tema-claro .resena-stars span[style*="68, 68, 68"]{color:#d6d6d1!important;}
+html.tema-claro .resena-stars span[style*="233, 196, 106"]{color:#d9961c!important;}
+/* Carrito */
+html.tema-claro .cart-item{background:#f7f7f5;}
+html.tema-claro .cart-drawer-footer{background:#fafaf8;}
+/* Chat */
+html.tema-claro .chat-head .ch-t{color:#141416;}
+html.tema-claro .chat-human{border-color:#9fd3b1;color:#1f8a4c;}
+html.tema-claro #total-nota[style*="127, 201, 160"]{color:#2e7d55!important;}
+html.tema-claro #total-nota[style*="201, 162, 39"]{color:#9a6a1e!important;}
+html.tema-claro .cart-item-price{color:#9a6a1e;}
+html.tema-claro .carrier-option:hover,html.tema-claro .carrier-option.selected{border-color:#141416;}
+html.tema-claro .carrier-price{color:#141416;}
+html.tema-claro .carrier-price[style*="105, 196, 109"]{color:#2e8b46!important;}
+html.tema-claro .carrier-eta{color:#2e7d55;}
+html.tema-claro .ac-item{border-bottom-color:#ececea;}
+html.tema-claro .ac-item:hover{background:#f0f0ee;}
+html.tema-claro .ship-line svg{stroke:#2e8b46;}
+html.tema-claro .detail{border-color:transparent;}
+html.tema-claro .seo-block{color:#6b6b72;}
+html.tema-claro .seo-block h2{color:#5d5d65;}
+html.tema-claro .seo-block b{color:#3a3a40;}
+html.tema-claro .banner{border:none;border-radius:20px;}
+/* Botones que eran blancos sobre negro: pasan a negro sobre blanco */
+html.tema-claro .cart-cta,html.tema-claro .qty-dialog-actions .confirm{background:#0b0b0c;color:#fff;}
+html.tema-claro .btn-review:hover{border-color:#141416;background:#141416;color:#fff;}
+html.tema-claro .upsell-btn:hover{border-color:#2e7d55;color:#2e7d55;}
+html.tema-claro .upsell-tags{border-color:#e6d3ad;}
 </style>
 </head>
 <body>
