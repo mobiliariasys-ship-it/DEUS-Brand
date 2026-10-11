@@ -15,7 +15,10 @@ const TASA_PASARELA = 0.035; // sobre el monto cobrado
 // subestimaba la publicidad en un 19% todos los dias.
 const IVA = 0.19;
 
-function calcularDia(d, ads) {
+// comprasMeta: compras que Meta le atribuye a los anuncios ese día. Va solo
+// como dato para el costo por compra "según Meta"; no entra en la utilidad,
+// que se calcula con las ventas reales del panel.
+function calcularDia(d, ads, comprasMeta) {
   const pedidos = Number(d.pedidos) || 0;
   const unidades = Number(d.unidades) || 0;
   const ingresos = Number(d.ingresos) || 0;
@@ -43,6 +46,7 @@ function calcularDia(d, ads) {
     costoBandas, costoEnvios, pasarela,
     adsNeto, ivaAds,
     ads: gastoAds,
+    comprasMeta: Number(comprasMeta) || 0,
     utilidad: ingresos - costoBandas - costoEnvios - pasarela - gastoAds,
     estimado: !!d.estimado
   };
@@ -58,8 +62,8 @@ function totalizar(filas) {
     ingresos: a.ingresos + f.ingresos, costoBandas: a.costoBandas + f.costoBandas,
     costoEnvios: a.costoEnvios + f.costoEnvios, pasarela: a.pasarela + f.pasarela,
     adsNeto: a.adsNeto + f.adsNeto, ivaAds: a.ivaAds + f.ivaAds,
-    ads: a.ads + f.ads, utilidad: a.utilidad + f.utilidad
-  }), { pedidos: 0, unidades: 0, conTapones: 0, pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, adsNeto: 0, ivaAds: 0, ads: 0, utilidad: 0 });
+    ads: a.ads + f.ads, comprasMeta: a.comprasMeta + (f.comprasMeta || 0), utilidad: a.utilidad + f.utilidad
+  }), { pedidos: 0, unidades: 0, conTapones: 0, pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, adsNeto: 0, ivaAds: 0, ads: 0, comprasMeta: 0, utilidad: 0 });
 }
 
 module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, IVA, calcularDia, totalizar };

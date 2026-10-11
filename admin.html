@@ -177,6 +177,7 @@
   .util-kpi{background:var(--card,#141418);border:1px solid var(--border-soft,#2a2a32);border-radius:9px;padding:11px 13px;}
   .util-kpi .k{font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:#8a8a92;margin-bottom:6px;}
   .util-kpi .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;color:#e8e8ee;}
+  .util-kpi .s{font-size:.62rem;color:#8a8a92;margin-top:5px;line-height:1.35;}
   .util-kpi.bien .v{color:#69c46d;} .util-kpi.mal .v{color:#e07a6a;}
   .util-tabla{overflow-x:auto;}
   /* Días elegidos en el gráfico de Conversión: mismo violeta que esa selección,
@@ -1647,7 +1648,7 @@
     var set = {}; fechas.forEach(function(x){ set[x] = 1; });
     var f = filas.filter(function(x){ return set[x.fecha]; });
     var campos = ['pedidos','unidades','conTapones','pedidosExternos','unidadesExternas','ingresosExternos',
-      'ingresos','costoBandas','costoEnvios','pasarela','adsNeto','ivaAds','ads','utilidad'];
+      'ingresos','costoBandas','costoEnvios','pasarela','adsNeto','ivaAds','ads','comprasMeta','utilidad'];
     var t = {};
     campos.forEach(function(k){ t[k] = 0; });
     f.forEach(function(x){ campos.forEach(function(k){ t[k] += Number(x[k]) || 0; }); });
@@ -1744,7 +1745,6 @@
       aviso.innerHTML = '';
     }
     var dias = f.length || 1;
-    var conVenta = f.filter(function(x){ return x.pedidos > 0; }).length;
     // Costo por venta de los ANUNCIOS: las bandas vendidas por Mercado Libre no
     // vinieron de un anuncio, así que no entran en la división.
     var unidadesAds = t.unidades - (t.unidadesExternas || 0);
@@ -1758,7 +1758,14 @@
       kpi('Gastado en ads', money0(t.ads), '') +
       kpi('de eso, IVA', money0(t.ivaAds || 0), '') +
       kpi('Costo por venta', unidadesAds ? money0(cpa) : '—', '') +
-      kpi('Días con venta', conVenta + ' de ' + dias, '') +
+      // Costo por compra SEGÚN META: lo que muestra Ads Manager (gasto sin
+      // IVA ÷ compras que Meta atribuye a los anuncios). Distinto del "Costo
+      // por venta" de al lado, que divide el gasto con IVA por las bandas que
+      // de verdad se vendieron; si Meta se atribuye menos o más compras que
+      // las reales, los dos números se separan y eso también es un dato.
+      kpi('Costo por compra · Meta', t.comprasMeta ? money0(t.adsNeto / t.comprasMeta) : '—', '',
+        t.comprasMeta ? t.comprasMeta + (t.comprasMeta === 1 ? ' compra' : ' compras') + ' según Meta · sin IVA'
+                      : (d.adsOk ? 'Meta no registró compras' : 'Meta no respondió')) +
       // Attach del upsell de tapones. Se mide para saber si mover su precio
       // sirve de algo: con un attach bajo, el upsell casi no mueve la
       // contribución por pedido y bajarle el precio es pelear por migajas.
@@ -1901,8 +1908,9 @@
     });
   }
 
-  function kpi(k, v, cls){
-    return '<div class="util-kpi ' + (cls || '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>';
+  function kpi(k, v, cls, sub){
+    return '<div class="util-kpi ' + (cls || '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div>' +
+      (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>';
   }
 
   function cargarCtr(dias){

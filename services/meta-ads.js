@@ -129,6 +129,18 @@ function accionValor(actions, tipo) {
   return a ? Number(a.value) || 0 : 0;
 }
 
+// Compras que Meta le atribuye a los anuncios en una fila de insights. Se
+// toma el PRIMER tipo que venga (omni_purchase, si no el del píxel), nunca la
+// suma de los dos: omni_purchase ya incluye las del píxel y contarlas otra vez
+// duplicaría las compras y dejaría el costo por compra a la mitad.
+function comprasDe(actions) {
+  for (const tipo of PURCHASE_ACTION_TYPES) {
+    const a = (actions || []).find(x => x.action_type === tipo);
+    if (a) return Number(a.value) || 0;
+  }
+  return 0;
+}
+
 function extraerCompras(insights) {
   const actions = insights.actions || [];
   const costos = insights.cost_per_action_type || [];
@@ -206,7 +218,8 @@ async function getInsightsDiarios(campaignId, dias = 14) {
       // cuenta el propio sitio, y el que separa el tráfico pagado del resto.
       visitas: accionValor(r.actions, 'landing_page_view'),
       impresiones: Number(r.impressions || 0),
-      gasto: Number(r.spend || 0)
+      gasto: Number(r.spend || 0),
+      compras: comprasDe(r.actions)
     }))
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
 }
@@ -301,6 +314,8 @@ async function duplicateCampaign(campaignId, overrides = {}) {
 // Gasto diario de la CUENTA COMPLETA (no de una campaña): para la utilidad
 // diaria hay que restar todo lo gastado en publicidad ese día, incluidas las
 // campañas pausadas después, que igual consumieron plata mientras corrían.
+// Trae también las compras que Meta atribuye a los anuncios cada día
+// (`compras`), para el costo por compra "según Meta" del panel.
 async function getGastoDiarioCuenta(dias = 14) {
 
   // Camino 1: una sola llamada a nivel de CUENTA. Es lo barato — un request
@@ -310,12 +325,15 @@ async function getGastoDiarioCuenta(dias = 14) {
   try {
     const { adAccountId } = creds();
     const filas = await insightsCompletos(`/${adAccountId}/insights`, {
-      fields: 'spend', time_increment: 1, time_range: rangoHastaHoy(dias, 14)
+      fields: 'spend,actions', time_increment: 1, time_range: rangoHastaHoy(dias, 14)
     });
     if (filas.length) {
-      const mapa = {};
-      for (const r of filas) mapa[r.date_start] = Number(r.spend || 0);
-      return { mapa, via: 'cuenta' };
+      const mapa = {}, compras = {};
+      for (const r of filas) {
+        mapa[r.date_start] = Number(r.spend || 0);
+        compras[r.date_start] = comprasDe(r.actions);
+      }
+      return { mapa, compras, via: 'cuenta' };
     }
   } catch (e) {
     errorCuenta = e.message || String(e);
@@ -343,11 +361,14 @@ async function getGastoDiarioCuenta(dias = 14) {
   const porCampana = await Promise.all(
     campanas.map(c => getInsightsDiarios(c.id, dias).catch(() => []))
   );
-  const mapa = {};
+  const mapa = {}, compras = {};
   let filas = 0;
   for (const dias_ of porCampana) {
     filas += dias_.length;
-    for (const d of dias_) mapa[d.fecha] = (mapa[d.fecha] || 0) + (Number(d.gasto) || 0);
+    for (const d of dias_) {
+      mapa[d.fecha] = (mapa[d.fecha] || 0) + (Number(d.gasto) || 0);
+      compras[d.fecha] = (compras[d.fecha] || 0) + (Number(d.compras) || 0);
+    }
   }
   // Campañas que responden pero sin una sola fila de insights: el permiso de
   // insights está cortado aunque el de leer campañas no. Distinto problema.
@@ -357,7 +378,7 @@ async function getGastoDiarioCuenta(dias = 14) {
       'Nivel cuenta: ' + (errorCuenta || 'sin datos') + '. Falta el permiso ads_read sobre los insights.'
     );
   }
-  return { mapa, via: 'campañas', campanas: campanas.length, errorCuenta };
+  return { mapa, compras, via: 'campañas', campanas: campanas.length, errorCuenta };
 }
 
 // Gasto POR HORA de la cuenta, para la sección "en vivo" del panel. Mismo

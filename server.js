@@ -829,10 +829,10 @@ app.get('/admin/utilidad-diaria', async (req, res) => {
     const ventas = metrics.ventasPorDia(dias);
     // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
     // media verdad sirve más que un panel en blanco.
-    let gasto = {}, adsOk = true, adsError = '', via = '';
+    let gasto = {}, compras = {}, adsOk = true, adsError = '', via = '';
     try {
       const r = await metaAds.getGastoDiarioCuenta(dias);
-      gasto = r.mapa; via = r.via;
+      gasto = r.mapa; compras = r.compras || {}; via = r.via;
     }
     catch (e) {
       adsOk = false;
@@ -843,7 +843,7 @@ app.get('/admin/utilidad-diaria', async (req, res) => {
       console.error('[utilidad] Meta no respondió:', adsError);
     }
 
-    const filas = ventas.map(d => utilidad_.calcularDia(d, gasto[d.fecha]));
+    const filas = ventas.map(d => utilidad_.calcularDia(d, gasto[d.fecha], compras[d.fecha]));
     const tot = utilidad_.totalizar(filas);
 
     // Meta fecha por el huso de la CUENTA publicitaria, y las ventas se agrupan
