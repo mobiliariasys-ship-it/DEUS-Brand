@@ -17,6 +17,7 @@ const persist = require('./services/persist');
 const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
 const metaCapi = require('./services/meta-capi');
 const metaAds = require('./services/meta-ads');
+const resenas = require('./services/resenas');
 
 // Precio AUTORITATIVO: es el que se cobra, con stock y en modo reserva. El
 // sitio lo lee de /stock y muestra exactamente esto, así no puede pasar que la
@@ -1035,11 +1036,79 @@ app.post('/resenas', async (req, res) => {
   }
 });
 
+// ── Reseñas cargadas desde el panel (services/resenas.js) ──
+// Las de /admin/* van con ?clave= (STOCK_KEY), como el resto del panel.
+function claveAdminOk(req) {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  return !!clave && (req.query.clave || '') === clave;
+}
+function exigirClave(req, res) {
+  if (!(process.env.STOCK_KEY || '').trim()) { res.status(404).json({ error: 'No disponible' }); return false; }
+  if (!claveAdminOk(req)) { res.status(403).json({ error: 'Clave incorrecta' }); return false; }
+  return true;
+}
+function errorResena(res, e) {
+  if (e instanceof resenas.ErrorResena) return res.status(400).json({ error: e.message });
+  console.error('[resenas] Error:', e.message);
+  res.status(500).json({ error: 'No se pudo guardar. Intenta de nuevo.' });
+}
+
+app.get('/admin/resenas', (req, res) => {
+  if (!exigirClave(req, res)) return;
+  res.json({ resenas: resenas.todas() });
+});
+
+app.post('/admin/resenas', async (req, res) => {
+  if (!exigirClave(req, res)) return;
+  try { res.json({ ok: true, resena: await resenas.crear(req.body) }); } catch (e) { errorResena(res, e); }
+});
+
+app.post('/admin/resenas/:id/visible', async (req, res) => {
+  if (!exigirClave(req, res)) return;
+  try {
+    const r = await resenas.cambiarVisible(req.params.id, !!(req.body && req.body.visible));
+    if (!r) return res.status(404).json({ error: 'No existe esa reseña.' });
+    res.json({ ok: true, resena: r });
+  } catch (e) { errorResena(res, e); }
+});
+
+app.post('/admin/resenas/:id/borrar', async (req, res) => {
+  if (!exigirClave(req, res)) return;
+  try {
+    if (!(await resenas.borrar(req.params.id))) return res.status(404).json({ error: 'No existe esa reseña.' });
+    res.json({ ok: true });
+  } catch (e) { errorResena(res, e); }
+});
+
+// Públicas: la web las suma al carrusel. Un minuto de caché basta para que una
+// reseña recién subida aparezca enseguida sin consultar en cada visita.
+app.get('/resenas/lista', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=60');
+  res.json({ resenas: resenas.publicas() });
+});
+
+// Cada foto tiene su id y nunca cambia: se cachea un año. Con la clave del
+// panel también se entregan las de reseñas ocultas (miniaturas), sin caché.
+app.get('/resenas/foto/:id', async (req, res) => {
+  try {
+    const admin = claveAdminOk(req);
+    const f = await resenas.foto(req.params.id, { incluirOcultas: admin });
+    if (!f) return res.status(404).send('No encontrada');
+    res.set('Content-Type', f.tipo);
+    res.set('Cache-Control', admin ? 'private, no-store' : 'public, max-age=31536000, immutable');
+    res.send(f.buf);
+  } catch (e) {
+    console.error('[resenas] foto:', e.message);
+    res.status(500).send('Error');
+  }
+});
+
 // Carga lo guardado (disco o Postgres) antes de aceptar tráfico, así ninguna
 // venta/ticket/vista que llegue justo al arrancar se registra sobre datos vacíos.
 async function arrancar() {
   await metrics.init(); // carga ventas, tickets y vistas persistidos
   await atletas.init(); // carga equipos, atletas y sus días
+  await resenas.init(); // reseñas cargadas desde el panel
   const pedidosGuardados = await persist.load('pedidos.json', []);
   pedidos.push(...pedidosGuardados);
 

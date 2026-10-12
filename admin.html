@@ -219,6 +219,22 @@
   .vm-chk input{width:auto;}
   .vm-msg{font-size:.7rem;margin-top:12px;min-height:16px;}
   .vm-pie{display:flex;gap:9px;justify-content:flex-end;margin-top:14px;}
+  /* Reseñas cargadas desde el panel */
+  .rp-form{max-width:600px;margin-bottom:20px;}
+  .rp-form .vm-pie{justify-content:flex-start;}
+  .vm-campo textarea{background:var(--card2);border:1px solid var(--border);color:var(--ink);padding:8px 10px;border-radius:7px;font-size:.78rem;font-family:inherit;width:100%;min-height:76px;resize:vertical;line-height:1.45;}
+  .vm-campo textarea:focus{outline:none;border-color:var(--cyan);}
+  .vm-campo input[type=file]{padding:7px;font-size:.72rem;}
+  #rp-prev{max-width:150px;max-height:190px;border-radius:8px;margin-top:8px;object-fit:cover;}
+  .rp-item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--border);}
+  .rp-item img,.rp-sinfoto{width:56px;height:70px;border-radius:6px;flex:none;object-fit:cover;}
+  .rp-sinfoto{background:var(--card2);display:grid;place-items:center;color:var(--faint);font-size:1.4rem;}
+  .rp-cuerpo{flex:1;min-width:0;}
+  .rp-cuerpo b{font-size:.8rem;color:var(--ink);}
+  .rp-cuerpo p{font-size:.76rem;color:#cfcfcf;margin:3px 0 5px;line-height:1.45;overflow-wrap:anywhere;}
+  .rp-meta{font-size:.66rem;color:var(--muted);line-height:1.5;}
+  .rp-acc{display:flex;flex-direction:column;gap:6px;flex:none;}
+  .rp-oculta img,.rp-oculta .rp-cuerpo{opacity:.45;}
   .util-tabla table{width:100%;border-collapse:collapse;font-size:.72rem;}
   .util-tabla th,.util-tabla td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--border-soft,#2a2a32);font-variant-numeric:tabular-nums;color:#bbb;}
   .util-tabla th{color:#9a9a9a;font-weight:600;}
@@ -312,6 +328,7 @@
       <button class="nav-i" onclick="irA('sec-negocio',this)"><span class="ico">📦</span> Negocio</button>
       <button class="nav-i" onclick="irA('sec-pedidos',this)"><span class="ico">📦</span> Pedidos</button>
       <button class="nav-i" onclick="irA('sec-ads',this)"><span class="ico">📣</span> Ads</button>
+      <button class="nav-i" onclick="irA('sec-resenas',this)"><span class="ico">⭐</span> Reseñas</button>
       <div class="nav-sep"></div>
       <button class="nav-i" id="btn-self" onclick="toggleSelf()">Excluir mis vistas</button>
       <button class="nav-i" onclick="salir()"><span class="ico">↩</span> Salir</button>
@@ -614,6 +631,29 @@
       <div class="ads-grid" id="ads-grid"></div>
     </section>
 
+    <section id="sec-resenas">
+      <div class="sec-h"><h2>⭐ Reseñas · subir a la web</h2><span class="pill" id="rp-total"></span></div>
+      <div class="rp-form">
+        <div class="vm-grid">
+          <div class="vm-campo"><label for="rp-autor">Quién la escribió</label><input id="rp-autor" maxlength="60" placeholder="@usuario o nombre" autocomplete="off"></div>
+          <div class="vm-campo"><label for="rp-estrellas">Estrellas</label>
+            <select id="rp-estrellas"><option value="5">★★★★★ 5</option><option value="4">★★★★ 4</option><option value="3">★★★ 3</option><option value="2">★★ 2</option><option value="1">★ 1</option></select></div>
+          <div class="vm-campo ancho"><label for="rp-texto">Comentario</label><textarea id="rp-texto" maxlength="600" placeholder="Tal como lo escribió el cliente"></textarea></div>
+          <div class="vm-campo"><label for="rp-origen">Dónde la dejó</label>
+            <select id="rp-origen"><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="web">Formulario web</option><option value="otro">Otro</option></select></div>
+          <div class="vm-campo"><label for="rp-ubicacion">Ciudad o comuna (opcional)</label><input id="rp-ubicacion" maxlength="40" placeholder="Las Condes"></div>
+          <div class="vm-campo ancho"><label for="rp-foto">Foto (opcional)</label><input id="rp-foto" type="file" accept="image/*" onchange="rpVistaPrevia()"><img id="rp-prev" alt="Vista previa de la foto" style="display:none"></div>
+          <label class="vm-chk"><input type="checkbox" id="rp-editada" onchange="rpEditada()"> La foto está editada (la tarjeta lo avisa)</label>
+          <div class="vm-campo ancho" id="rp-nota-campo" style="display:none"><label for="rp-nota">Qué se editó (opcional)</label><input id="rp-nota" maxlength="60" placeholder="para mostrar la correa gris"></div>
+          <label class="vm-chk"><input type="checkbox" id="rp-cercano"> Es familia, amigo o del equipo (la tarjeta lo avisa)</label>
+        </div>
+        <div class="vm-msg" id="rp-msg" aria-live="polite"></div>
+        <div class="vm-pie"><button class="btn" id="rp-ok" onclick="publicarResena()">Publicar reseña</button></div>
+      </div>
+      <div id="rp-lista"></div>
+      <div class="empty" id="rp-vacia" style="display:none">Todavía no subiste reseñas desde el panel. Las que ya estaban en la web siguen ahí.</div>
+    </section>
+
     <section id="sec-chat">
       <div class="sec-h"><h2>💬 Chat · qué le preguntan al bot</h2><span class="pill" id="chat-total"></span></div>
       <div id="chat-lista"></div>
@@ -648,6 +688,95 @@
     cargar(true);
   }
   function salir(){ localStorage.removeItem('deus-admin-key'); location.reload(); }
+
+  // ── Reseñas cargadas desde el panel (services/resenas.js) ──
+  // Lo que se publica acá aparece en el carrusel de la web en menos de un minuto.
+  var rpFoto=null; // foto ya achicada, como data URL
+  function rpVal(id){ return document.getElementById(id).value.trim(); }
+  function rpMsg(txt, color){ var m=document.getElementById('rp-msg'); m.style.color=color||'var(--muted)'; m.textContent=txt; }
+  function rpEditada(){ document.getElementById('rp-nota-campo').style.display=document.getElementById('rp-editada').checked?'':'none'; }
+  // Se achica en el navegador (lado largo 1000 px) antes de subir: nunca viaja la
+  // foto de varios MB del celular. WebP si el navegador sabe generarlo, si no JPEG.
+  function rpAchicar(file){
+    return new Promise(function(ok, mal){
+      var url=URL.createObjectURL(file), img=new Image();
+      img.onload=function(){
+        var w=img.naturalWidth, h=img.naturalHeight, k=Math.min(1, 1000/Math.max(w,h));
+        var c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        var d=c.toDataURL('image/webp', 0.82);
+        if(d.indexOf('data:image/webp')!==0) d=c.toDataURL('image/jpeg', 0.85);
+        ok(d);
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); mal(new Error('No se pudo leer esa imagen. Prueba con una foto JPG o PNG.')); };
+      img.src=url;
+    });
+  }
+  function rpVistaPrevia(){
+    var f=document.getElementById('rp-foto').files[0], prev=document.getElementById('rp-prev');
+    rpFoto=null; prev.style.display='none'; rpMsg('');
+    if(!f) return;
+    rpAchicar(f).then(function(d){ rpFoto=d; prev.src=d; prev.style.display='block'; })
+      .catch(function(e){ rpMsg(e.message, 'var(--red)'); });
+  }
+  function rpLimpiar(){
+    ['rp-autor','rp-texto','rp-ubicacion','rp-nota','rp-foto'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.getElementById('rp-estrellas').value='5'; document.getElementById('rp-origen').value='instagram';
+    document.getElementById('rp-editada').checked=false; document.getElementById('rp-cercano').checked=false; rpEditada();
+    document.getElementById('rp-prev').style.display='none'; rpFoto=null;
+  }
+  function publicarResena(){
+    var btn=document.getElementById('rp-ok'), hayArchivo=!!document.getElementById('rp-foto').files[0];
+    var datos={ autor:rpVal('rp-autor'), texto:rpVal('rp-texto'), estrellas:Number(rpVal('rp-estrellas')),
+      origen:rpVal('rp-origen'), ubicacion:rpVal('rp-ubicacion'), foto:rpFoto,
+      fotoEditada:hayArchivo && document.getElementById('rp-editada').checked, notaFoto:rpVal('rp-nota'),
+      cercano:document.getElementById('rp-cercano').checked };
+    if(!datos.autor || !datos.texto){ rpMsg('Completa quién la escribió y el comentario.', 'var(--red)'); return; }
+    if(hayArchivo && !rpFoto){ rpMsg('Espera a que cargue la foto…'); return; }
+    btn.disabled=true; rpMsg('Publicando…');
+    fetch(BASE+'/admin/resenas?clave='+encodeURIComponent(clave), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(datos) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok) throw new Error(j.error||'No se pudo publicar.'); return j; }); })
+      .then(function(){ rpLimpiar(); rpMsg('Publicada. Aparece en la web en menos de un minuto.', 'var(--green)'); cargarResenasPanel(); })
+      .catch(function(e){ rpMsg(e.message, 'var(--red)'); })
+      .then(function(){ btn.disabled=false; });
+  }
+  function cargarResenasPanel(){
+    fetch(BASE+'/admin/resenas?clave='+encodeURIComponent(clave))
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d && d.resenas) pintarResenasPanel(d.resenas); })
+      .catch(function(){});
+  }
+  // Se arma con nodos y textContent: lo que escribe un cliente nunca se interpreta como HTML.
+  function pintarResenasPanel(arr){
+    var cont=document.getElementById('rp-lista'); cont.textContent='';
+    document.getElementById('rp-vacia').style.display=arr.length?'none':'block';
+    var vis=arr.filter(function(r){ return r.visible; }).length;
+    document.getElementById('rp-total').textContent=arr.length ? vis+' en la web'+(arr.length>vis ? ' · '+(arr.length-vis)+' ocultas' : '') : '';
+    arr.forEach(function(r){
+      var it=document.createElement('div'); it.className='rp-item'+(r.visible?'':' rp-oculta');
+      if(r.foto){ var im=document.createElement('img'); im.src=BASE+r.foto+'?clave='+encodeURIComponent(clave); im.alt=''; im.loading='lazy'; it.appendChild(im); }
+      else { var sf=document.createElement('div'); sf.className='rp-sinfoto'; sf.textContent='“'; it.appendChild(sf); }
+      var cu=document.createElement('div'); cu.className='rp-cuerpo';
+      var b=document.createElement('b'); b.textContent=r.autor+'  '+'★'.repeat(r.estrellas); cu.appendChild(b);
+      var p=document.createElement('p'); p.textContent=r.texto; cu.appendChild(p);
+      var m=document.createElement('div'); m.className='rp-meta';
+      m.textContent=[fecha(r.creada), r.origen, r.ubicacion, r.notaFoto, r.cercano?'Persona cercana a DEUS':'', r.visible?'':'Oculta: no se ve en la web'].filter(Boolean).join(' · ');
+      cu.appendChild(m); it.appendChild(cu);
+      var ac=document.createElement('div'); ac.className='rp-acc';
+      var bv=document.createElement('button'); bv.className='btn ghost'; bv.textContent=r.visible?'Ocultar':'Mostrar';
+      bv.onclick=function(){ rpAccion(r.id, 'visible', {visible:!r.visible}); };
+      var bb=document.createElement('button'); bb.className='btn ghost'; bb.textContent='Borrar';
+      bb.onclick=function(){ if(confirm('¿Borrar la reseña de '+r.autor+'? No se puede deshacer.')) rpAccion(r.id, 'borrar', {}); };
+      ac.appendChild(bv); ac.appendChild(bb); it.appendChild(ac); cont.appendChild(it);
+    });
+  }
+  function rpAccion(id, accion, body){
+    fetch(BASE+'/admin/resenas/'+encodeURIComponent(id)+'/'+accion+'?clave='+encodeURIComponent(clave), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d.error){ alert(d.error); return; } cargarResenasPanel(); })
+      .catch(function(){ alert('No se pudo. Revisa la conexión e intenta de nuevo.'); });
+  }
 
   function rows(tbodySel, arr, render, emptyId){
     var tb=document.querySelector(tbodySel+' tbody'); tb.innerHTML='';
@@ -1534,7 +1663,7 @@
       if(r.status===403||r.status===404){ throw new Error('clave'); }
       return r.json();
     }).then(function(d){
-      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); }
+      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); }
       pintar(d);
       cargarChats();
     }).catch(function(e){

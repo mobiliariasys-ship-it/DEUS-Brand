@@ -1,0 +1,167 @@
+'use strict';
+// Reseñas cargadas desde el panel (services/resenas.js): validación de los datos,
+// firma real de las fotos, ocultar y borrar. Se usa un almacenamiento en memoria
+// para no escribir archivos ni tocar la base.
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('fs');
+const path = require('path');
+const { crearServicio, ErrorResena } = require('../services/resenas');
+
+function memoria(inicial = {}) {
+  const datos = { ...inicial };
+  const guardados = [];
+  return {
+    datos,
+    guardados,
+    load: async (k, fallback) => (k in datos ? JSON.parse(JSON.stringify(datos[k])) : fallback),
+    save: async (k, v) => { datos[k] = JSON.parse(JSON.stringify(v)); guardados.push(k); }
+  };
+}
+
+// Imágenes mínimas: lo que importa es que empiecen con la firma correcta.
+const JPEG = 'data:image/jpeg;base64,' + Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70]).toString('base64');
+const PNG = 'data:image/png;base64,' + Buffer.concat([Buffer.from('\x89PNG\r\n\x1a\n', 'latin1'), Buffer.alloc(8)]).toString('base64');
+const WEBP = 'data:image/webp;base64,' + Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4), Buffer.from('WEBPVP8 '), Buffer.alloc(8)]).toString('base64');
+
+async function servicio(inicial) {
+  const m = memoria(inicial);
+  const s = crearServicio(m);
+  await s.init();
+  return { s, m };
+}
+
+test('una reseña sin foto queda publicada con los textos limpios y el origen legible', async () => {
+  const { s, m } = await servicio();
+  const r = await s.crear({ autor: '  @rocio.romann ', texto: 'Me gusta   mucho', estrellas: 5, origen: 'instagram', ubicacion: ' Ñuñoa ' });
+  assert.deepStrictEqual(
+    { autor: r.autor, texto: r.texto, estrellas: r.estrellas, origen: r.origen, ubicacion: r.ubicacion, foto: r.foto, notaFoto: r.notaFoto, cercano: r.cercano },
+    { autor: '@rocio.romann', texto: 'Me gusta mucho', estrellas: 5, origen: 'Instagram', ubicacion: 'Ñuñoa', foto: null, notaFoto: '', cercano: false });
+  assert.match(r.id, /^[a-f0-9]{12}$/);
+  assert.strictEqual(s.publicas().length, 1);
+  assert.ok(m.guardados.includes('resenas-panel.json'));
+});
+
+test('las más nuevas quedan primero', async () => {
+  const { s } = await servicio();
+  await s.crear({ autor: 'A', texto: 'primera', estrellas: 5 });
+  await s.crear({ autor: 'B', texto: 'segunda', estrellas: 4 });
+  assert.deepStrictEqual(s.publicas().map((r) => r.autor), ['B', 'A']);
+});
+
+test('sin autor, sin comentario o con estrellas fuera de rango no se guarda', async () => {
+  const { s, m } = await servicio();
+  await assert.rejects(s.crear({ autor: '', texto: 'hola', estrellas: 5 }), ErrorResena);
+  await assert.rejects(s.crear({ autor: 'A', texto: '   ', estrellas: 5 }), ErrorResena);
+  await assert.rejects(s.crear({ autor: 'A', texto: 'hola', estrellas: 0 }), ErrorResena);
+  await assert.rejects(s.crear({ autor: 'A', texto: 'hola', estrellas: 6 }), ErrorResena);
+  await assert.rejects(s.crear({ autor: 'A', texto: 'hola' }), ErrorResena);
+  assert.strictEqual(s.publicas().length, 0);
+  assert.strictEqual(m.guardados.length, 0);
+});
+
+test('un origen desconocido se toma como Instagram y los textos largos se recortan', async () => {
+  const { s } = await servicio();
+  const r = await s.crear({ autor: 'x'.repeat(200), texto: 'y'.repeat(2000), estrellas: 3, origen: 'tiktok' });
+  assert.strictEqual(r.origen, 'Instagram');
+  assert.strictEqual(r.autor.length, 60);
+  assert.strictEqual(r.texto.length, 600);
+});
+
+test('acepta fotos JPG, PNG y WebP y las sirve con su tipo', async () => {
+  const { s } = await servicio();
+  for (const [foto, tipo] of [[JPEG, 'image/jpeg'], [PNG, 'image/png'], [WEBP, 'image/webp']]) {
+    const r = await s.crear({ autor: 'A', texto: 'con foto', estrellas: 5, foto });
+    assert.strictEqual(r.foto, `/resenas/foto/${r.id}`);
+    const f = await s.foto(r.id);
+    assert.strictEqual(f.tipo, tipo);
+    assert.ok(Buffer.isBuffer(f.buf) && f.buf.length > 0);
+  }
+});
+
+test('la foto se lee desde el almacenamiento después de un reinicio', async () => {
+  const m = memoria();
+  const a = crearServicio(m); await a.init();
+  const r = await a.crear({ autor: 'A', texto: 'con foto', estrellas: 5, foto: JPEG });
+  const b = crearServicio(m); await b.init(); // proceso nuevo: sin caché en memoria
+  const f = await b.foto(r.id);
+  assert.strictEqual(f.tipo, 'image/jpeg');
+  assert.strictEqual(f.buf[0], 0xff);
+});
+
+test('un archivo que no es imagen, aunque diga image/jpeg, no se guarda', async () => {
+  const { s } = await servicio();
+  const falsa = 'data:image/jpeg;base64,' + Buffer.from('<script>alert(1)</script>').toString('base64');
+  await assert.rejects(s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: falsa }), /no es una imagen válida/);
+  await assert.rejects(s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: 'data:image/gif;base64,R0lGOD' }), /JPG, PNG o WebP/);
+  await assert.rejects(s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: 'https://otro-sitio.cl/foto.jpg' }), /JPG, PNG o WebP/);
+  assert.strictEqual(s.publicas().length, 0);
+});
+
+test('una foto de más de 1,5 MB se rechaza', async () => {
+  const { s } = await servicio();
+  const grande = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.alloc(1.6 * 1024 * 1024)]);
+  await assert.rejects(s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: 'data:image/jpeg;base64,' + grande.toString('base64') }), /1,5 MB/);
+});
+
+test('foto editada y persona cercana a la marca quedan avisadas en la reseña pública', async () => {
+  const { s } = await servicio();
+  const r = await s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: JPEG, fotoEditada: true, notaFoto: 'para mostrar la correa gris', cercano: true });
+  assert.strictEqual(r.notaFoto, 'Foto editada para mostrar la correa gris');
+  assert.strictEqual(r.cercano, true);
+  const sinDetalle = await s.crear({ autor: 'B', texto: 'x', estrellas: 5, foto: JPEG, fotoEditada: true });
+  assert.strictEqual(sinDetalle.notaFoto, 'Foto editada');
+  // sin foto no hay nada que avisar de la foto
+  const sinFoto = await s.crear({ autor: 'C', texto: 'x', estrellas: 5, fotoEditada: true, notaFoto: 'algo' });
+  assert.strictEqual(sinFoto.notaFoto, '');
+});
+
+test('una reseña oculta sale de la web y su foto solo la ve el panel', async () => {
+  const { s } = await servicio();
+  const r = await s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: JPEG });
+  await s.cambiarVisible(r.id, false);
+  assert.strictEqual(s.publicas().length, 0);
+  assert.strictEqual(s.todas()[0].visible, false);
+  assert.strictEqual(await s.foto(r.id), null);
+  assert.ok(await s.foto(r.id, { incluirOcultas: true }));
+  await s.cambiarVisible(r.id, true);
+  assert.strictEqual(s.publicas().length, 1);
+  assert.strictEqual(await s.cambiarVisible('000000000000', true), null);
+});
+
+test('borrar quita la reseña y vacía su foto guardada', async () => {
+  const { s, m } = await servicio();
+  const r = await s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: JPEG });
+  assert.strictEqual(await s.borrar(r.id), true);
+  assert.strictEqual(s.todas().length, 0);
+  assert.strictEqual(m.datos[`resena-foto-${r.id}.json`], null);
+  assert.strictEqual(await s.foto(r.id, { incluirOcultas: true }), null);
+  assert.strictEqual(await s.borrar(r.id), false);
+});
+
+test('un id con otro formato nunca llega al almacenamiento', async () => {
+  const { s } = await servicio();
+  assert.strictEqual(await s.foto('../pedidos'), null);
+  assert.strictEqual(await s.foto(''), null);
+});
+
+test('al arrancar se recuperan las reseñas guardadas', async () => {
+  const { s } = await servicio({ 'resenas-panel.json': [{ id: 'abcdef123456', autor: 'A', texto: 'x', estrellas: 5, origen: 'whatsapp', ubicacion: '', foto: false, fotoEditada: false, notaFoto: '', cercano: false, visible: true, creada: '2026-10-12T10:00:00.000Z' }] });
+  const [r] = s.publicas();
+  assert.strictEqual(r.origen, 'WhatsApp');
+  assert.strictEqual(r.autor, 'A');
+});
+
+test('la web pinta las reseñas del panel con textContent y el panel también', () => {
+  // Lo que escribe un cliente no puede convertirse en HTML en ninguna de las dos páginas.
+  const web = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const ini = web.indexOf('function tarjetaResenaPanel(');
+  const fin = web.indexOf('function sumarResenasPanel(');
+  assert.ok(ini > 0 && fin > ini, 'existe tarjetaResenaPanel en index.html');
+  const cuerpo = web.slice(ini, fin);
+  assert.ok(/t\.textContent='"'\+r\.texto\+'"'/.test(cuerpo), 'el comentario entra con textContent');
+  assert.ok(!/innerHTML\s*=\s*[^;]*r\./.test(cuerpo), 'ningún dato de la reseña pasa por innerHTML');
+  const admin = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
+  const a = admin.slice(admin.indexOf('function pintarResenasPanel('), admin.indexOf('function rpAccion('));
+  assert.ok(a.length > 0 && !/innerHTML/.test(a), 'el panel arma la lista sin innerHTML');
+});

@@ -151,6 +151,13 @@
   status = 200
   force = true
 
+# Reseñas cargadas desde el panel: la lista que pinta la web y las fotos.
+[[redirects]]
+  from = "/resenas/*"
+  to = "https://deus-band.onrender.com/resenas/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/pedidos"
   to = "https://deus-band.onrender.com/pedidos"

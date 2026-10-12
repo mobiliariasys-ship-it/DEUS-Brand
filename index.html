@@ -5564,6 +5564,67 @@ function verMasResenas(btn){
   if(window.pintarContadorResenas) setTimeout(window.pintarContadorResenas,450);
   if(window.deusEvento) window.deusEvento('accion:mas-resenas');
 }
+// Reseñas subidas desde el panel (admin → Reseñas, services/resenas.js). Se piden
+// con la página ya cargada, para no competir con lo de arriba, y se suman al
+// carrusel: las con foto al principio (las más nuevas primero) y las de solo
+// texto junto a las otras de texto, que se ven con "Ver más reseñas".
+// Todo lo que escribió el cliente entra con textContent: nunca como HTML.
+function tarjetaResenaPanel(r){
+  var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
+  var c=document.createElement('div');
+  c.className='review-card'+(r.foto?'':' review-extra rv-sin-foto');
+  c.setAttribute('data-panel','');
+  if(r.foto){
+    var img=document.createElement('img');
+    img.className='review-photo'; img.src=base+r.foto; img.loading='lazy'; img.decoding='async';
+    img.alt='Foto de la reseña de '+r.autor+(r.notaFoto?' ('+r.notaFoto.toLowerCase()+')':'');
+    // atributo (no listener) para que también funcione en el clon del modal de reseñas
+    img.setAttribute('onclick','abrirFotoResena(this.src)');
+    c.appendChild(img);
+    if(r.notaFoto){ var n=document.createElement('p'); n.className='review-nota'; n.textContent=r.notaFoto; c.appendChild(n); }
+  }
+  var e=Math.max(1,Math.min(5,Math.round(r.estrellas)||5));
+  var s=document.createElement('div'); s.className='review-stars'; s.textContent='★★★★★'.slice(0,e)+'☆☆☆☆☆'.slice(0,5-e);
+  var t=document.createElement('p'); t.className='review-text'; t.textContent='"'+r.texto+'"';
+  var a=document.createElement('div'); a.className='review-author';
+  var ig=document.createElement('span'); ig.className='review-ig'; ig.textContent=r.autor; a.appendChild(ig);
+  if(r.origen) a.appendChild(document.createTextNode(' · '+r.origen));
+  c.appendChild(s); c.appendChild(t); c.appendChild(a);
+  if(r.ubicacion){
+    var l=document.createElement('div'); l.className='review-loc';
+    l.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>';
+    l.appendChild(document.createTextNode(r.ubicacion)); c.appendChild(l);
+  }
+  if(r.cercano){ var k=document.createElement('div'); k.className='review-loc'; k.textContent='Persona cercana a DEUS'; c.appendChild(k); }
+  return c;
+}
+function sumarResenasPanel(lista){
+  var carr=document.getElementById('reviewsCarr'); if(!carr || !lista.length) return;
+  var primeraFoto=carr.querySelector('.review-card'), primeraTexto=carr.querySelector('.rv-sin-foto')||carr.querySelector('.rv-arrow');
+  lista.forEach(function(r){ carr.insertBefore(tarjetaResenaPanel(r), r.foto ? primeraFoto : primeraTexto); });
+  // El modal clona el carrusel la primera vez que se abre: si ya lo clonó, que lo rehaga.
+  var mb=document.getElementById('reviews-modal-body'), modal=document.getElementById('reviews-modal');
+  if(mb && !(modal && modal.classList.contains('show'))) mb.innerHTML='';
+  // Contador junto a las estrellas, promedio y "Ver más reseñas (n)", con las nuevas incluidas.
+  var tarjetas=document.querySelectorAll('.reviews .review-card');
+  var rc=document.getElementById('rating-count'); if(rc) rc.textContent=tarjetas.length;
+  var suma=0, conEstrellas=0;
+  tarjetas.forEach(function(x){ var st=x.querySelector('.review-stars'); if(st){ suma+=(st.textContent.match(/★/g)||[]).length; conEstrellas++; } });
+  var pb=document.querySelector('.proof-line b'); if(pb && conEstrellas) pb.textContent=(suma/conEstrellas).toFixed(1);
+  var mas=document.getElementById('rv-mas'), nTexto=carr.querySelectorAll('.rv-sin-foto').length;
+  if(mas && nTexto && mas.getAttribute('aria-expanded')!=='true'){ mas.hidden=false; mas.textContent='Ver más reseñas ('+nTexto+')'; }
+  if(window.pintarContadorResenas) window.pintarContadorResenas();
+}
+(function(){
+  function pedir(){
+    var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
+    fetch(base+'/resenas/lista').then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ if(d && Array.isArray(d.resenas)) sumarResenasPanel(d.resenas); })
+      .catch(function(){});
+  }
+  if(document.readyState==='complete') setTimeout(pedir,800);
+  else window.addEventListener('load',function(){ setTimeout(pedir,800); });
+})();
 function abrirResenasModal(){
   var grid=document.querySelector('.reviews-grid');
   var body=document.getElementById('reviews-modal-body');
