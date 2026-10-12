@@ -1721,6 +1721,11 @@
       });
   }
 
+  // Proyección mensual: "si el mes entero fuera como estos días". Promedio por
+  // día de lo que se está mirando (los días elegidos en Conversión, o los
+  // últimos 7/14/30) llevado a 30 días. No es un pronóstico: solo escala.
+  function proyeccionMensual(utilidad, dias){ return dias ? utilidad / dias * 30 : 0; }
+
   function pintarUtilidad(d){
     var sel = diasElegidosUtil();
     // Respuesta que ya no corresponde (se eligieron o soltaron días mientras
@@ -1750,10 +1755,16 @@
     var unidadesAds = t.unidades - (t.unidadesExternas || 0);
     var pedidosWeb = t.pedidos - (t.pedidosExternos || 0);
     var cpa = unidadesAds ? t.ads / unidadesAds : 0;
+    var hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    // Hoy todavía no termina: si entra en el promedio, la proyección queda corta.
+    var conHoy = f.some(function(r){ return r.fecha === hoy; });
 
     document.getElementById('util-kpis').innerHTML =
       kpi(titulo, money0(t.utilidad), t.utilidad >= 0 ? 'bien' : 'mal') +
       kpi('Promedio por día', money0(t.utilidad / dias), t.utilidad >= 0 ? 'bien' : 'mal') +
+      kpi('Proyección mensual', f.length ? money0(proyeccionMensual(t.utilidad, f.length)) : '—', t.utilidad >= 0 ? 'bien' : 'mal',
+        f.length ? 'promedio de ' + (f.length === 1 ? '1 día' : f.length + ' días') + ' × 30' +
+                   (conHoy ? ' · incluye hoy (en curso)' : '') : '') +
       kpi('Vendido', money0(t.ingresos), '') +
       kpi('Gastado en ads', money0(t.ads), '') +
       kpi('de eso, IVA', money0(t.ivaAds || 0), '') +
@@ -1775,7 +1786,6 @@
             ? (t.conTapones || 0) + ' de ' + pedidosWeb + ' · ' + Math.round(((t.conTapones || 0) / pedidosWeb) * 100) + '%'
             : '—', '');
 
-    var hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
     var filas = f.slice().reverse().map(function(r){
       var cls = r.utilidad >= 0 ? 'pos' : 'neg';
       return '<tr' + (r.fecha === hoy ? ' class="hoy"' : '') + '>' +
