@@ -3720,9 +3720,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="rv-hint">Desliza para verlas todas · <b id="rv-count">1 / 13</b></div>
     <div class="reviews-carr">
     <div class="reviews-grid" id="reviewsCarr">
-      <!-- Orden pensado para variar lo que se ve al deslizar: las grises temprano y
-           repartidas, silicona y nylon alternados, escenarios distintos seguidos. -->
-      <div class="review-card">
+      <!-- Este es el orden por defecto. El que se elige en el panel (admin → Reseñas)
+           lo reemplaza al cargar la página; cada tarjeta se identifica por data-rid. -->
+      <div class="review-card" data-rid="f-marcelo.rojas_">
         <video class="review-photo review-video" src="img/resena-marcelo.mp4" data-poster="img/resena-marcelo-poster.webp"
                muted loop playsinline preload="none" disablepictureinpicture
                aria-label="DEUS Band con correa de nylon en la muñeca, en un parque — reseña de Marcelo"></video>
@@ -3731,7 +3731,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-author"><span class="review-ig">@marcelo.rojas_</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Buin</div>
       </div>
-      <div class="review-card">
+      <div class="review-card" data-rid="f-diorr.jayy">
         <img class="review-photo" src="img/resena-diorr-gris.webp" alt="DEUS Band con correa de nylon gris en la muñeca, entrenando con mancuernas en el gimnasio. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <!-- La foto original del cliente es con correa negra (img/resena-diorr.webp); esta se editó
              para mostrar la gris y se avisa a la vista, para no hacer pasar la edición por foto real. -->
@@ -3741,28 +3741,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-author"><span class="review-ig">@diorr.jayy</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Las Condes</div>
       </div>
-      <div class="review-card">
+      <div class="review-card" data-rid="f-pdrozzzz">
         <img class="review-photo" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Muy bueno, llegó en el tiempo correspondiente y la atención 10 de 10, y del producto nada que decir, muy bueno."</p>
         <div class="review-author"><span class="review-ig">@Pdrozzzz</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Frutillar</div>
       </div>
-      <div class="review-card">
+      <div class="review-card" data-rid="f-joose.ojedaa">
         <img class="review-photo" src="img/resena-jose.webp" alt="DEUS Band con correa de nylon en la muñeca, en el gimnasio junto al rack de mancuernas — reseña de José" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Muy buena experiencia, muy útil, lleva muy bien el sueño y el monitoreo general. Cómoda y combinable con todo. Muy feliz."</p>
         <div class="review-author"><span class="review-ig">@joose.ojedaa</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>La Serena</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra" data-rid="f-cffs_kvbir">
         <img class="review-photo" src="img/resena-cffs-v2.webp" alt="DEUS Band en la muñeca en una cancha de tenis de arcilla — reseña de @cffs_kvbir" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Las mejores mediciones gracias a DEUS Band 💪🏽"</p>
         <div class="review-author"><span class="review-ig">@cffs_kvbir</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>San Miguel</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra" data-rid="f-elhayecknico">
         <img class="review-photo" src="img/resena-nicolas-gris.webp" alt="DEUS Band con correa de nylon gris en la muñeca al aire libre. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <!-- La foto original del cliente es con correa negra (img/resena-nicolas.webp); esta se editó
              para mostrar la gris y se avisa a la vista, igual que la de @diorr.jayy. -->
@@ -3772,87 +3772,87 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-author"><span class="review-ig">@Elhayecknico</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Villarrica</div>
       </div>
-      <div class="review-card">
+      <div class="review-card" data-rid="f-diego.vidal23">
         <img class="review-photo" src="img/resena-diego-2.webp" style="object-position:50% 80%" alt="DEUS Band negra con correa perforada en la muñeca, dentro del auto — reseña de Diego" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Excelente producto, muy cómodo y útil para mis entrenamientos. 10/10"</p>
         <div class="review-author"><span class="review-ig">@diego.vidal23</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra" data-rid="f-andres.fuentesg">
         <img class="review-photo" src="img/resena-andres.webp" alt="DEUS Band con correa de nylon asomando bajo el guante, durante una sesión de kinesiología — reseña de Andrés" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Soy kinesiólogo y me sirve mucho para medir la actividad física. La batería dura más de 20 días y es muy cómoda para dormir y analizar mi sueño."</p>
         <div class="review-author"><span class="review-ig">@andres.fuentesg</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Puerto Varas</div>
       </div>
-      <div class="review-card">
+      <div class="review-card" data-rid="f-keznit_god">
         <img class="review-photo" src="img/resena-keznit.webp" alt="DEUS Band negra con correa de nylon en la muñeca — reseña de Keznit" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Gracias a los chicos de DEUS que me ayudan en este proceso de cambio físico, gracias a su band veo las calorías, sueño, pasos, etc. Unos cracks."</p>
         <div class="review-author"><span class="review-ig">@keznit_god</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>La Florida</div>
       </div>
-      <div class="review-card">
+      <div class="review-card" data-rid="f-martinnoct">
         <img class="review-photo" src="img/resena-martin.webp" alt="DEUS Band con correa de nylon en la muñeca, junto a una bicicleta de ruta — reseña de @martinnoct" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Feliz como una lombrizzz"</p>
         <div class="review-author"><span class="review-ig">@martinnoct</span> · Instagram</div>
       </div>
-      <div class="review-card">
+      <div class="review-card" data-rid="f-_cristobalnanning">
         <img class="review-photo" src="img/resena-cristobal.webp" alt="DEUS Band en la muneca en el gimnasio — reseña de Cristóbal Nanning" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Entrenando mejor con DEUS Band 🔝"</p>
         <div class="review-author"><span class="review-ig">@_cristobalnanning</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Providencia</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra" data-rid="f-robertogonzgtr34">
         <img class="review-photo" src="img/resena-auto.webp" alt="DEUS Band en la muñeca al volante del auto — reseña de la comunidad" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Súper cómoda, me gusta cómo queda. Es súper estética y precisa 👌🏽"</p>
         <div class="review-author"><span class="review-ig">@robertogonzGtr34</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra">
+      <div class="review-card review-extra" data-rid="f-pedraza_raul">
         <img class="review-photo review-nozoom" src="img/resena-raul.webp" alt="DEUS Band negra en la muñeca apoyada sobre una barra, en el gimnasio — reseña de Raúl" loading="lazy" decoding="async">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Espectacular la banda, me ha ayudado mucho con los datos, muy precisos 👌🏽"</p>
         <div class="review-author"><span class="review-ig">@pedraza_raul</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra rv-sin-foto">
+      <div class="review-card review-extra rv-sin-foto" data-rid="f-cristian_vera.cl">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Me encanta que no tenga pantalla, no me distrae y el diseño es elegante. Justo lo que buscaba."</p>
         <div class="review-author"><span class="review-ig">@cristian_vera.cl</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra rv-sin-foto">
+      <div class="review-card review-extra rv-sin-foto" data-rid="f-sebastian.revil">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Excelente producto, no solo monitorea mi sueño, sino que también me ayuda a registrar mi frecuencia cardíaca y cumplir con mis objetivos en el gimnasio."</p>
         <div class="review-author"><span class="review-ig">@sebastian.revil</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra rv-sin-foto">
+      <div class="review-card review-extra rv-sin-foto" data-rid="f-william_alejandro_c">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Una buena compra y muy funcional."</p>
         <div class="review-author"><span class="review-ig">@william_alejandro_c</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra rv-sin-foto">
+      <div class="review-card review-extra rv-sin-foto" data-rid="f-clau.ossaf">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Está brutal, funciona perfecto 👌🏻"</p>
         <div class="review-author"><span class="review-ig">@clau.ossaf</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra rv-sin-foto">
+      <div class="review-card review-extra rv-sin-foto" data-rid="f-joaquin.pfok">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Recomendadísimo!!! 🔥"</p>
         <div class="review-author"><span class="review-ig">@joaquin.pfok</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra rv-sin-foto">
+      <div class="review-card review-extra rv-sin-foto" data-rid="f-e._maya">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Funciona perfecto! Soy de región y llegó sin problemas!!! Me gustó que no se sienta!!! La iremos probando, muchas gracias!!! 🔥🔥🔥"</p>
         <div class="review-author"><span class="review-ig">@e._maya</span> · Instagram</div>
       </div>
-      <div class="review-card review-extra rv-sin-foto">
+      <div class="review-card review-extra rv-sin-foto" data-rid="f-rodrigo.andres.cg">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Masacre el producto, recomendado."</p>
         <div class="review-author"><span class="review-ig">@rodrigo.andres.cg</span> · Instagram</div>
       </div>
-      <div class="review-card rv-sin-foto">
+      <div class="review-card rv-sin-foto" data-rid="f-kathcortes_">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Estéticamente y en los datos es bastante parecida a las mediciones del Apple Watch. Lo mejor: mucho más cómoda para dormir que el reloj, y la batería dura muchísimo — llevo 5 días sin sacármela y aún tengo 85%."</p>
         <div class="review-author"><span class="review-ig">@kathcortes_</span> · Instagram</div>
@@ -5578,7 +5578,7 @@ function tarjetaResenaPanel(r){
   var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
   var c=document.createElement('div');
   c.className='review-card'+(r.foto?'':' review-extra rv-sin-foto');
-  c.setAttribute('data-panel','');
+  c.setAttribute('data-panel',''); c.setAttribute('data-rid',r.id);
   if(r.foto){
     var img=document.createElement('img');
     img.className='review-photo'; img.src=base+r.foto; img.loading='lazy'; img.decoding='async';
@@ -5607,9 +5607,7 @@ function sumarResenasPanel(lista){
   var carr=document.getElementById('reviewsCarr'); if(!carr || !lista.length) return;
   var primeraFoto=carr.querySelector('.review-card'), primeraTexto=carr.querySelector('.rv-sin-foto')||carr.querySelector('.rv-arrow');
   lista.forEach(function(r){ carr.insertBefore(tarjetaResenaPanel(r), r.foto ? primeraFoto : primeraTexto); });
-  // El modal clona el carrusel la primera vez que se abre: si ya lo clonó, que lo rehaga.
-  var mb=document.getElementById('reviews-modal-body'), modal=document.getElementById('reviews-modal');
-  if(mb && !(modal && modal.classList.contains('show'))) mb.innerHTML='';
+  rehacerModalResenas();
   // Contador junto a las estrellas, promedio y "Ver más reseñas (n)", con las nuevas incluidas.
   var tarjetas=document.querySelectorAll('.reviews .review-card');
   var rc=document.getElementById('rating-count'); if(rc) rc.textContent=tarjetas.length;
@@ -5620,15 +5618,45 @@ function sumarResenasPanel(lista){
   if(mas && nTexto && mas.getAttribute('aria-expanded')!=='true'){ mas.hidden=false; mas.textContent='Ver más reseñas ('+nTexto+')'; }
   if(window.pintarContadorResenas) window.pintarContadorResenas();
 }
-(function(){
-  function pedir(){
-    var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
-    fetch(base+'/resenas/lista').then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(d){ if(d && Array.isArray(d.resenas)) sumarResenasPanel(d.resenas); })
-      .catch(function(){});
+// El modal clona el carrusel la primera vez que se abre: si ya lo clonó, que lo rehaga.
+function rehacerModalResenas(){
+  var mb=document.getElementById('reviews-modal-body'), modal=document.getElementById('reviews-modal');
+  if(mb && !(modal && modal.classList.contains('show'))) mb.innerHTML='';
+}
+// Orden elegido en el panel: { fotos:[ids], textos:[ids] } con los data-rid de las
+// tarjetas. Con foto y solo texto se ordenan aparte (las de texto se ven recién con
+// "Ver más reseñas"). Las subidas que todavía no están en el orden van primero (la
+// más nueva arriba) y las fijas que no figuran quedan al final, como estaban.
+// Es la misma regla que muestra el panel (rpOrdenar en admin.html).
+function aplicarOrdenResenas(orden){
+  var carr=document.getElementById('reviewsCarr'); if(!carr || !orden) return;
+  function grupo(sel, ids){
+    ids=Array.isArray(ids)?ids:[];
+    var cards=[].slice.call(carr.querySelectorAll(':scope > .review-card'+sel)), porId={}, usados={}, res=[];
+    cards.forEach(function(c){ porId[c.getAttribute('data-rid')]=c; });
+    cards.forEach(function(c){ var id=c.getAttribute('data-rid'); if(c.hasAttribute('data-panel') && ids.indexOf(id)<0){ res.push(c); usados[id]=1; } });
+    ids.forEach(function(id){ if(porId[id] && !usados[id]){ res.push(porId[id]); usados[id]=1; } });
+    cards.forEach(function(c){ if(!usados[c.getAttribute('data-rid')]) res.push(c); });
+    return res;
   }
-  if(document.readyState==='complete') setTimeout(pedir,800);
-  else window.addEventListener('load',function(){ setTimeout(pedir,800); });
+  var nuevo=grupo(':not(.rv-sin-foto)', orden.fotos).concat(grupo('.rv-sin-foto', orden.textos));
+  var actual=[].slice.call(carr.querySelectorAll(':scope > .review-card'));
+  if(nuevo.every(function(c,i){ return c===actual[i]; })) return; // ya está así: no se toca (no corta el video)
+  var flecha=carr.querySelector('.rv-arrow');
+  nuevo.forEach(function(c){ carr.insertBefore(c, flecha); });
+  rehacerModalResenas();
+  if(window.pintarContadorResenas) window.pintarContadorResenas();
+}
+// Se pide apenas se arma la página: es un JSON chico y las fotos van con carga diferida.
+(function(){
+  var base=(window.DEUS_API_BASE||'').replace(/\/$/,'');
+  fetch(base+'/resenas/lista').then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if(!d) return;
+      if(Array.isArray(d.resenas) && d.resenas.length) sumarResenasPanel(d.resenas);
+      if(d.orden) aplicarOrdenResenas(d.orden);
+    })
+    .catch(function(){});
 })();
 function abrirResenasModal(){
   var grid=document.querySelector('.reviews-grid');

@@ -162,6 +162,37 @@ test('la web pinta las reseñas del panel con textContent y el panel también', 
   assert.ok(/t\.textContent='"'\+r\.texto\+'"'/.test(cuerpo), 'el comentario entra con textContent');
   assert.ok(!/innerHTML\s*=\s*[^;]*r\./.test(cuerpo), 'ningún dato de la reseña pasa por innerHTML');
   const admin = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
-  const a = admin.slice(admin.indexOf('function pintarResenasPanel('), admin.indexOf('function rpAccion('));
+  const ini2 = admin.indexOf('function rpLista(');
+  assert.ok(ini2 > 0, 'existe rpLista en admin.html');
+  const a = admin.slice(ini2, admin.indexOf('function rpAccion(', ini2));
   assert.ok(a.length > 0 && !/innerHTML/.test(a), 'el panel arma la lista sin innerHTML');
+});
+
+test('el orden guardado se valida: ids con otro formato y repetidos se descartan', async () => {
+  const { s, m } = await servicio();
+  const o = await s.guardarOrden({ fotos: ['f-marcelo.rojas_', 'abcdef123456', 'f-marcelo.rojas_', '<script>', '../x'], textos: ['f-kathcortes_'] });
+  assert.deepStrictEqual(o, { fotos: ['f-marcelo.rojas_', 'abcdef123456'], textos: ['f-kathcortes_'] });
+  assert.deepStrictEqual(s.verOrden(), o);
+  assert.ok(m.guardados.includes('resenas-orden.json'));
+  await assert.rejects(s.guardarOrden({ fotos: 'no-es-lista', textos: [] }), ErrorResena);
+  assert.deepStrictEqual(s.verOrden(), o, 'un orden mal armado no pisa el anterior');
+});
+
+test('el orden sobrevive a un reinicio', async () => {
+  const m = memoria();
+  const a = crearServicio(m); await a.init();
+  await a.guardarOrden({ fotos: ['f-pdrozzzz', 'f-diorr.jayy'], textos: [] });
+  const b = crearServicio(m); await b.init();
+  assert.deepStrictEqual(b.verOrden(), { fotos: ['f-pdrozzzz', 'f-diorr.jayy'], textos: [] });
+});
+
+test('cada tarjeta fija de la web tiene un data-rid único que el orden acepta', () => {
+  const web = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const ini = web.indexOf('id="reviewsCarr"');
+  const zona = web.slice(ini, web.indexOf('class="rv-arrow l"', ini));
+  const tarjetas = zona.match(/<div class="review-card[^"]*"[^>]*>/g) || [];
+  const ids = tarjetas.map((t) => (/data-rid="([^"]+)"/.exec(t) || [])[1]);
+  assert.ok(tarjetas.length >= 20, 'se encontraron las tarjetas del carrusel');
+  assert.ok(ids.every((id) => /^f-[a-z0-9._]{1,60}$/.test(id || '')), 'todas tienen data-rid válido');
+  assert.strictEqual(new Set(ids).size, ids.length, 'sin repetidos');
 });

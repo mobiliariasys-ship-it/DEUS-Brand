@@ -235,6 +235,22 @@
   .rp-meta{font-size:.66rem;color:var(--muted);line-height:1.5;}
   .rp-acc{display:flex;flex-direction:column;gap:6px;flex:none;}
   .rp-oculta img,.rp-oculta .rp-cuerpo{opacity:.45;}
+  .rp-h{margin:6px 0 4px;font-size:.86rem;color:#fff;}
+  .rp-ayuda{font-size:.72rem;color:var(--muted);line-height:1.5;margin:0 0 6px;}
+  .rp-sub{margin:16px 0 2px;font-size:.66rem;color:var(--cyan);letter-spacing:.5px;text-transform:uppercase;font-weight:600;}
+  .rp-pos{width:20px;flex:none;font-size:.78rem;font-weight:700;color:var(--muted);text-align:right;padding-top:4px;font-variant-numeric:tabular-nums;}
+  .rp-cuerpo p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .rp-tag{display:inline-block;font-size:.58rem;letter-spacing:.4px;text-transform:uppercase;color:var(--faint);border:1px solid var(--border);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle;}
+  .rp-botones{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .rp-botones .btn{padding:7px 11px;}
+  .rp-flecha{min-width:40px;font-size:.9rem;line-height:1;}
+  .rp-flecha:disabled{opacity:.3;cursor:default;}
+  .rp-movida{animation:rpMovida .5s ease-out;}
+  @keyframes rpMovida{from{background:rgba(30,200,240,.14);}to{background:transparent;}}
+  .rp-guardar{position:sticky;bottom:12px;z-index:5;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px;padding:10px 12px;border-radius:12px;background:#1d1d1d;border:1px solid var(--cyan);box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  .rp-guardar[hidden]{display:none;}
+  .rp-guardar span{font-size:.74rem;color:#ddd;margin-right:auto;}
+  @media (prefers-reduced-motion: reduce){.rp-movida{animation:none;}}
   .util-tabla table{width:100%;border-collapse:collapse;font-size:.72rem;}
   .util-tabla th,.util-tabla td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--border-soft,#2a2a32);font-variant-numeric:tabular-nums;color:#bbb;}
   .util-tabla th{color:#9a9a9a;font-weight:600;}
@@ -650,8 +666,20 @@
         <div class="vm-msg" id="rp-msg" aria-live="polite"></div>
         <div class="vm-pie"><button class="btn" id="rp-ok" onclick="publicarResena()">Publicar reseña</button></div>
       </div>
-      <div id="rp-lista"></div>
-      <div class="empty" id="rp-vacia" style="display:none">Todavía no subiste reseñas desde el panel. Las que ya estaban en la web siguen ahí.</div>
+      <h3 class="rp-h">Orden en la web</h3>
+      <p class="rp-ayuda">Así se ven en el carrusel, de izquierda a derecha. Muévelas con ↑ ↓ y toca <b>Guardar orden</b>. Las nuevas entran primero hasta que las muevas.</p>
+      <div class="vm-msg" id="rp-orden-msg" aria-live="polite"></div>
+      <h4 class="rp-sub">Con foto o video · se ven primero</h4>
+      <div id="rp-lista-fotos"></div>
+      <h4 class="rp-sub">Solo texto · aparecen con "Ver más reseñas"</h4>
+      <div id="rp-lista-textos"></div>
+      <div id="rp-ocultas-caja" style="display:none"><h4 class="rp-sub">Ocultas · no se ven en la web</h4><div id="rp-lista-ocultas"></div></div>
+      <div class="empty" id="rp-vacia" style="display:none">Cargando reseñas…</div>
+      <div class="rp-guardar" id="rp-guardar" hidden>
+        <span>Cambiaste el orden</span>
+        <button class="btn ghost" onclick="rpDescartar()">Descartar</button>
+        <button class="btn" id="rp-guardar-ok" onclick="rpGuardarOrden()">Guardar orden</button>
+      </div>
     </section>
 
     <section id="sec-chat">
@@ -741,35 +769,121 @@
       .catch(function(e){ rpMsg(e.message, 'var(--red)'); })
       .then(function(){ btn.disabled=false; });
   }
+  // ── Orden del carrusel ──
+  // Junta las reseñas fijas del HTML de la web (se leen de index.html, con su
+  // data-rid) con las subidas desde el panel, y las ordena con la MISMA regla que
+  // aplicarOrdenResenas() en index.html: las subidas que no están en el orden
+  // guardado van primero, después el orden guardado, y al final las fijas nuevas.
+  var rpSt={ panel:[], fijas:null, orden:{fotos:[],textos:[]}, local:null, vista:{fotos:[],textos:[]} };
+  function rpLeerFijas(){
+    if(rpSt.fijas) return Promise.resolve(rpSt.fijas);
+    return fetch('/index.html', {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(html){
+      var doc=new DOMParser().parseFromString(html, 'text/html');
+      rpSt.fijas=[].slice.call(doc.querySelectorAll('#reviewsCarr > .review-card[data-rid]')).map(function(c){
+        var im=c.querySelector('img.review-photo'), vi=c.querySelector('video');
+        return { rid:c.getAttribute('data-rid'), fija:true, visible:true, conFoto:!c.classList.contains('rv-sin-foto'),
+          autor:((c.querySelector('.review-ig')||{}).textContent||'').trim(),
+          texto:((c.querySelector('.review-text')||{}).textContent||'').trim().replace(/^"|"$/g,''),
+          thumb: im ? im.getAttribute('src') : (vi ? vi.getAttribute('data-poster') : ''), video:!!vi };
+      });
+      return rpSt.fijas;
+    });
+  }
+  function rpOrdenar(items, ids){
+    var porId={}, usados={}, res=[];
+    items.forEach(function(x){ porId[x.rid]=x; });
+    items.forEach(function(x){ if(!x.fija && ids.indexOf(x.rid)<0){ res.push(x); usados[x.rid]=1; } });
+    ids.forEach(function(id){ if(porId[id] && !usados[id]){ res.push(porId[id]); usados[id]=1; } });
+    items.forEach(function(x){ if(!usados[x.rid]) res.push(x); });
+    return res;
+  }
   function cargarResenasPanel(){
-    fetch(BASE+'/admin/resenas?clave='+encodeURIComponent(clave))
-      .then(function(r){ return r.json(); })
-      .then(function(d){ if(d && d.resenas) pintarResenasPanel(d.resenas); })
-      .catch(function(){});
+    var vacia=document.getElementById('rp-vacia');
+    Promise.all([
+      fetch(BASE+'/admin/resenas?clave='+encodeURIComponent(clave)).then(function(r){ return r.json(); }),
+      rpLeerFijas().catch(function(){ return []; })
+    ]).then(function(res){
+      var d=res[0]||{};
+      rpSt.panel=(d.resenas||[]).map(function(r){
+        return { rid:r.id, fija:false, visible:r.visible, conFoto:!!r.foto, autor:r.autor, texto:r.texto,
+          thumb: r.foto ? BASE+r.foto+'?clave='+encodeURIComponent(clave) : '', r:r };
+      });
+      if(d.orden) rpSt.orden=d.orden;
+      rpPintar();
+    }).catch(function(){ vacia.style.display='block'; vacia.textContent='No se pudieron cargar las reseñas. Revisa la conexión.'; });
+  }
+  function rpPintar(){
+    var o=rpSt.local||rpSt.orden;
+    var todas=rpSt.panel.concat(rpSt.fijas||[]);
+    var vis=todas.filter(function(x){ return x.visible; });
+    rpSt.vista={ fotos:rpOrdenar(vis.filter(function(x){ return x.conFoto; }), o.fotos||[]),
+                 textos:rpOrdenar(vis.filter(function(x){ return !x.conFoto; }), o.textos||[]) };
+    var ocultas=rpSt.panel.filter(function(x){ return !x.visible; });
+    rpLista('rp-lista-fotos', rpSt.vista.fotos, 'fotos');
+    rpLista('rp-lista-textos', rpSt.vista.textos, 'textos');
+    rpLista('rp-lista-ocultas', ocultas, null);
+    document.getElementById('rp-ocultas-caja').style.display=ocultas.length?'':'none';
+    document.getElementById('rp-vacia').style.display=vis.length?'none':'block';
+    document.getElementById('rp-vacia').textContent='Todavía no hay reseñas para mostrar.';
+    var subidas=rpSt.panel.filter(function(x){ return x.visible; }).length;
+    document.getElementById('rp-total').textContent=vis.length+' en la web'+(subidas?' · '+subidas+' subidas acá':'')+(ocultas.length?' · '+ocultas.length+' ocultas':'');
+    document.getElementById('rp-guardar').hidden=!rpSt.local;
   }
   // Se arma con nodos y textContent: lo que escribe un cliente nunca se interpreta como HTML.
-  function pintarResenasPanel(arr){
-    var cont=document.getElementById('rp-lista'); cont.textContent='';
-    document.getElementById('rp-vacia').style.display=arr.length?'none':'block';
-    var vis=arr.filter(function(r){ return r.visible; }).length;
-    document.getElementById('rp-total').textContent=arr.length ? vis+' en la web'+(arr.length>vis ? ' · '+(arr.length-vis)+' ocultas' : '') : '';
-    arr.forEach(function(r){
-      var it=document.createElement('div'); it.className='rp-item'+(r.visible?'':' rp-oculta');
-      if(r.foto){ var im=document.createElement('img'); im.src=BASE+r.foto+'?clave='+encodeURIComponent(clave); im.alt=''; im.loading='lazy'; it.appendChild(im); }
+  function rpLista(idCont, arr, grupo){
+    var cont=document.getElementById(idCont); cont.textContent='';
+    arr.forEach(function(x, i){
+      var it=document.createElement('div'); it.className='rp-item'+(x.visible?'':' rp-oculta');
+      if(rpSt.ultimaMovida===x.rid){ it.classList.add('rp-movida'); }
+      var pos=document.createElement('span'); pos.className='rp-pos'; pos.textContent=grupo?(i+1):'–'; it.appendChild(pos);
+      if(x.thumb){ var im=document.createElement('img'); im.src=x.thumb; im.alt=''; im.loading='lazy'; it.appendChild(im); }
       else { var sf=document.createElement('div'); sf.className='rp-sinfoto'; sf.textContent='“'; it.appendChild(sf); }
       var cu=document.createElement('div'); cu.className='rp-cuerpo';
-      var b=document.createElement('b'); b.textContent=r.autor+'  '+'★'.repeat(r.estrellas); cu.appendChild(b);
-      var p=document.createElement('p'); p.textContent=r.texto; cu.appendChild(p);
-      var m=document.createElement('div'); m.className='rp-meta';
-      m.textContent=[fecha(r.creada), r.origen, r.ubicacion, r.notaFoto, r.cercano?'Persona cercana a DEUS':'', r.visible?'':'Oculta: no se ve en la web'].filter(Boolean).join(' · ');
-      cu.appendChild(m); it.appendChild(cu);
-      var ac=document.createElement('div'); ac.className='rp-acc';
-      var bv=document.createElement('button'); bv.className='btn ghost'; bv.textContent=r.visible?'Ocultar':'Mostrar';
-      bv.onclick=function(){ rpAccion(r.id, 'visible', {visible:!r.visible}); };
-      var bb=document.createElement('button'); bb.className='btn ghost'; bb.textContent='Borrar';
-      bb.onclick=function(){ if(confirm('¿Borrar la reseña de '+r.autor+'? No se puede deshacer.')) rpAccion(r.id, 'borrar', {}); };
-      ac.appendChild(bv); ac.appendChild(bb); it.appendChild(ac); cont.appendChild(it);
+      var b=document.createElement('b'); b.textContent=x.autor+(x.r ? '  '+'★'.repeat(x.r.estrellas) : '');
+      var tg=document.createElement('span'); tg.className='rp-tag'; tg.textContent=x.fija ? (x.video?'Fija · video':'Fija') : 'Subida acá'; b.appendChild(tg);
+      cu.appendChild(b);
+      var p=document.createElement('p'); p.textContent=x.texto; cu.appendChild(p);
+      if(x.r){
+        var m=document.createElement('div'); m.className='rp-meta';
+        m.textContent=[fecha(x.r.creada), x.r.origen, x.r.ubicacion, x.r.notaFoto, x.r.cercano?'Persona cercana a DEUS':''].filter(Boolean).join(' · ');
+        cu.appendChild(m);
+      }
+      var bt=document.createElement('div'); bt.className='rp-botones';
+      if(grupo){
+        bt.appendChild(rpBoton('↑', 'Subir', i===0, function(){ rpMover(grupo, i, -1); }, 'rp-flecha'));
+        bt.appendChild(rpBoton('↓', 'Bajar', i===arr.length-1, function(){ rpMover(grupo, i, 1); }, 'rp-flecha'));
+      }
+      if(!x.fija){
+        bt.appendChild(rpBoton(x.visible?'Ocultar':'Mostrar', '', false, function(){ rpAccion(x.rid, 'visible', {visible:!x.visible}); }));
+        bt.appendChild(rpBoton('Borrar', '', false, function(){ if(confirm('¿Borrar la reseña de '+x.autor+'? No se puede deshacer.')) rpAccion(x.rid, 'borrar', {}); }));
+      }
+      cu.appendChild(bt); it.appendChild(cu); cont.appendChild(it);
     });
+  }
+  function rpBoton(txt, etiqueta, deshabilitado, fn, clase){
+    var b=document.createElement('button'); b.type='button'; b.className='btn ghost'+(clase?' '+clase:'');
+    b.textContent=txt; if(etiqueta) b.setAttribute('aria-label', etiqueta); b.disabled=deshabilitado; b.onclick=fn; return b;
+  }
+  function rpMover(grupo, i, d){
+    var arr=rpSt.vista[grupo].map(function(x){ return x.rid; }), j=i+d;
+    if(j<0 || j>=arr.length) return;
+    var t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+    rpSt.local={ fotos: grupo==='fotos'?arr:rpSt.vista.fotos.map(function(x){ return x.rid; }),
+                 textos: grupo==='textos'?arr:rpSt.vista.textos.map(function(x){ return x.rid; }) };
+    rpSt.ultimaMovida=t; rpOrdenMsg('');
+    rpPintar();
+    rpSt.ultimaMovida=null;
+  }
+  function rpOrdenMsg(txt, color){ var m=document.getElementById('rp-orden-msg'); m.style.color=color||'var(--muted)'; m.textContent=txt; }
+  function rpDescartar(){ rpSt.local=null; rpPintar(); rpOrdenMsg(''); }
+  function rpGuardarOrden(){
+    var btn=document.getElementById('rp-guardar-ok'); btn.disabled=true;
+    var cuerpo={ fotos:rpSt.vista.fotos.map(function(x){ return x.rid; }), textos:rpSt.vista.textos.map(function(x){ return x.rid; }) };
+    fetch(BASE+'/admin/resenas/orden?clave='+encodeURIComponent(clave), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(cuerpo) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok) throw new Error(j.error||'No se pudo guardar el orden.'); return j; }); })
+      .then(function(d){ rpSt.orden=d.orden; rpSt.local=null; rpPintar(); rpOrdenMsg('Orden guardado. La web lo muestra en menos de un minuto.', 'var(--green)'); })
+      .catch(function(e){ alert(e.message); })
+      .then(function(){ btn.disabled=false; });
   }
   function rpAccion(id, accion, body){
     fetch(BASE+'/admin/resenas/'+encodeURIComponent(id)+'/'+accion+'?clave='+encodeURIComponent(clave), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })

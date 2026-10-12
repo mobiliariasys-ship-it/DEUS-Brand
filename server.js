@@ -1055,7 +1055,13 @@ function errorResena(res, e) {
 
 app.get('/admin/resenas', (req, res) => {
   if (!exigirClave(req, res)) return;
-  res.json({ resenas: resenas.todas() });
+  res.json({ resenas: resenas.todas(), orden: resenas.verOrden() });
+});
+
+// Orden del carrusel: { fotos: [ids], textos: [ids] }.
+app.post('/admin/resenas/orden', async (req, res) => {
+  if (!exigirClave(req, res)) return;
+  try { res.json({ ok: true, orden: await resenas.guardarOrden(req.body) }); } catch (e) { errorResena(res, e); }
 });
 
 app.post('/admin/resenas', async (req, res) => {
@@ -1084,7 +1090,7 @@ app.post('/admin/resenas/:id/borrar', async (req, res) => {
 // reseña recién subida aparezca enseguida sin consultar en cada visita.
 app.get('/resenas/lista', (req, res) => {
   res.set('Cache-Control', 'public, max-age=60');
-  res.json({ resenas: resenas.publicas() });
+  res.json({ resenas: resenas.publicas(), orden: resenas.verOrden() });
 });
 
 // Cada foto tiene su id y nunca cambia: se cachea un año. Con la clave del

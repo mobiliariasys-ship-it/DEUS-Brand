@@ -13,6 +13,10 @@
 const crypto = require('crypto');
 
 const CLAVE_LISTA = 'resenas-panel.json';
+const CLAVE_ORDEN = 'resenas-orden.json';
+// Ids de tarjeta: "f-usuario" para las fijas del HTML (data-rid) y el id de 12
+// caracteres para las subidas desde el panel.
+const RID_OK = /^(?:f-[a-z0-9._]{1,60}|[a-f0-9]{12})$/;
 const claveFoto = (id) => `resena-foto-${id}.json`;
 const MAX_FOTO = 1.5 * 1024 * 1024;   // bytes de la imagen ya decodificada
 const MAX_EN_CACHE = 40;              // fotos en memoria para no ir a la base en cada visita
@@ -46,13 +50,36 @@ function leerFoto(dataUrl) {
   return { tipo, buf };
 }
 
+// El orden llega del panel como dos listas de ids (con foto / solo texto).
+// Se descartan los ids con otro formato y los repetidos.
+function listaIds(v) {
+  if (!Array.isArray(v)) throw new ErrorResena('El orden llegó mal armado. Recarga el panel e intenta de nuevo.');
+  const ids = new Set();
+  for (const x of v.slice(0, 300)) { const id = String(x); if (RID_OK.test(id)) ids.add(id); }
+  return [...ids];
+}
+
 function crearServicio({ load, save }) {
   let lista = [];
+  // Orden del carrusel elegido en el panel. Las reseñas que no figuran (las
+  // recién subidas) van primero; las fijas que no figuran, al final.
+  let orden = { fotos: [], textos: [] };
   const cache = new Map(); // id -> { tipo, buf }
 
   async function init() {
     const v = await load(CLAVE_LISTA, []);
     lista = Array.isArray(v) ? v : [];
+    const o = await load(CLAVE_ORDEN, null);
+    if (o && Array.isArray(o.fotos) && Array.isArray(o.textos)) orden = { fotos: o.fotos, textos: o.textos };
+  }
+
+  const verOrden = () => ({ fotos: [...orden.fotos], textos: [...orden.textos] });
+
+  async function guardarOrden(d) {
+    const o = { fotos: listaIds(d && d.fotos), textos: listaIds(d && d.textos) };
+    await save(CLAVE_ORDEN, { ...o, actualizado: new Date().toISOString() });
+    orden = o; // recién después de guardar: si falla, queda el orden anterior
+    return verOrden();
   }
 
   const guardarLista = () => save(CLAVE_LISTA, lista);
@@ -150,7 +177,7 @@ function crearServicio({ load, save }) {
     return f;
   }
 
-  return { init, publicas, todas, crear, cambiarVisible, borrar, foto };
+  return { init, publicas, todas, crear, cambiarVisible, borrar, foto, verOrden, guardarOrden };
 }
 
 const persist = require('./persist');

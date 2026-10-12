@@ -29,6 +29,7 @@ chats.json
 # Reseñas cargadas desde el panel cuando no hay base de datos (modo archivo).
 resenas-panel.json
 resena-foto-*.json
+resenas-orden.json
 
 # Mockups de diseño (canvas de propuestas para la ficha de producto).
 # Van fuera del repo por dos razones: el archivo publicado del canvas pesa
