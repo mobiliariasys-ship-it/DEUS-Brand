@@ -32,12 +32,13 @@ function precios(ahora = Date.now()) {
 // precioBanda() sin argumentos desde todos los sitios existentes.
 const precioBanda = (ahora) => precios(ahora).precio;
 
-// Tapones de oído: DOS precios distintos y no son intercambiables. UPSELL es lo
-// que cuestan agregados a la compra de una banda; TAPONES_PRICE es lo que
-// cuestan comprados solos. Vivían declarados por separado en server.js,
+// Tapones de oído: DOS precios y no son intercambiables. UPSELL es lo que
+// cuestan agregados a la compra de una banda; TAPONES_PRICE es lo que cuestan
+// comprados solos. Desde el 12-oct-2026 valen lo mismo ($18.990, decisión del
+// dueño), pero siguen separados por si vuelven a tener precios distintos. Vivían declarados por separado en server.js,
 // flow.js y transbank.js — el mismo error que este archivo existe para evitar.
-const TAPONES_PRICE  = 14990;   // comprados solos, sin banda
-const UPSELL_TAPONES = 12990;   // agregados a la compra de una banda
+const TAPONES_PRICE  = 18990;   // comprados solos, sin banda
+const UPSELL_TAPONES = 18990;   // agregados a la compra de una banda
 
 // El monto que se cobra, en UN solo lugar.
 //

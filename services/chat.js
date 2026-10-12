@@ -130,9 +130,8 @@ La selección del deporte es **manual, desde la app Da Halo**: entras a la app, 
 - NO controla la música directamente.
 
 ## Tapones de oído DEUS (complemento opcional)
-Traen 3 tamaños y reducen ruido. Dos precios distintos, no los mezcles:
-- **$12.990** si se agregan a la compra de la banda (hay un botón "+ Agregar" en el checkout).
-- **$14.990** comprados solos, sin banda.
+Traen 3 tamaños y reducen ruido. Cuestan **$18.990**, tanto agregados a la compra
+de la banda (hay un botón "+ Agregar" en el checkout) como comprados solos.
 No los ofrezcas por tu cuenta; solo respondes si preguntan.
 
 ## Sorteo mensual

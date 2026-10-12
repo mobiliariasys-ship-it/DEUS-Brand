@@ -33,7 +33,7 @@ test('el sitio y el backend están de acuerdo: sin promo no hay tapones gratis n
   // el encabezado del recuadro y el raspe. El recuadro celeste es html.promo .beneficios.
   assert.ok(HTML.includes('html:not(.promo) .solo-promo{display:none!important;}'));
   assert.ok(HTML.includes('ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span>'), 'el "+ tapones" de la barra solo con la promo');
-  assert.ok(/<div class="gift-line con-extra solo-promo">/.test(HTML), 'la línea de tapones gratis solo con la promo');
+  assert.ok(/<div class="gift-line solo-promo">/.test(HTML), 'la línea de tapones gratis solo con la promo');
   assert.ok(/html\.promo \.beneficios\{border:1px solid var\(--cy-linea\)/.test(HTML), 'el recuadro celeste solo con la promo');
 });
 
@@ -127,4 +127,16 @@ test('la página y el chatbot ya no dicen "Cyber", y el bot solo ofrece tapones 
   const chat = fs.readFileSync(path.join(__dirname, '..', 'services', 'chat.js'), 'utf8');
   assert.doesNotMatch(chat, /por Cyber|CYBER \(hasta/, 'el chatbot no puede seguir ofreciendo el regalo "por Cyber" con fecha');
   assert.match(chat, /\$\{llevaRegaloTapones\(\) \? `\n- PROMOCIÓN VIGENTE/, 'el bot ofrece tapones de regalo solo si la promo está prendida');
+});
+
+test('los tapones valen $18.990 y ya no dicen "última unidad" (12-oct-2026)', () => {
+  const { UPSELL_TAPONES } = require('../services/precio');
+  assert.strictEqual(TAPONES_PRICE, 18990);
+  assert.strictEqual(UPSELL_TAPONES, 18990);
+  // el checkout repite los precios del backend: tienen que coincidir
+  assert.match(HTML, /const UPSELL_PRICE = 18990;\s*const TAPONES_PRICE = 18990;/);
+  assert.ok(HTML.includes('<div class="upsell-price">+ $18.990</div>'));
+  assert.ok(HTML.includes('Comprar tapones · $18.990'));
+  // (el "Última unidad" de la barra de arriba es el stock de la banda, otra cosa)
+  assert.ok(!/Tapones de oído · última unidad|gl-ultimos|up-ultimos/.test(HTML), 'quedó el aviso de "última unidad" de los tapones');
 });

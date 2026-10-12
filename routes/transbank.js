@@ -104,7 +104,7 @@ router.post('/webpay/crear', async (req, res) => {
       error: e.message,
       cliente: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
-      // El upsell de tapones (+$12.990) tambien va en el aviso: si no, el monto
+      // El upsell de tapones (UPSELL_TAPONES) tambien va en el aviso: si no, el monto
       // de la venta rescatable sale menor al que el cliente iba a pagar.
       monto: calcularMonto({ cantidad, tapones, soloTapones, shippingCost }).total,
       color: colorPedido,

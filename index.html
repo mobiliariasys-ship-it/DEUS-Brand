@@ -427,21 +427,6 @@ html.promo .benef-head{display:flex;align-items:center;gap:8px;font-size:.6rem;l
 html.promo .beneficios .ship-line,html.promo .beneficios .gift-line{color:var(--cy-claro);margin:0;}
 html.promo .beneficios .ship-line svg,html.promo .beneficios .gift-line svg{stroke:var(--cy);}
 html.promo .beneficios .ship-line+.gift-line{margin-top:8px;}
-/* Tapones: "Tapones de oído · última unidad" bajo la línea del regalo. Dorado (el color de los
-   destacados del sitio) con punto rojo que late y un brillo suave: en celeste se
-   perdía dentro del recuadro, que también es celeste. El número es fijo: el
-   sistema no lleva stock de tapones. */
-.gift-line.con-extra{align-items:flex-start;}
-.gl-txt{display:flex;flex-direction:column;gap:10px;}
-.gl-extra{display:flex;align-items:center;gap:8px;font-size:.56rem;letter-spacing:1.4px;text-transform:uppercase;color:#8fb8cf;font-weight:600;}
-.gl-ultimos{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#f3c886,#d69f45);color:#151008;border-radius:6px;padding:6px 11px;font-size:.72rem;font-weight:800;letter-spacing:1.3px;line-height:1;animation:quedanBrillo 2.2s ease-out infinite;}
-/* En el celular "Tapones de oído · última unidad" no cabe con el espaciado de
-   escritorio y se partía en dos líneas: un poco más chico y en una sola. */
-@media(max-width:600px){.gl-ultimos{white-space:nowrap;font-size:.68rem;letter-spacing:.5px;padding:6px 10px;gap:6px;}}
-.gl-ultimos::before,.up-ultimos::before{content:"";width:7px;height:7px;border-radius:50%;background:#d8341f;box-shadow:0 0 0 2px rgba(216,52,31,.25);animation:quedanLate 1.2s ease-in-out infinite;}
-@keyframes quedanLate{50%{opacity:.3;}}
-@keyframes quedanBrillo{0%{box-shadow:0 0 0 0 rgba(232,180,100,.55);}70%{box-shadow:0 0 0 9px rgba(232,180,100,0);}100%{box-shadow:0 0 0 0 rgba(232,180,100,0);}}
-@media(prefers-reduced-motion:reduce){.gl-ultimos,.up-ultimos,.gl-ultimos::before,.up-ultimos::before{animation:none;}}
 .raspe{margin-top:8px;border:1px solid #2b2e33;background:#141417;border-radius:10px;padding:12px 12px 8px;}
 #checkout-overlay.tapones .raspe{display:none!important;}
 html.promo #upsell-card{display:none!important;}
@@ -1596,13 +1581,7 @@ body.sb-on .wa-float{bottom:82px;}
 .upsell-info{flex:1;min-width:0;}
 .upsell-name{font-size:.8rem;font-weight:700;color:var(--white);}
 .upsell-desc{font-size:.64rem;color:#888;margin-top:2px;}
-/* "Tapones de oído · última unidad": pestaña sobre el borde de arriba de la tarjeta (en la
-   columna de texto no cabe en una línea), en el mismo dorado */
 .upsell-card{position:relative;}
-.upsell-tags{position:absolute;top:-13px;left:10px;display:flex;align-items:center;background:#131313;border:1px solid #3a3226;border-radius:7px;padding:2px;font-size:.62rem;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;white-space:nowrap;line-height:1;}
-.upsell-card.added .upsell-tags{background:#101710;}
-.up-ultimos{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#f3c886,#d69f45);color:#151008;border-radius:5px;padding:5px 9px;font-weight:800;animation:quedanBrillo 2.2s ease-out infinite;}
-.up-ultimos::before{width:6px;height:6px;}
 .upsell-price{font-size:.78rem;color:#e8b464;font-weight:600;margin-top:3px;}
 .upsell-btn{background:transparent;border:1px solid var(--border);color:var(--white);padding:8px 13px;border-radius:7px;font-size:.68rem;font-weight:700;cursor:pointer;letter-spacing:.5px;white-space:nowrap;transition:all .2s;}
 .upsell-btn:hover{border-color:#7fc9a0;color:#7fc9a0;}
@@ -2081,7 +2060,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="beneficios">
           <div class="benef-head solo-promo">Tu compra incluye</div>
           <div class="ship-line" id="ship-line"><svg viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="1.5"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>ENVÍO GRATIS A TODO CHILE</div>
-          <div class="gift-line con-extra solo-promo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4.5 6 4.5 6 7c0 1.2 1.6 1 6 1zM12 8c1.5-3.5 6-3.5 6-1 0 1.2-1.6 1-6 1z"/></svg><span class="gl-txt">+ TAPONES DE OÍDO GRATIS<span class="gl-extra"><span class="gl-ultimos">Tapones de oído · última unidad</span></span></span></div>
+          <div class="gift-line solo-promo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4.5 6 4.5 6 7c0 1.2 1.6 1 6 1zM12 8c1.5-3.5 6-3.5 6-1 0 1.2-1.6 1-6 1z"/></svg>+ TAPONES DE OÍDO GRATIS</div>
         </div>
         <div class="stock-note" id="stock-note" style="display:none;"></div>
         <div class="cta-row">
@@ -2210,7 +2189,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                   <img src="img/img-tapones-mini.webp" alt="Tapones de oído DEUS" width="64" height="64" loading="lazy" decoding="async">
                   <div class="raspe-txt">
                     <b>¡Tapones DEUS gratis!</b>
-                    <span class="raspe-precio"><span class="vh">Valor normal: </span><s class="raspe-antes">$14.990</s><em>Gratis</em></span>
+                    <span class="raspe-precio"><span class="vh">Valor normal: </span><s class="raspe-antes">$18.990</s><em>Gratis</em></span>
                     <small>Van de regalo en tu pedido. No tienes que hacer nada más.</small>
                   </div>
                 </div>
@@ -2253,7 +2232,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                  de "solo tapones" (no tiene sentido sumar tapones a un pedido
                  de tapones). El JS que ya existe gestiona el toggle. -->
             <div class="upsell-card" id="upsell-card" onclick="toggleUpsell()" style="cursor:pointer;">
-              <div class="upsell-tags"><span class="up-ultimos">Tapones de oído · última unidad</span></div>
               <button type="button" class="upsell-zoom" onclick="verFotosTapones(event)" aria-label="Ver fotos de los tapones en grande">
                 <img src="img/img-tapones-mini.webp" alt="Tapones de oído DEUS" class="upsell-img" loading="lazy" decoding="async">
                 <span class="upsell-lupa" aria-hidden="true">⤢</span>
@@ -2261,7 +2239,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div class="upsell-info">
                 <div class="upsell-name">Tapones de oído DEUS</div>
                 <div class="upsell-desc">Mejora tu sueño al 100%</div>
-                <div class="upsell-price">+ $12.990</div>
+                <div class="upsell-price">+ $18.990</div>
               </div>
               <button type="button" class="upsell-btn" id="upsell-btn">+ Agregar</button>
             </div>
@@ -2271,7 +2249,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                  envío costaba: el total no se sabía hasta cotizar. Con el envío
                  gratis el total se conoce de entrada, y esconderlo significaba
                  que quien agregaba los tapones NO veía por ningún lado los
-                 $81.980 que le iban a cobrar — el precio de arriba es solo la
+                 $87.980 que le iban a cobrar — el precio de arriba es solo la
                  línea de la banda y no incluye el upsell. -->
             <div class="total-row" id="total-row">
               <span class="total-label">Total a pagar</span>
@@ -2820,7 +2798,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             upsellCard.style.display = soloTapones ? 'none' : '';
           }
           if (upsellBtn) upsellBtn.textContent = '+ Agregar';
-          // Modo "solo tapones": el mismo modal pero como producto Tapones $14.990
+          // Modo "solo tapones": el mismo modal pero como producto Tapones $18.990
           const overlay = document.getElementById('checkout-overlay');
           overlay.classList.toggle('tapones', checkoutTapones);
           const nameEl = document.querySelector('#checkout-overlay .co-prod-name');
@@ -2919,7 +2897,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('raspe-premio').removeAttribute('aria-hidden');
             capa.setAttribute('tabindex', '-1');
             var vivo = document.getElementById('raspe-vivo');
-            if (vivo) vivo.textContent = 'Tu regalo: tapones DEUS gratis, valor normal $14.990.';
+            if (vivo) vivo.textContent = 'Tu regalo: tapones DEUS gratis, valor normal $18.990.';
             try { sessionStorage.setItem(CLAVE, '1'); } catch (e) {}
             if (!deSesion) {
               try { if (navigator.vibrate) navigator.vibrate(30); } catch (e) {}
@@ -3016,8 +2994,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (listo && !revelado() && !Object.keys(tocadas).length) pintar();
           });
         })();
-        const UPSELL_PRICE = 12990;
-        const TAPONES_PRICE = 14990;
+        const UPSELL_PRICE = 18990;
+        const TAPONES_PRICE = 18990;
         function toggleUpsell() {
           upsellTapones = !upsellTapones;
           const card = document.getElementById('upsell-card');
@@ -5491,10 +5469,10 @@ document.addEventListener('keydown',function(e){
     </div>
     <div class="tapones-dots" id="tapones-dots"><span class="active"></span><span></span></div>
     <div class="tapones-title">Tapones de oído DEUS</div>
-    <div class="tapones-price"><span class="tp-now">$14.990</span></div>
+    <div class="tapones-price"><span class="tp-now">$18.990</span></div>
     <div class="tapones-desc">Estuche premium con tapones de silicona de alta atenuación. Ideales para dormir, concentrarte o entrenar.</div>
     <div class="tapones-note">🎁 O llévalos <b>gratis</b> al reservar tu DEUS Band</div>
-    <button class="tapones-buy" onclick="abrirCheckoutSoloTapones()">Comprar tapones · $14.990</button>
+    <button class="tapones-buy" onclick="abrirCheckoutSoloTapones()">Comprar tapones · $18.990</button>
   </div>
 </div>
 <script>
