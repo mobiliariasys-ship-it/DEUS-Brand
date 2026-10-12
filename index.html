@@ -389,22 +389,18 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 /* Barra con contador: texto arriba + contador regresivo centrado debajo */
 .announce-bar.reserva{display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.35;padding-top:8px;padding-bottom:8px;}
 .announce-bar .reserva-cd{display:flex;gap:6px;justify-content:center;text-transform:none;}
-/* Top bar en dos columnas con la misma forma: el dato arriba (blanco / dorado)
-   y la aclaración abajo en gris. Izquierda, el envío; derecha, lo que falta
-   para el corte de pedidos del día. La raya del medio es el ::before, que
-   ocupa las dos filas de la columna angosta. Las filas se alinean por línea
-   base, así "ENVÍO GRATIS" y el reloj quedan a la misma altura aunque el
-   reloj sea más grande. */
+/* Top bar en dos columnas. Izquierda, el envío ("ENVÍO GRATIS" arriba y los
+   días de envío abajo en gris); derecha, el reloj de 24 h solo, centrado en
+   el alto de las dos filas. La raya del medio es el ::before. */
 .announce-bar .ab-in{display:inline-grid;grid-template-columns:auto 1px auto;column-gap:16px;row-gap:4px;align-items:baseline;text-align:left;vertical-align:top;}
 .announce-bar .ab-in::before{content:"";grid-column:2;grid-row:1/3;align-self:stretch;background:#2c2c2c;}
 .announce-bar .ab-titulo{grid-column:1;grid-row:1;font-size:.74rem;letter-spacing:2.4px;font-weight:700;}
 .announce-bar .ab-plazo{grid-column:1;grid-row:2;font-size:.6rem;letter-spacing:1.6px;color:#9a9a9a;font-weight:500;}
-.announce-bar .ab-reloj{grid-column:3;grid-row:1;justify-self:center;font-size:.86rem;font-weight:800;color:#e7cf9c;letter-spacing:1.6px;font-variant-numeric:tabular-nums;}
-.announce-bar .ab-corte-lbl{grid-column:3;grid-row:2;justify-self:center;font-size:.54rem;letter-spacing:1.6px;color:#9a9a9a;font-weight:500;}
-/* Sin contador (modo reserva, o un navegador sin la hora de Chile): queda
-   solo la columna del envío, centrada. */
-.announce-bar .ab-in.sin-corte{grid-template-columns:auto;text-align:center;}
-.announce-bar .ab-in.sin-corte::before{display:none;}
+.announce-bar .ab-reloj{grid-column:3;grid-row:1/3;align-self:center;justify-self:center;font-size:1rem;font-weight:800;color:#e7cf9c;letter-spacing:1.6px;font-variant-numeric:tabular-nums;}
+/* Sin reloj (un navegador sin la hora de Chile, o mientras haya un plazo de
+   promo con sus propias cajitas): queda solo la columna del envío, centrada. */
+.announce-bar .ab-in.sin-reloj{grid-template-columns:auto;text-align:center;}
+.announce-bar .ab-in.sin-reloj::before{display:none;}
 /* Cajitas del contador de la oferta en la barra superior. Cada dígito tiene
    su recuadro con su etiqueta abajo. Las del bloque de precio usan .cdb, que
    es el mismo lenguaje visual en chico. */
@@ -425,15 +421,14 @@ html,body{overflow-x:hidden;overflow-x:clip;}
   .announce-bar .ab-in{column-gap:12px;row-gap:3px;}
   .announce-bar .ab-titulo{font-size:.66rem;letter-spacing:1.8px;}
   .announce-bar .ab-plazo{font-size:.54rem;letter-spacing:1px;}
-  .announce-bar .ab-reloj{font-size:.78rem;letter-spacing:1.2px;}
-  .announce-bar .ab-corte-lbl{font-size:.5rem;letter-spacing:1px;}
+  .announce-bar .ab-reloj{font-size:.92rem;letter-spacing:1.2px;}
   /* Con la promo, el regalo baja a su propia línea en vez de dejar "GRATIS" suelto */
   .announce-bar .ab-titulo .solo-promo{display:block;margin-top:3px;}
 }
 @media(max-width:374px){
   .announce-bar .ab-in{column-gap:9px;}
   .announce-bar .ab-titulo{letter-spacing:1.3px;}
-  .announce-bar .ab-plazo,.announce-bar .ab-corte-lbl{letter-spacing:.5px;}
+  .announce-bar .ab-plazo{letter-spacing:.5px;}
 }
 .promo-timer{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:7px;}
 .promo-label{font-size:.55rem;letter-spacing:2.5px;color:#1b2b2b;}
@@ -1684,7 +1679,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 <!-- Mismo marcado que arma htmlTopBar() en aplicarReserva(): si se toca uno, tocar el otro. -->
-<div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span><b class="ab-reloj" id="ab-reloj" role="timer">--:--:--</b><span class="ab-corte-lbl" title="Los pedidos hechos antes de las 02:00 (hora de Chile) entran en el despacho de ese día">Corte de pedidos</span></div></div>
+<div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span><b class="ab-reloj" id="ab-reloj" role="timer">--:--:--</b></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -2358,8 +2353,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // El envío gratis es PERMANENTE: no vence en ninguna fecha. Antes
         // OFERTA_END lo apagaba solo al llegar el día, y el sitio dejaba de
         // mostrar "ENVÍO GRATIS" sin que nadie tocara nada. Ahora está fijo en
-        // activo; el reloj del top bar marca el corte de pedidos del día
-        // (02:00 de Chile, ver CORTE_HORA) y no controla el envío gratis.
+        // activo; el reloj del top bar se reinicia a las 02:00 de Chile (ver
+        // RELOJ_HORA) y no controla el envío gratis.
         const OFERTA_END = new Date('2099-01-01T00:00:00-04:00').getTime();
         const ofertaActiva = () => true;
         // Precio, ancla tachada y % del sello. El precio es el mismo con stock
@@ -4901,10 +4896,10 @@ function aplicarReserva() {
     // prende la clase html.promo del <head>). Sin ella el banner queda en
     // "🇨🇱 ENVÍO GRATIS", que siempre es cierto: el envío gratis es permanente.
     // Las cajitas de "Termina en" solo aparecen si FIN_PROMO_DIA está en el
-    // futuro, y entonces reemplazan al corte de pedidos (dos relojes en la
+    // futuro, y entonces reemplazan al reloj de 24 h (dos relojes en la
     // misma barra se leen como insistencia).
     var quedaPromo = msRestanteOferta();
-    ab.innerHTML = htmlTopBar(on || quedaPromo > 0) +
+    ab.innerHTML = htmlTopBar(quedaPromo > 0) +
       (quedaPromo > 0
         ? '<div class="ab-cd"><span class="ab-cd-lbl">Termina en</span>' +
           '<span class="ab-cd-boxes" id="cd-ofcd" data-u="' + firmaUnidadesOferta() + '">' +
@@ -5050,36 +5045,27 @@ pintarContadorOferta();
 setInterval(pintarContadorOferta, 1000);
 
 
-// ── Top bar: corte de pedidos, todos los días a las 02:00 de Chile ──
-// El reloj de la derecha cuenta lo que falta para las 02:00 (hora de Chile) y
-// al llegar vuelve a 24:00:00. Todos los visitantes ven lo mismo: sale del
-// reloj de Chile, no de la primera visita ni de localStorage.
-//
-// La etiqueta es una PROMESA DE DESPACHO, no una oferta que vence: lo que
-// marca es que los pedidos hechos antes de las 02:00 entran en el despacho de
-// ese día. Si cambia la hora de corte, se cambia CORTE_HORA (y el texto de
-// CORTE_DETALLE). Si el corte deja de existir, hay que sacar el reloj, no
-// cambiarle la etiqueta por "la oferta termina en": un plazo que se reinicia
-// solo y no marca nada real es publicidad engañosa (Ley 19.496).
+// ── Top bar: reloj de 24 h que se reinicia todos los días a las 02:00 de Chile ──
+// Cuenta lo que falta para las 02:00 (hora de Chile) y al llegar vuelve a
+// 24:00:00. Todos los visitantes ven lo mismo: sale del reloj de Chile, no de
+// la primera visita ni de localStorage. Va sin etiqueta, a pedido del dueño.
 //
 // Va en hora de reloj de Chile: la noche del cambio de horario (sábado a
 // domingo, dos veces al año) el reloj salta una hora, igual que el de pared.
-var CORTE_HORA = 2;
-var CORTE_DETALLE = 'Los pedidos hechos antes de las 02:00 (hora de Chile) entran en el despacho de ese día';
+var RELOJ_HORA = 2;
 
-function msHastaCorte() {
+function msHastaReinicio() {
   try {
-    var falta = (CORTE_HORA * 3600 - ahoraChile().seg + 86400) % 86400;
+    var falta = (RELOJ_HORA * 3600 - ahoraChile().seg + 86400) % 86400;
     return (falta || 86400) * 1000;   // justo a las 02:00:00 muestra 24:00:00
   } catch (e) {
-    // Sin Intl no se sabe la hora de Chile; un plazo inventado es peor que
-    // ninguno, así que la barra queda sin reloj.
+    // Sin Intl no se sabe la hora de Chile: la barra queda sin reloj.
     return 0;
   }
 }
 
-function relojCorte(ms) {
-  var s = Math.floor((ms === undefined ? msHastaCorte() : ms) / 1000);
+function textoReloj(ms) {
+  var s = Math.floor((ms === undefined ? msHastaReinicio() : ms) / 1000);
   if (s <= 0) return '--:--:--';
   var z = function (n) { return String(n).padStart(2, '0'); };
   return z(Math.floor(s / 3600)) + ':' + z(Math.floor(s / 60) % 60) + ':' + z(s % 60);
@@ -5087,34 +5073,29 @@ function relojCorte(ms) {
 
 // Marcado de la barra. El HTML de la página trae el mismo ya puesto, para que
 // no parpadee mientras aplicarReserva() espera al fetch de /stock.
-// sinCorte: en modo reserva no hay despacho que prometer (es preventa).
-function htmlTopBar(sinCorte) {
-  sinCorte = sinCorte || !msHastaCorte();
-  return '<div class="ab-in' + (sinCorte ? ' sin-corte' : '') + '">' +
+function htmlTopBar(sinReloj) {
+  sinReloj = sinReloj || !msHastaReinicio();
+  return '<div class="ab-in' + (sinReloj ? ' sin-reloj' : '') + '">' +
     (ofertaActiva()
       ? '<b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b>'
       : '<b class="ab-titulo">🔥 Última unidad disponible</b>') +
     '<span class="ab-plazo">1-2 días de envío a todo Chile</span>' +
-    (sinCorte ? '' :
-      '<b class="ab-reloj" id="ab-reloj" role="timer">' + relojCorte() + '</b>' +
-      '<span class="ab-corte-lbl" title="' + CORTE_DETALLE + '">Corte de pedidos</span>') +
+    (sinReloj ? '' : '<b class="ab-reloj" id="ab-reloj" role="timer">' + textoReloj() + '</b>') +
     '</div>';
 }
 
 // Se llama cada segundo y recalcula desde el reloj real (no descuenta 1 a
 // mano), así no se desfasa aunque la pestaña quede en segundo plano.
-function pintarCorte() {
+function pintarReloj() {
   var e = document.getElementById('ab-reloj');
   if (!e) return;
-  var ms = msHastaCorte();
-  if (ms) { e.textContent = relojCorte(ms); return; }
-  var caja = e.parentNode, lbl = caja.querySelector('.ab-corte-lbl');
-  caja.removeChild(e);
-  if (lbl) caja.removeChild(lbl);
-  caja.classList.add('sin-corte');
+  var ms = msHastaReinicio();
+  if (ms) { e.textContent = textoReloj(ms); return; }
+  e.parentNode.classList.add('sin-reloj');
+  e.parentNode.removeChild(e);
 }
-pintarCorte();
-setInterval(pintarCorte, 1000);
+pintarReloj();
+setInterval(pintarReloj, 1000);
 
 
 // ── Contador del sorteo mensual ──

@@ -1,5 +1,5 @@
 'use strict';
-// Top bar: el reloj de "Corte de pedidos" cuenta hasta las 02:00 de Chile y
+// Top bar: el reloj de 24 h cuenta hasta las 02:00 de Chile y
 // vuelve a 24 h justo a esa hora, todos los días. Corre las funciones REALES
 // de index.html con un reloj fijo, en invierno (UTC-4) y en verano (UTC-3),
 // para que nadie lo pase a una hora fija en UTC sin darse cuenta.
@@ -38,41 +38,40 @@ function conReloj(iso) {
   }
   const ctx = vm.createContext({ Date: RelojFijo, ofertaActiva: () => true });
   vm.runInContext([
-    variable('CORTE_HORA'), variable('CORTE_DETALLE'),
-    extraer('ahoraChile'), extraer('msHastaCorte'), extraer('relojCorte'), extraer('htmlTopBar'),
+    variable('RELOJ_HORA'),
+    extraer('ahoraChile'), extraer('msHastaReinicio'), extraer('textoReloj'), extraer('htmlTopBar'),
   ].join('\n'), ctx);
   return ctx;
 }
 
-test('el corte es a las 02:00 de Chile y se reinicia a 24 h (verano, UTC-3)', () => {
-  assert.strictEqual(conReloj('2026-10-13T04:59:59Z').relojCorte(), '00:00:01', '01:59:59 → falta 1 segundo');
-  assert.strictEqual(conReloj('2026-10-13T05:00:00Z').relojCorte(), '24:00:00', '02:00:00 → vuelve a 24 h');
-  assert.strictEqual(conReloj('2026-10-13T05:00:01Z').relojCorte(), '23:59:59');
-  assert.strictEqual(conReloj('2026-10-12T17:00:00Z').relojCorte(), '12:00:00', '14:00 → faltan 12 h');
-  assert.strictEqual(conReloj('2026-10-13T02:30:00Z').relojCorte(), '02:30:00', '23:30 → faltan 2 h 30');
+test('el reloj llega a cero a las 02:00 de Chile y vuelve a 24 h (verano, UTC-3)', () => {
+  assert.strictEqual(conReloj('2026-10-13T04:59:59Z').textoReloj(), '00:00:01', '01:59:59 → falta 1 segundo');
+  assert.strictEqual(conReloj('2026-10-13T05:00:00Z').textoReloj(), '24:00:00', '02:00:00 → vuelve a 24 h');
+  assert.strictEqual(conReloj('2026-10-13T05:00:01Z').textoReloj(), '23:59:59');
+  assert.strictEqual(conReloj('2026-10-12T17:00:00Z').textoReloj(), '12:00:00', '14:00 → faltan 12 h');
+  assert.strictEqual(conReloj('2026-10-13T02:30:00Z').textoReloj(), '02:30:00', '23:30 → faltan 2 h 30');
 });
 
-test('en invierno (UTC-4) el corte sigue a las 02:00 de Chile, no a una hora fija en UTC', () => {
-  assert.strictEqual(conReloj('2026-07-15T06:00:00Z').relojCorte(), '24:00:00', '02:00 de Chile en julio');
-  assert.strictEqual(conReloj('2026-07-15T05:00:00Z').relojCorte(), '01:00:00', '01:00 de Chile en julio');
+test('en invierno (UTC-4) el reinicio sigue a las 02:00 de Chile, no a una hora fija en UTC', () => {
+  assert.strictEqual(conReloj('2026-07-15T06:00:00Z').textoReloj(), '24:00:00', '02:00 de Chile en julio');
+  assert.strictEqual(conReloj('2026-07-15T05:00:00Z').textoReloj(), '01:00:00', '01:00 de Chile en julio');
 });
 
 test('el reloj nunca pasa de 24 h ni queda en cero', () => {
   for (let h = 0; h < 24; h++) {
-    const ms = conReloj(`2026-10-12T${String(h).padStart(2, '0')}:17:42Z`).msHastaCorte();
+    const ms = conReloj(`2026-10-12T${String(h).padStart(2, '0')}:17:42Z`).msHastaReinicio();
     assert.ok(ms > 0 && ms <= 86400000, `a las ${h}:17Z dio ${ms}`);
   }
 });
 
-test('la barra lleva el envío a todo Chile y el reloj; en reserva va sin reloj', () => {
+test('la barra lleva el envío a todo Chile y el reloj solo, sin etiqueta', () => {
   const c = conReloj('2026-10-12T17:00:00Z');
   const con = c.htmlTopBar(false);
   assert.match(con, /1-2 días de envío a todo Chile/);
-  assert.match(con, /id="ab-reloj"[^>]*>12:00:00</);
-  assert.match(con, /Corte de pedidos/);
+  assert.match(con, /id="ab-reloj"[^>]*>12:00:00<\/b><\/div>$/, 'el reloj cierra la barra, sin texto al lado');
   const sin = c.htmlTopBar(true);
-  assert.match(sin, /class="ab-in sin-corte"/);
-  assert.doesNotMatch(sin, /ab-reloj|Corte de pedidos/, 'en preventa no hay despacho que prometer');
+  assert.match(sin, /class="ab-in sin-reloj"/);
+  assert.doesNotMatch(sin, /ab-reloj/, 'con un plazo de promo real, sus cajitas reemplazan al reloj');
 });
 
 test('el HTML de la página trae el mismo marcado que arma htmlTopBar()', () => {
