@@ -483,6 +483,36 @@ html.promo #upsell-card{display:none!important;}
 .soft-block{position:relative;}
 .soft-block+.soft-block{margin-top:72px;}
 .soft-head{text-align:center;max-width:580px;margin:0 auto 30px;}
+/* Rollo de fotos de las reseñas, encima de la tabla comparativa: las fotos del
+   carrusel en chico, corriendo de derecha a izquierda como una tira de película.
+   La pista lleva las fotos dos veces y se corre la mitad de su ancho, así la
+   vuelta empalma sin salto. Solo se anima transform (no recalcula la página).
+   Los cuadros miden un múltiplo de 12 px, el paso de las perforaciones, para
+   que la fila de agujeros siga pareja de un cuadro al otro. */
+.rollo{margin:0 -36px 40px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);}
+.rollo-pista{display:flex;width:max-content;min-height:168px;animation:rollo-correr 40s linear infinite;}
+.rollo-cuadro{position:relative;flex:none;width:120px;padding:15px 5px;background:#0a0a0a;}
+.rollo-cuadro::before,.rollo-cuadro::after{content:"";position:absolute;left:0;right:0;height:6px;
+  background:radial-gradient(ellipse 3.2px 2.3px at 50% 50%,rgba(226,220,206,.78) 90%,transparent 100%) 0 0/12px 6px repeat-x;}
+.rollo-cuadro::before{top:4px;}
+.rollo-cuadro::after{bottom:4px;}
+.rollo-cuadro img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:3px;background:#1a1a1a;}
+/* Mismo aviso que lleva la reseña cuando la foto está editada */
+.rollo-ed{position:absolute;left:5px;right:5px;bottom:15px;padding:3px 0 2px;border-radius:0 0 3px 3px;
+  background:rgba(0,0,0,.62);color:#d6d6d6;font-size:.5rem;letter-spacing:.6px;text-align:center;text-transform:uppercase;}
+@keyframes rollo-correr{to{transform:translateX(-50%);}}
+@media(hover:hover) and (pointer:fine){.rollo:hover .rollo-pista{animation-play-state:paused;}}
+@media(prefers-reduced-motion:reduce){.rollo{overflow-x:auto;}.rollo-pista{animation:none;}}
+@media(max-width:600px){
+  .rollo{margin:0 -16px 30px;}
+  .rollo-pista{min-height:136px;}
+  .rollo-cuadro{width:96px;padding:13px 4px;}
+  .rollo-cuadro::before{top:3.5px;}
+  .rollo-cuadro::after{bottom:3.5px;}
+  .rollo-ed{left:4px;right:4px;bottom:13px;font-size:.44rem;}
+}
 .soft-kicker{display:inline-block;font-size:.64rem;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:#d8d8e0;border-radius:999px;padding:6px 14px;margin-bottom:14px;
   background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.13);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 6px 16px -8px rgba(0,0,0,.7);}
@@ -4127,6 +4157,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="soft-block">
+        <!-- Rollo con las fotos de las reseñas, en chico y corriendo como una tira
+             de película. Lo llena armarRolloResenas() cuando se acerca a la pantalla. -->
+        <div class="rollo" id="rollo-resenas" aria-hidden="true"><div class="rollo-pista"></div></div>
         <div class="soft-head">
           <div class="soft-kicker">Por qué DEUS Band</div>
           <h2 class="soft-title">Lo que la hace diferente</h2>
@@ -5645,6 +5678,7 @@ function sumarResenasPanel(lista){
   var primeraFoto=carr.querySelector('.review-card'), primeraTexto=carr.querySelector('.rv-sin-foto')||carr.querySelector('.rv-arrow');
   lista.forEach(function(r){ carr.insertBefore(tarjetaResenaPanel(r), r.foto ? primeraFoto : primeraTexto); });
   rehacerModalResenas();
+  armarRolloResenas();
   // Contador junto a las estrellas, promedio y "Ver más reseñas (n)", con las nuevas incluidas.
   var tarjetas=document.querySelectorAll('.reviews .review-card');
   var rc=document.getElementById('rating-count'); if(rc) rc.textContent=tarjetas.length;
@@ -5682,6 +5716,7 @@ function aplicarOrdenResenas(orden){
   var flecha=carr.querySelector('.rv-arrow');
   nuevo.forEach(function(c){ carr.insertBefore(c, flecha); });
   rehacerModalResenas();
+  armarRolloResenas();
   if(window.pintarContadorResenas) window.pintarContadorResenas();
 }
 // Se pide apenas se arma la página: es un JSON chico y las fotos van con carga diferida.
@@ -5694,6 +5729,55 @@ function aplicarOrdenResenas(orden){
       if(d.orden) aplicarOrdenResenas(d.orden);
     })
     .catch(function(){});
+})();
+// ── Rollo de fotos de las reseñas (encima de la tabla comparativa) ──
+// Toma las fotos del carrusel en el orden en que se ven, incluidas las subidas
+// desde el panel, y las pasa en chico como una tira de película. Las fijas usan
+// su copia liviana de img/rollo/ (mismo nombre de archivo); las del panel, su
+// foto. Una foto editada lleva el mismo aviso que en su reseña.
+// Se arma recién cuando el rollo se acerca a la pantalla (no baja fotos que
+// nadie va a ver) y se rehace si cambian las reseñas o su orden.
+function miniRollo(src){
+  var m=/^img\/([\w.-]+\.webp)$/.exec(src||'');
+  return m ? 'img/rollo/'+m[1] : src;
+}
+function armarRolloResenas(forzar){
+  var rollo=document.getElementById('rollo-resenas'), carr=document.getElementById('reviewsCarr');
+  if(!rollo || !carr || (!forzar && !rollo.hasAttribute('data-listo'))) return;
+  rollo.setAttribute('data-listo','');
+  var fotos=[];
+  [].forEach.call(carr.querySelectorAll(':scope > .review-card:not(.rv-sin-foto)'), function(c){
+    var m=c.querySelector('.review-photo'); if(!m) return;
+    var src=m.tagName==='VIDEO' ? (m.getAttribute('data-poster')||m.getAttribute('poster')) : m.getAttribute('src');
+    if(src) fotos.push({ src:src, pos:m.style.objectPosition, editada:!!c.querySelector('.review-nota') });
+  });
+  var pista=rollo.querySelector('.rollo-pista');
+  pista.textContent='';
+  rollo.hidden=!fotos.length;
+  if(!fotos.length) return;
+  var quieto=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  for(var vuelta=0; vuelta<(quieto?1:2); vuelta++){
+    fotos.forEach(function(f){
+      var cu=document.createElement('div'); cu.className='rollo-cuadro';
+      var img=document.createElement('img'); img.alt=''; img.decoding='async';
+      var mini=miniRollo(f.src);
+      if(mini!==f.src) img.onerror=function(){ this.onerror=null; this.src=f.src; }; // sin copia chica: la original
+      img.src=mini;
+      if(f.pos) img.style.objectPosition=f.pos;
+      cu.appendChild(img);
+      if(f.editada){ var e=document.createElement('span'); e.className='rollo-ed'; e.textContent='Foto editada'; cu.appendChild(e); }
+      pista.appendChild(cu);
+    });
+  }
+  pista.style.animationDuration=(fotos.length*3.4)+'s'; // misma velocidad con más o menos fotos
+}
+(function(){
+  var rollo=document.getElementById('rollo-resenas'); if(!rollo) return;
+  if(!('IntersectionObserver' in window)){ armarRolloResenas(true); return; }
+  var io=new IntersectionObserver(function(es){
+    if(es.some(function(e){ return e.isIntersecting; })){ io.disconnect(); armarRolloResenas(true); }
+  }, { rootMargin:'700px 0px' });
+  io.observe(rollo);
 })();
 function abrirResenasModal(){
   var grid=document.querySelector('.reviews-grid');

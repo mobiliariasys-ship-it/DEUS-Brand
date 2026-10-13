@@ -226,3 +226,17 @@ test('cada tarjeta fija de la web tiene un data-rid único que el orden acepta',
   assert.ok(ids.every((id) => /^f-[a-z0-9._]{1,60}$/.test(id || '')), 'todas tienen data-rid válido');
   assert.strictEqual(new Set(ids).size, ids.length, 'sin repetidos');
 });
+
+test('cada foto fija del carrusel tiene su copia chica para el rollo (img/rollo/, mismo nombre)', () => {
+  // Si se cambia la foto de una reseña y no se hace la copia, el rollo mostraría
+  // igual la original (pesada); esto avisa antes de publicar.
+  const web = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const carr = web.slice(web.indexOf('id="reviewsCarr"'), web.indexOf('class="reviews-cta"'));
+  const fotos = [...carr.matchAll(/<(img|video) class="review-photo[^"]*"([^>]*)>/g)].map(([, tag, a]) =>
+    (tag === 'video' ? /data-poster="([^"]+)"/ : / src="([^"]+)"/).exec(a)[1]);
+  assert.ok(fotos.length >= 10, 'el carrusel tiene fotos');
+  for (const f of fotos) {
+    assert.match(f, /^img\/[\w.-]+\.webp$/, f + ': el rollo busca la copia por este formato');
+    assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'rollo', path.basename(f))), 'falta img/rollo/' + path.basename(f));
+  }
+});
