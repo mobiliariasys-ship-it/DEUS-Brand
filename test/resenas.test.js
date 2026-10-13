@@ -229,13 +229,21 @@ test('cada tarjeta fija de la web tiene un data-rid único que el orden acepta',
 
 test('cada foto fija del carrusel tiene su copia chica para el rollo (img/rollo/, mismo nombre)', () => {
   // Si se cambia la foto de una reseña y no se hace la copia, el rollo mostraría
-  // igual la original (pesada); esto avisa antes de publicar.
+  // igual la original (pesada); esto avisa antes de publicar. El rollo no lleva
+  // textos: de una reseña con foto editada usa la ORIGINAL (data-original).
   const web = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   const carr = web.slice(web.indexOf('id="reviewsCarr"'), web.indexOf('class="reviews-cta"'));
-  const fotos = [...carr.matchAll(/<(img|video) class="review-photo[^"]*"([^>]*)>/g)].map(([, tag, a]) =>
-    (tag === 'video' ? /data-poster="([^"]+)"/ : / src="([^"]+)"/).exec(a)[1]);
-  assert.ok(fotos.length >= 10, 'el carrusel tiene fotos');
-  for (const f of fotos) {
+  const tarjetas = carr.split('<div class="review-card').slice(1).filter((t) => /class="review-photo/.test(t));
+  assert.ok(tarjetas.length >= 10, 'el carrusel tiene fotos');
+  for (const t of tarjetas) {
+    const [, tag, a] = /<(img|video) class="review-photo[^"]*"([^>]*)>/.exec(t);
+    let f = (tag === 'video' ? /data-poster="([^"]+)"/ : / src="([^"]+)"/).exec(a)[1];
+    if (t.includes('class="review-nota"')) {
+      const o = /data-original="([^"]+)"/.exec(a);
+      assert.ok(o, f + ': una foto editada necesita data-original con la foto del cliente para el rollo');
+      f = o[1];
+      assert.ok(fs.existsSync(path.join(__dirname, '..', f)), 'falta la original ' + f);
+    }
     assert.match(f, /^img\/[\w.-]+\.webp$/, f + ': el rollo busca la copia por este formato');
     assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'rollo', path.basename(f))), 'falta img/rollo/' + path.basename(f));
   }

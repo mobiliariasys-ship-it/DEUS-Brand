@@ -484,34 +484,25 @@ html.promo #upsell-card{display:none!important;}
 .soft-block+.soft-block{margin-top:72px;}
 .soft-head{text-align:center;max-width:580px;margin:0 auto 30px;}
 /* Rollo de fotos de las reseñas, encima de la tabla comparativa: las fotos del
-   carrusel en chico, corriendo de derecha a izquierda como una tira de película.
-   La pista lleva las fotos dos veces y se corre la mitad de su ancho, así la
-   vuelta empalma sin salto. Solo se anima transform (no recalcula la página).
-   Los cuadros miden un múltiplo de 12 px, el paso de las perforaciones, para
-   que la fila de agujeros siga pareja de un cuadro al otro. */
-.rollo{margin:0 -36px 40px;overflow:hidden;
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);
-          mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);}
-.rollo-pista{display:flex;width:max-content;min-height:168px;animation:rollo-correr 40s linear infinite;}
-.rollo-cuadro{position:relative;flex:none;width:120px;padding:15px 5px;background:#0a0a0a;}
-.rollo-cuadro::before,.rollo-cuadro::after{content:"";position:absolute;left:0;right:0;height:6px;
-  background:radial-gradient(ellipse 3.2px 2.3px at 50% 50%,rgba(226,220,206,.78) 90%,transparent 100%) 0 0/12px 6px repeat-x;}
-.rollo-cuadro::before{top:4px;}
-.rollo-cuadro::after{bottom:4px;}
-.rollo-cuadro img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:3px;background:#1a1a1a;}
-/* Mismo aviso que lleva la reseña cuando la foto está editada */
-.rollo-ed{position:absolute;left:5px;right:5px;bottom:15px;padding:3px 0 2px;border-radius:0 0 3px 3px;
-  background:rgba(0,0,0,.62);color:#d6d6d6;font-size:.5rem;letter-spacing:.6px;text-align:center;text-transform:uppercase;}
-@keyframes rollo-correr{to{transform:translateX(-50%);}}
-@media(hover:hover) and (pointer:fine){.rollo:hover .rollo-pista{animation-play-state:paused;}}
-@media(prefers-reduced-motion:reduce){.rollo{overflow-x:auto;}.rollo-pista{animation:none;}}
+   carrusel en chico, pasando despacio de derecha a izquierda. Es un scroll
+   horizontal de verdad, así se desliza con el dedo (con la inercia del
+   teléfono); el avance solo lo hace moverRollo() y se frena al tocarlo. */
+.rollo{margin:0 -36px 40px;overflow-x:auto;overflow-y:hidden;scroll-behavior:auto;
+  overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);}
+.rollo::-webkit-scrollbar{display:none;}
+.rollo-pista{display:flex;width:max-content;min-height:160px;}
+/* El margen derecho de cada foto hace de separación: así las copias de la
+   pista miden exactamente lo mismo y la vuelta empalma sin salto. */
+.rollo-cuadro{flex:none;width:128px;margin-right:12px;}
+.rollo-cuadro img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);background:#1a1a1a;-webkit-user-drag:none;user-select:none;}
 @media(max-width:600px){
   .rollo{margin:0 -16px 30px;}
-  .rollo-pista{min-height:136px;}
-  .rollo-cuadro{width:96px;padding:13px 4px;}
-  .rollo-cuadro::before{top:3.5px;}
-  .rollo-cuadro::after{bottom:3.5px;}
-  .rollo-ed{left:4px;right:4px;bottom:13px;font-size:.44rem;}
+  .rollo-pista{min-height:130px;}
+  .rollo-cuadro{width:104px;margin-right:10px;}
+  .rollo-cuadro img{border-radius:12px;}
 }
 .soft-kicker{display:inline-block;font-size:.64rem;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:#d8d8e0;border-radius:999px;padding:6px 14px;margin-bottom:14px;
   background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.13);
@@ -3752,7 +3743,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Buin</div>
       </div>
       <div class="review-card" data-rid="f-diorr.jayy">
-        <img class="review-photo" src="img/resena-diorr-gris.webp" alt="DEUS Band con correa de nylon gris en la muñeca, entrenando con mancuernas en el gimnasio. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" src="img/resena-diorr-gris.webp" data-original="img/resena-diorr.webp" alt="DEUS Band con correa de nylon gris en la muñeca, entrenando con mancuernas en el gimnasio. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <!-- La foto original del cliente es con correa negra (img/resena-diorr.webp); esta se editó
              para mostrar la gris y se avisa a la vista, para no hacer pasar la edición por foto real. -->
         <p class="review-nota">Foto editada para mostrar la correa gris</p>
@@ -3776,7 +3767,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>San Miguel</div>
       </div>
       <div class="review-card review-extra" data-rid="f-elhayecknico">
-        <img class="review-photo" src="img/resena-nicolas-gris.webp" alt="DEUS Band con correa de nylon gris en la muñeca al aire libre. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" src="img/resena-nicolas-gris.webp" data-original="img/resena-nicolas.webp" alt="DEUS Band con correa de nylon gris en la muñeca al aire libre. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <!-- La foto original del cliente es con correa negra (img/resena-nicolas.webp); esta se editó
              para mostrar la gris y se avisa a la vista, igual que la de @diorr.jayy. -->
         <p class="review-nota">Foto editada para mostrar la correa gris</p>
@@ -3792,7 +3783,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-author"><span class="review-ig">@diego.vidal23</span> · Instagram</div>
       </div>
       <div class="review-card review-extra" data-rid="f-andres.fuentesg">
-        <img class="review-photo" src="img/resena-andres-gris.webp" alt="DEUS Band con correa de nylon gris asomando bajo el guante, durante una sesión de kinesiología — reseña de Andrés. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" src="img/resena-andres-gris.webp" data-original="img/resena-andres.webp" alt="DEUS Band con correa de nylon gris asomando bajo el guante, durante una sesión de kinesiología — reseña de Andrés. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <!-- La foto original del cliente es con correa negra (img/resena-andres.webp); esta se editó
              para mostrar la gris y se avisa a la vista, para no hacer pasar la edición por foto real. -->
         <p class="review-nota">Foto editada para mostrar la correa gris</p>
@@ -4157,8 +4148,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="soft-block">
-        <!-- Rollo con las fotos de las reseñas, en chico y corriendo como una tira
-             de película. Lo llena armarRolloResenas() cuando se acerca a la pantalla. -->
+        <!-- Rollo con las fotos de las reseñas, en chico y pasando despacio.
+             Lo llena armarRolloResenas() cuando se acerca a la pantalla. -->
         <div class="rollo" id="rollo-resenas" aria-hidden="true"><div class="rollo-pista"></div></div>
         <div class="soft-head">
           <div class="soft-kicker">Por qué DEUS Band</div>
@@ -5732,11 +5723,16 @@ function aplicarOrdenResenas(orden){
 })();
 // ── Rollo de fotos de las reseñas (encima de la tabla comparativa) ──
 // Toma las fotos del carrusel en el orden en que se ven, incluidas las subidas
-// desde el panel, y las pasa en chico como una tira de película. Las fijas usan
+// desde el panel, y las pasa en chico, corriendo despacio. Las fijas usan
 // su copia liviana de img/rollo/ (mismo nombre de archivo); las del panel, su
-// foto. Una foto editada lleva el mismo aviso que en su reseña.
+// foto. El rollo no lleva textos, así que de una reseña con foto editada se usa
+// la foto ORIGINAL del cliente (data-original); si no hay original (una subida
+// desde el panel marcada como editada), esa reseña no entra al rollo.
 // Se arma recién cuando el rollo se acerca a la pantalla (no baja fotos que
 // nadie va a ver) y se rehace si cambian las reseñas o su orden.
+// La pista lleva las fotos 3 veces y arranca en la del medio: así se puede
+// deslizar para los dos lados, y al quedar quieto se salta una copia entera
+// (que es idéntica) sin que se note.
 function miniRollo(src){
   var m=/^img\/([\w.-]+\.webp)$/.exec(src||'');
   return m ? 'img/rollo/'+m[1] : src;
@@ -5749,27 +5745,66 @@ function armarRolloResenas(forzar){
   [].forEach.call(carr.querySelectorAll(':scope > .review-card:not(.rv-sin-foto)'), function(c){
     var m=c.querySelector('.review-photo'); if(!m) return;
     var src=m.tagName==='VIDEO' ? (m.getAttribute('data-poster')||m.getAttribute('poster')) : m.getAttribute('src');
-    if(src) fotos.push({ src:src, pos:m.style.objectPosition, editada:!!c.querySelector('.review-nota') });
+    if(c.querySelector('.review-nota')) src=m.getAttribute('data-original');
+    if(src) fotos.push({ src:src, pos:m.style.objectPosition });
   });
   var pista=rollo.querySelector('.rollo-pista');
   pista.textContent='';
   rollo.hidden=!fotos.length;
   if(!fotos.length) return;
-  var quieto=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  for(var vuelta=0; vuelta<(quieto?1:2); vuelta++){
+  var copias=rolloQuieto() ? 1 : 3;
+  for(var vuelta=0; vuelta<copias; vuelta++){
     fotos.forEach(function(f){
       var cu=document.createElement('div'); cu.className='rollo-cuadro';
-      var img=document.createElement('img'); img.alt=''; img.decoding='async';
+      var img=document.createElement('img'); img.alt=''; img.decoding='async'; img.draggable=false;
       var mini=miniRollo(f.src);
       if(mini!==f.src) img.onerror=function(){ this.onerror=null; this.src=f.src; }; // sin copia chica: la original
       img.src=mini;
       if(f.pos) img.style.objectPosition=f.pos;
       cu.appendChild(img);
-      if(f.editada){ var e=document.createElement('span'); e.className='rollo-ed'; e.textContent='Foto editada'; cu.appendChild(e); }
       pista.appendChild(cu);
     });
   }
-  pista.style.animationDuration=(fotos.length*3.4)+'s'; // misma velocidad con más o menos fotos
+  rollo.scrollLeft=copias===3 ? pista.scrollWidth/3 : 0;
+  moverRollo(rollo);
+}
+function rolloQuieto(){ return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+// Avance automático: ~30 px por segundo moviendo el scroll del rollo. Se frena
+// mientras el dedo está encima (o el mouse, en computador) y vuelve solo un
+// poco después de soltar, cuando terminó la inercia. Si el scroll cambió sin
+// que lo moviera esto (dedo, inercia, trackpad), se toma esa posición nueva.
+// Fuera de pantalla no corre. Con "reducir movimiento" no avanza solo.
+var rolloMotor=null;
+function moverRollo(rollo){
+  if(rolloMotor){ rolloMotor.desde(rollo.scrollLeft); return; }
+  if(rolloQuieto()) return;
+  var VEL=0.03, x=rollo.scrollLeft, tocando=false, encima=false, enPantalla=true, pausaHasta=0, antes=0, corriendo=false;
+  var mouse=!!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
+  rolloMotor={ desde:function(v){ x=v; } };
+  rollo.addEventListener('touchstart', function(){ tocando=true; }, { passive:true });
+  ['touchend','touchcancel'].forEach(function(ev){
+    rollo.addEventListener(ev, function(){ tocando=false; pausaHasta=performance.now()+1200; }, { passive:true });
+  });
+  if(mouse){
+    rollo.addEventListener('mouseenter', function(){ encima=true; });
+    rollo.addEventListener('mouseleave', function(){ encima=false; });
+  }
+  function paso(t){
+    if(!enPantalla){ corriendo=false; return; }
+    var dt=antes ? Math.min(t-antes, 64) : 0; antes=t;
+    if(Math.abs(rollo.scrollLeft-x)>2){ x=rollo.scrollLeft; pausaHasta=t+1200; } // lo movió la persona
+    var W=rollo.querySelector('.rollo-pista').scrollWidth/3;
+    if(!tocando && !encima && t>pausaHasta && W>0){
+      x+=VEL*dt;
+      if(x>=2*W) x-=W; else if(x<W) x+=W;
+      rollo.scrollLeft=x;
+    }
+    requestAnimationFrame(paso);
+  }
+  function arrancar(){ if(!corriendo){ corriendo=true; antes=0; requestAnimationFrame(paso); } }
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(es){ enPantalla=es[0].isIntersecting; if(enPantalla) arrancar(); }).observe(rollo);
+  } else arrancar();
 }
 (function(){
   var rollo=document.getElementById('rollo-resenas'); if(!rollo) return;
