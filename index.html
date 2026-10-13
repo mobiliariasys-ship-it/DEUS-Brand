@@ -354,6 +354,11 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
       "@type": "Question",
       "name": "¿Es un dispositivo médico? ¿Tiene aval de instituciones clínicas?",
       "acceptedAnswer": { "@type": "Answer", "text": "No es un dispositivo de diagnóstico médico (no sustituye una polisomnografía ni un ECG clínico), sino una herramienta de métrica continua para rendimiento deportivo. Su valor práctico se basa en la correlación de la VFC (variabilidad de la frecuencia cardíaca, HRV) nocturna y el pulso en reposo, respaldada por la literatura en ciencias del deporte. Si necesitas algún detalle o requerimiento técnico específico, escríbenos y lo revisamos." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Qué certificaciones tiene?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Cuenta con las certificaciones internacionales exigidas para tecnología wearable de consumo: CE y FCC, que acreditan que cumple los estándares de emisión electromagnética y de radiofrecuencia (Bluetooth Low Energy), y RoHS, que certifica que sus componentes electrónicos están libres de sustancias peligrosas como plomo, mercurio o cadmio. Para medir usa sensores fotopletismográficos (PPG), que leen tu pulso con luz, y un acelerómetro de 3 ejes, integrados con la app Da Halo." }
     }
   ]
 }
@@ -589,6 +594,8 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
 .bat-card img{width:100%;height:auto;display:block;}
 .bat-txt .soft-title{font-size:1.85rem;}
 .bat-txt p{font-size:.88rem;line-height:1.6;color:var(--silver);margin-top:10px;}
+/* Certificaciones, en chico bajo las tres cifras (el detalle está en la FAQ) */
+.bat-txt p.bat-cert{margin-top:14px;font-size:.74rem;line-height:1.4;letter-spacing:.6px;color:#8a8a94;} /* sin mayúsculas: el nombre es "RoHS" */
 .bat-stats{list-style:none;display:flex;gap:10px;margin:20px 0 0;padding:0;}
 .bat-stats li{flex:1;border-radius:16px;padding:12px 6px;text-align:center;
   background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.11);
@@ -4127,12 +4134,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="bat-txt">
             <div class="soft-kicker">Materiales y sensor</div>
             <h2 class="soft-title">Ligera, resistente y con sensor de alta calidad</h2>
-            <p>Pesa solo 24 gramos con la correa: no la sientes ni al dormir. Estructura de aleación de zinc, correas de silicona de grado médico y nylon respirable, y metal libre de níquel donde toca tu piel. Atrás, un sensor óptico de alta calidad lee tu pulso con luz, las 24 horas.</p>
+            <p>Pesa solo 24 gramos con la correa: no la sientes ni al dormir. Estructura de aleación de zinc, correas de silicona de grado médico y nylon respirable, y metal libre de níquel donde toca tu piel. Atrás, un sensor óptico (PPG) de alta calidad lee tu pulso con luz las 24 horas, junto a un acelerómetro de 3 ejes que registra tu movimiento.</p>
             <ul class="bat-stats">
               <li><b>24</b><span>gramos con correa</span></li>
               <li><b>Zinc</b><span>estructura de aleación</span></li>
               <li><b>24/7</b><span>sensor óptico</span></li>
             </ul>
+            <p class="bat-cert">Certificaciones CE · FCC · RoHS</p>
           </div>
         </div>
       </div>
@@ -4691,6 +4699,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <details>
       <summary>¿Es un dispositivo médico? ¿Tiene aval de instituciones clínicas?</summary>
       <p>No es un dispositivo de diagnóstico médico (no sustituye una polisomnografía ni un ECG clínico), sino una herramienta de métrica continua para rendimiento deportivo. Su valor práctico se basa en la correlación de la VFC (variabilidad de la frecuencia cardíaca, HRV) nocturna y el pulso en reposo, respaldada por la literatura en ciencias del deporte. Si necesitas algún detalle o requerimiento técnico específico, escríbenos y lo revisamos.</p>
+    </details>
+    <details>
+      <summary>¿Qué certificaciones tiene?</summary>
+      <p>Cuenta con las certificaciones internacionales exigidas para tecnología wearable de consumo: CE y FCC, que acreditan que cumple los estándares de emisión electromagnética y de radiofrecuencia (Bluetooth Low Energy), y RoHS, que certifica que sus componentes electrónicos están libres de sustancias peligrosas como plomo, mercurio o cadmio. Para medir usa sensores fotopletismográficos (PPG), que leen tu pulso con luz, y un acelerómetro de 3 ejes, integrados con la app Da Halo.</p>
     </details>
   </section>
 

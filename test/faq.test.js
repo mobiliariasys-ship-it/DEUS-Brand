@@ -27,3 +27,14 @@ test('la FAQ aclara que no es un dispositivo de diagnóstico médico', () => {
   assert.match(r, /literatura en ciencias del deporte/);
   assert.ok(datosFaq.mainEntity.some((q) => q.name === p), 'falta la pregunta en los datos para Google');
 });
+
+test('la FAQ de certificaciones describe bien cada una (RoHS no es biocompatibilidad)', () => {
+  const p = '¿Qué certificaciones tiene?';
+  const i = html.indexOf('<summary>' + p + '</summary>');
+  assert.ok(i !== -1, 'falta la pregunta en la página');
+  const r = html.slice(i, html.indexOf('</details>', i));
+  for (const c of ['CE', 'FCC', 'RoHS', 'PPG', 'acelerómetro de 3 ejes']) assert.ok(r.includes(c), 'falta ' + c);
+  assert.match(r, /RoHS, que certifica que sus componentes electrónicos están libres de sustancias peligrosas/);
+  assert.doesNotMatch(r, /biocompatib/i, 'RoHS trata sustancias peligrosas en la electrónica, no la biocompatibilidad con la piel');
+  assert.ok(datosFaq.mainEntity.some((q) => q.name === p), 'falta la pregunta en los datos para Google');
+});
