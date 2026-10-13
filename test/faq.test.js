@@ -44,8 +44,9 @@ test('agua: la FAQ dice qué aguanta y cómo cuidarla, y el chatbot lo mismo', (
   const i = html.indexOf('<summary>¿Puedo entrenar y mojarla?</summary>');
   assert.ok(i !== -1, 'falta la pregunta del agua');
   const r = html.slice(i, html.indexOf('</details>', i));
-  for (const t of ['sudor intenso', 'duchas de agua fría o templada', 'inmersiones accidentales o breves en agua dulce',
+  for (const t of ['sudor intenso', 'duchas de agua templada', 'inmersiones accidentales o breves en agua dulce',
     'No es apta para buceo ni natación prolongada', 'saunas', 'seca bien los pines de carga']) assert.ok(r.includes(t), 'la FAQ no dice: ' + t);
+  assert.ok(!/ducha\w* (de agua )?fr[ií]a/i.test(html) && !/ducha\w* (de agua )?fr[ií]a/i.test(chat), 'quedó una mención a duchas frías');
   assert.match(chat, /No se recomienda usar la banda en duchas con agua caliente ni saunas/);
   assert.match(chat, /secar bien los pines/);
   // La web dice 1 ATM. Si la banda tiene certificación IP68, se cambia en la web
