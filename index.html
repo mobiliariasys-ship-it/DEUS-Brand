@@ -483,7 +483,7 @@ html.promo #upsell-card{display:none!important;}
 .soft-block{position:relative;}
 .soft-block+.soft-block{margin-top:72px;}
 .soft-head{text-align:center;max-width:580px;margin:0 auto 30px;}
-/* Rollo de fotos de las reseñas, encima de la tabla comparativa: las fotos del
+/* Rollo de fotos de las reseñas, encima de la tarjeta "En movimiento": las fotos del
    carrusel en chico, pasando despacio de derecha a izquierda. Es un scroll
    horizontal de verdad, así se desliza con el dedo (con la inercia del
    teléfono); el avance solo lo hace moverRollo() y se frena al tocarlo. */
@@ -4134,6 +4134,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="soft-block" id="diseno">
+        <!-- Rollo con las fotos de las reseñas, en chico y pasando despacio.
+             Lo llena armarRolloResenas() cuando se acerca a la pantalla. -->
+        <div class="rollo" id="rollo-resenas" aria-hidden="true"><div class="rollo-pista"></div></div>
         <!-- Diseño sin distracciones: el video del ciclista en la misma tarjeta de
              vidrio. El video (585 KB; antes 1,2 MB, que en 4G tardaba en
              arrancar) se carga recién cuando se acerca (data-lazy-src) y lo
@@ -4148,9 +4151,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="soft-block">
-        <!-- Rollo con las fotos de las reseñas, en chico y pasando despacio.
-             Lo llena armarRolloResenas() cuando se acerca a la pantalla. -->
-        <div class="rollo" id="rollo-resenas" aria-hidden="true"><div class="rollo-pista"></div></div>
         <div class="soft-head">
           <div class="soft-kicker">Por qué DEUS Band</div>
           <h2 class="soft-title">Lo que la hace diferente</h2>
@@ -5721,7 +5721,7 @@ function aplicarOrdenResenas(orden){
     })
     .catch(function(){});
 })();
-// ── Rollo de fotos de las reseñas (encima de la tabla comparativa) ──
+// ── Rollo de fotos de las reseñas (encima de la tarjeta "En movimiento") ──
 // Toma las fotos del carrusel en el orden en que se ven, incluidas las subidas
 // desde el panel, y las pasa en chico, corriendo despacio. Las fijas usan
 // su copia liviana de img/rollo/ (mismo nombre de archivo); las del panel, su
