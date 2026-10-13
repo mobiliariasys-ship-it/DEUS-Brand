@@ -78,10 +78,10 @@ test('el 360° va en "Así de simple", entre los pasos y las funciones de la app
   const finSimple = html.indexOf('</section>', simple);
   const pasos = html.indexOf('Póntela y optimízate', simple);
   const tarjeta = html.indexOf('<div class="soft-block" id="tecnologia">');
-  const app = html.indexOf('App Da Halo · gratis', simple);
+  const app = html.indexOf('+14 funciones en una sola app', simple);
   assert.ok(simple !== -1 && pasos !== -1 && app !== -1, 'faltan los bloques de #simple');
   assert.ok(simple < pasos && pasos < tarjeta && tarjeta < app && app < finSimple,
-    'el 360° va dentro de #simple, después de los pasos y arriba de "App Da Halo · gratis"');
+    'el 360° va dentro de #simple, después de los pasos y arriba de las +14 funciones de la app');
   // El script del visor busca el canvas apenas carga: si quedara antes de la
   // tarjeta no lo encontraría y la banda no giraría.
   const script = html.indexOf("document.getElementById('rot360-canvas')");

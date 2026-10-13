@@ -17,8 +17,9 @@ test('La app y Diseño sin distracciones van dentro de #simple, antes de la tabl
   const orden = [
     ['los pasos', pos('Póntela y optimízate')],
     ['el 360°', pos('id="tecnologia"')],
-    ['las +14 funciones', pos('+14 funciones en una sola app')],
     ['La app', pos('<div class="soft-block" id="app">')],
+    ['las +14 funciones (dentro de la tarjeta de la app)', pos('+14 funciones en una sola app')],
+    ['"se conecta con" de la app', pos('class="app-tri"')],
     ['Materiales y sensor', pos('class="bat-card"')],
     ['Diseño sin distracciones', pos('<div class="soft-block" id="diseno">')],
     ['la tabla', pos('Por qué DEUS Band')],
