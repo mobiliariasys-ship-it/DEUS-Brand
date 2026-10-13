@@ -1593,14 +1593,18 @@ body.sb-on .wa-float{bottom:82px;}
    barra de batería, se corre el cursor del peso, suben las barras de agua y
    aparece el check; solo se anima transform y opacity. Sin JS o con "reducir
    movimiento" no se agrega .anim y todo queda quieto en su estado final. */
-.specs{--ac:#3cc3cf;--ac-claro:#9ee7ee;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0 0;}
+/* Las columnas nunca quedan más angostas que su contenido ("App incluida Gratis"
+   va en una sola línea): si a los cuatro no les alcanza el ancho del bloque,
+   pasan a 2 × 2. */
+.specs-caja{container:specs / inline-size;}
+.specs{--ac:#3cc3cf;--ac-claro:#9ee7ee;display:grid;grid-template-columns:repeat(4,minmax(min-content,1fr));gap:8px;margin:12px 0 0;}
 .spec{display:flex;flex-direction:column;gap:8px;min-width:0;overflow:hidden;background:#101010;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px 12px 13px;}
 .spec-k{font-size:.56rem;letter-spacing:1.6px;text-transform:uppercase;color:#8a8a94;font-weight:600;}
 .spec-v{display:flex;align-items:baseline;gap:4px;line-height:1;white-space:nowrap;}
 .spec-v b{font-size:1.5rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.5px;}
 .spec-v small{font-size:.68rem;color:var(--silver);font-weight:500;}
 .spec-s{font-size:.64rem;line-height:1.35;color:#8f8f99;}
-.spec-s .spec-az{color:var(--ac-claro);font-weight:600;} /* "Gratis", en el mismo celeste que "App incluida" */
+.spec-app .spec-az{font-weight:inherit;} /* "Gratis", en la misma línea y el mismo celeste que "App incluida" */
 .spec-bat{height:6px;border-radius:6px;background:#262629;overflow:hidden;}
 .spec-bat i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--ac),var(--ac-claro));transform-origin:left;}
 .spec-peso{position:relative;height:14px;background:repeating-linear-gradient(90deg,#3c3c44 0 1px,transparent 1px 6px) 0 50%/100% 7px no-repeat;}
@@ -1631,6 +1635,7 @@ body.sb-on .wa-float{bottom:82px;}
 /* Las barras de agua ondean suave una vez que aparecieron */
 @keyframes spec-ola{0%,100%{transform:scaleY(1);}50%{transform:scaleY(.6);}}
 @media(max-width:600px){.specs{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@container specs (max-width:469px){.specs{grid-template-columns:repeat(2,minmax(0,1fr));}}
 /* Modal de reseñas: se ven sin salir de la zona de compra */
 .reviews-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1600;align-items:center;justify-content:center;padding:20px;}
 .reviews-modal.show{display:flex;}
@@ -2172,7 +2177,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- Cifras de la banda en cuatro recuadros (con animación al aparecer). Son
            los datos de DEUS: hasta 30 días de batería, 24 g con correa, 1 ATM
            y la app gratis. El celeste es el acento de este bloque. -->
-      <div class="specs" id="specs">
+      <div class="specs-caja"><div class="specs" id="specs">
         <div class="spec">
           <div class="spec-k">Batería</div>
           <div class="spec-v"><b data-hasta="30">30</b><small>días</small></div>
@@ -2182,8 +2187,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="spec">
           <div class="spec-k">Suscripción</div>
           <div class="spec-v"><b>$0</b><small>siempre</small></div>
-          <div class="spec-app"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#0b0b0b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>App incluida</div>
-          <div class="spec-s"><b class="spec-az">Gratis</b> en iOS y Android</div>
+          <div class="spec-app"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#0b0b0b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>App incluida <b class="spec-az">Gratis</b></span></div>
+          <div class="spec-s">en iOS y Android</div>
         </div>
         <div class="spec spec-dest">
           <div class="spec-k">Resistencia</div>
@@ -2197,7 +2202,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="spec-peso" aria-hidden="true"><i></i></div>
           <div class="spec-s">Con correa y estructura de alta resistencia en aleación de zinc</div>
         </div>
-      </div>
+      </div></div>
 
       <div class="resist-badge app-badge">
         <img src="img/img-c9eeead6.webp" alt="App Da Halo" class="app-badge-ico" loading="lazy" decoding="async">
