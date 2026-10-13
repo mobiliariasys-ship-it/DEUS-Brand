@@ -98,10 +98,40 @@ test('un archivo que no es imagen, aunque diga image/jpeg, no se guarda', async 
   assert.strictEqual(s.publicas().length, 0);
 });
 
-test('una foto de más de 1,5 MB se rechaza', async () => {
+// JPEG de prueba del peso pedido (la firma basta para pasar la validación).
+const jpegDe = (bytes) => 'data:image/jpeg;base64,' + Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.alloc(bytes - 3)]).toString('base64');
+
+test('una foto de alta calidad (2,5 MB) se acepta y una de más de 3 MB se rechaza', async () => {
   const { s } = await servicio();
-  const grande = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.alloc(1.6 * 1024 * 1024)]);
-  await assert.rejects(s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: 'data:image/jpeg;base64,' + grande.toString('base64') }), /1,5 MB/);
+  const r = await s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: jpegDe(2.5 * 1024 * 1024) });
+  assert.strictEqual(r.foto, '/resenas/foto/' + r.id, 'el panel sube fotos de hasta 2000 px, que pesan eso');
+  assert.strictEqual((await s.foto(r.id)).buf.length, 2.5 * 1024 * 1024);
+  await assert.rejects(s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: jpegDe(3 * 1024 * 1024 + 1) }), /3 MB/);
+});
+
+test('la cache de fotos se limita por peso: saca las más viejas y las vuelve a leer de la base', async () => {
+  const m = memoria();
+  let lecturas = 0;
+  const load = (k, fallback) => { if (k.startsWith('resena-foto-')) lecturas++; return m.load(k, fallback); };
+  const s = crearServicio({ load, save: m.save, maxCache: 1000 });
+  await s.init();
+  const [a, b, c] = [await s.crear({ autor: 'A', texto: 'x', estrellas: 5, foto: jpegDe(400) }),
+    await s.crear({ autor: 'B', texto: 'x', estrellas: 5, foto: jpegDe(400) }),
+    await s.crear({ autor: 'C', texto: 'x', estrellas: 5, foto: jpegDe(400) })];
+  // A + B + C = 1200 bytes > 1000: A salió de la memoria, B y C siguen.
+  await s.foto(b.id); await s.foto(c.id);
+  assert.strictEqual(lecturas, 0, 'B y C se sirven desde memoria');
+  assert.strictEqual((await s.foto(a.id)).buf.length, 400, 'A se recupera de la base');
+  assert.strictEqual(lecturas, 1);
+  // Al volver A, sale B (la más vieja que queda); C sigue en memoria.
+  await s.foto(c.id);
+  assert.strictEqual(lecturas, 1);
+  await s.foto(b.id);
+  assert.strictEqual(lecturas, 2);
+  // Una foto más pesada que todo el límite igual se sirve: solo queda ella.
+  const d = await s.crear({ autor: 'D', texto: 'x', estrellas: 5, foto: jpegDe(1500) });
+  assert.strictEqual((await s.foto(d.id)).buf.length, 1500);
+  assert.strictEqual(lecturas, 2, 'la recién subida se sirve desde memoria');
 });
 
 test('foto editada y persona cercana a la marca quedan avisadas en la reseña pública', async () => {

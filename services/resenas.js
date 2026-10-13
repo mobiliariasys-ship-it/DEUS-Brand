@@ -18,8 +18,12 @@ const CLAVE_ORDEN = 'resenas-orden.json';
 // caracteres para las subidas desde el panel.
 const RID_OK = /^(?:f-[a-z0-9._]{1,60}|[a-f0-9]{12})$/;
 const claveFoto = (id) => `resena-foto-${id}.json`;
-const MAX_FOTO = 1.5 * 1024 * 1024;   // bytes de la imagen ya decodificada
-const MAX_EN_CACHE = 40;              // fotos en memoria para no ir a la base en cada visita
+// Bytes de la imagen ya decodificada. El panel sube fotos de hasta 2000 px y
+// apunta a 2,5 MB como máximo; esto deja margen.
+const MAX_FOTO = 3 * 1024 * 1024;
+// Fotos en memoria para no ir a la base en cada visita. Se cuenta por PESO y no
+// por cantidad: con fotos de alta calidad, 40 fotos podían ser ~120 MB.
+const MAX_CACHE = 48 * 1024 * 1024;
 const ID_OK = /^[a-f0-9]{12}$/;
 // Cómo se muestra el origen junto al nombre ("@usuario · Instagram").
 const ORIGENES = { instagram: 'Instagram', whatsapp: 'WhatsApp', web: 'Formulario web', otro: '' };
@@ -40,7 +44,7 @@ function leerFoto(dataUrl) {
   const tipo = m[1];
   const buf = Buffer.from(m[2], 'base64');
   if (!buf.length) throw new ErrorResena('La foto llegó vacía.');
-  if (buf.length > MAX_FOTO) throw new ErrorResena('La foto pesa más de 1,5 MB.');
+  if (buf.length > MAX_FOTO) throw new ErrorResena('La foto pesa más de 3 MB.');
   const ascii = (a, b) => buf.subarray(a, b).toString('latin1');
   const firmaOk =
     tipo === 'image/jpeg' ? buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff :
@@ -59,12 +63,13 @@ function listaIds(v) {
   return [...ids];
 }
 
-function crearServicio({ load, save }) {
+function crearServicio({ load, save, maxCache = MAX_CACHE }) {
   let lista = [];
   // Orden del carrusel elegido en el panel. Las reseñas que no figuran (las
   // recién subidas) van primero; las fijas que no figuran, al final.
   let orden = { fotos: [], textos: [] };
-  const cache = new Map(); // id -> { tipo, buf }
+  const cache = new Map(); // id -> { tipo, buf }, de la más vieja a la más nueva
+  let pesoCache = 0;       // bytes que ocupan las fotos de la cache
 
   async function init() {
     const v = await load(CLAVE_LISTA, []);
@@ -153,15 +158,28 @@ function crearServicio({ load, save }) {
     const [r] = lista.splice(i, 1);
     await guardarLista();
     if (r.foto) {
-      cache.delete(id);
+      olvidar(id);
       await save(claveFoto(id), null); // persist.js no borra claves: se vacía
     }
     return true;
   }
 
+  function olvidar(id) {
+    const f = cache.get(id);
+    if (!f) return;
+    cache.delete(id);
+    pesoCache -= f.buf.length;
+  }
+
+  // Guarda la foto y, si la cache se pasa de peso, saca las más viejas.
   function recordar(id, f) {
-    if (cache.size >= MAX_EN_CACHE) cache.delete(cache.keys().next().value);
+    olvidar(id);
     cache.set(id, f);
+    pesoCache += f.buf.length;
+    for (const k of cache.keys()) {
+      if (pesoCache <= maxCache || k === id) break;
+      olvidar(k);
+    }
   }
 
   // Foto de una reseña. Las ocultas solo se entregan al panel (miniaturas).
