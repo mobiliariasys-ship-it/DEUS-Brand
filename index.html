@@ -383,18 +383,13 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 /* Barra con contador: texto arriba + contador regresivo centrado debajo */
 .announce-bar.reserva{display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.35;padding-top:8px;padding-bottom:8px;}
 .announce-bar .reserva-cd{display:flex;gap:6px;justify-content:center;text-transform:none;}
-/* Top bar en dos columnas. Izquierda, el envío ("ENVÍO GRATIS" arriba y los
-   días de envío abajo en gris); derecha, el reloj de 24 h solo, centrado en
-   el alto de las dos filas. La raya del medio es el ::before. */
-.announce-bar .ab-in{display:inline-grid;grid-template-columns:auto 1px auto;column-gap:16px;row-gap:4px;align-items:baseline;text-align:left;vertical-align:top;}
-.announce-bar .ab-in::before{content:"";grid-column:2;grid-row:1/3;align-self:stretch;background:#2c2c2c;}
-.announce-bar .ab-titulo{grid-column:1;grid-row:1;font-size:.74rem;letter-spacing:2.4px;font-weight:700;}
-.announce-bar .ab-plazo{grid-column:1;grid-row:2;font-size:.6rem;letter-spacing:1.6px;color:#9a9a9a;font-weight:500;}
-.announce-bar .ab-reloj{grid-column:3;grid-row:1/3;align-self:center;justify-self:center;font-size:1rem;font-weight:800;color:#e7cf9c;letter-spacing:1.6px;font-variant-numeric:tabular-nums;}
-/* Sin reloj (un navegador sin la hora de Chile, o mientras haya un plazo de
-   promo con sus propias cajitas): queda solo la columna del envío, centrada. */
-.announce-bar .ab-in.sin-reloj{grid-template-columns:auto;text-align:center;}
-.announce-bar .ab-in.sin-reloj::before{display:none;}
+/* Top bar en una columna centrada: "ENVÍO GRATIS", los días de envío en gris
+   y debajo el reloj de 24 h en cajitas (hrs · min · seg), con el mismo
+   recuadro .abcd-box que usaba el contador de las promos. */
+.announce-bar .ab-in{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.announce-bar .ab-titulo{font-size:.74rem;letter-spacing:2.4px;font-weight:700;}
+.announce-bar .ab-plazo{font-size:.6rem;letter-spacing:1.6px;color:#9a9a9a;font-weight:500;}
+.announce-bar .ab-reloj{display:inline-flex;gap:5px;margin-top:5px;text-transform:none;}
 /* Cajitas del contador de la oferta en la barra superior. Cada dígito tiene
    su recuadro con su etiqueta abajo. Las del bloque de precio usan .cdb, que
    es el mismo lenguaje visual en chico. */
@@ -412,15 +407,13 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 .abcd-box small{font-size:.48rem;letter-spacing:1.2px;color:#7a7a7a;margin-top:4px;text-transform:uppercase;font-weight:500;}
 @media(max-width:600px){.abcd-box{min-width:38px;padding:4px 8px;}.abcd-box b{font-size:.98rem;}}
 @media(max-width:600px){
-  .announce-bar .ab-in{column-gap:12px;row-gap:3px;}
   .announce-bar .ab-titulo{font-size:.66rem;letter-spacing:1.8px;}
   .announce-bar .ab-plazo{font-size:.54rem;letter-spacing:1px;}
-  .announce-bar .ab-reloj{font-size:.92rem;letter-spacing:1.2px;}
+  .announce-bar .ab-reloj{margin-top:4px;}
   /* Con la promo, el regalo baja a su propia línea en vez de dejar "GRATIS" suelto */
   .announce-bar .ab-titulo .solo-promo{display:block;margin-top:3px;}
 }
 @media(max-width:374px){
-  .announce-bar .ab-in{column-gap:9px;}
   .announce-bar .ab-titulo{letter-spacing:1.3px;}
   .announce-bar .ab-plazo{letter-spacing:.5px;}
 }
@@ -1680,7 +1673,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 <!-- Mismo marcado que arma htmlTopBar() en aplicarReserva(): si se toca uno, tocar el otro. -->
-<div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span><b class="ab-reloj" id="ab-reloj" role="timer">--:--:--</b></div></div>
+<div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span><span class="ab-reloj" id="ab-reloj" role="timer"><span class="abcd-box"><b>--</b><small>hrs</small></span><span class="abcd-box"><b>--</b><small>min</small></span><span class="abcd-box"><b>--</b><small>seg</small></span></span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -5058,6 +5051,15 @@ function textoReloj(ms) {
   return z(Math.floor(s / 3600)) + ':' + z(Math.floor(s / 60) % 60) + ':' + z(s % 60);
 }
 
+// El reloj va en tres cajitas, cada una con su unidad abajo.
+var RELOJ_UNIDADES = ['hrs', 'min', 'seg'];
+function cajitasReloj(texto) {
+  var p = texto.split(':');
+  return RELOJ_UNIDADES.map(function (u, i) {
+    return '<span class="abcd-box"><b>' + p[i] + '</b><small>' + u + '</small></span>';
+  }).join('');
+}
+
 // Marcado de la barra. El HTML de la página trae el mismo ya puesto, para que
 // no parpadee mientras aplicarReserva() espera al fetch de /stock.
 function htmlTopBar(sinReloj) {
@@ -5067,7 +5069,7 @@ function htmlTopBar(sinReloj) {
       ? '<b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b>'
       : '<b class="ab-titulo">🔥 Última unidad disponible</b>') +
     '<span class="ab-plazo">1-2 días de envío a todo Chile</span>' +
-    (sinReloj ? '' : '<b class="ab-reloj" id="ab-reloj" role="timer">' + textoReloj() + '</b>') +
+    (sinReloj ? '' : '<span class="ab-reloj" id="ab-reloj" role="timer">' + cajitasReloj(textoReloj()) + '</span>') +
     '</div>';
 }
 
@@ -5077,7 +5079,11 @@ function pintarReloj() {
   var e = document.getElementById('ab-reloj');
   if (!e) return;
   var ms = msHastaReinicio();
-  if (ms) { e.textContent = textoReloj(ms); return; }
+  if (ms) {
+    var p = textoReloj(ms).split(':'), b = e.querySelectorAll('b');
+    for (var i = 0; i < b.length; i++) b[i].textContent = p[i];
+    return;
+  }
   e.parentNode.classList.add('sin-reloj');
   e.parentNode.removeChild(e);
 }

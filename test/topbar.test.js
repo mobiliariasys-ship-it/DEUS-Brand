@@ -38,8 +38,8 @@ function conReloj(iso) {
   }
   const ctx = vm.createContext({ Date: RelojFijo, ofertaActiva: () => true });
   vm.runInContext([
-    variable('RELOJ_HORA'),
-    extraer('ahoraChile'), extraer('msHastaReinicio'), extraer('textoReloj'), extraer('htmlTopBar'),
+    variable('RELOJ_HORA'), variable('RELOJ_UNIDADES'),
+    extraer('ahoraChile'), extraer('msHastaReinicio'), extraer('textoReloj'), extraer('cajitasReloj'), extraer('htmlTopBar'),
   ].join('\n'), ctx);
   return ctx;
 }
@@ -64,11 +64,13 @@ test('el reloj nunca pasa de 24 h ni queda en cero', () => {
   }
 });
 
-test('la barra lleva el envío a todo Chile y el reloj solo, sin etiqueta', () => {
+test('la barra lleva el envío a todo Chile y debajo el reloj en cajitas, sin etiqueta', () => {
   const c = conReloj('2026-10-12T17:00:00Z');
   const con = c.htmlTopBar(false);
   assert.match(con, /1-2 días de envío a todo Chile/);
-  assert.match(con, /id="ab-reloj"[^>]*>12:00:00<\/b><\/div>$/, 'el reloj cierra la barra, sin texto al lado');
+  const caja = (n, u) => '<span class="abcd-box"><b>' + n + '</b><small>' + u + '</small></span>';
+  assert.ok(con.endsWith('<span class="ab-reloj" id="ab-reloj" role="timer">' + caja('12', 'hrs') + caja('00', 'min') + caja('00', 'seg') + '</span></div>'),
+    'el reloj cierra la barra en tres cajitas, sin texto al lado: ' + con);
   const sin = c.htmlTopBar(true);
   assert.match(sin, /class="ab-in sin-reloj"/);
   assert.doesNotMatch(sin, /ab-reloj/, 'con un plazo de promo real, sus cajitas reemplazan al reloj');
@@ -78,8 +80,8 @@ test('el HTML de la página trae el mismo marcado que arma htmlTopBar()', () => 
   // Si difieren, la barra cambia de forma apenas corre aplicarReserva().
   const m = SRC.match(/<div class="announce-bar" id="offer-bar">([\s\S]*?)<\/div><\/div>/);
   assert.ok(m, 'no encontré el top bar en el HTML');
-  const reloj = /(id="ab-reloj"[^>]*>)[^<]*</;
-  const html = (m[1] + '</div>').replace(reloj, '$1X<');
-  const js = conReloj('2026-10-12T17:00:00Z').htmlTopBar(false).replace(reloj, '$1X<');
+  const reloj = /<b>[^<]*<\/b>/g; // los números cambian; el marcado no
+  const html = (m[1] + '</div>').replace(reloj, '<b>X</b>');
+  const js = conReloj('2026-10-12T17:00:00Z').htmlTopBar(false).replace(reloj, '<b>X</b>');
   assert.strictEqual(html, js);
 });
