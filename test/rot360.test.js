@@ -78,7 +78,7 @@ test('el 360° va en "Así de simple", entre los pasos y las funciones de la app
   const finSimple = html.indexOf('</section>', simple);
   const pasos = html.indexOf('Póntela y optimízate', simple);
   const tarjeta = html.indexOf('<div class="soft-block" id="tecnologia">');
-  const app = html.indexOf('Funciones en una sola app', simple);
+  const app = html.indexOf('Funciones de la DEUS Band', simple);
   assert.ok(simple !== -1 && pasos !== -1 && app !== -1, 'faltan los bloques de #simple');
   assert.ok(simple < pasos && pasos < tarjeta && tarjeta < app && app < finSimple,
     'el 360° va dentro de #simple, después de los pasos y arriba de las funciones de la app');

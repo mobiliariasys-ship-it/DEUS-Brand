@@ -18,7 +18,7 @@ test('La app y Diseño sin distracciones van dentro de #simple, antes de la tabl
     ['los pasos', pos('Póntela y optimízate')],
     ['el 360°', pos('id="tecnologia"')],
     ['La app', pos('<div class="soft-block" id="app">')],
-    ['las funciones (dentro de la tarjeta de la app)', pos('Funciones en una sola app')],
+    ['las funciones (dentro de la tarjeta de la app)', pos('Funciones de la DEUS Band')],
     ['"se conecta con" de la app', pos('class="app-tri"')],
     ['Materiales y sensor', pos('class="bat-card"')],
     ['Diseño sin distracciones', pos('<div class="soft-block" id="diseno">')],

@@ -252,3 +252,11 @@
   for = "/*.html"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
+
+# La portada se pide como "/" (no como "/index.html"), así que la regla de
+# arriba no la alcanza: sin esta, un navegador (el de Instagram, por ejemplo)
+# podía seguir mostrando una versión vieja de la web.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
