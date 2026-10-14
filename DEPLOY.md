@@ -35,3 +35,17 @@
 ## Nota sobre el plan gratis de Render
 
 El backend "se duerme" tras 15 min de inactividad. La primera petición tras dormir tarda ~30s en despertar. Para una tienda con tráfico bajo es aceptable; si necesitas que esté siempre activo, sube al plan de pago.
+
+## Si un despliegue de Render se traba
+
+Si en Render → Events un despliegue queda en "Building… / Awaiting logs" o
+"Build not found" por más de 5 minutos, o "Manual Deploy" responde
+"Internal Server Error", la falla es de Render y no del código (pasó el
+14-10-2026, antes de una mantención suya). Qué hacer:
+
+1. Cancelar el despliegue trabado.
+2. Manual Deploy → Deploy latest commit.
+3. Si sigue igual, esperar y reintentar más tarde, o escribir a soporte
+   (Help → Contact support) con el link del despliegue.
+
+Mientras tanto la web sigue funcionando con la última versión publicada.
