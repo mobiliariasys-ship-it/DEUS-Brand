@@ -76,7 +76,7 @@ test('la tarjeta 360° va en la tarjeta de vidrio, con "DEUS BAND" y el visor ad
 test('el 360° va en "Así de simple", entre los pasos y las funciones de la app', () => {
   const simple = html.indexOf('<section class="soft" id="simple">');
   const finSimple = html.indexOf('</section>', simple);
-  const pasos = html.indexOf('Póntela y optimízate', simple);
+  const pasos = html.indexOf('Cómo usar la DEUS Band', simple);
   const tarjeta = html.indexOf('<div class="soft-block" id="tecnologia">');
   const app = html.indexOf('Funciones de la DEUS Band', simple);
   assert.ok(simple !== -1 && pasos !== -1 && app !== -1, 'faltan los bloques de #simple');

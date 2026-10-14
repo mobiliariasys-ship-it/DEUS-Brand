@@ -15,7 +15,7 @@ test('La app y Diseño sin distracciones van dentro de #simple, antes de la tabl
   assert.ok(ini !== -1 && fin !== -1, 'falta la sección #simple');
   const pos = s => html.indexOf(s, ini);
   const orden = [
-    ['los pasos', pos('Póntela y optimízate')],
+    ['los pasos', pos('Cómo usar la DEUS Band')],
     ['el 360°', pos('id="tecnologia"')],
     ['La app', pos('<div class="soft-block" id="app">')],
     ['las funciones (dentro de la tarjeta de la app)', pos('Funciones de la DEUS Band')],
