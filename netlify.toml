@@ -36,6 +36,12 @@
   force = true
 
 [[redirects]]
+  from = "/automatizacion/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
   from = "/scripts/*"
   to = "/404.html"
   status = 404
