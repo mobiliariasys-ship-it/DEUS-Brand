@@ -588,10 +588,8 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
 .fbtn:focus-visible{outline:2px solid var(--white);outline-offset:3px;}
 .fi{width:44px;height:44px;border-radius:15px;}
 .soft-note{text-align:center;font-size:.74rem;color:#8a8a94;margin-top:18px;}
-.bat-card{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:24px;border-radius:26px;padding:34px 34px 34px 14px;}
-/* La banda es negra: un foco de luz detrás la despega del fondo */
-.bat-foto{border-radius:20px;background:radial-gradient(ellipse 60% 70% at 50% 44%,rgba(255,255,255,.17) 0%,rgba(255,255,255,.06) 42%,rgba(255,255,255,0) 72%);}
-.bat-card img{width:100%;height:auto;display:block;}
+/* Tarjeta "Materiales y sensor": solo texto (sin la foto de la banda) */
+.bat-card{border-radius:26px;padding:34px;}
 .bat-txt .soft-title{font-size:1.85rem;}
 .bat-txt p{font-size:.88rem;line-height:1.6;color:var(--silver);margin-top:10px;}
 /* Certificaciones, en chico bajo las tres cifras (el detalle está en la FAQ) */
@@ -642,7 +640,7 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
 .soft.rev .rev-on{opacity:1;transform:none;}
 @media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}.soft.rev .step:nth-child(3){transition-delay:.2s;}}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
-  .bat-card{grid-template-columns:1fr;padding:26px 18px 22px;gap:14px;}}
+  .bat-card{padding:26px 18px 22px;}}
 @media(max-width:600px){.soft{padding:0;margin:24px -12px;}.soft-in{padding:42px 16px;border-radius:22px;}.soft-title{font-size:1.6rem;}.bat-txt .soft-title{font-size:1.5rem;}.soft-block+.soft-block{margin-top:56px;}.soft-head{margin-bottom:22px;}
   .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);}.fbtn{padding:16px 4px 12px;font-size:.68rem;gap:8px;border-radius:20px;}.fi{width:38px;height:38px;border-radius:13px;}.fi svg{width:19px;height:19px;}
   .cmp-wrap{padding:6px 4px 2px;border-radius:20px;}.cmp{font-size:.72rem;}.cmp th,.cmp td{padding:12px 4px;}.cmp thead th{font-size:.62rem;}.cmp thead th small{font-size:.56rem;}.cmp thead .c-deus{font-size:.7rem;}.cmp thead th.c-deus{font-size:.6rem;letter-spacing:.02em;}.cmp tbody th{padding-left:10px;width:38%;}.cmp tbody th small{font-size:.62rem;}.cv{font-size:.66rem;}.ck,.cx{width:22px;height:22px;}.ck svg,.cx svg{width:12px;height:12px;}
@@ -4209,7 +4207,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              Lo llena armarRolloResenas() cuando se acerca a la pantalla. -->
         <div class="rollo" id="rollo-resenas" aria-hidden="true"><div class="rollo-pista"></div></div>
         <div class="bat-card">
-          <div class="bat-foto"><img src="img/deus-sensor-celeste.webp" width="1100" height="311" alt="DEUS Band de perfil con el sensor óptico encendido en celeste" loading="lazy" decoding="async"></div>
           <div class="bat-txt">
             <div class="soft-kicker">Materiales y sensor</div>
             <h2 class="soft-title">Ligera, resistente y con sensor de alta calidad</h2>
