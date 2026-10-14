@@ -471,10 +471,10 @@ html.promo #upsell-card{display:none!important;}
 @keyframes raspePop{0%{transform:scale(.92)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
 .raspe-skip{display:block;margin:7px auto 0;background:none;border:none;color:#8f8f99;font-size:.62rem;text-decoration:underline;text-underline-offset:2px;cursor:pointer;font-family:inherit;padding:2px 6px;}
 @media(prefers-reduced-motion:reduce){.raspe-capa{transition:none;}.raspe.revelado .raspe-premio{animation:none;}}
-/* ── Sección "soft": cómo funciona, +14 funciones (cada una abre su
+/* ── Sección "soft": cómo funciona, funciones (cada una abre su
    explicación), batería y comparativa. Grises del sitio con profundidad: la
    hoja recibe luz desde arriba y las tarjetas son de vidrio (relleno
-   translúcido, filo de luz arriba, sombra abajo). Las 14 funciones son
+   translúcido, filo de luz arriba, sombra abajo). Las funciones son
    "gelatina": vidrio esmerilado sobre una trama de puntos, que se aplasta al
    tocarlo y rebota al soltarlo. ── */
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;}
@@ -517,7 +517,7 @@ html.promo #upsell-card{display:none!important;}
   background:radial-gradient(120% 90% at 0% 0%,rgba(255,255,255,.07),rgba(255,255,255,0) 55%),linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
   border:1px solid rgba(255,255,255,.09);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.3),0 26px 52px -30px rgba(0,0,0,.95);}
-.steps{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:0;padding:0;}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin:0;padding:0;}
 .step{border-radius:22px;padding:22px 22px 24px;}
 .step-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .step-n{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#5a5a63;letter-spacing:1px;}
@@ -534,9 +534,9 @@ html.promo #upsell-card{display:none!important;}
   .soft-title,.bat-stats b{background:linear-gradient(180deg,#ffffff 35%,#c4c4cd 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
   .step-n{background:linear-gradient(180deg,#a8a8b2 0%,#45454d 92%);-webkit-background-clip:text;background-clip:text;color:transparent;}
 }
-/* +14 funciones: luces suaves y una trama de puntos detrás, para que el
+/* funciones: luces suaves y una trama de puntos detrás, para que el
    vidrio se note (dentro de la tarjeta la trama se ve difuminada). */
-/* +14 funciones dentro de la tarjeta de la app, debajo de las pantallas:
+/* funciones dentro de la tarjeta de la app, debajo de las pantallas:
    una línea fina las separa del carrusel, como una sección más de la tarjeta. */
 .fn-en-app{position:relative;margin-top:30px;padding-top:30px;border-top:1px solid rgba(255,255,255,.08);}
 .fn-en-app .soft-head{margin-bottom:22px;}
@@ -638,7 +638,7 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
    la primera imagen. */
 .soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .r360-card,.soft.rev .app-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
 .soft.rev .rev-on{opacity:1;transform:none;}
-@media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}.soft.rev .step:nth-child(3){transition-delay:.2s;}}
+@media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
   .bat-card{padding:26px 18px 22px;}}
 @media(max-width:600px){.soft{padding:0;margin:24px -12px;}.soft-in{padding:42px 16px;border-radius:22px;}.soft-title{font-size:1.6rem;}.bat-txt .soft-title{font-size:1.5rem;}.soft-block+.soft-block{margin-top:56px;}.soft-head{margin-bottom:22px;}
@@ -2032,7 +2032,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var hitos=[
         ['.price-block','precio'],   // zona de compra
         ['.reviews','reviews'],      // reseñas
-        ['#simple','simple'],        // así de simple, +14 funciones y comparativa
+        ['#simple','simple'],        // así de simple, funciones y comparativa
         ['#tecnologia','sensor'],    // cómo funciona / 360°
         ['#app','app'],              // la app
         ['#diseno','diseno'],        // diseño sin distracciones
@@ -3957,7 +3957,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <!-- SOFT: cómo funciona en 3 pasos, +14 funciones (cada tarjeta abre su
+  <!-- SOFT: cómo funciona en 2 pasos, funciones (cada tarjeta abre su
        explicación en #fn-modal), batería de 30 días y comparativa. Con los
        grises del sitio y sin el celeste de la promo. -->
   <section class="soft" id="simple">
@@ -3967,21 +3967,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="soft-head">
           <div class="soft-kicker">Así de simple</div>
           <h2 class="soft-title">Póntela y optimízate</h2>
-          <p class="soft-sub">Tres pasos y tu DEUS Band empieza a entender cómo duermes, entrenas y te recuperas.</p>
+          <p class="soft-sub">Dos pasos y tu DEUS Band empieza a entender cómo duermes, entrenas y te recuperas.</p>
         </div>
         <ol class="steps">
           <li class="step">
             <div class="step-top"><span class="step-n">01</span><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9 6V3h6v3M9 18v3h6v-3"/></svg></span></div>
             <h3>Póntela</h3>
-            <p>Vincúlala solo una vez a la app Da Halo vía Bluetooth. Úsala en la muñeca que prefieras, izquierda o derecha. Pesa solo 24 g: la llevas todo el día e incluso para dormir, cómoda y ligera, sin luces que interrumpan tu sueño.</p>
+            <p>Vincúlala solo una vez a la app Da Halo vía Bluetooth. Úsala en la muñeca que prefieras, izquierda o derecha. La llevas todo el día e incluso para dormir, cómoda y ligera, sin luces que interrumpan tu sueño. Sus sensores siguen tu pulso, oxígeno y actividad 24/7, y lo guardan aunque no tengas el celular cerca.</p>
           </li>
           <li class="step">
-            <div class="step-top"><span class="step-n">02</span><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l2-6 4 12 3-9 2 3h5"/></svg></span></div>
-            <h3>Deja que DEUS Band haga el resto</h3>
-            <p>Sus sensores siguen tu pulso, oxígeno y actividad 24/7, y lo guardan aunque no tengas el celular cerca.</p>
-          </li>
-          <li class="step">
-            <div class="step-top"><span class="step-n">03</span><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M9 15l2-2 2 1.5 2-3.5"/></svg></span></div>
+            <div class="step-top"><span class="step-n">02</span><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M9 15l2-2 2 1.5 2-3.5"/></svg></span></div>
             <h3>Revisa tus resultados</h3>
             <p>En la app Da Halo, gratis y en español, ves tus datos y tu progreso. Se conecta con Apple Health y Strava.</p>
           </li>
@@ -4143,7 +4138,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           })();
           </script>
 
-          <!-- +14 funciones: integradas en la tarjeta de la app, debajo de las
+          <!-- funciones: integradas en la tarjeta de la app, debajo de las
                pantallas (antes eran un bloque aparte arriba de la tarjeta). -->
           <div class="fn-en-app">
           <div class="soft-head">
@@ -4538,7 +4533,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </dialog>
   <script>
-  // +14 funciones: cada tarjeta abre #fn-modal con qué mide y para qué le
+  // funciones: cada tarjeta abre #fn-modal con qué mide y para qué le
   // sirve a la persona. Los textos viven acá y el ícono se copia de la
   // tarjeta, para no duplicar nada en el HTML. Anterior/Siguiente (y las
   // flechas del teclado) recorren las 14 sin cerrar.
