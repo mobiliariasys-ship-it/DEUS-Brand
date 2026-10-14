@@ -111,7 +111,7 @@ exactamente lo mismo para la precisión. Va en la **muñeca**, y solo ahí.
 Si preguntan por bíceps o pecho, decilo derecho y con el motivo (se pierde
 precisión), y volvé a lo que sí: en la muñeca, en el brazo que prefiera.
 
-## Lo que MIDE (14 funciones, textual del sitio)
+## Lo que MIDE (las funciones, textual del sitio)
 Frecuencia cardíaca · Saturación de O₂ (SpO₂) · Recuperación · HRV (variabilidad cardíaca) · Nivel de estrés · Calidad del sueño (fases: profundo, ligero, REM) · Pasos y calorías · +100 modos deportivos · Ritmo, velocidad y cadencia · Notificaciones por vibración (llamadas, mensajes y alarma) · Sueño (duración y análisis) · Actividad diaria.
 
 ## Funciones básicas — SÍ tiene

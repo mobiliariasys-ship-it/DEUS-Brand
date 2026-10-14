@@ -18,7 +18,7 @@ test('La app y Diseño sin distracciones van dentro de #simple, antes de la tabl
     ['los pasos', pos('Póntela y optimízate')],
     ['el 360°', pos('id="tecnologia"')],
     ['La app', pos('<div class="soft-block" id="app">')],
-    ['las +14 funciones (dentro de la tarjeta de la app)', pos('+14 funciones en una sola app')],
+    ['las funciones (dentro de la tarjeta de la app)', pos('Funciones en una sola app')],
     ['"se conecta con" de la app', pos('class="app-tri"')],
     ['Materiales y sensor', pos('class="bat-card"')],
     ['Diseño sin distracciones', pos('<div class="soft-block" id="diseno">')],
@@ -84,4 +84,12 @@ test('el video del ciclista se maneja como el de la reseña y no se queda pegado
   const moov = mp4.indexOf('moov'), mdat = mp4.indexOf('mdat');
   assert.ok(moov !== -1 && moov < mdat, 'el índice (moov) tiene que ir antes de los datos (faststart)');
   assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'diseno-poster-v2.webp')), 'falta la portada nueva');
+});
+
+test('las funciones se nombran sin cantidad ("Funciones", no "14 funciones") en la web y el chatbot', () => {
+  // Se mira el texto visible y los scripts, sin los comentarios del código.
+  const visible = html.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  assert.ok(!/\b14 funciones/i.test(visible), 'quedó "14 funciones" en la web');
+  const chat = fs.readFileSync(path.join(__dirname, '..', 'services', 'chat.js'), 'utf8');
+  assert.ok(!/\b14 funciones/i.test(chat), 'quedó "14 funciones" en el chatbot');
 });
