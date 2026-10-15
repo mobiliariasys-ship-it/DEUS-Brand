@@ -826,7 +826,11 @@ app.get('/admin/ads/gasto-horario', async (req, res) => {
 app.get('/admin/utilidad-diaria', async (req, res) => {
   if (!claveAdsOk(req, res)) return;
   try {
-    const dias = [7, 14, 30].includes(Number(req.query.dias)) ? Number(req.query.dias) : 14;
+    // dias=iva: desde que la utilidad cuenta los ads con IVA (tarjeta
+    // "Utilidad histórica" del panel). Si no, 7, 14 o 30.
+    const desdeIva = req.query.dias === 'iva';
+    const dias = desdeIva ? utilidad_.diasDesdeIva()
+      : [7, 14, 30].includes(Number(req.query.dias)) ? Number(req.query.dias) : 14;
     const ventas = metrics.ventasPorDia(dias);
     // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
     // media verdad sirve más que un panel en blanco.
@@ -861,7 +865,7 @@ app.get('/admin/utilidad-diaria', async (req, res) => {
     }
 
     res.json({
-      dias, adsOk, adsError, filas, total: tot,
+      dias, desde: desdeIva ? utilidad_.IVA_DESDE : undefined, adsOk, adsError, filas, total: tot,
       diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan, via },
       costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA, iva: utilidad_.IVA }
     });

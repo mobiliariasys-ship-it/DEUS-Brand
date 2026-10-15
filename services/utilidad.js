@@ -15,6 +15,20 @@ const TASA_PASARELA = 0.035; // sobre el monto cobrado
 // subestimaba la publicidad en un 19% todos los dias.
 const IVA = 0.19;
 
+// Día desde el que la utilidad cuenta los ads con IVA (commit "Utilidad
+// diaria: el gasto en ads va con el 19% de IVA", 11-09-2026). La tarjeta
+// "Utilidad histórica" del panel suma desde acá: antes de esa fecha el panel
+// calculaba la publicidad sin IVA y no se mezclan las dos cuentas.
+const IVA_DESDE = '2026-09-11';
+
+// Cuántos días van desde IVA_DESDE hasta `hoy` (YYYY-MM-DD, día de Chile),
+// contando los dos. Máximo 400: es lo que se le pide a Meta de una vez.
+function diasDesdeIva(hoy) {
+  const h = hoy || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+  const n = Math.round((Date.parse(h + 'T00:00:00Z') - Date.parse(IVA_DESDE + 'T00:00:00Z')) / 86400000) + 1;
+  return Math.min(400, Math.max(1, n));
+}
+
 // comprasMeta: compras que Meta le atribuye a los anuncios ese día. Va solo
 // como dato para el costo por compra "según Meta"; no entra en la utilidad,
 // que se calcula con las ventas reales del panel.
@@ -66,4 +80,4 @@ function totalizar(filas) {
   }), { pedidos: 0, unidades: 0, conTapones: 0, pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, adsNeto: 0, ivaAds: 0, ads: 0, comprasMeta: 0, utilidad: 0 });
 }
 
-module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, IVA, calcularDia, totalizar };
+module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, IVA, IVA_DESDE, diasDesdeIva, calcularDia, totalizar };

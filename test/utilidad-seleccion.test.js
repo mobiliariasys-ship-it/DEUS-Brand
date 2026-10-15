@@ -45,6 +45,7 @@ function montar() {
   const els = {};
   const elem = () => ({ innerHTML: '', textContent: '', style: {}, classList: { toggle() {}, add() {}, remove() {} } });
   const pedidos = [];
+  const pedidosIva = [];   // consultas de la tarjeta "Utilidad histórica" (dias=iva)
   // Los botones 7/14/30 de la sección: se guarda cuál quedó marcado.
   const botones = [7, 14, 30].map(n => ({ n, on: n === 14, getAttribute: () => String(n),
     classList: { toggle(c, v) { if (c === 'on') this.dueno.on = !!v; } } }));
@@ -56,6 +57,8 @@ function montar() {
     return { dias, adsOk: true, filas, total: u.totalizar(filas), diagnostico: { diasQueCalzan: dias },
              costos: { banda: u.COSTO_BANDA, envio: u.COSTO_ENVIO, pasarela: u.TASA_PASARELA, iva: u.IVA } };
   };
+  // dias=iva: todo lo que hay desde que los ads se cuentan con IVA.
+  const respuestaIva = { ...respuesta(30), desde: u.IVA_DESDE };
   const ctx = {
     console, Date, Number, Object, Math,
     BASE: '', clave: 'prueba',
@@ -63,22 +66,32 @@ function montar() {
     document: { getElementById: id => els[id] || (els[id] = elem()),
                 querySelectorAll: q => (q === '[data-udias]' ? botones : []) },
     fetch: url => {
-      const dias = Number(new URL('http://x' + url).searchParams.get('dias'));
+      const q = new URL('http://x' + url).searchParams.get('dias');
+      if (q === 'iva') {
+        pedidosIva.push(q);
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(ctx.RESP_IVA || respuestaIva) });
+      }
+      const dias = Number(q);
       pedidos.push(dias);
       return Promise.resolve({ ok: true, json: () => Promise.resolve(respuesta(dias)) });
     },
     irA() {}
   };
   vm.createContext(ctx);
+  // La tarjeta de arriba escribe en el primer nodo de texto del valor.
+  els['s-util'] = { childNodes: [{ nodeValue: '' }], style: {} };
   const estado = SRC.match(/var utilSt = \{[^\n]*\};\n\s*var UTIL30_VIGENCIA = [^\n]*;/);
   assert.ok(estado, 'no encontré el estado de la utilidad (utilSt / UTIL30_VIGENCIA)');
+  const estadoHist = SRC.match(/var utilHist = \{[^\n]*\};/);
+  assert.ok(estadoHist, 'no encontré el estado de la tarjeta de utilidad (utilHist)');
   vm.runInContext(
-    estado[0] + '\n' +
+    estado[0] + '\n' + estadoHist[0] + '\n' +
     ['diasElegidosUtil', 'utilDeDias', 'utilidadSegunSel', 'pintarUtilSelResumen', 'marcarRangoUtil', 'cargarUtilidad',
-     'proyeccionMensual', 'pintarUtilidad', 'kpi', 'money0', 'marcarAct'].map(extraer).join('\n') +
+     'proyeccionMensual', 'pintarUtilidad', 'kpi', 'money0', 'marcarAct',
+     'cargarUtilHist', 'utilTarjeta', 'pintarUtilTarjeta'].map(extraer).join('\n') +
     // Como en el panel: refrescarSel termina llamando a utilidadSegunSel.
     '\nfunction refrescarSel(){ utilidadSegunSel(); }', ctx);
-  return { ctx, els, pedidos, filas30, marcado };
+  return { ctx, els, pedidos, pedidosIva, filas30, marcado };
 }
 const esperar = () => new Promise(r => setImmediate(r));
 const run = (h, js) => vm.runInContext(js, h.ctx);
@@ -163,4 +176,58 @@ test('la proyección mensual lleva a 30 días el promedio de los días que se es
   assert.ok(h.els['util-kpis'].innerHTML.includes('promedio de 3 días × 30'));
   assert.ok(!h.els['util-kpis'].innerHTML.includes('incluye hoy'), 'estos días ya terminaron');
   assert.strictEqual(run(h, 'proyeccionMensual(1000, 0)'), 0, 'sin días no hay proyección');
+});
+
+test('la tarjeta de arriba muestra la utilidad desde el IVA, o la de los días elegidos en Conversión', async () => {
+  const h = montar();
+  const f = h.filas30;
+  const plata = n => (n < 0 ? '−' : '') + '$' + Math.round(Math.abs(n)).toLocaleString('es-CL');
+  const valor = () => h.els['s-util'].childNodes[0].nodeValue.trim();
+
+  // Sin días elegidos: la histórica desde que los ads van con IVA
+  run(h, 'refrescarSel()'); await esperar();
+  assert.deepStrictEqual(h.pedidosIva, ['iva'], 'pide la utilidad desde el IVA');
+  assert.strictEqual(h.els['s-util-k'].textContent, 'Utilidad histórica');
+  assert.strictEqual(valor(), plata(u.totalizar(f).utilidad));
+  assert.strictEqual(h.els['s-util-m'].textContent, 'desde ' + u.IVA_DESDE.slice(8) + '-' + u.IVA_DESDE.slice(5, 7) + ' (con IVA)');
+
+  // Con días elegidos: la de esos días, sin volver a consultar
+  h.ctx.CONV_SEL[f[3].fecha] = true; h.ctx.CONV_SEL[f[20].fecha] = true;
+  h.els['conv-sel-util'] = { innerHTML: '', textContent: '', style: {} };
+  run(h, 'refrescarSel()'); await esperar();
+  assert.strictEqual(h.els['s-util-k'].textContent, 'Utilidad · 2 días elegidos');
+  assert.strictEqual(valor(), plata(u.totalizar([f[3], f[20]]).utilidad));
+
+  // Soltar la selección vuelve a la histórica
+  h.ctx.CONV_SEL = {};
+  run(h, 'refrescarSel()'); await esperar();
+  assert.strictEqual(h.els['s-util-k'].textContent, 'Utilidad histórica');
+  assert.strictEqual(valor(), plata(u.totalizar(f).utilidad));
+
+  // El panel se refresca cada pocos segundos: no se le pide a Meta en cada refresco
+  for (let i = 0; i < 5; i++) { run(h, 'refrescarSel()'); await esperar(); }
+  assert.deepStrictEqual(h.pedidosIva, ['iva'], 'una sola consulta mientras está vigente');
+});
+
+test('si Meta no respondió, la tarjeta lo avisa en vez de mostrar una utilidad inflada', async () => {
+  const h = montar();
+  h.ctx.RESP_IVA = { dias: 30, desde: u.IVA_DESDE, adsOk: false, filas: h.filas30, total: u.totalizar(h.filas30) };
+  run(h, 'refrescarSel()'); await esperar();
+  assert.strictEqual(h.els['s-util-m'].textContent, '⚠ sin gasto de Meta');
+});
+
+test('el servidor cuenta los días desde la fecha del IVA, incluidos los dos extremos', () => {
+  assert.strictEqual(u.diasDesdeIva(u.IVA_DESDE), 1);
+  assert.strictEqual(u.diasDesdeIva('2026-10-15'), 35);
+  assert.strictEqual(u.diasDesdeIva('2030-01-01'), 400, 'tope de lo que se le pide a Meta');
+  const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  assert.match(srv, /req\.query\.dias === 'iva'/, 'el endpoint acepta dias=iva');
+});
+
+test('con un servidor sin actualizar (ignora dias=iva) la tarjeta no muestra 14 días como si fueran la histórica', async () => {
+  const h = montar();
+  h.ctx.RESP_IVA = { dias: 14, adsOk: true, filas: h.filas30.slice(-14), total: u.totalizar(h.filas30.slice(-14)) };
+  run(h, 'refrescarSel()'); await esperar();
+  assert.strictEqual(h.els['s-util'].childNodes[0].nodeValue.trim(), '—');
+  assert.strictEqual(h.els['s-util-m'].textContent, 'falta actualizar el servidor');
 });

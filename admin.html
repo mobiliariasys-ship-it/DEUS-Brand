@@ -375,7 +375,9 @@
       <div class="stat"><div class="k">Conversión histórica</div><div class="v" id="s-conv">— <small id="s-conv-d"></small></div></div>
       <!-- Ventas del periodo elegido arriba en la barra (semana, mes, etc.) -->
       <div class="stat gold"><div class="k" id="s-perv-k">Ventas del periodo</div><div class="v" id="s-perv">— <small id="s-perv-m"></small></div></div>
-      <div class="stat"><div class="k">Ticket promedio</div><div class="v" id="s-aov">—</div></div>
+      <!-- Utilidad: sin días elegidos en el gráfico de Conversión, la histórica
+           desde que los ads se cuentan con IVA; con días elegidos, la de esos días. -->
+      <div class="stat"><div class="k" id="s-util-k">Utilidad histórica</div><div class="v" id="s-util">— <small id="s-util-m"></small></div></div>
       <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
     </div>
 
@@ -1567,7 +1569,6 @@
     pintarCanales(convAcc, conducta);
     pintarNegocio(d, RANGO_DIAS);
     pintarAlertas(d);
-    document.getElementById('s-aov').textContent = d.__aovRango ? money(d.__aovRango) : '—';
     var st=document.getElementById('s-stock');
     if(st) st.textContent = (d.stock===undefined||d.stock===null) ? '—' : d.stock;
     var cb=document.getElementById('canal-base');
@@ -1957,6 +1958,8 @@
       }
     }
     pintarUtilSelResumen();
+    cargarUtilHist();
+    pintarUtilTarjeta();
   }
 
   // La utilidad de la selección, en el mismo recuadro del promedio de conversión.
@@ -1971,6 +1974,64 @@
       (t.utilidad >= 0 ? '' : '−') + money0(Math.abs(t.utilidad)) + '</b>' +
       ' · vendido ' + money0(t.ingresos) + ' · ads ' + money0(t.ads) +
       ' · <a href="#sec-utilidad" onclick="irA(\'sec-utilidad\');return false;">ver día por día ↓</a>';
+  }
+
+  // ── Tarjeta "Utilidad" de arriba (antes "Ticket promedio") ──
+  // Sin días elegidos en el gráfico de Conversión: la utilidad acumulada desde
+  // que los ads se cuentan con IVA (IVA_DESDE en services/utilidad.js). Con días
+  // elegidos: la de esos días. Es la misma cuenta que "Utilidad diaria": suma
+  // las filas que el servidor ya calculó día por día.
+  // El panel se refresca cada pocos segundos: esto pide a Meta como mucho cada
+  // 10 min (o 1 min si la última vez falló), no en cada refresco.
+  var utilHist = { d: null, proximo: 0, pidiendo: false, fallo: false };
+  function cargarUtilHist(){
+    if (utilHist.pidiendo || Date.now() < utilHist.proximo) return;
+    utilHist.pidiendo = true;
+    fetch(BASE+'/admin/utilidad-diaria?dias=iva&clave='+encodeURIComponent(clave))
+      .then(function(r){ if(!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(function(d){
+        // Un servidor sin actualizar ignora dias=iva y responde 14 días: eso no
+        // es la histórica, así que no se muestra como tal.
+        if (!d || !d.desde) throw new Error('falta actualizar el servidor');
+        utilHist.d = d; utilHist.fallo = false; utilHist.pidiendo = false;
+        utilHist.proximo = Date.now() + 10 * 60000;
+        pintarUtilTarjeta();
+      })
+      .catch(function(e){
+        utilHist.fallo = (e && e.message) || 'sin datos'; utilHist.pidiendo = false;
+        utilHist.proximo = Date.now() + 60000;
+        pintarUtilTarjeta();
+      });
+  }
+  // Qué muestra la tarjeta. `hist` = respuesta de /admin/utilidad-diaria?dias=iva.
+  function utilTarjeta(hist, sel){
+    if (!hist) return null;
+    var filas = hist.filas || [];
+    var dd = String(hist.desde || '').split('-');
+    var desde = dd.length === 3 ? dd[2] + '-' + dd[1] : '';
+    if (sel && sel.length) {
+      var u = utilDeDias(filas, sel);
+      return { etiqueta: 'Utilidad · ' + u.filas.length + (u.filas.length === 1 ? ' día elegido' : ' días elegidos'),
+               utilidad: u.total.utilidad, nota: 'en Conversión', adsOk: hist.adsOk !== false };
+    }
+    return { etiqueta: 'Utilidad histórica', utilidad: hist.total ? hist.total.utilidad : utilDeDias(filas, []).total.utilidad,
+             nota: desde ? 'desde ' + desde + ' (con IVA)' : 'con IVA', adsOk: hist.adsOk !== false };
+  }
+  function pintarUtilTarjeta(){
+    var v = document.getElementById('s-util'); if (!v) return;
+    var k = document.getElementById('s-util-k'), m = document.getElementById('s-util-m');
+    var r = utilTarjeta(utilHist.d, diasElegidosUtil());
+    if (!r) {
+      v.childNodes[0].nodeValue = '— ';
+      if (m) m.textContent = utilHist.fallo || 'calculando…';
+      v.style.color = '';
+      return;
+    }
+    if (k) k.textContent = r.etiqueta;
+    v.childNodes[0].nodeValue = (r.utilidad < 0 ? '−' : '') + money0(Math.abs(r.utilidad)) + ' ';
+    v.style.color = r.utilidad < 0 ? '#e07a6a' : '#69c46d';
+    // Sin el gasto de Meta la utilidad saldría inflada: se avisa en vez de callar.
+    if (m) m.textContent = r.adsOk ? r.nota : '⚠ sin gasto de Meta';
   }
 
   // Con días elegidos no queda marcado ningún 7/14/30: la tabla no es ninguno de esos.

@@ -159,9 +159,12 @@ function extraerCompras(insights) {
 // CERRADOS anteriores y dejan HOY afuera, así que el gasto del día recién
 // aparecía en el panel cuando el día terminaba (la utilidad de hoy salía con
 // publicidad en cero y las tarjetas no se movían en todo el día).
-const DIAS_VALIDOS = [7, 14, 30];
+// Acepta cualquier cantidad entera de días entre 1 y 400 (la utilidad
+// "desde el IVA" pide más de 30). Cada endpoint ya valida lo que recibe del
+// navegador antes de llegar acá.
 function rangoHastaHoy(dias, porDefecto) {
-  const n = DIAS_VALIDOS.includes(Number(dias)) ? Number(dias) : porDefecto;
+  const d = Number(dias);
+  const n = Number.isInteger(d) && d >= 1 && d <= 400 ? d : porDefecto;
   return JSON.stringify({ since: diaChile(n - 1), until: diaChile(0) });
 }
 
