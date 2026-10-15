@@ -47,7 +47,7 @@ function montar() {
   const pedidos = [];
   const pedidosIva = [];   // consultas de la tarjeta "Utilidad histórica" (dias=iva)
   // Los botones 7/14/30 de la sección: se guarda cuál quedó marcado.
-  const botones = [7, 14, 30].map(n => ({ n, on: n === 14, getAttribute: () => String(n),
+  const botones = [7, 14, 30, 'iva'].map(n => ({ n, on: n === 14, getAttribute: () => String(n),
     classList: { toggle(c, v) { if (c === 'on') this.dueno.on = !!v; } } }));
   botones.forEach(x => { x.classList.dueno = x; });
   const marcado = () => botones.filter(x => x.on).map(x => x.n);
@@ -88,7 +88,7 @@ function montar() {
     estado[0] + '\n' + estadoHist[0] + '\n' +
     ['diasElegidosUtil', 'utilDeDias', 'utilidadSegunSel', 'pintarUtilSelResumen', 'marcarRangoUtil', 'cargarUtilidad',
      'proyeccionMensual', 'pintarUtilidad', 'kpi', 'money0', 'marcarAct',
-     'cargarUtilHist', 'utilTarjeta', 'pintarUtilTarjeta'].map(extraer).join('\n') +
+     'cargarUtilHist', 'utilTarjeta', 'pintarUtilTarjeta', 'verUtilHistorica'].map(extraer).join('\n') +
     // Como en el panel: refrescarSel termina llamando a utilidadSegunSel.
     '\nfunction refrescarSel(){ utilidadSegunSel(); }', ctx);
   return { ctx, els, pedidos, pedidosIva, filas30, marcado };
@@ -230,4 +230,21 @@ test('con un servidor sin actualizar (ignora dias=iva) la tarjeta no muestra 14 
   run(h, 'refrescarSel()'); await esperar();
   assert.strictEqual(h.els['s-util'].childNodes[0].nodeValue.trim(), '—');
   assert.strictEqual(h.els['s-util-m'].textContent, 'falta actualizar el servidor');
+});
+
+test('arriba de "Utilidad diaria", "Desde el IVA" muestra el histórico día por día', async () => {
+  const h = montar();
+  assert.match(SRC, /<button data-udias="iva" onclick="cargarUtilidad\('iva'\)">Desde el IVA<\/button>/);
+  run(h, 'cargarUtilidad()'); await esperar();
+  run(h, "cargarUtilidad('iva')"); await esperar();
+  assert.deepStrictEqual(h.pedidosIva, ['iva']);
+  const dd = u.IVA_DESDE.split('-');
+  assert.match(h.els['util-kpis'].innerHTML, new RegExp('Utilidad desde el ' + dd[2] + '-' + dd[1]));
+  assert.deepStrictEqual(h.marcado(), ['iva'], 'queda marcado "Desde el IVA"');
+  // La misma respuesta llena la tarjeta de arriba, sin otra consulta
+  run(h, 'refrescarSel()'); await esperar();
+  assert.deepStrictEqual(h.pedidosIva, ['iva']);
+  assert.strictEqual(h.els['s-util-k'].textContent, 'Utilidad histórica');
+  // Tocar la tarjeta lleva a la sección con el histórico
+  assert.match(SRC, /onclick="verUtilHistorica\(\)"/);
 });

@@ -377,7 +377,7 @@
       <div class="stat gold"><div class="k" id="s-perv-k">Ventas del periodo</div><div class="v" id="s-perv">— <small id="s-perv-m"></small></div></div>
       <!-- Utilidad: sin días elegidos en el gráfico de Conversión, la histórica
            desde que los ads se cuentan con IVA; con días elegidos, la de esos días. -->
-      <div class="stat"><div class="k" id="s-util-k">Utilidad histórica</div><div class="v" id="s-util">— <small id="s-util-m"></small></div></div>
+      <div class="stat" style="cursor:pointer" onclick="verUtilHistorica()" title="Ver la utilidad día por día"><div class="k" id="s-util-k">Utilidad histórica</div><div class="v" id="s-util">— <small id="s-util-m"></small></div></div>
       <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
     </div>
 
@@ -431,6 +431,8 @@
         <button data-udias="7" onclick="cargarUtilidad(7)">7 días</button>
         <button data-udias="14" class="on" onclick="cargarUtilidad(14)">14 días</button>
         <button data-udias="30" onclick="cargarUtilidad(30)">30 días</button>
+        <!-- Todo lo que hay desde que los ads se cuentan con IVA (11-09-2026) -->
+        <button data-udias="iva" onclick="cargarUtilidad('iva')">Desde el IVA</button>
       </div>
       <!-- Con días elegidos en el gráfico de Conversión, la utilidad muestra
            solo esos días (ver utilidadSegunSel). -->
@@ -2017,6 +2019,14 @@
     return { etiqueta: 'Utilidad histórica', utilidad: hist.total ? hist.total.utilidad : utilDeDias(filas, []).total.utilidad,
              nota: desde ? 'desde ' + desde + ' (con IVA)' : 'con IVA', adsOk: hist.adsOk !== false };
   }
+  // Tocar la tarjeta: sin días elegidos abre el histórico día por día; con días
+  // elegidos, la sección ya muestra esos días.
+  function verUtilHistorica(){
+    if(!diasElegidosUtil().length) cargarUtilidad('iva');
+    irA('sec-utilidad');
+  }
+  window.verUtilHistorica = verUtilHistorica;
+
   function pintarUtilTarjeta(){
     var v = document.getElementById('s-util'); if (!v) return;
     var k = document.getElementById('s-util-k'), m = document.getElementById('s-util-m');
@@ -2037,7 +2047,7 @@
   // Con días elegidos no queda marcado ningún 7/14/30: la tabla no es ninguno de esos.
   function marcarRangoUtil(sel){
     Array.prototype.forEach.call(document.querySelectorAll('[data-udias]'), function(b){
-      b.classList.toggle('on', !sel && Number(b.getAttribute('data-udias')) === utilSt.dias);
+      b.classList.toggle('on', !sel && b.getAttribute('data-udias') === String(utilSt.dias));
     });
   }
 
@@ -2058,7 +2068,9 @@
       .then(function(r){ if(!r.ok) throw new Error('sin datos'); return r.json(); })
       .then(function(d){
         if(pedir === 30) utilSt.pidiendo30 = false;
-        if(d.dias === 30){ utilSt.ult30 = d; utilSt.t30 = Date.now(); }
+        if(d.dias === 30 && !d.desde){ utilSt.ult30 = d; utilSt.t30 = Date.now(); }
+        // La del IVA también le sirve a la tarjeta de arriba: una consulta menos.
+        if(d.desde){ utilHist.d = d; utilHist.fallo = false; utilHist.proximo = Date.now() + 10 * 60000; pintarUtilTarjeta(); }
         pintarUtilidad(d);
         pintarUtilSelResumen();
       })
@@ -2080,11 +2092,15 @@
     // Respuesta que ya no corresponde (se eligieron o soltaron días mientras
     // viajaba): con selección hacen falta los 30 días, sin ella el rango elegido.
     if(sel.length && d.dias !== 30){ cargarUtilidad(); return; }
-    if(!sel.length && d.dias !== utilSt.dias) return;
+    if(!sel.length && (utilSt.dias === 'iva' ? !d.desde : d.dias !== utilSt.dias)) return;
     marcarRangoUtil(sel.length > 0);
     marcarAct('util-act');
     document.getElementById('util-off').style.display='none';
     var t = d.total, f = d.filas || [], titulo = 'Utilidad ' + d.dias + ' días';
+    if(d.desde){
+      var dd = d.desde.split('-');
+      titulo = 'Utilidad desde el ' + dd[2] + '-' + dd[1] + ' (' + d.dias + ' días)';
+    }
     var aviso = document.getElementById('util-sel');
     if(sel.length){
       var u = utilDeDias(f, sel);
@@ -2092,7 +2108,7 @@
       titulo = 'Utilidad · ' + f.length + (f.length === 1 ? ' día elegido' : ' días elegidos');
       aviso.innerHTML = '<span>📌 Mostrando <b>' + (f.length === 1 ? 'el día elegido' : 'los ' + f.length + ' días elegidos') +
         '</b> en el gráfico de Conversión.</span>' +
-        '<button onclick="cargarUtilidad(utilSt.dias)">Ver últimos ' + utilSt.dias + ' días</button>';
+        '<button onclick="cargarUtilidad(utilSt.dias)">' + (utilSt.dias === 'iva' ? 'Ver desde el IVA' : 'Ver últimos ' + utilSt.dias + ' días') + '</button>';
       aviso.style.display = '';
     } else {
       aviso.style.display = 'none';
