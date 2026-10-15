@@ -2009,15 +2009,14 @@
   function utilTarjeta(hist, sel){
     if (!hist) return null;
     var filas = hist.filas || [];
-    var dd = String(hist.desde || '').split('-');
-    var desde = dd.length === 3 ? dd[2] + '-' + dd[1] : '';
     if (sel && sel.length) {
       var u = utilDeDias(filas, sel);
       return { etiqueta: 'Utilidad · ' + u.filas.length + (u.filas.length === 1 ? ' día elegido' : ' días elegidos'),
                utilidad: u.total.utilidad, nota: 'en Conversión', adsOk: hist.adsOk !== false };
     }
     return { etiqueta: 'Utilidad histórica', utilidad: hist.total ? hist.total.utilidad : utilDeDias(filas, []).total.utilidad,
-             nota: desde ? 'desde ' + desde + ' (con IVA)' : 'con IVA', adsOk: hist.adsOk !== false };
+             nota: (hist.dias ? hist.dias + (hist.dias === 1 ? ' día' : ' días') + ' · ' : '') + 'con IVA',
+             adsOk: hist.adsOk !== false };
   }
   // Tocar la tarjeta: sin días elegidos abre el histórico día por día; con días
   // elegidos, la sección ya muestra esos días.
@@ -2097,10 +2096,8 @@
     marcarAct('util-act');
     document.getElementById('util-off').style.display='none';
     var t = d.total, f = d.filas || [], titulo = 'Utilidad ' + d.dias + ' días';
-    if(d.desde){
-      var dd = d.desde.split('-');
-      titulo = 'Utilidad desde el ' + dd[2] + '-' + dd[1] + ' (' + d.dias + ' días)';
-    }
+    // Histórico: los días transcurridos desde que los ads van con IVA.
+    if(d.desde) titulo = 'Utilidad histórica · ' + d.dias + (d.dias === 1 ? ' día' : ' días');
     var aviso = document.getElementById('util-sel');
     if(sel.length){
       var u = utilDeDias(f, sel);

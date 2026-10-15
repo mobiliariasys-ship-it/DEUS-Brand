@@ -189,7 +189,7 @@ test('la tarjeta de arriba muestra la utilidad desde el IVA, o la de los días e
   assert.deepStrictEqual(h.pedidosIva, ['iva'], 'pide la utilidad desde el IVA');
   assert.strictEqual(h.els['s-util-k'].textContent, 'Utilidad histórica');
   assert.strictEqual(valor(), plata(u.totalizar(f).utilidad));
-  assert.strictEqual(h.els['s-util-m'].textContent, 'desde ' + u.IVA_DESDE.slice(8) + '-' + u.IVA_DESDE.slice(5, 7) + ' (con IVA)');
+  assert.strictEqual(h.els['s-util-m'].textContent, '30 días · con IVA', 'los días transcurridos, no la fecha');
 
   // Con días elegidos: la de esos días, sin volver a consultar
   h.ctx.CONV_SEL[f[3].fecha] = true; h.ctx.CONV_SEL[f[20].fecha] = true;
@@ -238,8 +238,8 @@ test('arriba de "Utilidad diaria", "Desde el IVA" muestra el histórico día por
   run(h, 'cargarUtilidad()'); await esperar();
   run(h, "cargarUtilidad('iva')"); await esperar();
   assert.deepStrictEqual(h.pedidosIva, ['iva']);
-  const dd = u.IVA_DESDE.split('-');
-  assert.match(h.els['util-kpis'].innerHTML, new RegExp('Utilidad desde el ' + dd[2] + '-' + dd[1]));
+  assert.match(h.els['util-kpis'].innerHTML, /Utilidad histórica · 30 días/);
+  assert.ok(!h.els['util-kpis'].innerHTML.includes(u.IVA_DESDE.slice(8) + '-' + u.IVA_DESDE.slice(5, 7)), 'sin la fecha');
   assert.deepStrictEqual(h.marcado(), ['iva'], 'queda marcado "Desde el IVA"');
   // La misma respuesta llena la tarjeta de arriba, sin otra consulta
   run(h, 'refrescarSel()'); await esperar();
