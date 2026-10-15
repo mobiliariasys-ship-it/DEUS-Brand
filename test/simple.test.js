@@ -20,7 +20,6 @@ test('La app y Diseño sin distracciones van dentro de #simple, antes de la tabl
     ['La app', pos('<div class="soft-block" id="app">')],
     ['las funciones (dentro de la tarjeta de la app)', pos('Funciones de la DEUS Band')],
     ['"se conecta con" de la app', pos('class="app-tri"')],
-    ['Materiales y sensor', pos('class="bat-card"')],
     ['Diseño sin distracciones', pos('<div class="soft-block" id="diseno">')],
     ['la tabla', pos('Por qué DEUS Band')],
   ];
@@ -92,4 +91,18 @@ test('las funciones se nombran sin cantidad ("Funciones", no "14 funciones") en 
   assert.ok(!/\b14 funciones/i.test(visible), 'quedó "14 funciones" en la web');
   const chat = fs.readFileSync(path.join(__dirname, '..', 'services', 'chat.js'), 'utf8');
   assert.ok(!/\b14 funciones/i.test(chat), 'quedó "14 funciones" en el chatbot');
+});
+
+test('"Materiales y sensor" va dentro de la tarjeta del 360°, debajo del visor y sin foto', () => {
+  const ini = html.indexOf('<div class="soft-block" id="tecnologia">');
+  const fin = html.indexOf('<!-- /r360-card -->', ini);
+  const tarjeta = html.slice(ini, fin);
+  const mat = tarjeta.indexOf('Materiales y sensor');
+  assert.ok(mat !== -1, 'Materiales y sensor tiene que estar en la tarjeta del 360°');
+  assert.ok(tarjeta.indexOf('id="rot360"') < mat, 'va debajo de la banda girando');
+  for (const t of ['Ligera, resistente y con sensor de alta calidad', 'bat-stats', 'Certificaciones CE · FCC · RoHS']) {
+    assert.ok(tarjeta.includes(t), 'falta en la tarjeta: ' + t);
+  }
+  assert.ok(!/<img[^>]*deus-caja/.test(html), 'la foto de la caja ya no va');
+  assert.strictEqual(html.indexOf('class="bat-card"'), -1, 'no puede quedar la tarjeta suelta de materiales');
 });

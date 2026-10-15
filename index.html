@@ -513,7 +513,7 @@ html.promo #upsell-card{display:none!important;}
 .soft-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:2.05rem;line-height:1.15;letter-spacing:-.6px;color:var(--white);}
 .soft-sub{font-size:.9rem;line-height:1.6;color:var(--silver);margin-top:10px;}
 /* Base de vidrio de las tarjetas */
-.step,.bat-card,.cmp-wrap{
+.step,.cmp-wrap{
   background:radial-gradient(120% 90% at 0% 0%,rgba(255,255,255,.07),rgba(255,255,255,0) 55%),linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
   border:1px solid rgba(255,255,255,.09);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.3),0 26px 52px -30px rgba(0,0,0,.95);}
@@ -588,10 +588,10 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
 .fbtn:focus-visible{outline:2px solid var(--white);outline-offset:3px;}
 .fi{width:44px;height:44px;border-radius:15px;}
 .soft-note{text-align:center;font-size:.74rem;color:#8a8a94;margin-top:18px;}
-/* Tarjeta "Materiales y sensor": la foto de la caja (vertical) a la izquierda
-   y el texto a la derecha; en celular la foto va arriba, centrada. */
-.bat-card{display:grid;grid-template-columns:minmax(0,320px) 1fr;align-items:center;gap:34px;border-radius:26px;padding:34px;}
-.bat-foto img{width:100%;height:auto;display:block;border-radius:18px;box-shadow:0 18px 40px -22px rgba(0,0,0,.9);}
+/* "Materiales y sensor" dentro de la tarjeta del 360°, debajo de la banda
+   girando, separado por una línea fina (igual que las funciones en la de la app). */
+.mat-en-360{text-align:center;margin-top:24px;padding-top:26px;border-top:1px solid rgba(255,255,255,.08);}
+.mat-en-360 p{max-width:520px;margin-left:auto;margin-right:auto;}
 .bat-txt .soft-title{font-size:1.85rem;}
 .bat-txt p{font-size:.88rem;line-height:1.6;color:var(--silver);margin-top:10px;}
 /* Certificaciones, en chico bajo las tres cifras (el detalle está en la FAQ) */
@@ -638,11 +638,11 @@ html.js .fn-plegable:not(.abierto) .fn-plegable-in{opacity:0;transition:opacity 
    entrada. La tarjeta del video del ciclista (.diseno-card) NO entra así: en
    iPhone un video que arranca dentro de algo con opacidad 0 queda congelado en
    la primera imagen. */
-.soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .bat-card,.soft.rev .r360-card,.soft.rev .app-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
+.soft.rev .soft-head,.soft.rev .step,.soft.rev .fn-ver,.soft.rev .soft-note,.soft.rev .r360-card,.soft.rev .app-card,.soft.rev .cmp-wrap,.soft.rev .soft-cta{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);}
 .soft.rev .rev-on{opacity:1;transform:none;}
 @media(min-width:861px){.soft.rev .step:nth-child(2){transition-delay:.1s;}}
 @media(max-width:860px){.steps{grid-template-columns:1fr;gap:12px;}.step{display:grid;grid-template-columns:auto 1fr;column-gap:14px;padding:18px;}.step-top{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:0;grid-row:span 2;}.step-n{font-size:2rem;}.step-ico{width:40px;height:40px;border-radius:13px;}.step h3{align-self:end;}
-  .bat-card{grid-template-columns:1fr;padding:26px 18px 22px;gap:20px;}.bat-foto{width:100%;max-width:340px;margin:0 auto;}}
+}
 @media(max-width:600px){.soft{padding:0;margin:24px -12px;}.soft-in{padding:42px 16px;border-radius:22px;}.soft-title{font-size:1.6rem;}.bat-txt .soft-title{font-size:1.5rem;}.soft-block+.soft-block{margin-top:56px;}.soft-head{margin-bottom:22px;}
   .fgrid{gap:8px;}.fgrid li{width:calc((100% - 16px)/3);}.fbtn{padding:16px 4px 12px;font-size:.68rem;gap:8px;border-radius:20px;}.fi{width:38px;height:38px;border-radius:13px;}.fi svg{width:19px;height:19px;}
   .cmp-wrap{padding:6px 4px 2px;border-radius:20px;}.cmp{font-size:.72rem;}.cmp th,.cmp td{padding:12px 4px;}.cmp thead th{font-size:.62rem;}.cmp thead th small{font-size:.56rem;}.cmp thead .c-deus{font-size:.7rem;}.cmp thead th.c-deus{font-size:.6rem;letter-spacing:.02em;}.cmp tbody th{padding-left:10px;width:38%;}.cmp tbody th small{font-size:.62rem;}.cv{font-size:.66rem;}.ck,.cx{width:22px;height:22px;}.ck svg,.cx svg{width:12px;height:12px;}
@@ -3985,8 +3985,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </ol>
       </div>
 
-      <!-- COMO FUNCIONA: todo dentro de una tarjeta de vidrio, como la de materiales
-           y sensor. Los cuadros del 360° no tienen fondo (scripts/recortar-fondo-360.js):
+      <!-- COMO FUNCIONA: todo dentro de una tarjeta de vidrio; abajo, en la misma
+           tarjeta, "Materiales y sensor". Los cuadros del 360° no tienen fondo (scripts/recortar-fondo-360.js):
            la banda queda directo sobre el gris de la tarjeta. -->
       <div class="soft-block" id="tecnologia">
         <div class="r360-card">
@@ -4006,6 +4006,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <div class="rot-hint-wrap"><span class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor</span></div>
         </div>
+          <!-- Materiales y sensor: va en la misma tarjeta, debajo de la banda girando -->
+          <div class="bat-txt mat-en-360">
+            <div class="soft-kicker">Materiales y sensor</div>
+            <h2 class="soft-title">Ligera, resistente y con sensor de alta calidad</h2>
+            <p>Pesa solo 24 gramos con la correa: no la sientes ni al dormir. Estructura de aleación de zinc, correas de silicona de grado médico y nylon respirable, y metal libre de níquel donde toca tu piel. Atrás, un sensor óptico (PPG) de alta calidad lee tu pulso con luz las 24 horas, junto a un acelerómetro de 3 ejes que registra tu movimiento.</p>
+            <ul class="bat-stats">
+              <li><b>24</b><span>gramos con correa</span></li>
+              <li><b>Zinc</b><span>estructura de aleación</span></li>
+              <li><b>24/7</b><span>sensor óptico</span></li>
+            </ul>
+            <p class="bat-cert">Certificaciones CE · FCC · RoHS</p>
+          </div>
         </div><!-- /r360-card -->
 
       </div>
@@ -4201,22 +4213,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <div class="soft-block">
         <!-- Rollo con las fotos de las reseñas, en chico y pasando despacio.
-             Lo llena armarRolloResenas() cuando se acerca a la pantalla. -->
+             Lo llena armarRolloResenas() cuando se acerca a la pantalla.
+             ("Materiales y sensor" pasó a la tarjeta del 360°.) -->
         <div class="rollo" id="rollo-resenas" aria-hidden="true"><div class="rollo-pista"></div></div>
-        <div class="bat-card">
-          <div class="bat-foto"><img src="img/deus-caja.webp" srcset="img/deus-caja-600.webp 600w, img/deus-caja.webp 941w" sizes="(max-width:860px) 340px, 320px" width="941" height="1304" alt="Caja de DEUS Band abierta con la banda de silicona y la correa de nylon" loading="lazy" decoding="async"></div>
-          <div class="bat-txt">
-            <div class="soft-kicker">Materiales y sensor</div>
-            <h2 class="soft-title">Ligera, resistente y con sensor de alta calidad</h2>
-            <p>Pesa solo 24 gramos con la correa: no la sientes ni al dormir. Estructura de aleación de zinc, correas de silicona de grado médico y nylon respirable, y metal libre de níquel donde toca tu piel. Atrás, un sensor óptico (PPG) de alta calidad lee tu pulso con luz las 24 horas, junto a un acelerómetro de 3 ejes que registra tu movimiento.</p>
-            <ul class="bat-stats">
-              <li><b>24</b><span>gramos con correa</span></li>
-              <li><b>Zinc</b><span>estructura de aleación</span></li>
-              <li><b>24/7</b><span>sensor óptico</span></li>
-            </ul>
-            <p class="bat-cert">Certificaciones CE · FCC · RoHS</p>
-          </div>
-        </div>
       </div>
 
       <div class="soft-block" id="diseno">
@@ -4669,7 +4668,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var io=new IntersectionObserver(function(ents){
       ents.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('rev-on'); io.unobserve(en.target); } });
     },{rootMargin:'0px 0px -6% 0px',threshold:0.1});
-    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fn-ver,.soft-note,.bat-card,.r360-card,.app-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
+    [].forEach.call(sec.querySelectorAll('.soft-head,.step,.fn-ver,.soft-note,.r360-card,.app-card,.cmp-wrap,.soft-cta'),function(el){ io.observe(el); });
   })();
   </script>
 
