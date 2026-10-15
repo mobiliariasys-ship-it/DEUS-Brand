@@ -1,8 +1,8 @@
 'use strict';
-// Top bar: el reloj de 24 h cuenta hasta las 02:00 de Chile y
-// vuelve a 24 h justo a esa hora, todos los días. Corre las funciones REALES
-// de index.html con un reloj fijo, en invierno (UTC-4) y en verano (UTC-3),
-// para que nadie lo pase a una hora fija en UTC sin darse cuenta.
+// Top bar: "ENVÍO GRATIS" y "1-2 días de envío a todo Chile", sin contador.
+// El reloj de 24 h que iba debajo se sacó a pedido del dueño; estas pruebas
+// avisan si vuelve a aparecer y si el HTML de la página deja de coincidir con
+// el que arma htmlTopBar() (si difieren, la barra cambia de forma al cargar).
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -23,65 +23,27 @@ function extraer(nombre) {
   throw new Error('llaves sin cerrar en ' + nombre);
 }
 
-function variable(nombre) {
-  const m = SRC.match(new RegExp('var ' + nombre + ' = [^\\n]*;'));
-  assert.ok(m, 'no encontré var ' + nombre + ' en index.html');
-  return m[0];
+function htmlTopBar() {
+  const ctx = vm.createContext({ ofertaActiva: () => true });
+  vm.runInContext(extraer('htmlTopBar'), ctx);
+  return ctx.htmlTopBar();
 }
 
-// Arma las funciones con el reloj clavado en `iso` (UTC).
-function conReloj(iso) {
-  const fijo = new Date(iso).getTime();
-  class RelojFijo extends Date {
-    constructor(...a) { if (a.length) super(...a); else super(fijo); }
-    static now() { return fijo; }
-  }
-  const ctx = vm.createContext({ Date: RelojFijo, ofertaActiva: () => true });
-  vm.runInContext([
-    variable('RELOJ_HORA'), variable('RELOJ_UNIDADES'),
-    extraer('ahoraChile'), extraer('msHastaReinicio'), extraer('textoReloj'), extraer('cajitasReloj'), extraer('htmlTopBar'),
-  ].join('\n'), ctx);
-  return ctx;
-}
-
-test('el reloj llega a cero a las 02:00 de Chile y vuelve a 24 h (verano, UTC-3)', () => {
-  assert.strictEqual(conReloj('2026-10-13T04:59:59Z').textoReloj(), '00:00:01', '01:59:59 → falta 1 segundo');
-  assert.strictEqual(conReloj('2026-10-13T05:00:00Z').textoReloj(), '24:00:00', '02:00:00 → vuelve a 24 h');
-  assert.strictEqual(conReloj('2026-10-13T05:00:01Z').textoReloj(), '23:59:59');
-  assert.strictEqual(conReloj('2026-10-12T17:00:00Z').textoReloj(), '12:00:00', '14:00 → faltan 12 h');
-  assert.strictEqual(conReloj('2026-10-13T02:30:00Z').textoReloj(), '02:30:00', '23:30 → faltan 2 h 30');
-});
-
-test('en invierno (UTC-4) el reinicio sigue a las 02:00 de Chile, no a una hora fija en UTC', () => {
-  assert.strictEqual(conReloj('2026-07-15T06:00:00Z').textoReloj(), '24:00:00', '02:00 de Chile en julio');
-  assert.strictEqual(conReloj('2026-07-15T05:00:00Z').textoReloj(), '01:00:00', '01:00 de Chile en julio');
-});
-
-test('el reloj nunca pasa de 24 h ni queda en cero', () => {
-  for (let h = 0; h < 24; h++) {
-    const ms = conReloj(`2026-10-12T${String(h).padStart(2, '0')}:17:42Z`).msHastaReinicio();
-    assert.ok(ms > 0 && ms <= 86400000, `a las ${h}:17Z dio ${ms}`);
-  }
-});
-
-test('la barra lleva el envío a todo Chile y debajo el reloj en cajitas, sin etiqueta', () => {
-  const c = conReloj('2026-10-12T17:00:00Z');
-  const con = c.htmlTopBar(false);
-  assert.match(con, /1-2 días de envío a todo Chile/);
-  const caja = (n, u) => '<span class="abcd-box"><b>' + n + '</b><small>' + u + '</small></span>';
-  assert.ok(con.endsWith('<span class="ab-reloj" id="ab-reloj" role="timer">' + caja('12', 'hrs') + caja('00', 'min') + caja('00', 'seg') + '</span></div>'),
-    'el reloj cierra la barra en tres cajitas, sin texto al lado: ' + con);
-  const sin = c.htmlTopBar(true);
-  assert.match(sin, /class="ab-in sin-reloj"/);
-  assert.doesNotMatch(sin, /ab-reloj/, 'con un plazo de promo real, sus cajitas reemplazan al reloj');
+test('la barra lleva "ENVÍO GRATIS" y el envío a todo Chile, sin contador', () => {
+  const html = htmlTopBar();
+  assert.match(html, /ENVÍO GRATIS/);
+  assert.match(html, /1-2 días de envío a todo Chile/);
+  assert.doesNotMatch(html, /ab-reloj|abcd-box|role="timer"/, 'volvió a aparecer un contador en la barra');
 });
 
 test('el HTML de la página trae el mismo marcado que arma htmlTopBar()', () => {
-  // Si difieren, la barra cambia de forma apenas corre aplicarReserva().
   const m = SRC.match(/<div class="announce-bar" id="offer-bar">([\s\S]*?)<\/div><\/div>/);
   assert.ok(m, 'no encontré el top bar en el HTML');
-  const reloj = /<b>[^<]*<\/b>/g; // los números cambian; el marcado no
-  const html = (m[1] + '</div>').replace(reloj, '<b>X</b>');
-  const js = conReloj('2026-10-12T17:00:00Z').htmlTopBar(false).replace(reloj, '<b>X</b>');
-  assert.strictEqual(html, js);
+  assert.strictEqual(m[1] + '</div>', htmlTopBar());
+});
+
+test('no queda el reloj de 24 h en el código', () => {
+  for (const t of ['id="ab-reloj"', 'function pintarReloj', 'setInterval(pintarReloj', 'RELOJ_HORA']) {
+    assert.ok(!SRC.includes(t), 'quedó en index.html: ' + t);
+  }
 });

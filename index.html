@@ -393,13 +393,10 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 /* Barra con contador: texto arriba + contador regresivo centrado debajo */
 .announce-bar.reserva{display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.35;padding-top:8px;padding-bottom:8px;}
 .announce-bar .reserva-cd{display:flex;gap:6px;justify-content:center;text-transform:none;}
-/* Top bar en una columna centrada: "ENVÍO GRATIS", los días de envío en gris
-   y debajo el reloj de 24 h en cajitas (hrs · min · seg), con el mismo
-   recuadro .abcd-box que usaba el contador de las promos. */
+/* Top bar en una columna centrada: "ENVÍO GRATIS" y los días de envío en gris. */
 .announce-bar .ab-in{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .announce-bar .ab-titulo{font-size:.74rem;letter-spacing:2.4px;font-weight:700;}
 .announce-bar .ab-plazo{font-size:.6rem;letter-spacing:1.6px;color:#9a9a9a;font-weight:500;}
-.announce-bar .ab-reloj{display:inline-flex;gap:5px;margin-top:5px;text-transform:none;}
 /* Cajitas del contador de la oferta en la barra superior. Cada dígito tiene
    su recuadro con su etiqueta abajo. Las del bloque de precio usan .cdb, que
    es el mismo lenguaje visual en chico. */
@@ -419,7 +416,6 @@ html,body{overflow-x:hidden;overflow-x:clip;}
 @media(max-width:600px){
   .announce-bar .ab-titulo{font-size:.66rem;letter-spacing:1.8px;}
   .announce-bar .ab-plazo{font-size:.54rem;letter-spacing:1px;}
-  .announce-bar .ab-reloj{margin-top:4px;}
   /* Con la promo, el regalo baja a su propia línea en vez de dejar "GRATIS" suelto */
   .announce-bar .ab-titulo .solo-promo{display:block;margin-top:3px;}
 }
@@ -1736,7 +1732,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 <!-- Mismo marcado que arma htmlTopBar() en aplicarReserva(): si se toca uno, tocar el otro. -->
-<div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span><span class="ab-reloj" id="ab-reloj" role="timer"><span class="abcd-box"><b>--</b><small>hrs</small></span><span class="abcd-box"><b>--</b><small>min</small></span><span class="abcd-box"><b>--</b><small>seg</small></span></span></div></div>
+<div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -2427,8 +2423,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // El envío gratis es PERMANENTE: no vence en ninguna fecha. Antes
         // OFERTA_END lo apagaba solo al llegar el día, y el sitio dejaba de
         // mostrar "ENVÍO GRATIS" sin que nadie tocara nada. Ahora está fijo en
-        // activo; el reloj del top bar se reinicia a las 02:00 de Chile (ver
-        // RELOJ_HORA) y no controla el envío gratis.
+        // activo.
         const OFERTA_END = new Date('2099-01-01T00:00:00-04:00').getTime();
         const ofertaActiva = () => true;
         // Precio, ancla tachada y % del sello. El precio es el mismo con stock
@@ -4973,10 +4968,9 @@ function aplicarReserva() {
     // prende la clase html.promo del <head>). Sin ella el banner queda en
     // "🇨🇱 ENVÍO GRATIS", que siempre es cierto: el envío gratis es permanente.
     // Las cajitas de "Termina en" solo aparecen si FIN_PROMO_DIA está en el
-    // futuro, y entonces reemplazan al reloj de 24 h (dos relojes en la
-    // misma barra se leen como insistencia).
+    // futuro (promo con fecha de término real).
     var quedaPromo = msRestanteOferta();
-    ab.innerHTML = htmlTopBar(quedaPromo > 0) +
+    ab.innerHTML = htmlTopBar() +
       (quedaPromo > 0
         ? '<div class="ab-cd"><span class="ab-cd-lbl">Termina en</span>' +
           '<span class="ab-cd-boxes" id="cd-ofcd" data-u="' + firmaUnidadesOferta() + '">' +
@@ -5122,70 +5116,18 @@ pintarContadorOferta();
 setInterval(pintarContadorOferta, 1000);
 
 
-// ── Top bar: reloj de 24 h que se reinicia todos los días a las 02:00 de Chile ──
-// Cuenta lo que falta para las 02:00 (hora de Chile) y al llegar vuelve a
-// 24:00:00. Todos los visitantes ven lo mismo: sale del reloj de Chile, no de
-// la primera visita ni de localStorage. Va sin etiqueta, a pedido del dueño.
-//
-// Va en hora de reloj de Chile: la noche del cambio de horario (sábado a
-// domingo, dos veces al año) el reloj salta una hora, igual que el de pared.
-var RELOJ_HORA = 2;
-
-function msHastaReinicio() {
-  try {
-    var falta = (RELOJ_HORA * 3600 - ahoraChile().seg + 86400) % 86400;
-    return (falta || 86400) * 1000;   // justo a las 02:00:00 muestra 24:00:00
-  } catch (e) {
-    // Sin Intl no se sabe la hora de Chile: la barra queda sin reloj.
-    return 0;
-  }
-}
-
-function textoReloj(ms) {
-  var s = Math.floor((ms === undefined ? msHastaReinicio() : ms) / 1000);
-  if (s <= 0) return '--:--:--';
-  var z = function (n) { return String(n).padStart(2, '0'); };
-  return z(Math.floor(s / 3600)) + ':' + z(Math.floor(s / 60) % 60) + ':' + z(s % 60);
-}
-
-// El reloj va en tres cajitas, cada una con su unidad abajo.
-var RELOJ_UNIDADES = ['hrs', 'min', 'seg'];
-function cajitasReloj(texto) {
-  var p = texto.split(':');
-  return RELOJ_UNIDADES.map(function (u, i) {
-    return '<span class="abcd-box"><b>' + p[i] + '</b><small>' + u + '</small></span>';
-  }).join('');
-}
-
+// ── Top bar: "ENVÍO GRATIS" y los días de envío, sin contador ──
 // Marcado de la barra. El HTML de la página trae el mismo ya puesto, para que
-// no parpadee mientras aplicarReserva() espera al fetch de /stock.
-function htmlTopBar(sinReloj) {
-  sinReloj = sinReloj || !msHastaReinicio();
-  return '<div class="ab-in' + (sinReloj ? ' sin-reloj' : '') + '">' +
+// no parpadee mientras aplicarReserva() espera al fetch de /stock. (El reloj
+// de 24 h que iba debajo se sacó a pedido del dueño.)
+function htmlTopBar() {
+  return '<div class="ab-in">' +
     (ofertaActiva()
       ? '<b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b>'
       : '<b class="ab-titulo">🔥 Última unidad disponible</b>') +
     '<span class="ab-plazo">1-2 días de envío a todo Chile</span>' +
-    (sinReloj ? '' : '<span class="ab-reloj" id="ab-reloj" role="timer">' + cajitasReloj(textoReloj()) + '</span>') +
     '</div>';
 }
-
-// Se llama cada segundo y recalcula desde el reloj real (no descuenta 1 a
-// mano), así no se desfasa aunque la pestaña quede en segundo plano.
-function pintarReloj() {
-  var e = document.getElementById('ab-reloj');
-  if (!e) return;
-  var ms = msHastaReinicio();
-  if (ms) {
-    var p = textoReloj(ms).split(':'), b = e.querySelectorAll('b');
-    for (var i = 0; i < b.length; i++) b[i].textContent = p[i];
-    return;
-  }
-  e.parentNode.classList.add('sin-reloj');
-  e.parentNode.removeChild(e);
-}
-pintarReloj();
-setInterval(pintarReloj, 1000);
 
 
 // ── Contador del sorteo mensual ──
