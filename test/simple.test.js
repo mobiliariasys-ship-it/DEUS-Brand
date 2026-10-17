@@ -16,9 +16,9 @@ test('La app y Diseño sin distracciones van dentro de #simple, antes de la tabl
   const pos = s => html.indexOf(s, ini);
   const orden = [
     ['los pasos', pos('Cómo usar la DEUS Band')],
+    ['las funciones (bloque propio, arriba del 360°)', pos('<div class="soft-block" id="funciones">')],
     ['el 360°', pos('id="tecnologia"')],
     ['La app', pos('<div class="soft-block" id="app">')],
-    ['las funciones (dentro de la tarjeta de la app)', pos('Funciones de la DEUS Band')],
     ['"se conecta con" de la app', pos('class="app-tri"')],
     ['Diseño sin distracciones', pos('<div class="soft-block" id="diseno">')],
     ['la tabla', pos('Por qué DEUS Band')],
@@ -105,4 +105,17 @@ test('"Materiales y sensor" va dentro de la tarjeta del 360°, debajo del visor 
   }
   assert.ok(!/<img[^>]*deus-caja/.test(html), 'la foto de la caja ya no va');
   assert.strictEqual(html.indexOf('class="bat-card"'), -1, 'no puede quedar la tarjeta suelta de materiales');
+});
+
+test('las funciones van siempre a la vista: 12, sin desplegable, sin HRV ni Ritmo y cadencia', () => {
+  const ini = html.indexOf('<div class="soft-block" id="funciones">');
+  const fin = html.indexOf('</ul>', ini);
+  assert.ok(ini !== -1 && fin !== -1, 'falta el bloque de funciones');
+  const bloque = html.slice(ini, fin);
+  assert.ok(bloque.includes('Funciones de la DEUS Band'), 'el título va en el bloque');
+  const ids = [...bloque.matchAll(/data-fn="([^"]+)"/g)].map(m => m[1]);
+  assert.deepStrictEqual(ids, ['fc', 'spo2', 'estres', 'recup', 'fases', 'dur', 'pasos', 'cal', 'dep', 'act', 'alarma', 'avisos']);
+  assert.ok(!/id="fn-ver"|fn-plegable/.test(html), 'no puede quedar el botón "Ver las funciones" ni el desplegable');
+  // Cada función que se ve tiene su ficha en el modal
+  for (const id of ids) assert.match(html, new RegExp('\\b' + id + ":\\{t:'"), 'falta la ficha de ' + id);
 });
