@@ -49,6 +49,8 @@ test('las rutas de métricas son solo GET, con su propia clave por cabecera', ()
   ]);
   assert.match(SRV, /process\.env\.METRICAS_KEY/);
   assert.match(SRV, /req\.get\('x-metricas-key'\)/, 'la clave va en la cabecera, no en la URL');
+  assert.match(SRV, /req\.get\('authorization'\)/, 'también como Authorization: Bearer (secretos de red)');
+  assert.ok(!/req\.query\.(clave|key)[^\n]*metricas/i.test(SRV), 'nunca por la URL');
   // Las rutas que modifican siguen exigiendo la clave admin, no la de métricas
   for (const r of ['/admin/ads/budget', '/admin/ads/status', '/stock/ajustar', '/admin/resenas']) {
     const i = SRV.indexOf("'" + r + "'");

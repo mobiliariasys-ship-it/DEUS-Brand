@@ -895,7 +895,11 @@ function claveMetricasOk(req, res) {
     res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos.' });
     return false;
   }
-  if (!metricasLectura.claveValida(req.get('x-metricas-key'), real)) {
+  // La clave llega en X-Metricas-Key o como "Authorization: Bearer <clave>"
+  // (el formato por defecto de los secretos de red del entorno de Claude).
+  const bearer = /^Bearer\s+(.+)$/i.exec(req.get('authorization') || '');
+  const enviada = req.get('x-metricas-key') || (bearer ? bearer[1].trim() : '');
+  if (!metricasLectura.claveValida(enviada, real)) {
     if (!reg || ahora - reg.desde > BLOQUEO_ADMIN_MS) intentosAdmin.set(ip, { desde: ahora, n: 1 });
     else reg.n += 1;
     res.status(403).json({ error: 'Clave incorrecta' });

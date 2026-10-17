@@ -40,8 +40,11 @@ commitea en ambos.
 
 ## Métricas de la tienda (para analizar la conversión)
 
-Si la sesión tiene la variable `DEUS_METRICAS_KEY` y acceso a `deusbrand.cl`,
-las métricas reales se leen así (solo lectura, sin datos de clientes):
+Lo normal es que la clave esté como **secreto de red** del entorno (host
+`deusbrand.cl`, cabecera `X-Metricas-Key`): el proxy la agrega solo y basta con
+`curl -sS https://deusbrand.cl/admin/metricas` (sin cabecera). Si en cambio la
+sesión tiene la variable `DEUS_METRICAS_KEY`, se leen así (solo lectura, sin
+datos de clientes):
 
 ```bash
 curl -sS -H "X-Metricas-Key: $DEUS_METRICAS_KEY" https://deusbrand.cl/admin/metricas
