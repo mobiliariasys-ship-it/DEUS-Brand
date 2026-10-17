@@ -17,6 +17,7 @@ const persist = require('./services/persist');
 const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
 const metaCapi = require('./services/meta-capi');
 const metaAds = require('./services/meta-ads');
+const metricasLectura = require('./services/metricas-lectura');
 const resenas = require('./services/resenas');
 
 // Precio AUTORITATIVO: es el que se cobra, con stock y en modo reserva. El
@@ -823,52 +824,114 @@ app.get('/admin/ads/gasto-horario', async (req, res) => {
 // El gasto de Meta es de la cuenta completa, no de una campaña: una campaña
 // pausada hoy igual consumió plata mientras corría, y esa plata salió del
 // mismo bolsillo.
+// La usan el panel (clave admin) y las métricas de solo lectura (METRICAS_KEY).
+async function utilidadDiaria(diasParam) {
+  // dias=iva: desde que la utilidad cuenta los ads con IVA (tarjeta
+  // "Utilidad histórica" del panel). Si no, 7, 14 o 30.
+  const desdeIva = diasParam === 'iva';
+  const dias = desdeIva ? utilidad_.diasDesdeIva()
+    : [7, 14, 30].includes(Number(diasParam)) ? Number(diasParam) : 14;
+  const ventas = metrics.ventasPorDia(dias);
+  // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
+  // media verdad sirve más que un panel en blanco.
+  let gasto = {}, compras = {}, adsOk = true, adsError = '', via = '';
+  try {
+    const r = await metaAds.getGastoDiarioCuenta(dias);
+    gasto = r.mapa; compras = r.compras || {}; via = r.via;
+  }
+  catch (e) {
+    adsOk = false;
+    // El mensaje VIAJA al panel. Antes solo iba al log de Render, así que la
+    // columna de ads salía en 0 sin decir por qué y no había cómo saber si
+    // faltaba el token, si Meta rechazó la llamada o si no había datos.
+    adsError = e.message || 'Meta no respondió';
+    console.error('[utilidad] Meta no respondió:', adsError);
+  }
+
+  const filas = ventas.map(d => utilidad_.calcularDia(d, gasto[d.fecha], compras[d.fecha]));
+  const tot = utilidad_.totalizar(filas);
+
+  // Meta fecha por el huso de la CUENTA publicitaria, y las ventas se agrupan
+  // por día de Chile. Si los dos no coinciden, la llamada responde bien pero
+  // ninguna fecha calza y la columna de ads queda en cero igual — un fallo
+  // que se ve idéntico a "no hay datos". Se detecta y se informa.
+  const fechasMeta = Object.keys(gasto);
+  const calzan = ventas.filter(d => gasto[d.fecha] != null).length;
+  if (adsOk && fechasMeta.length && !calzan) {
+    adsOk = false;
+    adsError = 'Meta devolvió ' + fechasMeta.length + ' días (' + fechasMeta.sort()[0] +
+      ' a ' + fechasMeta.sort().slice(-1)[0] + ') pero ninguno coincide con los días del panel. ' +
+      'Revisa el huso horario de la cuenta publicitaria.';
+  }
+
+  return {
+    dias, desde: desdeIva ? utilidad_.IVA_DESDE : undefined, adsOk, adsError, filas, total: tot,
+    diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan, via },
+    costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA, iva: utilidad_.IVA }
+  };
+}
+
 app.get('/admin/utilidad-diaria', async (req, res) => {
   if (!claveAdsOk(req, res)) return;
   try {
-    // dias=iva: desde que la utilidad cuenta los ads con IVA (tarjeta
-    // "Utilidad histórica" del panel). Si no, 7, 14 o 30.
-    const desdeIva = req.query.dias === 'iva';
-    const dias = desdeIva ? utilidad_.diasDesdeIva()
-      : [7, 14, 30].includes(Number(req.query.dias)) ? Number(req.query.dias) : 14;
-    const ventas = metrics.ventasPorDia(dias);
-    // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
-    // media verdad sirve más que un panel en blanco.
-    let gasto = {}, compras = {}, adsOk = true, adsError = '', via = '';
-    try {
-      const r = await metaAds.getGastoDiarioCuenta(dias);
-      gasto = r.mapa; compras = r.compras || {}; via = r.via;
-    }
-    catch (e) {
-      adsOk = false;
-      // El mensaje VIAJA al panel. Antes solo iba al log de Render, así que la
-      // columna de ads salía en 0 sin decir por qué y no había cómo saber si
-      // faltaba el token, si Meta rechazó la llamada o si no había datos.
-      adsError = e.message || 'Meta no respondió';
-      console.error('[utilidad] Meta no respondió:', adsError);
-    }
+    res.json(await utilidadDiaria(req.query.dias));
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
 
-    const filas = ventas.map(d => utilidad_.calcularDia(d, gasto[d.fecha], compras[d.fecha]));
-    const tot = utilidad_.totalizar(filas);
+// ── Métricas de SOLO LECTURA (METRICAS_KEY) ──────────────────────────────
+// Para analizar la conversión sin la clave admin (ver services/metricas-lectura.js):
+// solo GET y solo números, nunca nombres, correos ni direcciones. La clave va en
+// la cabecera X-Metricas-Key y no en la URL, para que no quede en los logs ni en
+// el historial del navegador. Los intentos fallidos suman al mismo bloqueo por
+// IP que la clave admin. Sin METRICAS_KEY configurada, las rutas no existen (404).
+//   curl -H "X-Metricas-Key: $DEUS_METRICAS_KEY" https://deusbrand.cl/admin/metricas
+function claveMetricasOk(req, res) {
+  const real = (process.env.METRICAS_KEY || '').trim();
+  if (!real) { res.status(404).json({ error: 'No disponible' }); return false; }
+  const ip = ipDeLaPeticion(req), ahora = Date.now(), reg = intentosAdmin.get(ip);
+  if (reg && reg.n >= MAX_INTENTOS_ADMIN && ahora - reg.desde < BLOQUEO_ADMIN_MS) {
+    res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos.' });
+    return false;
+  }
+  if (!metricasLectura.claveValida(req.get('x-metricas-key'), real)) {
+    if (!reg || ahora - reg.desde > BLOQUEO_ADMIN_MS) intentosAdmin.set(ip, { desde: ahora, n: 1 });
+    else reg.n += 1;
+    res.status(403).json({ error: 'Clave incorrecta' });
+    return false;
+  }
+  res.set('Cache-Control', 'no-store');
+  return true;
+}
 
-    // Meta fecha por el huso de la CUENTA publicitaria, y las ventas se agrupan
-    // por día de Chile. Si los dos no coinciden, la llamada responde bien pero
-    // ninguna fecha calza y la columna de ads queda en cero igual — un fallo
-    // que se ve idéntico a "no hay datos". Se detecta y se informa.
-    const fechasMeta = Object.keys(gasto);
-    const calzan = ventas.filter(d => gasto[d.fecha] != null).length;
-    if (adsOk && fechasMeta.length && !calzan) {
-      adsOk = false;
-      adsError = 'Meta devolvió ' + fechasMeta.length + ' días (' + fechasMeta.sort()[0] +
-        ' a ' + fechasMeta.sort().slice(-1)[0] + ') pero ninguno coincide con los días del panel. ' +
-        'Revisa el huso horario de la cuenta publicitaria.';
-    }
+// Todo lo del panel que sirve para la conversión: visitas, embudo, checkout,
+// conducta, canales, ventas por día/hora/método, stock y pedidos por color/comuna.
+app.get('/admin/metricas', (req, res) => {
+  if (!claveMetricasOk(req, res)) return;
+  res.json(metricasLectura.armar(metrics.snapshot(), pedidos, getStock()));
+});
 
-    res.json({
-      dias, desde: desdeIva ? utilidad_.IVA_DESDE : undefined, adsOk, adsError, filas, total: tot,
-      diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan, via },
-      costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA, iva: utilidad_.IVA }
-    });
+// Utilidad día por día: ?dias=7|14|30|iva (igual que en el panel).
+app.get('/admin/metricas/utilidad', async (req, res) => {
+  if (!claveMetricasOk(req, res)) return;
+  try {
+    res.json(await utilidadDiaria(req.query.dias));
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+// Campañas de Meta con sus números de los últimos 7 días (solo lectura).
+app.get('/admin/metricas/anuncios', async (req, res) => {
+  if (!claveMetricasOk(req, res)) return;
+  try {
+    const campañas = await metaAds.listCampaigns();
+    const conInsights = await Promise.all(campañas.map(async c => ({
+      ...c,
+      insights: await metaAds.getInsights(c.id).catch(() => null)
+    })));
+    res.json({ campaigns: conInsights });
   } catch (e) {
     errorAds(res, e);
   }

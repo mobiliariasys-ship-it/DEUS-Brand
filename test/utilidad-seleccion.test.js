@@ -221,7 +221,7 @@ test('el servidor cuenta los días desde la fecha del IVA, incluidos los dos ext
   assert.strictEqual(u.diasDesdeIva('2026-10-15'), 35);
   assert.strictEqual(u.diasDesdeIva('2030-01-01'), 400, 'tope de lo que se le pide a Meta');
   const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
-  assert.match(srv, /req\.query\.dias === 'iva'/, 'el endpoint acepta dias=iva');
+  assert.match(srv, /diasParam === 'iva'/, 'el endpoint acepta dias=iva');
 });
 
 test('con un servidor sin actualizar (ignora dias=iva) la tarjeta no muestra 14 días como si fueran la histórica', async () => {

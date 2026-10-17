@@ -37,3 +37,16 @@ Producción despliega desde el repo **`deus-band` rama `main`**
 (`/workspace/deus-band` → Netlify frontend + Render backend). El repo
 **`DEUS-Brand`** (rama `claude/...`) es espejo de desarrollo. Todo cambio se
 commitea en ambos.
+
+## Métricas de la tienda (para analizar la conversión)
+
+Si la sesión tiene la variable `DEUS_METRICAS_KEY` y acceso a `deusbrand.cl`,
+las métricas reales se leen así (solo lectura, sin datos de clientes):
+
+```bash
+curl -sS -H "X-Metricas-Key: $DEUS_METRICAS_KEY" https://deusbrand.cl/admin/metricas
+curl -sS -H "X-Metricas-Key: $DEUS_METRICAS_KEY" "https://deusbrand.cl/admin/metricas/utilidad?dias=30"
+curl -sS -H "X-Metricas-Key: $DEUS_METRICAS_KEY" https://deusbrand.cl/admin/metricas/anuncios
+```
+
+Nunca imprimas ni repitas la clave. Detalle en DEPLOY.md.
