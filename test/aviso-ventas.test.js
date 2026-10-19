@@ -22,15 +22,17 @@ function extraer(nombre) {
   throw new Error('llaves sin cerrar en ' + nombre);
 }
 
-function panel(permiso) {
+function panel(permiso, sonidoListo) {
   const avisos = [];
-  function Notification(titulo, op) { avisos.push({ titulo, cuerpo: op.body, tag: op.tag }); }
+  function Notification(titulo, op) { avisos.push({ titulo, cuerpo: op.body, tag: op.tag, silent: op.silent }); }
   Notification.permission = permiso;
-  const ctx = { avisos, window: { Notification }, Notification, String, Number };
+  const ctx = { avisos, window: { Notification }, Notification, String, Number, sonidoListo: !!sonidoListo };
   vm.createContext(ctx);
   vm.runInContext([
     "function money(n){ return '$'+(Number(n)||0).toLocaleString('es-CL'); }",
     'var avisoVentas = { visto: null };',
+    'var audioVenta = sonidoListo ? { state: "running" } : null; var sonidos = 0;',
+    'function sonarVenta(){ sonidos++; }',
     extraer('ventasNuevas'), extraer('avisarVentas')
   ].join('\n'), ctx);
   return ctx;
@@ -73,4 +75,26 @@ test('sin permiso de notificaciones no intenta avisar, pero sigue llevando la cu
 test('el panel llama al aviso en cada actualización y tiene el botón para activarlo', () => {
   assert.match(SRC, /pintar\(d\);\s*avisarVentas\(d\);/);
   assert.match(SRC, /id="aviso-btn"[^>]*onclick="activarAvisoVentas\(\)"/);
+});
+
+test('suena el ka-ching con cada venta nueva (no al abrir) y la notificación va en silencio', () => {
+  const p = panel('granted', true);
+  p.avisarVentas(datos(50, []));
+  assert.strictEqual(p.sonidos, 0, 'abrir el panel no suena');
+  p.avisarVentas(datos(51, [venta(68990)]));
+  assert.strictEqual(p.sonidos, 1);
+  assert.strictEqual(p.avisos[0].silent, true, 'sin doble sonido');
+});
+
+test('si el audio no está habilitado, no intenta sonar y deja el sonido de Windows', () => {
+  const p = panel('granted', false);
+  p.avisarVentas(datos(50, []));
+  p.avisarVentas(datos(51, [venta(68990)]));
+  assert.strictEqual(p.sonidos, 0);
+  assert.strictEqual(p.avisos[0].silent, false);
+});
+
+test('el botón del aviso hace sonar la venta al tocarlo', () => {
+  const f = SRC.slice(SRC.indexOf('function activarAvisoVentas'));
+  assert.match(f.slice(0, 200), /sonarVenta\(\)/);
 });

@@ -1843,6 +1843,41 @@
   // revisa más lento (hasta ~1 vez por minuto), así que el aviso puede tardar
   // hasta un minuto. Al abrir el panel no avisa lo que ya estaba vendido.
   var avisoVentas = { visto: null };
+  // Sonido de venta: un "ka-ching" de caja registradora armado con Web Audio
+  // (sin archivo). Chrome solo deja sonar después de un clic en la página, así
+  // que el audio se habilita con el primer clic en el panel (o en el botón del
+  // aviso). Mientras no esté habilitado, la notificación usa el sonido de Windows.
+  var audioVenta = null;
+  function ctxAudio(){
+    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    if (!audioVenta) audioVenta = new AC();
+    if (audioVenta.state === 'suspended') audioVenta.resume();
+    return audioVenta;
+  }
+  document.addEventListener('pointerdown', function(){ ctxAudio(); }, { once: true });
+  function sonarVenta(){
+    var c = ctxAudio(); if (!c) return;
+    var t = c.currentTime + 0.03;
+    // "ka": golpecito metálico de ruido filtrado
+    var largo = Math.floor(c.sampleRate * 0.05), buf = c.createBuffer(1, largo, c.sampleRate), ch = buf.getChannelData(0);
+    for (var i = 0; i < largo; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / largo);
+    var ruido = c.createBufferSource(); ruido.buffer = buf;
+    var hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
+    var gr = c.createGain(); gr.gain.value = 0.25;
+    ruido.connect(hp); hp.connect(gr); gr.connect(c.destination); ruido.start(t);
+    // "ching": dos campanitas (Mi y La agudos), cada una con su armónico de campana
+    [[1318.5, 0.09], [1760, 0.2]].forEach(function(nota){
+      [[1, 0.22, 0.9], [2.76, 0.06, 0.35]].forEach(function(p){
+        var o = c.createOscillator(), g = c.createGain(), t0 = t + nota[1];
+        o.type = 'sine'; o.frequency.value = nota[0] * p[0];
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(p[1], t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + p[2]);
+        o.connect(g); g.connect(c.destination);
+        o.start(t0); o.stop(t0 + p[2] + 0.05);
+      });
+    });
+  }
   // Compara el total con el último visto. `nuevas` trae el detalle (las más
   // nuevas primero); son como mucho 12, que es lo que manda d.ventas.ultimas.
   function ventasNuevas(antes, d){
@@ -1856,6 +1891,10 @@
     var r = ventasNuevas(avisoVentas.visto, d);
     avisoVentas.visto = r.total;
     if (!r.n || !('Notification' in window) || Notification.permission !== 'granted') return;
+    // Con el ka-ching habilitado, la notificación va en silencio para que no
+    // suenen dos cosas a la vez; si no, suena la de Windows.
+    var conSonido = !!(audioVenta && audioVenta.state === 'running');
+    if (conSonido) sonarVenta();
     var hoy = d.ventas.hoy || {};
     var resumenHoy = 'Hoy llevas ' + (hoy.count || 0) + (hoy.count === 1 ? ' venta' : ' ventas') + ' · ' + money(hoy.monto);
     var titulo, cuerpo;
@@ -1873,7 +1912,7 @@
     try {
       // tag: si hay dos pestañas del panel abiertas, la segunda reemplaza a la
       // primera en vez de duplicar el aviso.
-      var nt = new Notification(titulo, { body: cuerpo, tag: 'deus-venta-' + r.total });
+      var nt = new Notification(titulo, { body: cuerpo, tag: 'deus-venta-' + r.total, silent: conSonido });
       nt.onclick = function(){ window.focus(); nt.close(); };
     } catch (e) {}
   }
@@ -1883,9 +1922,11 @@
     var ok = Notification.permission === 'granted';
     b.classList.toggle('on', ok);
     b.textContent = ok ? '🔔 Aviso de ventas activado' : '🔔 Activar aviso de ventas';
-    b.title = ok ? 'Toca para ver un aviso de prueba' : 'Te llega una notificación en el PC cada vez que entra una venta';
+    b.title = ok ? 'Toca para escuchar el sonido y ver un aviso de prueba' : 'Te llega una notificación con sonido en el PC cada vez que entra una venta';
   }
   function activarAvisoVentas(){
+    // El clic habilita el audio y de paso se escucha cómo suena una venta
+    ctxAudio(); sonarVenta();
     if (!('Notification' in window)) return;
     if (Notification.permission === 'denied') {
       alert('Las notificaciones están bloqueadas para esta página. Actívalas en el candado de la barra de direcciones → Notificaciones → Permitir, y recarga el panel.');
@@ -1894,7 +1935,7 @@
     Notification.requestPermission().then(function(p){
       pintarAvisoBtn();
       if (p === 'granted') {
-        try { new Notification('🔔 Aviso de ventas activado', { body: 'Así te va a llegar cada venta mientras el panel esté abierto (aunque esté minimizado).', tag: 'deus-venta-prueba' }); } catch (e) {}
+        try { new Notification('🔔 Aviso de ventas activado', { body: 'Así te va a llegar cada venta, con este sonido, mientras el panel esté abierto (aunque esté minimizado).', tag: 'deus-venta-prueba', silent: true }); } catch (e) {}
       }
     });
   }
