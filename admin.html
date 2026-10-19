@@ -45,6 +45,9 @@
   .h-title p{margin:5px 0 0;color:var(--muted);font-size:.85rem;}
   .h-actions{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
   .updated{font-size:.64rem;color:var(--faint);letter-spacing:.5px;}
+  .aviso-btn{background:#161616;border:1px solid #2c2c2c;color:#aaa;border-radius:20px;padding:6px 14px;font-size:.72rem;cursor:pointer;font-family:inherit;}
+  .aviso-btn:hover{border-color:#444;color:#ddd;}
+  .aviso-btn.on{border-color:rgba(143,206,74,.45);color:var(--green);}
   .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3a3a3a;margin-right:7px;}
   .dot.on{background:var(--green);box-shadow:0 0 0 0 rgba(143,206,74,.6);animation:pulse 2s infinite;}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(143,206,74,.5)}70%{box-shadow:0 0 0 7px rgba(143,206,74,0)}100%{box-shadow:0 0 0 0 rgba(143,206,74,0)}}
@@ -352,7 +355,7 @@
     <main class="main" id="top">
     <header>
       <div class="h-title"><h1>Dashboard</h1><p>Resumen de tu tienda en tiempo real</p></div>
-      <div class="h-actions"><div class="updated" id="updated">—</div></div>
+      <div class="h-actions"><button type="button" class="aviso-btn" id="aviso-btn" onclick="activarAvisoVentas()">🔔 Activar aviso de ventas</button><div class="updated" id="updated">—</div></div>
     </header>
 
     <!-- Avisos: solo aparecen si hay algo roto. El chat se cayó una vez y el
@@ -1825,11 +1828,74 @@
       if(r.status===403||r.status===404){ throw new Error('clave'); }
       return r.json();
     }).then(function(d){
-      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); }
+      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); pintarAvisoBtn(); }
       pintar(d);
+      avisarVentas(d);
       cargarChats();
     }).catch(function(e){
       if(e.message==='clave'){ document.getElementById('loginErr').textContent='Clave incorrecta.'; localStorage.removeItem('deus-admin-key'); }
+    });
+  }
+
+  // Aviso de venta nueva: notificación del sistema (la de Windows o Mac)
+  // cuando sube el total de ventas. Funciona mientras el panel esté abierto
+  // en una pestaña, aunque esté minimizado: en segundo plano el navegador
+  // revisa más lento (hasta ~1 vez por minuto), así que el aviso puede tardar
+  // hasta un minuto. Al abrir el panel no avisa lo que ya estaba vendido.
+  var avisoVentas = { visto: null };
+  // Compara el total con el último visto. `nuevas` trae el detalle (las más
+  // nuevas primero); son como mucho 12, que es lo que manda d.ventas.ultimas.
+  function ventasNuevas(antes, d){
+    var tot = d && d.ventas && d.ventas.total ? d.ventas.total.count : null;
+    if (typeof tot !== 'number') return { total: antes, n: 0, nuevas: [] };
+    if (antes === null || tot <= antes) return { total: tot, n: 0, nuevas: [] };
+    var n = tot - antes;
+    return { total: tot, n: n, nuevas: (d.ventas.ultimas || []).slice(0, Math.min(n, 12)) };
+  }
+  function avisarVentas(d){
+    var r = ventasNuevas(avisoVentas.visto, d);
+    avisoVentas.visto = r.total;
+    if (!r.n || !('Notification' in window) || Notification.permission !== 'granted') return;
+    var hoy = d.ventas.hoy || {};
+    var resumenHoy = 'Hoy llevas ' + (hoy.count || 0) + (hoy.count === 1 ? ' venta' : ' ventas') + ' · ' + money(hoy.monto);
+    var titulo, cuerpo;
+    if (r.n === 1 && r.nuevas[0]) {
+      var v = r.nuevas[0];
+      var que = v.soloTapones ? 'Tapones' : ((v.unidades > 1 ? v.unidades + ' bandas' : '1 banda') + (v.tapones ? ' + tapones' : ''));
+      var nombre = String(v.nombre || '').trim().split(/\s+/)[0];
+      titulo = '💰 Nueva venta · ' + money(v.monto);
+      cuerpo = [que, v.metodo, nombre].filter(Boolean).join(' · ') + '\n' + resumenHoy;
+    } else {
+      var suma = r.nuevas.reduce(function(t, v){ return t + (Number(v.monto) || 0); }, 0);
+      titulo = '💰 ' + r.n + ' ventas nuevas' + (r.nuevas.length === r.n ? ' · ' + money(suma) : '');
+      cuerpo = resumenHoy;
+    }
+    try {
+      // tag: si hay dos pestañas del panel abiertas, la segunda reemplaza a la
+      // primera en vez de duplicar el aviso.
+      var nt = new Notification(titulo, { body: cuerpo, tag: 'deus-venta-' + r.total });
+      nt.onclick = function(){ window.focus(); nt.close(); };
+    } catch (e) {}
+  }
+  function pintarAvisoBtn(){
+    var b = document.getElementById('aviso-btn'); if (!b) return;
+    if (!('Notification' in window)) { b.style.display = 'none'; return; }
+    var ok = Notification.permission === 'granted';
+    b.classList.toggle('on', ok);
+    b.textContent = ok ? '🔔 Aviso de ventas activado' : '🔔 Activar aviso de ventas';
+    b.title = ok ? 'Toca para ver un aviso de prueba' : 'Te llega una notificación en el PC cada vez que entra una venta';
+  }
+  function activarAvisoVentas(){
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'denied') {
+      alert('Las notificaciones están bloqueadas para esta página. Actívalas en el candado de la barra de direcciones → Notificaciones → Permitir, y recarga el panel.');
+      return;
+    }
+    Notification.requestPermission().then(function(p){
+      pintarAvisoBtn();
+      if (p === 'granted') {
+        try { new Notification('🔔 Aviso de ventas activado', { body: 'Así te va a llegar cada venta mientras el panel esté abierto (aunque esté minimizado).', tag: 'deus-venta-prueba' }); } catch (e) {}
+      }
     });
   }
 
