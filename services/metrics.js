@@ -272,7 +272,24 @@ function registrarVenta(v) {
   const ticket = asignarTicket({ nombre: v.nombre, orden: v.orden, email: v.email });
   sumarEvento('co:5pago');
   guardar();
+  avisarVenta(ventas[ventas.length - 1]);
   return ticket;
+}
+
+// Quien quiera enterarse de cada venta NUEVA (no de los reavisos de la misma
+// orden) se anota acá; hoy, el aviso push al PC del dueño. Un error del aviso
+// nunca puede tumbar el registro de la venta.
+const alVenderCbs = [];
+function alVender(cb) { if (typeof cb === 'function') alVenderCbs.push(cb); }
+function avisarVenta(v) {
+  if (!alVenderCbs.length) return;
+  const resumen = resumenVentas();
+  for (const cb of alVenderCbs) {
+    try {
+      const r = cb(v, resumen);
+      if (r && typeof r.catch === 'function') r.catch(e => console.error('[metrics] aviso de venta:', e.message));
+    } catch (e) { console.error('[metrics] aviso de venta:', e.message); }
+  }
 }
 
 // Venta de Mercado Libre (u otro canal externo), cargada a mano desde el panel.
@@ -586,5 +603,5 @@ module.exports = {
   init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo, ventasPorDia,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden, ventaYaRegistrada,
   resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
-  registrarFalloChat, ventasPorHora
+  registrarFalloChat, ventasPorHora, alVender
 };

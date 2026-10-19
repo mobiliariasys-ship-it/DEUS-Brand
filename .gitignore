@@ -39,3 +39,6 @@ resenas-orden.json
 # El diseño vive en el artifact publicado; para volver a editarlo se lee de
 # ahí, no de acá.
 .design-deus/
+# Aviso push de ventas en modo archivo: lleva la llave privada VAPID y las
+# suscripciones del navegador del dueño. Nunca al repositorio.
+avisos-push.json

@@ -1828,7 +1828,7 @@
       if(r.status===403||r.status===404){ throw new Error('clave'); }
       return r.json();
     }).then(function(d){
-      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); pintarAvisoBtn(); }
+      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); pintarAvisoBtn(); activarPush(); }
       pintar(d);
       avisarVentas(d);
       cargarChats();
@@ -1837,12 +1837,16 @@
     });
   }
 
-  // Aviso de venta nueva: notificación del sistema (la de Windows o Mac)
-  // cuando sube el total de ventas. Funciona mientras el panel esté abierto
-  // en una pestaña, aunque esté minimizado: en segundo plano el navegador
-  // revisa más lento (hasta ~1 vez por minuto), así que el aviso puede tardar
-  // hasta un minuto. Al abrir el panel no avisa lo que ya estaba vendido.
-  var avisoVentas = { visto: null };
+  // Aviso de venta nueva: notificación del sistema (la de Windows o Mac).
+  // Llega por dos caminos que se cubren entre sí:
+  //  1. Push (sw-avisos.js + services/avisos-push.js): el servidor avisa apenas
+  //     entra la venta, AUNQUE EL PANEL ESTÉ CERRADO (basta el navegador
+  //     corriendo, que en Windows sigue en segundo plano al cerrar la ventana).
+  //  2. El propio panel abierto, que ve subir el total de ventas al refrescar.
+  // Los dos usan la misma etiqueta (tag) por venta, así que si llegan ambos el
+  // segundo reemplaza al primero sin volver a sonar. `sonado` evita que el
+  // ka-ching suene dos veces por la misma venta.
+  var avisoVentas = { visto: null, sonado: 0, push: false, reg: null };
   // Sonido de venta: un "ka-ching" de caja registradora armado con Web Audio
   // (sin archivo). Chrome solo deja sonar después de un clic en la página, así
   // que el audio se habilita con el primer clic en el panel (o en el botón del
@@ -1892,6 +1896,8 @@
     var r = ventasNuevas(avisoVentas.visto, d);
     avisoVentas.visto = r.total;
     if (!r.n || !('Notification' in window) || Notification.permission !== 'granted') return;
+    if (r.total <= avisoVentas.sonado) return;   // ya avisó el push
+    avisoVentas.sonado = r.total;
     // Con el ka-ching habilitado, la notificación va en silencio para que no
     // suenen dos cosas a la vez; si no, suena la de Windows.
     var conSonido = !!(audioVenta && audioVenta.state === 'running');
@@ -1917,13 +1923,74 @@
       nt.onclick = function(){ window.focus(); nt.close(); };
     } catch (e) {}
   }
+  // Aviso que llegó por push con el panel abierto: el service worker lo
+  // mostró en silencio y le pasa la venta al panel para que suene el ka-ching.
+  // Si el audio del panel todavía no está habilitado (no hubo clic desde que
+  // se abrió), se repite el mismo aviso con el sonido de Windows.
+  function ventaPorPush(m){
+    if (!m || m.tipo !== 'venta' || typeof m.total !== 'number') return;
+    if (avisoVentas.visto !== null) avisoVentas.visto = Math.max(avisoVentas.visto, m.total);
+    if (m.total <= avisoVentas.sonado) return;
+    avisoVentas.sonado = m.total;
+    if (audioVenta && audioVenta.state === 'running') { sonarVenta(); return; }
+    if (avisoVentas.reg && m.title) {
+      avisoVentas.reg.showNotification(m.title, { body: m.body, tag: m.tag, renotify: true, silent: false, data: { url: '/admin.html' } }).catch(function(){});
+    }
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function(e){ ventaPorPush(e.data); });
+    if (navigator.serviceWorker.startMessages) navigator.serviceWorker.startMessages();
+  }
+  function b64aBytes(b64){
+    var s = atob((b64 + '==='.slice((b64.length + 3) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
+    var out = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+  // Suscribe este navegador al aviso por push. Solo corre con el permiso ya
+  // dado (no vuelve a preguntar) y se repite cada vez que se abre el panel,
+  // así el servidor siempre tiene la suscripción al día.
+  function activarPush(){
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window) || Notification.permission !== 'granted') return Promise.resolve(false);
+    var clv;
+    return navigator.serviceWorker.register('/sw-avisos.js', { scope: '/admin' }).then(function(){
+      return navigator.serviceWorker.ready;
+    }).then(function(reg){
+      avisoVentas.reg = reg;
+      return fetch(BASE + '/admin/push/clave?clave=' + encodeURIComponent(clave)).then(function(r){ return r.json(); }).then(function(k){
+        if (!k || !k.publicKey) throw new Error('el servidor no dio la clave');
+        clv = b64aBytes(k.publicKey);
+        return reg.pushManager.getSubscription();
+      }).then(function(sub){
+        // Si la suscripción es de otras llaves (se regeneraron en el servidor), se rehace
+        var actual = sub && sub.options && sub.options.applicationServerKey ? new Uint8Array(sub.options.applicationServerKey) : null;
+        var igual = actual && actual.length === clv.length && Array.prototype.every.call(actual, function(x, i){ return x === clv[i]; });
+        if (sub && igual) return sub;
+        return (sub ? sub.unsubscribe() : Promise.resolve()).then(function(){
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: clv });
+        });
+      });
+    }).then(function(sub){
+      return fetch(BASE + '/admin/push/suscribir?clave=' + encodeURIComponent(clave), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub)
+      });
+    }).then(function(r){
+      avisoVentas.push = r.ok; pintarAvisoBtn(); return r.ok;
+    }).catch(function(e){
+      console.warn('[aviso push]', e && e.message);
+      avisoVentas.push = false; pintarAvisoBtn(); return false;
+    });
+  }
   function pintarAvisoBtn(){
     var b = document.getElementById('aviso-btn'); if (!b) return;
     if (!('Notification' in window)) { b.style.display = 'none'; return; }
     var ok = Notification.permission === 'granted';
     b.classList.toggle('on', ok);
-    b.textContent = ok ? '🔔 Aviso de ventas activado' : '🔔 Activar aviso de ventas';
-    b.title = ok ? 'Toca para escuchar el sonido y ver un aviso de prueba' : 'Te llega una notificación con sonido en el PC cada vez que entra una venta';
+    b.textContent = !ok ? '🔔 Activar aviso de ventas'
+      : avisoVentas.push ? '🔔 Aviso de ventas activado' : '🔔 Aviso activado · solo con el panel abierto';
+    b.title = !ok ? 'Te llega una notificación con sonido en el PC cada vez que entra una venta'
+      : avisoVentas.push ? 'Te llega aunque el panel esté cerrado. Toca para escuchar el sonido y mandar un aviso de prueba.'
+      : 'Este navegador no aceptó el aviso con el panel cerrado. Toca para reintentar.';
   }
   function activarAvisoVentas(){
     // El clic habilita el audio y de paso se escucha cómo suena una venta
@@ -1935,9 +2002,12 @@
     }
     Notification.requestPermission().then(function(p){
       pintarAvisoBtn();
-      if (p === 'granted') {
-        try { new Notification('🔔 Aviso de ventas activado', { body: 'Así te va a llegar cada venta, con este sonido, mientras el panel esté abierto (aunque esté minimizado).', tag: 'deus-venta-prueba', silent: true }); } catch (e) {}
-      }
+      if (p !== 'granted') return;
+      activarPush().then(function(ok){
+        // La prueba hace el mismo camino que una venta real (servidor → push → PC)
+        if (ok) return fetch(BASE + '/admin/push/probar?clave=' + encodeURIComponent(clave), { method: 'POST' });
+        try { new Notification('🔔 Aviso de ventas activado', { body: 'Así te va a llegar cada venta mientras el panel esté abierto (aunque esté minimizado).', tag: 'deus-venta-prueba', silent: true }); } catch (e) {}
+      });
     });
   }
 

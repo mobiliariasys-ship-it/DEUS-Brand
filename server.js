@@ -18,6 +18,7 @@ const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/reco
 const metaCapi = require('./services/meta-capi');
 const metaAds = require('./services/meta-ads');
 const metricasLectura = require('./services/metricas-lectura');
+const avisosPush = require('./services/avisos-push');
 const resenas = require('./services/resenas');
 
 // Precio AUTORITATIVO: es el que se cobra, con stock y en modo reserva. El
@@ -655,6 +656,50 @@ app.post('/admin/venta', (req, res) => {
   });
   console.log('[admin/venta]', yaEstaba ? 'orden ya registrada, no se suma:' : 'venta cargada a mano:', orden, m);
   res.json({ ok: true, duplicada: yaEstaba, ticket: ticket && ticket.numero || null });
+});
+
+// ── Aviso de venta por push (al PC del dueño, aunque el panel esté cerrado) ──
+// Con la misma clave del panel. Ver services/avisos-push.js.
+metrics.alVender((v, resumen) => avisosPush.enviar(avisosPush.textoVenta(v, resumen)));
+
+function clavePanelOk(req, res) {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) { res.status(404).json({ error: 'No disponible' }); return false; }
+  if ((req.query.clave || '') !== clave) { res.status(403).json({ error: 'Clave incorrecta' }); return false; }
+  return true;
+}
+
+app.get('/admin/push/clave', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try { res.json({ publicKey: await avisosPush.clavePublica() }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/admin/push/suscribir', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try { res.json({ ok: true, suscripciones: await avisosPush.suscribir(req.body) }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.post('/admin/push/desuscribir', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try { res.json({ ok: true, suscripciones: await avisosPush.desuscribir(String((req.body && req.body.endpoint) || '')) }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Aviso de prueba: pasa por el mismo camino que una venta real (servidor →
+// servicio de push → PC), así el botón del panel confirma que de verdad llega.
+app.post('/admin/push/probar', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try {
+    const r = await avisosPush.enviar({
+      tipo: 'prueba',
+      title: '🔔 Aviso de ventas activado',
+      body: 'Así te va a llegar cada venta, aunque el panel esté cerrado.',
+      tag: 'deus-venta-prueba'
+    });
+    res.json({ ok: true, ...r });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── Ads Manager (Marketing API de Meta), protegido con STOCK_KEY ──

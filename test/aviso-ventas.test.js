@@ -30,10 +30,10 @@ function panel(permiso, sonidoListo) {
   vm.createContext(ctx);
   vm.runInContext([
     "function money(n){ return '$'+(Number(n)||0).toLocaleString('es-CL'); }",
-    'var avisoVentas = { visto: null };',
+    'var avisoVentas = { visto: null, sonado: 0, push: false, reg: null };',
     'var audioVenta = sonidoListo ? { state: "running" } : null; var sonidos = 0;',
     'function sonarVenta(){ sonidos++; }',
-    extraer('ventasNuevas'), extraer('avisarVentas')
+    extraer('ventasNuevas'), extraer('avisarVentas'), extraer('ventaPorPush')
   ].join('\n'), ctx);
   return ctx;
 }
@@ -97,4 +97,29 @@ test('si el audio no está habilitado, no intenta sonar y deja el sonido de Wind
 test('el botón del aviso hace sonar la venta al tocarlo', () => {
   const f = SRC.slice(SRC.indexOf('function activarAvisoVentas'));
   assert.match(f.slice(0, 200), /sonarVenta\(\)/);
+});
+
+test('venta que llega por push con el panel abierto: suena una vez y el panel no la repite', () => {
+  const p = panel('granted', true);
+  p.avisarVentas(datos(60, []));
+  p.ventaPorPush({ tipo: 'venta', total: 61, title: 't', body: 'b', tag: 'deus-venta-61' });
+  assert.strictEqual(p.sonidos, 1, 'suena el ka-ching');
+  p.ventaPorPush({ tipo: 'venta', total: 61, title: 't', body: 'b', tag: 'deus-venta-61' });
+  assert.strictEqual(p.sonidos, 1, 'el mismo aviso repetido no vuelve a sonar');
+  p.avisarVentas(datos(61, [venta(68990)]));
+  assert.strictEqual(p.avisos.length, 0, 'al refrescar, el panel no repite el aviso que ya llegó por push');
+  assert.strictEqual(p.sonidos, 1);
+});
+
+test('venta por push con el audio del panel sin habilitar: repite el aviso con el sonido de Windows', () => {
+  const p = panel('granted', false);
+  const mostradas = [];
+  p.avisoVentas.reg = { showNotification: (t, o) => { mostradas.push({ t, ...o }); return Promise.resolve(); } };
+  p.avisarVentas(datos(60, []));
+  p.ventaPorPush({ tipo: 'venta', total: 61, title: '💰 Nueva venta · $68.990', body: 'b', tag: 'deus-venta-61' });
+  assert.strictEqual(p.sonidos, 0);
+  assert.strictEqual(mostradas.length, 1);
+  assert.strictEqual(mostradas[0].silent, false);
+  assert.strictEqual(mostradas[0].renotify, true);
+  assert.strictEqual(mostradas[0].tag, 'deus-venta-61');
 });
