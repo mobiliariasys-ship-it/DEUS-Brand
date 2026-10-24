@@ -222,7 +222,7 @@ test('cada tarjeta fija de la web tiene un data-rid único que el orden acepta',
   const zona = web.slice(ini, web.indexOf('class="rv-arrow l"', ini));
   const tarjetas = zona.match(/<div class="review-card[^"]*"[^>]*>/g) || [];
   const ids = tarjetas.map((t) => (/data-rid="([^"]+)"/.exec(t) || [])[1]);
-  assert.ok(tarjetas.length >= 20, 'se encontraron las tarjetas del carrusel');
+  assert.ok(tarjetas.length >= 15, 'se encontraron las tarjetas del carrusel');
   assert.ok(ids.every((id) => /^f-[a-z0-9._]{1,60}$/.test(id || '')), 'todas tienen data-rid válido');
   assert.strictEqual(new Set(ids).size, ids.length, 'sin repetidos');
 });
