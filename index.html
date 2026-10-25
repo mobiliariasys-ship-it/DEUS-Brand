@@ -2320,15 +2320,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                  que quien agregaba los tapones NO veía por ningún lado los
                  $87.980 que le iban a cobrar — el precio de arriba es solo la
                  línea de la banda y no incluye el upsell. -->
+            <!-- La forma de pago que eligió en la página (3 cuotas o 1 pago), con
+                 el monto de la cuota sobre el TOTAL. Va ARRIBA del total (pedido
+                 25-oct-2026): primero la cuota, después el total. La pinta
+                 actualizarTotalCheckout(). Solo informa: las cuotas se eligen
+                 en Webpay o Mercado Pago al pagar, y lo que se cobra es el total. -->
+            <div class="pago-elegido" id="pago-elegido" style="display:none;margin-top:16px;"></div>
             <div class="total-row" id="total-row">
               <span class="total-label">Total a pagar</span>
               <span class="total-price" id="total-display">$68.990</span>
             </div>
-            <!-- La forma de pago que eligió en la página (3 cuotas o 1 pago), con
-                 el monto de la cuota sobre el TOTAL. La pinta
-                 actualizarTotalCheckout(). Solo informa: las cuotas se eligen
-                 en Webpay o Mercado Pago al pagar, y lo que se cobra es el total. -->
-            <div class="pago-elegido" id="pago-elegido" style="display:none;"></div>
             <div class="total-nota" id="total-nota">Envío gratis incluido</div>
 
             <div class="cta-row" style="margin-top:18px;display:block;">
