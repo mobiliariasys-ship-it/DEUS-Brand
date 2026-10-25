@@ -668,18 +668,19 @@ body.fn-abierto{overflow:hidden;}
 header{display:flex;align-items:center;justify-content:space-between;max-width:1180px;height:76px;margin:0 auto;padding:10px 22px;
   background:#151517;border:1px solid #26262b;border-radius:20px;box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.04);}
 .hdr-right{display:flex;align-items:center;gap:16px;}
-/* Pulso en vivo: la línea del latido avanza como en un monitor, en el celeste
-   del sensor de la banda (#94e0fd, sacado de la foto del sensor). El SVG trae
+/* Pulso en vivo: la línea del latido avanza como en un monitor. Va en el
+   mismo verde del recuadro de precio elegido (.po.on): borde, fondo y etiqueta
+   iguales, línea en #7fd589. Antes era el celeste del sensor (#94e0fd). El SVG trae
    3 latidos de 46px y se corre 46px por ciclo, así el dibujo empalma sin salto;
    el script del pulso fija el ciclo en 60/bpm segundos (clase hdr-pulse-heart). */
-.hdr-pulse{display:inline-flex;align-items:center;gap:9px;background:#0c0d0f;border:1px solid #2b2f36;border-radius:999px;padding:7px 14px 7px 12px;color:#f2f2f2;font-family:'DM Sans',sans-serif;}
+.hdr-pulse{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(180deg,rgba(105,196,109,.12),rgba(105,196,109,.03)),#0c0d0f;border:1px solid rgba(105,196,109,.55);border-radius:999px;padding:7px 14px 7px 12px;color:#f2f2f2;font-family:'DM Sans',sans-serif;}
 .hdr-pulse .mon{width:46px;height:18px;overflow:hidden;position:relative;flex-shrink:0;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 35%,#000 80%,transparent);mask-image:linear-gradient(90deg,transparent,#000 35%,#000 80%,transparent);}
 .hdr-pulse .mon svg{position:absolute;left:0;top:0;width:138px;height:18px;animation:monCorre .88s linear infinite;}
 @keyframes monCorre{from{transform:translateX(0);}to{transform:translateX(-46px);}}
-.hdr-pulse .mon path{fill:none;stroke:#94e0fd;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 3px rgba(148,224,253,.7));}
+.hdr-pulse .mon path{fill:none;stroke:#7fd589;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 3px rgba(105,196,109,.7));}
 .hdr-pulse b{font-variant-numeric:tabular-nums;font-size:.95rem;font-weight:700;line-height:1;}
-.hdr-pulse small{font-size:.56rem;color:#8b8f97;letter-spacing:1.4px;font-weight:600;}
+.hdr-pulse small{font-size:.56rem;color:#9be0a3;letter-spacing:1.4px;font-weight:600;}
 @media(max-width:360px){.hdr-pulse small{display:none;}}
 @media(prefers-reduced-motion:reduce){.hdr-pulse .mon svg{animation:none;}}
 .hdr-price{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:1px;color:var(--white);}
