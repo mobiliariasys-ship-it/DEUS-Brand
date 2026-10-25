@@ -1549,7 +1549,7 @@ body.sb-on .wa-float{bottom:82px;}
 .pay-trust .pt-logos img[alt="Mercado Pago"]{height:27px;}
 /* Confianza en filas limpias (título izquierda · detalle derecha) */
 .reassure{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.07);
-  border-radius:14px;overflow:hidden;margin:16px 0 0;}
+  border-radius:14px;overflow:hidden;margin:10px 0 0;}
 .reassure-item{display:flex;flex-direction:row;align-items:center;gap:12px;
   background:#101010;padding:13px 15px;}
 .reassure-item svg{flex-shrink:0;}
@@ -1566,7 +1566,7 @@ body.sb-on .wa-float{bottom:82px;}
    pantalla (clase .vivo) se llena la barra de batería y aparece el check; solo
    se anima transform y opacity. Sin JS o con "reducir movimiento" no se agrega
    .anim y todo queda quieto en su estado final. */
-.specs{--ac:#3cc3cf;--ac-claro:#9ee7ee;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 0;}
+.specs{--ac:#3cc3cf;--ac-claro:#9ee7ee;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0 0;}
 .spec{display:flex;flex-direction:column;gap:10px;min-width:0;overflow:hidden;background:#101010;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:15px 14px 16px;}
 .spec-k{font-size:.62rem;letter-spacing:1.6px;text-transform:uppercase;color:#8a8a94;font-weight:600;}
 .spec-v{display:flex;align-items:baseline;gap:5px;line-height:1;white-space:nowrap;}
@@ -2117,14 +2117,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
            porque ya están más abajo (logos de pago bajo el botón, ficha
            técnica, tabla y FAQ) y frenaban la llegada a las reseñas. Quedan el
            envío con seguimiento, la garantía y la app. -->
-      <!-- Confianza en filas: título a la izquierda, detalle a la derecha. -->
-      <div class="reassure">
-        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg><b>Envío a todo Chile</b><small>Seguimiento Starken</small></div>
-        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><b>Garantía 6 meses</b><small>30 días de satisfacción</small></div>
-      </div>
-
       <!-- Las dos cifras que más venden, en dos recuadros grandes (con animación
-           al aparecer): hasta 30 días de batería y suscripción $0. Peso y
+           al aparecer): hasta 30 días de batería y suscripción $0. Van ARRIBA del
+           envío y la garantía, justo bajo la compra. Peso y
            resistencia al agua se sacaron de acá para no competir con estas dos;
            siguen en "Ligera, resistente…" y en las preguntas frecuentes. El
            celeste es el acento de este bloque. -->
@@ -2141,6 +2136,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="spec-app"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#0b0b0b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>App incluida <b class="spec-az">Gratis</b></span></div>
           <div class="spec-s">en iOS y Android</div>
         </div>
+      </div>
+
+      <!-- Confianza en filas: título a la izquierda, detalle a la derecha. -->
+      <div class="reassure">
+        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6"/><circle cx="18" cy="18.5" r="1.6"/></svg><b>Envío a todo Chile</b><small>Seguimiento Starken</small></div>
+        <div class="reassure-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><b>Garantía 6 meses</b><small>30 días de satisfacción</small></div>
       </div>
 
       <div class="resist-badge app-badge">
