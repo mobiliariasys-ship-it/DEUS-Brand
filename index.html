@@ -3126,8 +3126,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 '<div class="pe-s">Débito o crédito, con Webpay o Mercado Pago.</div>';
             pe.style.display = checkoutTapones ? 'none' : '';
           }
+          // En cuotas el número grande es la cuota; el total queda dicho acá
+          // para que nadie lea $22.990 como el precio completo.
           if (coCuotas) coCuotas.textContent = enCuotas
-            ? 'Pagando en 3 cuotas sin interés · Webpay o Mercado Pago'
+            ? 'Total ' + clp(total) + ' · 3 cuotas sin interés · Webpay o Mercado Pago'
             : 'Pagando en 1 pago · débito o crédito';
           if (checkoutTapones) {
             document.getElementById('co-prod-price').innerHTML =
@@ -3137,11 +3139,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // Precio real + el tachado (ancla × cantidad, igual que en el bloque
           // de precio desde el 4-oct-2026). Lo que se cobra sigue siendo
           // bandTotal. Con la oferta de envío gratis, un badge verde al lado.
+          // Pagando en cuotas se muestra la cuota ("$22.990 x 3 cuotas") y sin
+          // tachado: el ancla es un precio completo y al lado de una cuota confunde.
           const anclaTotal = PRECIO.ancla > PRECIO.precio ? PRECIO.ancla * checkoutQty : 0;
-          const tachado = anclaTotal ? ` <span class="co-price-old">$${anclaTotal.toLocaleString('es-CL')}</span>` : '';
+          const tachado = anclaTotal && !enCuotas ? ` <span class="co-price-old">$${anclaTotal.toLocaleString('es-CL')}</span>` : '';
+          const precioTxt = enCuotas
+            ? `<span class="co-price-now">${clp(cuotaDe(bandTotal))} <small style="font-size:.75em;color:#bbb;">x 3 cuotas</small></span>`
+            : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`;
           document.getElementById('co-prod-price').innerHTML = ofertaActiva()
-            ? `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>${tachado} <span class="pb-off" style="background:rgba(105,196,109,.12);border-color:rgba(105,196,109,.5);color:#7fd589;">ENVÍO GRATIS</span>`
-            : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>${tachado}`;
+            ? `${precioTxt}${tachado} <span class="pb-off" style="background:rgba(105,196,109,.12);border-color:rgba(105,196,109,.5);color:#7fd589;">ENVÍO GRATIS</span>`
+            : `${precioTxt}${tachado}`;
         }
 
         // ── CARRITO ──
