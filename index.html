@@ -2214,7 +2214,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                      está comprando. -->
                 <div class="co-prod-color" id="co-prod-color">Color negro</div>
                 <div class="co-prod-price" id="co-prod-price"><span class="co-price-now">$68.990</span></div>
-                <div class="co-cuotas">Hasta 3 cuotas sin interés con Webpay o Mercado Pago</div>
+                <div class="co-cuotas" id="co-cuotas">Hasta 3 cuotas sin interés con Webpay o Mercado Pago</div>
               </div>
             </div>
             <div class="co-stock" id="co-stock" style="display:none;"></div>
@@ -2324,6 +2324,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <span class="total-label">Total a pagar</span>
               <span class="total-price" id="total-display">$68.990</span>
             </div>
+            <!-- La forma de pago que eligió en la página (3 cuotas o 1 pago), con
+                 el monto de la cuota sobre el TOTAL. La pinta
+                 actualizarTotalCheckout(). Solo informa: las cuotas se eligen
+                 en Webpay o Mercado Pago al pagar, y lo que se cobra es el total. -->
+            <div class="pago-elegido" id="pago-elegido" style="display:none;"></div>
             <div class="total-nota" id="total-nota">Envío gratis incluido</div>
 
             <div class="cta-row" style="margin-top:18px;display:block;">
@@ -2427,7 +2432,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // la calcula y la muestra la pasarela en el paso de pago, y el monto
         // que se cobra siempre es precioBanda(). El tope del desvío es $30
         // (3 x $9,99), así que no puede crecer aunque cambie el precio.
-        const cuota3 = () => clp(Math.floor(PRECIO.precio / 3 / 10) * 10);
+        const cuotaDe = monto => Math.floor(monto / 3 / 10) * 10;
+        const cuota3 = () => clp(cuotaDe(PRECIO.precio));
         const precioBanda = () => PRECIO.precio;
         const envioGratis = () => ofertaActiva();
 
@@ -3106,6 +3112,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               : (conRegalo ? 'Envío gratis + tapones DEUS de regalo incluidos' : 'Envío gratis incluido');
             nota.style.color = faltaEnvio ? '#c9a227' : '#7fc9a0';
           }
+          // Forma de pago elegida en la página (elegirPago): "cuotas" por
+          // defecto, igual que el recuadro que parte marcado. Solo texto: no
+          // cambia lo que se cobra ni lo que va al píxel.
+          const pe = document.getElementById('pago-elegido');
+          const coCuotas = document.getElementById('co-cuotas');
+          const enCuotas = window.pagoElegido !== 'contado';
+          if (pe) {
+            pe.innerHTML = enCuotas
+              ? '<div class="pe-fila"><span class="pe-k">3 cuotas sin interés</span><span class="pe-v">' + clp(cuotaDe(total)) + '<small>c/u</small></span></div>' +
+                '<div class="pe-s">Al pagar, elige 3 cuotas en Webpay o Mercado Pago (con tarjeta de crédito).</div>'
+              : '<div class="pe-fila"><span class="pe-k">1 pago</span><span class="pe-v">' + clp(total) + '</span></div>' +
+                '<div class="pe-s">Débito o crédito, con Webpay o Mercado Pago.</div>';
+            pe.style.display = checkoutTapones ? 'none' : '';
+          }
+          if (coCuotas) coCuotas.textContent = enCuotas
+            ? 'Pagando en 3 cuotas sin interés · Webpay o Mercado Pago'
+            : 'Pagando en 1 pago · débito o crédito';
           if (checkoutTapones) {
             document.getElementById('co-prod-price').innerHTML =
               `<span class="co-price-now">$${(TAPONES_PRICE * checkoutQty).toLocaleString('es-CL')}</span>`;
@@ -5509,9 +5532,18 @@ document.addEventListener('keydown',function(e){
 .tapones-buy:hover{filter:brightness(1.06);}
 .tapones-buy:active{transform:scale(.98);}
 .tapones-note{text-align:center;font-size:.68rem;color:#8a8a8a;margin:0 0 11px;letter-spacing:.3px;}
+/* Forma de pago elegida, bajo "Total a pagar": mismo verde que .po.on */
+.pago-elegido{margin-top:10px;border:1px solid rgba(105,196,109,.55);border-radius:10px;padding:10px 12px;
+  background:linear-gradient(180deg,rgba(105,196,109,.12),rgba(105,196,109,.03)),#101010;}
+.pe-fila{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.pe-k{font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:#9be0a3;font-weight:600;}
+.pe-v{font-family:"Bebas Neue",sans-serif;font-size:1.45rem;line-height:1;color:#fff;white-space:nowrap;}
+.pe-v small{font-family:'DM Sans',sans-serif;font-size:.62rem;color:#9be0a3;margin-left:3px;letter-spacing:.3px;}
+.pe-s{font-size:.64rem;color:#7fc9a0;margin-top:5px;line-height:1.35;}
 /* Modo checkout "solo tapones": oculta lo que es exclusivo de la banda */
 #checkout-overlay.tapones #co-prod-color,
 #checkout-overlay.tapones .co-cuotas,
+#checkout-overlay.tapones .pago-elegido,
 #checkout-overlay.tapones #co-stock,
 #checkout-overlay.tapones .reserva-regalo{display:none !important;}
 </style>
@@ -5804,9 +5836,12 @@ function moverRollo(rollo){
   io.observe(rollo);
 })();
 // ── Precio: elegir 3 cuotas o 1 pago ──
-// Solo marca cuál se ilumina en verde. No abre el checkout ni manda nada al
-// píxel: la forma de pago real se elige en la pasarela.
+// Marca cuál se ilumina en verde y el checkout muestra esa opción. No abre el
+// checkout ni manda nada al píxel: la forma de pago real se elige en la pasarela.
 function elegirPago(el){
+  // El checkout la lee para mostrar con qué opción está pagando.
+  // abrirCheckout() vuelve a pintar el total, así que basta con guardarla.
+  window.pagoElegido = el.classList.contains('po-cuotas') ? 'cuotas' : 'contado';
   document.querySelectorAll('.precio-opc .po').forEach(function(p){
     var on = p === el;
     p.classList.toggle('on', on);
