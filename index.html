@@ -777,9 +777,12 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .join-line{margin-top:18px;display:flex;align-items:center;gap:11px;font-size:.84rem;color:#cfcfcf;line-height:1.5;}
 .join-line svg{flex-shrink:0;}
 .join-line b{color:#fff;font-size:.95rem;font-weight:600;}
-/* Línea de cuotas bajo el precio (opción A, 26-oct-2026). El monto NO está
-   escrito a mano: lo pinta cuota3() desde el precio que manda el backend. */
-.cuota-linea{display:flex;align-items:center;gap:8px;margin:-2px 0 14px;font-size:.92rem;color:#bdbdbd;line-height:1.3;}
+/* Línea de cuotas bajo el precio, dentro de un recuadro verde suave (opción
+   2, 26-oct-2026): el precio sigue siendo el único número grande y las cuotas
+   quedan agrupadas aparte. El monto NO está escrito a mano: lo pinta cuota3()
+   desde el precio que manda el backend. */
+.cuota-linea{display:flex;align-items:center;gap:8px;margin:-1px 0 14px;padding:11px 13px;font-size:.84rem;color:#bdbdbd;line-height:1.3;
+  border:1px solid rgba(105,196,109,.35);border-radius:14px;background:linear-gradient(180deg,rgba(105,196,109,.10),rgba(105,196,109,.03));}
 .cuota-linea svg{flex-shrink:0;}
 .cuota-linea .cl-g{color:#7fd589;font-weight:600;}
 .cuota-linea .cuota-monto{color:#fff;font-weight:600;}
@@ -2082,7 +2085,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              precio igual se ve completo. Sin tachado desde el 9-oct (ver
              services/precio.js). -->
         <!-- Opción A (26-oct-2026): UN solo precio grande y una línea de cuotas
-             debajo. Antes (25-oct) eran dos recuadros del mismo tamaño, 1 pago y
+             debajo, en un recuadro verde suave (opción 2 del mismo día). Antes (25-oct) eran dos recuadros del mismo tamaño, 1 pago y
              3 cuotas, y con tantos números la gente se confundía: $22.990 se
              leía como el precio de la banda. El total va primero y es el único
              número grande, como pide la ley aunque se ofrezcan cuotas. Los dos
