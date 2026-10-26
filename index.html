@@ -1687,8 +1687,8 @@ body.sb-on .wa-float{bottom:82px;}
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<!-- Mismo marcado que arman htmlTopBar() + htmlContadorBarra() en aplicarReserva(): si se toca uno, tocar el otro. -->
-<div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="ab-hasta"> hasta el 1 de noviembre</span><span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span></div><div class="ab-cd"><span class="ab-cd-lbl">Termina en</span><span class="ab-cd-boxes" id="cd-ofcd" data-u="dhm"><span class="abcd-box"><b id="ofcd-d">--</b><small>días</small></span><span class="abcd-box"><b id="ofcd-h">--</b><small>hrs</small></span><span class="abcd-box"><b id="ofcd-m">--</b><small>min</small></span></span></div></div>
+<!-- Mismo marcado que arma htmlTopBar() en aplicarReserva(): si se toca uno, tocar el otro. -->
+<div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span></div></div>
 <div class="topbar" id="topbar">
 <header>
   <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
@@ -4923,7 +4923,13 @@ function aplicarReserva() {
     // "🇨🇱 ENVÍO GRATIS", que siempre es cierto: el envío gratis es permanente.
     // Las cajitas de "Termina en" solo aparecen si FIN_PROMO_DIA está en el
     // futuro (promo con fecha de término real).
-    ab.innerHTML = htmlTopBar() + htmlContadorBarra(msRestanteOferta());
+    var quedaPromo = msRestanteOferta();
+    ab.innerHTML = htmlTopBar() +
+      (quedaPromo > 0
+        ? '<div class="ab-cd"><span class="ab-cd-lbl">Termina en</span>' +
+          '<span class="ab-cd-boxes" id="cd-ofcd" data-u="' + firmaUnidadesOferta() + '">' +
+          htmlCajitasOferta('ofcd', 'abcd-box') + '</span></div>'
+        : '');
   }
   // Repinta las cajitas recién creadas: si no, se ven "--" hasta el próximo tick.
   if (typeof pintarContadorOferta === 'function') pintarContadorOferta();
@@ -4954,14 +4960,11 @@ function aplicarReserva() {
 // devuelve ahoraChile().dia, así la resta no vuelve a pasar por ninguna
 // conversión de huso.
 //
-// Plazo actual: "envío gratis hasta el 1 de noviembre" (pedido del dueño el
-// 26-oct-2026), o sea hasta el domingo 1-nov 23:59. El anterior fue el Cyber
-// de octubre (5 al 7). Cuando el plazo pasa, msRestanteOferta() da 0 y la barra
-// vuelve sola a "ENVÍO GRATIS", sin fecha ni contador. Para otro plazo se
-// cambian JUNTOS: FIN_PROMO_DIA (el día siguiente al último, 00:00),
-// FIN_PROMO_TEXTO y el HTML del top bar (id="offer-bar"), que trae lo mismo.
-var FIN_PROMO_DIA = Date.UTC(2026, 10, 2) / 86400000;  // 2-nov-2026 00:00 de Chile
-var FIN_PROMO_TEXTO = '1 de noviembre';
+// El último plazo fue el Cyber de octubre (lunes 5 al miércoles 7, 23:59). Ya
+// pasó, así que msRestanteOferta() da 0 y la barra va sin contador. La promo
+// de tapones siguió sin fecha (html.promo); para volver a mostrar un contador
+// basta poner aquí un día futuro.
+var FIN_PROMO_DIA = Date.UTC(2026, 9, 8) / 86400000;   // 8-oct-2026 00:00 de Chile
 
 // Lee el reloj de Chile una sola vez y devuelve lo que necesita el contador:
 // el día (contado desde 1970, para saber en qué punto del ciclo estamos) y
@@ -5030,20 +5033,9 @@ var OFERTA_SITIOS = [['cd-ofcd', 'ofcd', 'abcd-box']];
 // sin recargar la página. NO apaga la promo de tapones (html.promo): esa ya no
 // tiene fecha de término y no depende de este contador.
 function quitarContadorVencido() {
-  Array.prototype.forEach.call(document.querySelectorAll('.announce-bar .ab-cd, .announce-bar .ab-hasta'), function (e) {
+  Array.prototype.forEach.call(document.querySelectorAll('.announce-bar .ab-cd'), function (e) {
     e.parentNode.removeChild(e);
   });
-}
-
-// Bloque "Termina en" con las cajitas del contador ('' si no queda plazo). Lo
-// arma aplicarReserva(); el HTML de la página trae el mismo ya puesto (con
-// "--") para que la barra no cambie de alto al cargar.
-function htmlContadorBarra(ms) {
-  if (!(ms > 0)) return '';
-  var u = unidadesOferta(ms);
-  return '<div class="ab-cd"><span class="ab-cd-lbl">Termina en</span>' +
-    '<span class="ab-cd-boxes" id="cd-ofcd" data-u="' + firmaUnidadesOferta(u) + '">' +
-    htmlCajitasOferta('ofcd', 'abcd-box', u) + '</span></div>';
 }
 
 function pintarContadorOferta() {
@@ -5078,16 +5070,14 @@ pintarContadorOferta();
 setInterval(pintarContadorOferta, 1000);
 
 
-// ── Top bar: "ENVÍO GRATIS" (con su fecha mientras dure el plazo) y los días de envío ──
+// ── Top bar: "ENVÍO GRATIS" y los días de envío, sin contador ──
 // Marcado de la barra. El HTML de la página trae el mismo ya puesto, para que
-// no parpadee mientras aplicarReserva() espera al fetch de /stock. El contador
-// "Termina en" va aparte, en htmlContadorBarra(). (El reloj de 24 h que iba
-// debajo se sacó a pedido del dueño y no volvió.)
+// no parpadee mientras aplicarReserva() espera al fetch de /stock. (El reloj
+// de 24 h que iba debajo se sacó a pedido del dueño.)
 function htmlTopBar() {
-  var hasta = msRestanteOferta() > 0 ? '<span class="ab-hasta"> hasta el ' + FIN_PROMO_TEXTO + '</span>' : '';
   return '<div class="ab-in">' +
     (ofertaActiva()
-      ? '<b class="ab-titulo">🇨🇱 ENVÍO GRATIS' + hasta + '<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b>'
+      ? '<b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b>'
       : '<b class="ab-titulo">🔥 Última unidad disponible</b>') +
     '<span class="ab-plazo">1-2 días de envío a todo Chile</span>' +
     '</div>';
