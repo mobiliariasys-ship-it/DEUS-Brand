@@ -780,7 +780,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 /* Precio en dos columnas: 3 cuotas (destacada, verde) y 1 pago. Los montos
    NO están escritos a mano: los pinta aplicarReserva() desde el precio que
    manda el backend (cuota3() y PRECIO.precio), así no quedan desfasados. */
-.precio-opc{display:grid;grid-template-columns:1.25fr 1fr;gap:8px;margin:0 0 13px;}
+.precio-opc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 13px;}
 .po{min-width:0;border:1px solid rgba(255,255,255,.1);background:#101010;border-radius:12px;padding:12px 13px;
   cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;
   transition:border-color .2s ease,background-color .2s ease,transform .12s ease;}
@@ -791,8 +791,9 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .po.on .po-k{color:#9be0a3;}
 .po-v{font-family:'Bebas Neue',sans-serif;font-size:2.3rem;line-height:1;color:#fff;white-space:nowrap;}
 .po-v sup{font-family:'DM Sans',sans-serif;font-size:1rem;color:var(--silver);vertical-align:top;margin-right:2px;font-weight:300;position:relative;top:.3em;}
-.buybox .po-total .price-block{font-size:1.7rem;margin:6px 0 0;color:#e6e6e6;}
-.buybox .po-total .price-block sup{font-size:.8rem;margin-top:4px;}
+/* El total, igual de grande que la cuota (mismo tamaño y mismo "$") */
+.buybox .po-total .price-block{font-size:2.3rem;line-height:1;margin:0;color:#fff;}
+.buybox .po-total .price-block sup{font-size:1rem;margin:0 2px 0 0;position:relative;top:.3em;}
 .po-s{font-size:.66rem;color:#8f8f99;margin-top:6px;line-height:1.3;transition:color .2s ease;}
 .po.on .po-s{color:#7fc9a0;}
 .cuota-monto{color:#7fd589;}
@@ -2093,10 +2094,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              corre después del fetch de /stock, así que si el backend tarda el
              precio igual se ve completo. Sin tachado desde el 9-oct (ver
              services/precio.js). -->
-        <!-- Opción B del test de precio (25-oct): dos columnas, 3 cuotas a la
-             izquierda (destacada) y 1 pago a la derecha. El total sigue a la
-             vista con su número completo: la ley pide informar el precio total
-             aunque se destaque la cuota. Los dos montos los pinta
+        <!-- Opción B del test de precio (25-oct): dos columnas. Desde el 26-oct
+             el "1 pago" ($68.990) va PRIMERO y del mismo tamaño que la cuota,
+             para que nadie lea $22.990 como el precio de la banda y se sienta
+             engañado después. "3 cuotas" sigue marcado en verde por defecto. La
+             ley pide informar el precio total aunque se destaque la cuota. Los dos montos los pinta
              aplicarReserva() desde el precio del backend; el .price-block de
              la derecha es el mismo de siempre (lo pisa aplicarReserva).
              Se puede elegir cualquiera de los dos y el elegido se ilumina en
@@ -2104,15 +2106,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              lo que se cobra ni dispara nada del píxel; la forma de pago real se
              elige en la pasarela. -->
         <div class="precio-opc" role="radiogroup" aria-label="Forma de pago">
-          <div class="po po-cuotas on" role="radio" aria-checked="true" tabindex="0" onclick="elegirPago(this)" onkeydown="teclaPago(event,this)">
-            <div class="po-k">3 cuotas</div>
-            <div class="po-v"><sup>$</sup><span class="cuota-num">22.990</span></div>
-            <div class="po-s">sin interés · Webpay o Mercado Pago</div>
-          </div>
           <div class="po po-total" role="radio" aria-checked="false" tabindex="-1" onclick="elegirPago(this)" onkeydown="teclaPago(event,this)">
             <div class="po-k">1 pago</div>
             <div class="price-block"><span class="pb-main"><sup>$</sup>68.990</span></div>
             <div class="po-s">débito o crédito</div>
+          </div>
+          <div class="po po-cuotas on" role="radio" aria-checked="true" tabindex="0" onclick="elegirPago(this)" onkeydown="teclaPago(event,this)">
+            <div class="po-k">3 cuotas</div>
+            <div class="po-v"><sup>$</sup><span class="cuota-num">22.990</span></div>
+            <div class="po-s">sin interés · Webpay o Mercado Pago</div>
           </div>
         </div>
         <!-- Beneficios bajo el precio. Con la promo van juntos en un solo
