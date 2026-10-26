@@ -1446,17 +1446,6 @@ body.sb-on .wa-float{bottom:82px;}
 .co-prod-price{margin-top:4px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;}
 .co-price-old{font-size:.72rem;color:#888;text-decoration:line-through;}
 .co-price-now{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#fff;line-height:1;}
-/* "DEUS Band · Negro" en una sola línea, y debajo el selector 3 cuotas / 1 pago */
-.co-prod-name,.co-prod-color{display:inline;font-size:.95rem;}
-.co-prod-name{font-weight:500;}
-.co-prod-color{text-transform:none;letter-spacing:0;color:#9a9a9a;font-weight:400;margin:0;}
-.co-prod-color::before{content:" · ";}
-.co-prod > div{flex:1;min-width:0;}
-.co-seg{display:flex;width:100%;margin-top:6px;border:1px solid #333;border-radius:9px;overflow:hidden;}
-.co-po{flex:1;background:transparent;border:0;color:#999;font-family:'DM Sans',sans-serif;font-size:.62rem;padding:7px 4px;cursor:pointer;line-height:1.25;}
-.co-po + .co-po{border-left:1px solid #333;}
-.co-po b{display:block;font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:1.15rem;color:#fff;letter-spacing:.5px;}
-.co-po.on{background:rgba(105,196,109,.14);color:#9be0a3;font-weight:600;}
 /* Precio "normal" tachado que acompaña al precio actual */
 .pb-old{font-size:.5em;color:#8a8a8a;text-decoration:line-through;margin-left:8px;font-family:'DM Sans',sans-serif;letter-spacing:0;vertical-align:middle;font-weight:400;}
 /* Medios de pago bajo el botón de compra: sin recuadro contenedor.
@@ -2223,7 +2212,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                      elige en la página (tocando un círculo o deslizando) y acá
                      solo se MUESTRA, para que igual quede a la vista qué se
                      está comprando. -->
-                <div class="co-prod-color" id="co-prod-color">Negro</div>
+                <div class="co-prod-color" id="co-prod-color">Color negro</div>
                 <div class="co-prod-price" id="co-prod-price"><span class="co-price-now">$68.990</span></div>
                 <div class="co-cuotas" id="co-cuotas">Hasta 3 cuotas sin interés con Webpay o Mercado Pago</div>
               </div>
@@ -2807,9 +2796,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // Mismo texto que arma resumen() en services/colores.js — el que
           // queda en el pedido y en el correo. Si acá dijera otra cosa, el
           // cliente vería un desglose y le llegaría otro.
-          // Va en la misma línea que "DEUS Band" ("DEUS Band · Negro", idea B).
           el.textContent = claves.length === 1
-            ? ((COLOR_LABEL[claves[0]] || claves[0]).replace(/^./, m => m.toUpperCase()))
+            ? 'Color ' + (COLOR_LABEL[claves[0]] || claves[0])
             : claves.map(c => cuenta[c] + ' ' + (cuenta[c] > 1 ? (COLOR_PLURAL[c] || c) : c)).join(' + ');
           const img = document.getElementById('co-prod-img');
           if (img && bandThumbs[checkoutColores[0]]) img.src = bandThumbs[checkoutColores[0]];
@@ -3141,23 +3129,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
           // En cuotas el número grande es la cuota; el total queda dicho acá
           // para que nadie lea $22.990 como el precio completo.
-          // Con la banda el selector de abajo ya dice todo; la línea queda oculta.
-          if (coCuotas) coCuotas.style.display = 'none';
+          if (coCuotas) coCuotas.textContent = enCuotas
+            ? 'Total ' + clp(total) + ' · 3 cuotas sin interés · Webpay o Mercado Pago'
+            : 'Pagando en 1 pago · débito o crédito';
           if (checkoutTapones) {
             document.getElementById('co-prod-price').innerHTML =
               `<span class="co-price-now">$${(TAPONES_PRICE * checkoutQty).toLocaleString('es-CL')}</span>`;
             return;
           }
-          // Selector de forma de pago (idea B, 25-oct-2026): "3 cuotas · $22.990
-          // c/u" y "1 pago · $68.990" lado a lado; se toca para cambiar. Solo
-          // informa, igual que elegirPago(): lo que se cobra sigue siendo el total.
-          // El envío gratis no va acá: lo dice el banner del camión justo debajo.
-          const op = (modo, on, titulo, monto) =>
-            `<button type="button" class="co-po${on ? ' on' : ''}" role="radio" aria-checked="${on}" onclick="elegirPagoCheckout('${modo}')">${titulo}<b>${monto}</b></button>`;
-          document.getElementById('co-prod-price').innerHTML =
-            `<div class="co-seg" role="radiogroup" aria-label="Forma de pago">` +
-            op('cuotas', enCuotas, '3 cuotas sin interés', clp(cuotaDe(bandTotal)) + ' c/u') +
-            op('contado', !enCuotas, '1 pago', clp(bandTotal)) + `</div>`;
+          // Precio real + el tachado (ancla × cantidad, igual que en el bloque
+          // de precio desde el 4-oct-2026). Lo que se cobra sigue siendo
+          // bandTotal. Con la oferta de envío gratis, un badge verde al lado.
+          // Pagando en cuotas se muestra la cuota ("$22.990 x 3 cuotas") y sin
+          // tachado: el ancla es un precio completo y al lado de una cuota confunde.
+          const anclaTotal = PRECIO.ancla > PRECIO.precio ? PRECIO.ancla * checkoutQty : 0;
+          const tachado = anclaTotal && !enCuotas ? ` <span class="co-price-old">$${anclaTotal.toLocaleString('es-CL')}</span>` : '';
+          const precioTxt = enCuotas
+            ? `<span class="co-price-now">${clp(cuotaDe(bandTotal))} <small style="font-size:.75em;color:#bbb;">x 3 cuotas</small></span>`
+            : `<span class="co-price-now">$${bandTotal.toLocaleString('es-CL')}</span>`;
+          document.getElementById('co-prod-price').innerHTML = ofertaActiva()
+            ? `${precioTxt}${tachado} <span class="pb-off" style="background:rgba(105,196,109,.12);border-color:rgba(105,196,109,.5);color:#7fd589;">ENVÍO GRATIS</span>`
+            : `${precioTxt}${tachado}`;
         }
 
         // ── CARRITO ──
@@ -4873,7 +4865,7 @@ function updateStockUI() {
   // El texto lo pinta actualizarResumenColor(): pisarlo con un solo color
   // borraba el desglose cuando la compra lleva colores mezclados.
   if (typeof actualizarResumenColor === 'function') actualizarResumenColor();
-  else { const coColor = document.getElementById('co-prod-color'); if (coColor) coColor.textContent = String(COLOR_LABEL[cc]).replace(/^./, m => m.toUpperCase()); }
+  else { const coColor = document.getElementById('co-prod-color'); if (coColor) coColor.textContent = 'Color ' + COLOR_LABEL[cc]; }
   const coStock = document.getElementById('co-stock');
   if (coStock) { const t = textoStock(cc); coStock.textContent = t; coStock.style.display = t ? '' : 'none'; }
 }
@@ -5864,13 +5856,6 @@ function elegirPago(el){
     p.setAttribute('aria-checked', on ? 'true' : 'false');
     p.tabIndex = on ? 0 : -1;
   });
-}
-// Lo mismo desde el selector del checkout: deja marcada la misma opción en la
-// página y vuelve a pintar el checkout.
-function elegirPagoCheckout(modo){
-  var el = document.querySelector('.precio-opc .po-' + (modo === 'cuotas' ? 'cuotas' : 'total'));
-  if (el) elegirPago(el); else window.pagoElegido = modo;
-  actualizarTotalCheckout();
 }
 function teclaPago(e, el){
   var k = e.key;
