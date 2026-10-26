@@ -3119,13 +3119,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const pe = document.getElementById('pago-elegido');
           const coCuotas = document.getElementById('co-cuotas');
           const enCuotas = window.pagoElegido !== 'contado';
+          // Opción 2 (25-oct-2026): cuota, total y envío en UNA tarjeta. Arriba
+          // la cuota grande; abajo "Total $68.990" y el envío. Con la banda la
+          // tarjeta reemplaza a la fila "Total a pagar" y a su nota; en modo
+          // solo tapones vuelven esas dos.
           if (pe) {
-            pe.innerHTML = enCuotas
-              ? '<div class="pe-fila"><span class="pe-k">3 cuotas sin interés</span><span class="pe-v">' + clp(cuotaDe(total)) + '<small>c/u</small></span></div>' +
-                '<div class="pe-s">Al pagar, elige 3 cuotas en Webpay o Mercado Pago (con tarjeta de crédito).</div>'
-              : '<div class="pe-fila"><span class="pe-k">1 pago</span><span class="pe-v">' + clp(total) + '</span></div>' +
-                '<div class="pe-s">Débito o crédito, con Webpay o Mercado Pago.</div>';
+            const faltaEnv = !ofertaActiva() && !selectedShipping;
+            const conRegalo = document.documentElement.classList.contains('promo');
+            const envTxt = faltaEnv
+              ? '<span class="pe-env" style="color:#c9a227;">+ envío, se calcula abajo</span>'
+              : '<span class="pe-env">🚚 Envío gratis' + (conRegalo ? ' + tapones de regalo' : '') + '</span>';
+            pe.innerHTML = (enCuotas
+              ? '<div class="pe-top"><div class="pe-k">Paga en 3 cuotas sin interés</div><div class="pe-v">' + clp(cuotaDe(total)) + '<small>al mes</small></div></div>'
+              : '<div class="pe-top"><div class="pe-k">1 pago · débito o crédito</div><div class="pe-v">' + clp(total) + '</div></div>') +
+              '<div class="pe-bot"><span class="pe-tot">' + (enCuotas ? 'Total <b>' + clp(total) + '</b>' : 'Webpay o Mercado Pago') + '</span>' + envTxt + '</div>';
             pe.style.display = checkoutTapones ? 'none' : '';
+            const fila = document.getElementById('total-row');
+            if (fila) fila.style.display = checkoutTapones ? '' : 'none';
+            if (nota) nota.style.display = checkoutTapones ? '' : 'none';
           }
           // En cuotas el número grande es la cuota; el total queda dicho acá
           // para que nadie lea $22.990 como el precio completo.
@@ -5541,13 +5552,15 @@ document.addEventListener('keydown',function(e){
 .tapones-buy:active{transform:scale(.98);}
 .tapones-note{text-align:center;font-size:.68rem;color:#8a8a8a;margin:0 0 11px;letter-spacing:.3px;}
 /* Forma de pago elegida, bajo "Total a pagar": mismo verde que .po.on */
-.pago-elegido{margin-top:10px;border:1px solid rgba(105,196,109,.55);border-radius:10px;padding:10px 12px;
-  background:linear-gradient(180deg,rgba(105,196,109,.12),rgba(105,196,109,.03)),#101010;}
-.pe-fila{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
-.pe-k{font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:#9be0a3;font-weight:600;}
-.pe-v{font-family:"Bebas Neue",sans-serif;font-size:1.45rem;line-height:1;color:#fff;white-space:nowrap;}
-.pe-v small{font-family:'DM Sans',sans-serif;font-size:.62rem;color:#9be0a3;margin-left:3px;letter-spacing:.3px;}
-.pe-s{font-size:.64rem;color:#7fc9a0;margin-top:5px;line-height:1.35;}
+.pago-elegido{margin-top:10px;border:1px solid rgba(105,196,109,.55);border-radius:12px;overflow:hidden;background:#101010;}
+.pe-top{padding:16px 14px 14px;text-align:center;background:linear-gradient(180deg,rgba(105,196,109,.15),rgba(105,196,109,.04));}
+.pe-k{font-size:.62rem;letter-spacing:2.5px;text-transform:uppercase;color:#9be0a3;font-weight:700;}
+.pe-v{font-family:"Bebas Neue",sans-serif;font-size:2.9rem;line-height:1;color:#fff;margin-top:6px;white-space:nowrap;}
+.pe-v small{font-family:'DM Sans',sans-serif;font-size:.85rem;color:#7fd589;margin-left:6px;letter-spacing:0;}
+.pe-bot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid rgba(105,196,109,.3);font-size:.8rem;}
+.pe-tot{color:#8a8a8a;}
+.pe-tot b{color:#fff;font-weight:700;}
+.pe-env{color:#7fd589;text-align:right;}
 /* Modo checkout "solo tapones": oculta lo que es exclusivo de la banda */
 #checkout-overlay.tapones #co-prod-color,
 #checkout-overlay.tapones .co-cuotas,
