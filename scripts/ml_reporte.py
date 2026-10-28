@@ -18,6 +18,12 @@ datos"). Esas se estiman igual que las demás del reporte: precio de la
 publicación ese día, menos el 12% de cargo de ML, menos el envío de las ventas
 más cercanas en fecha; una devolución sin montos toma lo que cobró ML en la
 devolución más cercana. Quedan marcadas "estimado" y el panel las señala.
+
+OJO: lo depositado NO trae la publicidad de ML, que se cobra aparte. Desde el
+28-oct-2026 el panel carga las ventas de ML a mano con el precio completo y les
+descuenta los cargos de ML, publicidad incluida (services/utilidad.js,
+CARGOS_ML). Un reporte reemplaza las cargadas a mano en sus fechas, así que
+esos días dejan de restar la publicidad de ML.
 """
 import json
 import re

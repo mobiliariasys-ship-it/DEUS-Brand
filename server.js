@@ -651,15 +651,18 @@ app.post('/admin/reset-tiempo', (req, res) => {
 // veces, la segunda no suma. Para una presencial sirve cualquier referencia
 // estable, ej. "presencial-2026-09-27-1".
 //
-// Mercado Libre (metodo "Mercado Libre"): el monto es lo que DEPOSITA ML, ya
-// sin su envío ni su comisión. metrics la guarda aparte: entra en la utilidad
-// (solo se le resta el costo de la banda) pero no en las métricas de la web.
+// Mercado Libre (metodo "Mercado Libre"): el panel manda el PRECIO COMPLETO de
+// la venta con bruto: true, y la utilidad le resta los cargos de ML (30,4%,
+// ver utilidad.CARGOS_ML) y la banda. Sin bruto, el monto es lo que ya
+// DEPOSITÓ ML (sin su envío ni su comisión) y solo se le resta la banda. En
+// los dos casos metrics la guarda aparte: entra en la utilidad pero no en las
+// métricas de la web.
 app.post('/admin/venta', (req, res) => {
   const clave = (process.env.STOCK_KEY || '').trim();
   if (!clave) return res.status(404).json({ error: 'No disponible' });
   if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
 
-  const { monto, fecha, metodo, nombre, orden, email, unidades, soloTapones, tapones } = req.body || {};
+  const { monto, fecha, metodo, nombre, orden, email, unidades, soloTapones, tapones, bruto } = req.body || {};
   const m = Number(monto);
   if (!m || m <= 0) return res.status(400).json({ error: 'monto tiene que ser un número mayor a 0' });
   if (!orden || !String(orden).trim()) return res.status(400).json({ error: 'orden es obligatoria (llave de idempotencia)' });
@@ -670,7 +673,7 @@ app.post('/admin/venta', (req, res) => {
     monto: m, fecha, metodo: metodo || 'Manual', nombre: nombre || '',
     orden: String(orden).trim(), email: email || '',
     unidades: Number(unidades) > 0 ? Number(unidades) : null,
-    soloTapones: !!soloTapones, tapones: !!tapones
+    soloTapones: !!soloTapones, tapones: !!tapones, bruto: !!bruto
   });
   console.log('[admin/venta]', yaEstaba ? 'orden ya registrada, no se suma:' : 'venta cargada a mano:', orden, m);
   res.json({ ok: true, duplicada: yaEstaba, ticket: ticket && ticket.numero || null });
@@ -880,8 +883,10 @@ app.get('/admin/ads/gasto-horario', async (req, res) => {
 //   - banda      $17.000 por UNIDAD (un pedido de 3 cuesta el triple)
 //   - envío       $4.000 por PEDIDO (uno de 3 bandas se despacha una vez)
 //   - pasarela      3,5% del monto (Webpay/Flow/MercadoPago)
-//   - Mercado Libre se carga con lo que deposita ML (ya sin su envío ni su
-//     comisión), así que a esas ventas solo se les resta la banda
+//   - Mercado Libre se carga con el precio completo y se le restan los cargos
+//     de ML (30,4%: publicidad, comisión, envío y devoluciones) y la banda.
+//     Las del reporte de ML y las cargadas antes del 28-oct traen lo que
+//     deposita ML (ya sin su envío ni su comisión): solo se les resta la banda
 //   - publicidad  el gasto REAL del día en la cuenta de Meta, no el presupuesto
 //
 // El gasto de Meta es de la cuenta completa, no de una campaña: una campaña
@@ -930,7 +935,8 @@ async function utilidadDiaria(diasParam) {
   return {
     dias, desde: desdeIva ? utilidad_.IVA_DESDE : undefined, adsOk, adsError, filas, total: tot,
     diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan, via },
-    costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA, iva: utilidad_.IVA }
+    costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA, iva: utilidad_.IVA,
+              ml: utilidad_.CARGOS_ML }
   };
 }
 

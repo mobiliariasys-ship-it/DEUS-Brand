@@ -50,6 +50,8 @@ const tickets = [];
 // compra de la web, y le darían un ticket del sorteo a alguien que no compró
 // en el sitio. El monto es lo que DEPOSITA el canal, ya sin su envío ni su
 // comisión. { monto, fecha, metodo, nombre, orden, unidades, soloTapones, externo: true }
+// Desde el 28-oct-2026 el panel las carga con el PRECIO COMPLETO y bruto: true;
+// a esas la utilidad les resta los cargos de ML (utilidad.CARGOS_ML).
 // Las que vienen del reporte de ML (importarMercadoLibre) traen además
 // fuente: 'reporte-ml', y pueden ser devolucion: true (monto negativo, sin
 // banda) o estimado: true (ML las mandó sin montos).
@@ -304,6 +306,9 @@ function avisarVenta(v) {
 // Venta de Mercado Libre (u otro canal externo), cargada a mano desde el panel.
 // Idempotente por n° de orden, igual que las de la web. No suma el paso final
 // del embudo (co:5pago) ni da ticket del sorteo: no pasó por el checkout.
+// bruto: true = el monto es el precio completo de la venta (lo que pagó el
+// comprador) y la utilidad le descuenta los cargos de ML. Sin él, el monto es
+// lo que ya depositó ML, como se cargaban antes del 28-oct-2026.
 function registrarVentaExterna(v) {
   const orden = String(v.orden || '').trim();
   if (orden && ventasExternas.some(x => x.orden === orden)) return null;
@@ -316,6 +321,7 @@ function registrarVentaExterna(v) {
     orden,
     unidades: Number(v.unidades) > 0 ? Number(v.unidades) : 1,
     soloTapones: !!v.soloTapones,
+    bruto: !!v.bruto,
     externo: true
   });
   guardar();
@@ -331,6 +337,10 @@ function registrarVentaExterna(v) {
 // una orden "manual-…") y sumar las dos inflaría la utilidad. Se aplica UNA vez
 // por reporte: si después se carga a mano una venta de ML, un reinicio no la
 // borra; recién el próximo reporte, que ya la trae, la reemplaza.
+// OJO: las cargadas a mano van con precio completo y llevan los cargos de ML,
+// publicidad de ML incluida (utilidad.CARGOS_ML). Lo depositado del reporte ya
+// trae la comisión y el envío, pero NO la publicidad, que ML cobra aparte: al
+// reemplazarlas, esos días dejan de restar la publicidad de ML.
 function importarMercadoLibre(lote) {
   if (!lote || !lote.id || !Array.isArray(lote.ventas) || !lote.ventas.length) return null;
   if (importacionesML.includes(lote.id)) return { aplicado: false, id: lote.id };
@@ -471,12 +481,13 @@ function resumenVentas() {
 // ventas igual gastó en publicidad y tiene que aparecer en rojo, no faltar.
 //
 // Incluye las ventas de canales externos (Mercado Libre), marcadas aparte:
-// su monto ya viene sin envío ni comisión, así que la utilidad no les vuelve a
-// restar envío ni pasarela, y el costo por venta de los anuncios no las cuenta.
+// la utilidad no les resta el envío ni la pasarela de la web, y el costo por
+// venta de los anuncios no las cuenta. `brutoML` suma las cargadas con precio
+// completo, que son las que llevan los cargos de ML.
 function ventasPorDia(dias = 14) {
   const precio = require('./precio').precioBanda();
   const vacio = d => ({ fecha: d, pedidos: 0, unidades: 0, ingresos: 0, conTapones: 0, conCorreas: 0, estimado: false,
-                        pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0,
+                        pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, brutoML: 0,
                         devoluciones: 0, mlEstimado: false });
   const mapa = {};
   for (const v of ventas.concat(ventasExternas)) {
@@ -496,6 +507,7 @@ function ventasPorDia(dias = 14) {
     if (v.externo) {
       mapa[d].pedidosExternos += 1;
       mapa[d].ingresosExternos += v.monto;
+      if (v.bruto) mapa[d].brutoML += v.monto;
       if (!v.soloTapones) mapa[d].unidadesExternas += v.unidades || 1;
     }
     if (v.tapones) mapa[d].conTapones += 1;

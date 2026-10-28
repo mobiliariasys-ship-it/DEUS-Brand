@@ -9,6 +9,23 @@ const COSTO_BANDA = 17000;   // por UNIDAD
 const COSTO_ENVIO = 4000;    // por PEDIDO
 const TASA_PASARELA = 0.035; // sobre el monto cobrado
 
+// Lo que se queda Mercado Libre de cada venta, sobre el PRECIO COMPLETO. Sale
+// del resumen de ML de los últimos 30 días al 28-oct-2026 (Métricas →
+// "Distribución de tus costos"): vendido $1.172.830 (17 × $68.990) y
+// cargos e inversiones $356.257 (30,4%), de los que publicidad es el 42,4%,
+// cargo por venta el 39,5%, envíos el 16,3% y devoluciones el 1,8%. Pasado a %
+// de lo vendido suma 30,4%: de $68.990 quedan $48.031, lo mismo que ML dice
+// que deposita en promedio ($816.573 / 17). El 12% de comisión calza además
+// con todas las filas del Excel de ML (ver scripts/ml_reporte.py).
+// Solo se aplica a las ventas de ML cargadas con su precio completo (bruto):
+// las del reporte de ML ya traen lo depositado.
+const CARGOS_ML = {
+  publicidad: 0.1288,
+  comision: 0.12,
+  envio: 0.0495,
+  devolucion: 0.0055
+};
+
 // Meta REPORTA el gasto sin IVA pero COBRA con IVA. Verificado contra el
 // recibo de agosto: las lineas por campana sumaban $88.898 y el cargo fue
 // $105.789 — exactamente 88.898 x 1,19. Usar el numero de la API tal cual
@@ -40,15 +57,27 @@ function calcularDia(d, ads, comprasMeta) {
   const adsNeto = Math.round(Number(ads) || 0);
   const ivaAds = Math.round(adsNeto * IVA);
   const gastoAds = adsNeto + ivaAds;
-  // Ventas de Mercado Libre: su monto ya viene sin envío ni comisión (es lo
-  // que deposita ML), así que a esas no se les resta envío ni pasarela. Sí
-  // llevan su costo de banda, que está incluido en `unidades`.
+  // Ventas de Mercado Libre: no pasan por el despacho ni la pasarela de la web,
+  // así que a esas no se les resta envío ni pasarela. Las del reporte de ML (y
+  // las cargadas a mano antes del 28-oct) traen lo que deposita ML; las
+  // cargadas con el precio completo (`brutoML`) llevan los cargos de ML de
+  // abajo. Todas llevan su costo de banda, que está incluido en `unidades`.
   const pedidosExternos = Number(d.pedidosExternos) || 0;
   const unidadesExternas = Number(d.unidadesExternas) || 0;
   const ingresosExternos = Number(d.ingresosExternos) || 0;
   const costoBandas = unidades * COSTO_BANDA;
   const costoEnvios = Math.max(0, pedidos - pedidosExternos) * COSTO_ENVIO;
   const pasarela = Math.round(Math.max(0, ingresos - ingresosExternos) * TASA_PASARELA);
+  // Las de Mercado Libre cargadas con el precio completo llevan los cargos de
+  // ML. Van en su propia cuenta y no en "ads" ni "envíos": esas columnas son de
+  // la web, y la publicidad de ML sumada a la de Meta falsearía el costo por
+  // venta de los anuncios.
+  const brutoML = Number(d.brutoML) || 0;
+  const mlPublicidad = Math.round(brutoML * CARGOS_ML.publicidad);
+  const mlComision = Math.round(brutoML * CARGOS_ML.comision);
+  const mlEnvio = Math.round(brutoML * CARGOS_ML.envio);
+  const mlDevolucion = Math.round(brutoML * CARGOS_ML.devolucion);
+  const cargosML = mlPublicidad + mlComision + mlEnvio + mlDevolucion;
   return {
     fecha: d.fecha,
     pedidos, unidades, ingresos,
@@ -63,10 +92,11 @@ function calcularDia(d, ads, comprasMeta) {
     devoluciones: Number(d.devoluciones) || 0,
     pedidosExternos, unidadesExternas, ingresosExternos,
     costoBandas, costoEnvios, pasarela,
+    cargosML, mlPublicidad, mlComision, mlEnvio, mlDevolucion,
     adsNeto, ivaAds,
     ads: gastoAds,
     comprasMeta: Number(comprasMeta) || 0,
-    utilidad: ingresos - costoBandas - costoEnvios - pasarela - gastoAds,
+    utilidad: ingresos - costoBandas - costoEnvios - pasarela - cargosML - gastoAds,
     estimado: !!d.estimado,
     // Montos de Mercado Libre estimados: el reporte de ML los trajo vacíos.
     mlEstimado: !!d.mlEstimado
@@ -84,9 +114,12 @@ function totalizar(filas) {
     ingresosExternos: a.ingresosExternos + (f.ingresosExternos || 0),
     ingresos: a.ingresos + f.ingresos, costoBandas: a.costoBandas + f.costoBandas,
     costoEnvios: a.costoEnvios + f.costoEnvios, pasarela: a.pasarela + f.pasarela,
+    cargosML: a.cargosML + (f.cargosML || 0), mlPublicidad: a.mlPublicidad + (f.mlPublicidad || 0),
+    mlComision: a.mlComision + (f.mlComision || 0), mlEnvio: a.mlEnvio + (f.mlEnvio || 0),
+    mlDevolucion: a.mlDevolucion + (f.mlDevolucion || 0),
     adsNeto: a.adsNeto + f.adsNeto, ivaAds: a.ivaAds + f.ivaAds,
     ads: a.ads + f.ads, comprasMeta: a.comprasMeta + (f.comprasMeta || 0), utilidad: a.utilidad + f.utilidad
-  }), { pedidos: 0, unidades: 0, conTapones: 0, conCorreas: 0, devoluciones: 0, pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, adsNeto: 0, ivaAds: 0, ads: 0, comprasMeta: 0, utilidad: 0 });
+  }), { pedidos: 0, unidades: 0, conTapones: 0, conCorreas: 0, devoluciones: 0, pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, cargosML: 0, mlPublicidad: 0, mlComision: 0, mlEnvio: 0, mlDevolucion: 0, adsNeto: 0, ivaAds: 0, ads: 0, comprasMeta: 0, utilidad: 0 });
 }
 
-module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, IVA, IVA_DESDE, diasDesdeIva, calcularDia, totalizar };
+module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, CARGOS_ML, IVA, IVA_DESDE, diasDesdeIva, calcularDia, totalizar };

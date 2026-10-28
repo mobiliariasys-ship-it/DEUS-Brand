@@ -26,7 +26,8 @@ function extraer(nombre) {
   throw new Error('llaves sin cerrar en ' + nombre);
 }
 
-// 30 días de Chile con ventas web, una de Mercado Libre, tapones y gasto en Meta.
+// 30 días de Chile con ventas web, de Mercado Libre (con lo depositado y con
+// el precio completo, que lleva los cargos de ML), tapones y gasto en Meta.
 function treintaDias() {
   const filas = [];
   for (let i = 29; i >= 0; i--) {
@@ -35,7 +36,9 @@ function treintaDias() {
       ? { fecha, pedidos: 2, unidades: 3, ingresos: 188970, conTapones: 1 }
       : i % 7 === 0
         ? { fecha, pedidos: 1, unidades: 1, ingresos: 57000, pedidosExternos: 1, unidadesExternas: 1, ingresosExternos: 57000 }
-        : { fecha, pedidos: 0, unidades: 0, ingresos: 0 };
+        : i === 20
+          ? { fecha, pedidos: 1, unidades: 1, ingresos: 68990, pedidosExternos: 1, unidadesExternas: 1, ingresosExternos: 68990, brutoML: 68990 }
+          : { fecha, pedidos: 0, unidades: 0, ingresos: 0 };
     filas.push(u.calcularDia(ventas, 20000 + i * 1000));
   }
   return filas;
@@ -55,7 +58,7 @@ function montar() {
   const respuesta = dias => {
     const filas = filas30.slice(-dias);
     return { dias, adsOk: true, filas, total: u.totalizar(filas), diagnostico: { diasQueCalzan: dias },
-             costos: { banda: u.COSTO_BANDA, envio: u.COSTO_ENVIO, pasarela: u.TASA_PASARELA, iva: u.IVA } };
+             costos: { banda: u.COSTO_BANDA, envio: u.COSTO_ENVIO, pasarela: u.TASA_PASARELA, iva: u.IVA, ml: u.CARGOS_ML } };
   };
   // dias=iva: todo lo que hay desde que los ads se cuentan con IVA.
   const respuestaIva = { ...respuesta(30), desde: u.IVA_DESDE };
@@ -87,7 +90,7 @@ function montar() {
   vm.runInContext(
     estado[0] + '\n' + estadoHist[0] + '\n' +
     ['diasElegidosUtil', 'utilDeDias', 'utilidadSegunSel', 'pintarUtilSelResumen', 'marcarRangoUtil', 'cargarUtilidad',
-     'proyeccionMensual', 'pintarUtilidad', 'kpi', 'money0', 'marcarAct',
+     'proyeccionMensual', 'pintarUtilidad', 'textoCargosML', 'kpi', 'money0', 'marcarAct',
      'cargarUtilHist', 'utilTarjeta', 'pintarUtilTarjeta', 'verUtilHistorica'].map(extraer).join('\n') +
     // Como en el panel: refrescarSel termina llamando a utilidadSegunSel.
     '\nfunction refrescarSel(){ utilidadSegunSel(); }', ctx);
@@ -103,7 +106,26 @@ test('la suma de los días elegidos es la misma que la del servidor, campo por c
   const r = JSON.parse(run(h, 'JSON.stringify(utilDeDias(FILAS, FECHAS))'));
   assert.deepStrictEqual(r.filas.map(f => f.fecha), fechas, 'solo los días elegidos, en orden');
   const servidor = u.totalizar(h.filas30.filter(f => fechas.includes(f.fecha)));
+  assert.ok(servidor.cargosML > 0, 'entre los días elegidos hay una venta de ML con precio completo');
   assert.deepStrictEqual(r.total, servidor);
+});
+
+test('la columna "Cargos ML" aparece solo si en el rango hay ventas de ML con precio completo', async () => {
+  const h = montar();
+  run(h, 'cargarUtilidad()'); await esperar();               // 14 días: solo ML con lo depositado
+  assert.ok(!h.els['util-tabla'].innerHTML.includes('Cargos ML'), 'sin cargos de ML no se agrega la columna');
+  run(h, 'cargarUtilidad(30)'); await esperar();             // 30 días: incluye la de precio completo
+  const html = h.els['util-tabla'].innerHTML;
+  const t = u.totalizar(h.filas30);
+  assert.ok(html.includes('<th>Cargos ML</th>'));
+  assert.ok(html.includes('−$' + t.cargosML.toLocaleString('es-CL')), 'el total de la columna');
+  assert.ok(html.includes('Publicidad $' + t.mlPublicidad.toLocaleString('es-CL')), 'el desglose va en el título');
+  // Cada fila tiene las mismas celdas que el encabezado.
+  const celdas = s => (s.match(/<t[hd][ >]/g) || []).length;
+  const [cab, cuerpo] = html.split('</thead>');
+  const primeraFila = cuerpo.split('</tr>')[0];
+  assert.strictEqual(celdas(primeraFila), celdas(cab));
+  assert.match(h.els['util-nota'].textContent, /Cargos ML: .*30,4% \(publicidad 12,88%, comisión 12%, envío 4,95% y devoluciones 0,55%\)/);
 });
 
 test('al elegir días, Utilidad diaria muestra solo esos y no consulta Meta en cada toque', async () => {
