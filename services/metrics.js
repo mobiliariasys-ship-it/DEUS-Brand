@@ -376,6 +376,24 @@ function importarMercadoLibre(lote) {
   return { aplicado: true, id: lote.id, nuevas, actualizadas, reemplazadas, desde, hasta };
 }
 
+// Limpieza única (28-oct-2026): saca las ventas de ML cargadas a mano con el
+// formato viejo, lo que depositaba ML (el dueño las cargaba con $57.990). Las
+// vuelve a subir con el precio completo, y si quedaran las dos se contarían
+// doble. No toca las del reporte de ML ni las cargadas con precio completo.
+// Se anota en importacionesML para que un reinicio no la repita.
+const LIMPIEZA_ML_NETAS = 'limpieza-ml-netas-2026-10-28';
+function quitarMLNetasCargadasAMano() {
+  if (importacionesML.includes(LIMPIEZA_ML_NETAS)) return { aplicado: false };
+  const quitadas = [];
+  for (let i = ventasExternas.length - 1; i >= 0; i--) {
+    const x = ventasExternas[i];
+    if (esCanalExterno(x.metodo) && x.fuente !== 'reporte-ml' && !x.bruto) quitadas.unshift(ventasExternas.splice(i, 1)[0]);
+  }
+  importacionesML.push(LIMPIEZA_ML_NETAS);
+  guardar();
+  return { aplicado: true, quitadas: quitadas.map(x => ({ fecha: x.fecha, monto: x.monto, orden: x.orden })) };
+}
+
 // ¿Esta orden ya está cargada? Mira las ventas de la web (por su ticket) y las
 // de canales externos. Es lo que usa la carga manual para no sumar dos veces.
 function ventaYaRegistrada(orden) {
@@ -678,6 +696,6 @@ function snapshot() {
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo, ventasPorDia,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden, ventaYaRegistrada, importarMercadoLibre,
-  resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
+  quitarMLNetasCargadasAMano, resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
   registrarFalloChat, ventasPorHora, alVender
 };

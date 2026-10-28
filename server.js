@@ -1262,6 +1262,11 @@ function importarReportesML() {
       if (r && r.aplicado) console.log('[mercadolibre]', f, 'aplicado:', r.nuevas, 'nuevas,', r.actualizadas, 'actualizadas,', r.reemplazadas, 'cargadas a mano reemplazadas (' + r.desde + ' a ' + r.hasta + ')');
     } catch (e) { console.error('[mercadolibre] No se pudo aplicar', f + ':', e.message); }
   }
+  // Las de ML cargadas a mano con lo depositado ($57.990) se sacan una vez:
+  // el dueño las vuelve a subir con el precio completo.
+  const l = metrics.quitarMLNetasCargadasAMano();
+  if (l.aplicado) console.log('[mercadolibre] limpieza: quitadas', l.quitadas.length, 'ventas de ML cargadas a mano con lo depositado:',
+    l.quitadas.map(x => x.fecha.slice(0, 10) + ' $' + x.monto).join(', ') || 'ninguna');
 }
 
 // Carga lo guardado (disco o Postgres) antes de aceptar tráfico, así ninguna
