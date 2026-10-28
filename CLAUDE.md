@@ -37,3 +37,19 @@ Producción despliega desde el repo **`deus-band` rama `main`**
 (`/workspace/deus-band` → Netlify frontend + Render backend). El repo
 **`DEUS-Brand`** (rama `claude/...`) es espejo de desarrollo. Todo cambio se
 commitea en ambos.
+
+## Métricas de la tienda (para analizar la conversión)
+
+Lo normal es que la clave esté como **secreto de red** del entorno (host
+`deusbrand.cl`, cabecera `X-Metricas-Key`): el proxy la agrega solo y basta con
+`curl -sS https://deusbrand.cl/admin/metricas` (sin cabecera). Si en cambio la
+sesión tiene la variable `DEUS_METRICAS_KEY`, se leen así (solo lectura, sin
+datos de clientes):
+
+```bash
+curl -sS -H "X-Metricas-Key: $DEUS_METRICAS_KEY" https://deusbrand.cl/admin/metricas
+curl -sS -H "X-Metricas-Key: $DEUS_METRICAS_KEY" "https://deusbrand.cl/admin/metricas/utilidad?dias=30"
+curl -sS -H "X-Metricas-Key: $DEUS_METRICAS_KEY" https://deusbrand.cl/admin/metricas/anuncios
+```
+
+Nunca imprimas ni repitas la clave. Detalle en DEPLOY.md.

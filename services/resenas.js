@@ -1,0 +1,202 @@
+// Reseñas que el dueño carga desde el panel (admin.html → sección "Reseñas").
+//
+// Se guardan con persist.js (Postgres si responde, archivo local si no), igual
+// que las ventas. La lista va en una clave y cada foto en la suya: así leer la
+// lista para pintar la web no arrastra las imágenes.
+//
+// La web pide /resenas/lista y suma estas tarjetas a las que están fijas en el
+// HTML; cada foto se sirve desde /resenas/foto/:id.
+//
+// Transparencia: si la foto está editada o quien escribe es cercano a la marca
+// (familia, amigos, equipo), la tarjeta lo dice a la vista. Una reseña que
+// esconde eso engaña al comprador, aunque el comentario sea sincero.
+const crypto = require('crypto');
+
+const CLAVE_LISTA = 'resenas-panel.json';
+const CLAVE_ORDEN = 'resenas-orden.json';
+// Ids de tarjeta: "f-usuario" para las fijas del HTML (data-rid) y el id de 12
+// caracteres para las subidas desde el panel.
+const RID_OK = /^(?:f-[a-z0-9._]{1,60}|[a-f0-9]{12})$/;
+const claveFoto = (id) => `resena-foto-${id}.json`;
+// Bytes de la imagen ya decodificada. El panel sube fotos de hasta 2000 px y
+// apunta a 2,5 MB como máximo; esto deja margen.
+const MAX_FOTO = 3 * 1024 * 1024;
+// Fotos en memoria para no ir a la base en cada visita. Se cuenta por PESO y no
+// por cantidad: con fotos de alta calidad, 40 fotos podían ser ~120 MB.
+const MAX_CACHE = 48 * 1024 * 1024;
+const ID_OK = /^[a-f0-9]{12}$/;
+// Cómo se muestra el origen junto al nombre ("@usuario · Instagram").
+const ORIGENES = { instagram: 'Instagram', whatsapp: 'WhatsApp', web: 'Formulario web', otro: '' };
+
+// Error de datos del formulario: su mensaje se le muestra tal cual al dueño.
+class ErrorResena extends Error {}
+
+function limpiar(v, max) {
+  return String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+// La foto llega del panel como data URL (el navegador ya la achicó). Se revisan
+// el tipo declarado, el tamaño y la firma real del archivo: un "image/jpeg" que
+// no empieza como JPEG no se guarda.
+function leerFoto(dataUrl) {
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || '').replace(/\s/g, ''));
+  if (!m) throw new ErrorResena('La foto tiene que ser JPG, PNG o WebP.');
+  const tipo = m[1];
+  const buf = Buffer.from(m[2], 'base64');
+  if (!buf.length) throw new ErrorResena('La foto llegó vacía.');
+  if (buf.length > MAX_FOTO) throw new ErrorResena('La foto pesa más de 3 MB.');
+  const ascii = (a, b) => buf.subarray(a, b).toString('latin1');
+  const firmaOk =
+    tipo === 'image/jpeg' ? buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff :
+    tipo === 'image/png' ? ascii(0, 8) === '\x89PNG\r\n\x1a\n' :
+    ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP';
+  if (!firmaOk) throw new ErrorResena('El archivo no es una imagen válida.');
+  return { tipo, buf };
+}
+
+// El orden llega del panel como dos listas de ids (con foto / solo texto).
+// Se descartan los ids con otro formato y los repetidos.
+function listaIds(v) {
+  if (!Array.isArray(v)) throw new ErrorResena('El orden llegó mal armado. Recarga el panel e intenta de nuevo.');
+  const ids = new Set();
+  for (const x of v.slice(0, 300)) { const id = String(x); if (RID_OK.test(id)) ids.add(id); }
+  return [...ids];
+}
+
+function crearServicio({ load, save, maxCache = MAX_CACHE }) {
+  let lista = [];
+  // Orden del carrusel elegido en el panel. Las reseñas que no figuran (las
+  // recién subidas) van primero; las fijas que no figuran, al final.
+  let orden = { fotos: [], textos: [] };
+  const cache = new Map(); // id -> { tipo, buf }, de la más vieja a la más nueva
+  let pesoCache = 0;       // bytes que ocupan las fotos de la cache
+
+  async function init() {
+    const v = await load(CLAVE_LISTA, []);
+    lista = Array.isArray(v) ? v : [];
+    const o = await load(CLAVE_ORDEN, null);
+    if (o && Array.isArray(o.fotos) && Array.isArray(o.textos)) orden = { fotos: o.fotos, textos: o.textos };
+  }
+
+  const verOrden = () => ({ fotos: [...orden.fotos], textos: [...orden.textos] });
+
+  async function guardarOrden(d) {
+    const o = { fotos: listaIds(d && d.fotos), textos: listaIds(d && d.textos) };
+    await save(CLAVE_ORDEN, { ...o, actualizado: new Date().toISOString() });
+    orden = o; // recién después de guardar: si falla, queda el orden anterior
+    return verOrden();
+  }
+
+  const guardarLista = () => save(CLAVE_LISTA, lista);
+
+  // Lo que ve cualquiera: sin datos internos.
+  function publica(r) {
+    return {
+      id: r.id,
+      autor: r.autor,
+      texto: r.texto,
+      estrellas: r.estrellas,
+      ubicacion: r.ubicacion,
+      origen: ORIGENES[r.origen] || '',
+      foto: r.foto ? `/resenas/foto/${r.id}` : null,
+      notaFoto: r.foto && r.fotoEditada ? `Foto editada${r.notaFoto ? ' ' + r.notaFoto : ''}` : '',
+      cercano: !!r.cercano,
+      creada: r.creada
+    };
+  }
+
+  const publicas = () => lista.filter((r) => r.visible).map(publica);
+  const todas = () => lista.map((r) => ({ ...publica(r), visible: !!r.visible }));
+
+  async function crear(datos) {
+    const d = datos || {};
+    const autor = limpiar(d.autor, 60);
+    const texto = limpiar(d.texto, 600);
+    if (!autor) throw new ErrorResena('Falta el nombre o usuario de quien escribió la reseña.');
+    if (!texto) throw new ErrorResena('Falta el comentario.');
+    const estrellas = Math.round(Number(d.estrellas));
+    if (!(estrellas >= 1 && estrellas <= 5)) throw new ErrorResena('Las estrellas van de 1 a 5.');
+    const r = {
+      id: crypto.randomBytes(6).toString('hex'),
+      autor,
+      texto,
+      estrellas,
+      ubicacion: limpiar(d.ubicacion, 40),
+      origen: Object.prototype.hasOwnProperty.call(ORIGENES, d.origen) ? d.origen : 'instagram',
+      foto: false,
+      fotoEditada: false,
+      notaFoto: '',
+      cercano: d.cercano === true,
+      visible: true,
+      creada: new Date().toISOString()
+    };
+    if (d.foto) {
+      const f = leerFoto(d.foto);
+      // La foto se guarda antes que la lista: si falla, la reseña no queda a medias.
+      await save(claveFoto(r.id), { tipo: f.tipo, datos: f.buf.toString('base64') });
+      recordar(r.id, f);
+      r.foto = true;
+      r.fotoEditada = d.fotoEditada === true;
+      r.notaFoto = r.fotoEditada ? limpiar(d.notaFoto, 60) : '';
+    }
+    lista.unshift(r); // la más nueva primero
+    await guardarLista();
+    return publica(r);
+  }
+
+  async function cambiarVisible(id, visible) {
+    const r = lista.find((x) => x.id === id);
+    if (!r) return null;
+    r.visible = !!visible;
+    await guardarLista();
+    return publica(r);
+  }
+
+  async function borrar(id) {
+    const i = lista.findIndex((x) => x.id === id);
+    if (i < 0) return false;
+    const [r] = lista.splice(i, 1);
+    await guardarLista();
+    if (r.foto) {
+      olvidar(id);
+      await save(claveFoto(id), null); // persist.js no borra claves: se vacía
+    }
+    return true;
+  }
+
+  function olvidar(id) {
+    const f = cache.get(id);
+    if (!f) return;
+    cache.delete(id);
+    pesoCache -= f.buf.length;
+  }
+
+  // Guarda la foto y, si la cache se pasa de peso, saca las más viejas.
+  function recordar(id, f) {
+    olvidar(id);
+    cache.set(id, f);
+    pesoCache += f.buf.length;
+    for (const k of cache.keys()) {
+      if (pesoCache <= maxCache || k === id) break;
+      olvidar(k);
+    }
+  }
+
+  // Foto de una reseña. Las ocultas solo se entregan al panel (miniaturas).
+  async function foto(id, { incluirOcultas = false } = {}) {
+    if (!ID_OK.test(String(id || ''))) return null;
+    const r = lista.find((x) => x.id === id);
+    if (!r || !r.foto || (!r.visible && !incluirOcultas)) return null;
+    if (cache.has(id)) return cache.get(id);
+    const g = await load(claveFoto(id), null);
+    if (!g || !g.datos) return null;
+    const f = { tipo: g.tipo, buf: Buffer.from(g.datos, 'base64') };
+    recordar(id, f);
+    return f;
+  }
+
+  return { init, publicas, todas, crear, cambiarVisible, borrar, foto, verOrden, guardarOrden };
+}
+
+const persist = require('./persist');
+module.exports = { ...crearServicio({ load: persist.load, save: persist.save }), crearServicio, leerFoto, ErrorResena };

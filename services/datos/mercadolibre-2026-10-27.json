@@ -1,0 +1,258 @@
+{
+ "id": "ml-2026-10-27",
+ "reporte": "Ventas CL Mercado Libre y Mercado Shops al 2026-10-27",
+ "resumen": {
+  "ventas": 33,
+  "devoluciones": 5,
+  "canceladas": 3,
+  "estimadas": 11,
+  "depositado": 1543519,
+  "cobradoPorDevoluciones": -58500
+ },
+ "ventas": [
+  {
+   "orden": "ml-2000013470568509",
+   "fecha": "2026-06-11T17:27:00Z",
+   "monto": 23141,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000013475966773",
+   "fecha": "2026-06-11T22:56:00Z",
+   "estimado": true,
+   "monto": 23141,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000013490754573",
+   "fecha": "2026-06-12T21:40:00Z",
+   "monto": 23141,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000016912667836",
+   "fecha": "2026-06-12T21:47:00Z",
+   "monto": 23141,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000013679700541",
+   "fecha": "2026-06-24T16:27:00Z",
+   "monto": 31061,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000013768286241",
+   "fecha": "2026-06-30T15:12:00Z",
+   "monto": 31061,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000013905440297",
+   "fecha": "2026-07-08T02:35:00Z",
+   "estimado": true,
+   "monto": 36341,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000017321124700",
+   "fecha": "2026-07-08T21:45:00Z",
+   "monto": 36341,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000013959232761",
+   "fecha": "2026-07-11T03:20:00Z",
+   "estimado": true,
+   "monto": 36341,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000014043433333",
+   "fecha": "2026-07-16T03:36:00Z",
+   "monto": -13000,
+   "unidades": 0,
+   "devolucion": true
+  },
+  {
+   "orden": "ml-2000017456394220",
+   "fecha": "2026-07-17T02:12:00Z",
+   "monto": 33099,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000017469880636",
+   "fecha": "2026-07-17T23:33:00Z",
+   "monto": 36611,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000014078948601",
+   "fecha": "2026-07-18T12:25:00Z",
+   "estimado": true,
+   "monto": -13000,
+   "unidades": 0,
+   "devolucion": true
+  },
+  {
+   "orden": "ml-2000014123225525",
+   "fecha": "2026-07-21T12:35:00Z",
+   "monto": -13000,
+   "unidades": 0,
+   "devolucion": true
+  },
+  {
+   "orden": "ml-2000017687782624",
+   "fecha": "2026-07-31T20:31:00Z",
+   "monto": 45332,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000014311402813",
+   "fecha": "2026-08-02T02:22:00Z",
+   "estimado": true,
+   "monto": 45332,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000014416603385",
+   "fecha": "2026-08-07T22:29:00Z",
+   "monto": 49131,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000014427010097",
+   "fecha": "2026-08-08T16:26:00Z",
+   "estimado": true,
+   "monto": 49131,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000017896360648",
+   "fecha": "2026-08-12T16:13:00Z",
+   "monto": 50699,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000018066134236",
+   "fecha": "2026-08-22T18:11:00Z",
+   "monto": 50699,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015365750737",
+   "fecha": "2026-10-05T19:54:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015390171705",
+   "fecha": "2026-10-06T22:29:00Z",
+   "monto": -9750,
+   "unidades": 0,
+   "devolucion": true
+  },
+  {
+   "orden": "ml-2000015455746381",
+   "fecha": "2026-10-10T14:24:00Z",
+   "estimado": true,
+   "monto": -9750,
+   "unidades": 0,
+   "devolucion": true
+  },
+  {
+   "orden": "ml-2000015489519757",
+   "fecha": "2026-10-12T19:46:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015509679537",
+   "fecha": "2026-10-13T22:11:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015516109209",
+   "fecha": "2026-10-14T06:20:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015521929629",
+   "fecha": "2026-10-14T16:20:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015532158201",
+   "fecha": "2026-10-15T02:04:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015583555413",
+   "fecha": "2026-10-18T14:47:00Z",
+   "estimado": true,
+   "monto": 57561,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015594150861",
+   "fecha": "2026-10-19T04:05:00Z",
+   "estimado": true,
+   "monto": 57561,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015594399433",
+   "fecha": "2026-10-19T04:34:00Z",
+   "monto": 57561,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015609795533",
+   "fecha": "2026-10-20T00:50:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015695021209",
+   "fecha": "2026-10-25T04:36:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015698197745",
+   "fecha": "2026-10-25T15:43:00Z",
+   "monto": 57561,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015701499729",
+   "fecha": "2026-10-25T20:14:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015709867969",
+   "fecha": "2026-10-26T13:26:00Z",
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015716259485",
+   "fecha": "2026-10-26T19:53:00Z",
+   "estimado": true,
+   "monto": 57461,
+   "unidades": 1
+  },
+  {
+   "orden": "ml-2000015724866957",
+   "fecha": "2026-10-27T07:43:00Z",
+   "estimado": true,
+   "monto": 57461,
+   "unidades": 1
+  }
+ ]
+}

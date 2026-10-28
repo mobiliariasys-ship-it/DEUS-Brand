@@ -35,3 +35,42 @@
 ## Nota sobre el plan gratis de Render
 
 El backend "se duerme" tras 15 min de inactividad. La primera petición tras dormir tarda ~30s en despertar. Para una tienda con tráfico bajo es aceptable; si necesitas que esté siempre activo, sube al plan de pago.
+
+## Si un despliegue de Render se traba
+
+Si en Render → Events un despliegue queda en "Building… / Awaiting logs" o
+"Build not found" por más de 5 minutos, o "Manual Deploy" responde
+"Internal Server Error", la falla es de Render y no del código (pasó el
+14-10-2026, antes de una mantención suya). Qué hacer:
+
+1. Cancelar el despliegue trabado.
+2. Manual Deploy → Deploy latest commit.
+3. Si sigue igual, esperar y reintentar más tarde, o escribir a soporte
+   (Help → Contact support) con el link del despliegue.
+
+Mientras tanto la web sigue funcionando con la última versión publicada.
+
+## Métricas de solo lectura (para analizar la conversión)
+
+El servidor tiene tres rutas que entregan **solo números** (visitas, embudo,
+checkout, conducta, canales, ventas, utilidad y campañas), nunca nombres,
+correos ni direcciones:
+
+- `GET /admin/metricas`
+- `GET /admin/metricas/utilidad?dias=7|14|30|iva`
+- `GET /admin/metricas/anuncios`
+
+Usan una clave aparte, `METRICAS_KEY`, que **no sirve para cambiar nada**. Para
+activarlas:
+
+1. Inventa una clave larga (por ejemplo, 30 letras y números al azar).
+2. Render → servicio de la web → **Environment** → agrega `METRICAS_KEY` con esa clave.
+3. En el entorno de Claude Code en la nube (Edit del entorno): agrega la misma
+   clave como variable `DEUS_METRICAS_KEY` y, en Network access → Allowed
+   domains, `deusbrand.cl`.
+
+La clave va en la cabecera `X-Metricas-Key`, nunca en la URL:
+
+    curl -H "X-Metricas-Key: $DEUS_METRICAS_KEY" https://deusbrand.cl/admin/metricas
+
+Sin `METRICAS_KEY` en Render las rutas no existen (404).

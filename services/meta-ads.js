@@ -66,6 +66,41 @@ async function llamar(path, { method = 'GET', params, body } = {}) {
   return data;
 }
 
+// Meta pagina los edges de a 25 filas y deja el resto detrás de paging.next.
+// Con time_increment=1 eso muerde apenas la ventana pasa de 25 filas y NO
+// avisa: la respuesta llega con 200 y parece completa.
+//
+// Lo que rompía: la vista de 30 días se quedaba con 25 y perdía los 5 días más
+// recientes (Meta devuelve ascendente), así que el panel mostraba esos días con
+// gasto en publicidad CERO y una utilidad inflada. El desglose horario —hasta
+// 168 filas en la ventana de 7 días— se quedaba en el primer día largo.
+//
+// Se pide una página grande Y se sigue el cursor: el limit ahorra vueltas, el
+// cursor es lo que garantiza que no falte ninguna fila. El tope de páginas es
+// para que un cursor que se repita no deje el request colgado para siempre.
+const MAX_PAGINAS_INSIGHTS = 20;
+
+async function llamarUrl(url) {
+  const res = await fetch(url);
+  chequearUso(res);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error?.message || `Meta respondió ${res.status}`);
+  return data;
+}
+
+async function insightsCompletos(path, params) {
+  let data = await llamar(path, { params: { ...params, limit: 500 } });
+  const filas = [];
+  for (let i = 0; i < MAX_PAGINAS_INSIGHTS; i++) {
+    filas.push(...(data.data || []));
+    const siguiente = data.paging && data.paging.next;
+    // En la última vuelta no se pide otra página: se iba a descartar igual.
+    if (!siguiente || i === MAX_PAGINAS_INSIGHTS - 1) break;
+    data = await llamarUrl(siguiente);
+  }
+  return filas;
+}
+
 async function listCampaigns() {
   const { adAccountId } = creds();
   const data = await llamar(`/${adAccountId}/campaigns`, {
@@ -87,6 +122,25 @@ const INSIGHTS_FIELDS = [
 
 const PURCHASE_ACTION_TYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
 
+// Lee un tipo de acción del array que manda Meta. Devuelve 0 si ese día no
+// hubo ninguna: Meta simplemente no incluye la fila, no manda un cero.
+function accionValor(actions, tipo) {
+  const a = (actions || []).find(x => x.action_type === tipo);
+  return a ? Number(a.value) || 0 : 0;
+}
+
+// Compras que Meta le atribuye a los anuncios en una fila de insights. Se
+// toma el PRIMER tipo que venga (omni_purchase, si no el del píxel), nunca la
+// suma de los dos: omni_purchase ya incluye las del píxel y contarlas otra vez
+// duplicaría las compras y dejaría el costo por compra a la mitad.
+function comprasDe(actions) {
+  for (const tipo of PURCHASE_ACTION_TYPES) {
+    const a = (actions || []).find(x => x.action_type === tipo);
+    if (a) return Number(a.value) || 0;
+  }
+  return 0;
+}
+
 function extraerCompras(insights) {
   const actions = insights.actions || [];
   const costos = insights.cost_per_action_type || [];
@@ -100,9 +154,23 @@ function extraerCompras(insights) {
   return { resultados: 0, costoPorResultado: null };
 }
 
-async function getInsights(campaignId, datePreset = 'last_7d') {
+// Ventana de N días QUE INCLUYE HOY (fechas de Chile, el huso de la cuenta).
+// NO se usan los date_preset last_7d / last_14d / last_30d: son los N días
+// CERRADOS anteriores y dejan HOY afuera, así que el gasto del día recién
+// aparecía en el panel cuando el día terminaba (la utilidad de hoy salía con
+// publicidad en cero y las tarjetas no se movían en todo el día).
+// Acepta cualquier cantidad entera de días entre 1 y 400 (la utilidad
+// "desde el IVA" pide más de 30). Cada endpoint ya valida lo que recibe del
+// navegador antes de llegar acá.
+function rangoHastaHoy(dias, porDefecto) {
+  const d = Number(dias);
+  const n = Number.isInteger(d) && d >= 1 && d <= 400 ? d : porDefecto;
+  return JSON.stringify({ since: diaChile(n - 1), until: diaChile(0) });
+}
+
+async function getInsights(campaignId, dias = 7) {
   const data = await llamar(`/${campaignId}/insights`, {
-    params: { fields: INSIGHTS_FIELDS, date_preset: datePreset }
+    params: { fields: INSIGHTS_FIELDS, time_range: rangoHastaHoy(dias, 7) }
   });
   const row = data.data?.[0] || {};
   const { resultados, costoPorResultado } = extraerCompras(row);
@@ -121,6 +189,101 @@ async function getInsights(campaignId, datePreset = 'last_7d') {
     costoPorResultado,
     actions: row.actions || []
   };
+}
+
+// Serie DIARIA de una campaña: mismo endpoint que getInsights pero con
+// time_increment=1, que devuelve una fila por día en vez de un solo agregado.
+// Es lo que necesita el gráfico del panel para mostrar la variación día a día.
+//
+// El CTR que se grafica es el de clics EN EL ENLACE (inline_link_click_ctr),
+// no el ctr "de todos los clics": ese último infla con likes, comentarios y
+// despliegues del texto, así que sube sin que nadie haya entrado al sitio.
+//
+// La ventana termina HOY (ver rangoHastaHoy): el último punto es el día en
+// curso, todavía incompleto.
+async function getInsightsDiarios(campaignId, dias = 14) {
+  const filas = await insightsCompletos(`/${campaignId}/insights`, {
+    fields: 'spend,impressions,clicks,ctr,inline_link_clicks,inline_link_click_ctr,actions',
+    time_increment: 1,
+    time_range: rangoHastaHoy(dias, 14)
+  });
+  // Meta devuelve los días en orden ascendente, pero no lo promete: se ordena
+  // acá para que el gráfico no dependa de eso.
+  return filas
+    .map(r => ({
+      fecha: r.date_start,
+      ctr: Number(r.inline_link_click_ctr || 0),
+      ctrTodos: Number(r.ctr || 0),
+      clics: Number(r.inline_link_clicks || 0),
+      // Gente que efectivamente ABRIÓ el sitio desde el anuncio. No es lo
+      // mismo que el clic: entre el clic y la página se pierde ~10% (cierran
+      // antes de que cargue). Es el número comparable con las visitas que
+      // cuenta el propio sitio, y el que separa el tráfico pagado del resto.
+      visitas: accionValor(r.actions, 'landing_page_view'),
+      impresiones: Number(r.impressions || 0),
+      gasto: Number(r.spend || 0),
+      compras: comprasDe(r.actions)
+    }))
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+}
+
+// ── Serie HORARIA de un anuncio ────────────────────────────────────────────
+// El gráfico diario dice si un anuncio sirve; este dice a qué HORA sirve, que
+// es otra pregunta y se responde con otro corte.
+//
+// Meta agrega las horas en el huso de la CUENTA (America/Santiago), el mismo
+// en el que el panel cuenta las ventas, así que las dos series se pueden mirar
+// una al lado de la otra sin corregir nada.
+function diaChile(atras = 0) {
+  return new Date(Date.now() - atras * 86400000)
+    .toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+}
+
+async function getCtrHorario(objectId, dias = 3) {
+  const n = [1, 3, 7].includes(Number(dias)) ? Number(dias) : 3;
+  const filas = await insightsCompletos(`/${objectId}/insights`, {
+    fields: 'impressions,clicks,inline_link_clicks,spend',
+    breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+    time_increment: 1,
+    // Ventana explícita y NO date_preset: last_3d devuelve los 3 días CERRADOS
+    // anteriores y deja HOY afuera, y hoy es justamente lo que se quiere mirar
+    // cuando el CTR se está moviendo.
+    time_range: JSON.stringify({ since: diaChile(n - 1), until: diaChile(0) })
+  });
+  return filas
+    .map(r => {
+      const impresiones = Number(r.impressions || 0);
+      // CTR del ENLACE calculado acá en vez de pedir inline_link_click_ctr:
+      // es la misma división, y así una hora con impresiones pero sin clics
+      // da 0 en vez de un campo que Meta simplemente no manda.
+      const clics = Number(r.inline_link_clicks || 0);
+      return {
+        fecha: r.date_start,
+        hora: Number(String(r.hourly_stats_aggregated_by_advertiser_time_zone || '0').slice(0, 2)) || 0,
+        ctr: impresiones ? (clics / impresiones) * 100 : 0,
+        clics,
+        clicsTodos: Number(r.clicks || 0),
+        impresiones,
+        gasto: Number(r.spend || 0)
+      };
+    })
+    // Una hora sin entrega no es un CTR de 0%: es una hora sin datos. Se cae
+    // de la serie para que la línea se CORTE en vez de desplomarse y hacer
+    // creer que el anuncio se cayó cuando en realidad estaba pausado.
+    .filter(h => h.impresiones > 0)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.hora - b.hora);
+}
+
+// Anuncios de la cuenta. Hace falta para ubicar uno POR NOMBRE: los creativos
+// de Meta son inmutables, así que cada vez que se cambia el video o el copy
+// nace un anuncio NUEVO con otro id, y un id escrito a mano dejaría el gráfico
+// mudo sin avisar.
+async function listAds() {
+  const { adAccountId } = creds();
+  const data = await llamar(`/${adAccountId}/ads`, {
+    params: { fields: 'id,name,effective_status', limit: 100 }
+  });
+  return data.data || [];
 }
 
 async function setStatus(objectId, status) {
@@ -151,4 +314,117 @@ async function duplicateCampaign(campaignId, overrides = {}) {
   return { id: nuevaId };
 }
 
-module.exports = { listCampaigns, getInsights, setStatus, updateBudget, duplicateCampaign };
+// Gasto diario de la CUENTA COMPLETA (no de una campaña): para la utilidad
+// diaria hay que restar todo lo gastado en publicidad ese día, incluidas las
+// campañas pausadas después, que igual consumieron plata mientras corrían.
+// Trae también las compras que Meta atribuye a los anuncios cada día
+// (`compras`), para el costo por compra "según Meta" del panel.
+async function getGastoDiarioCuenta(dias = 14) {
+
+  // Camino 1: una sola llamada a nivel de CUENTA. Es lo barato — un request
+  // trae todo. En esta cuenta Meta lo rechaza con "API access blocked": el
+  // token tiene permiso sobre las campañas pero no sobre el nodo de la cuenta.
+  let errorCuenta = '';
+  try {
+    const { adAccountId } = creds();
+    const filas = await insightsCompletos(`/${adAccountId}/insights`, {
+      fields: 'spend,actions', time_increment: 1, time_range: rangoHastaHoy(dias, 14)
+    });
+    if (filas.length) {
+      const mapa = {}, compras = {};
+      for (const r of filas) {
+        mapa[r.date_start] = Number(r.spend || 0);
+        compras[r.date_start] = comprasDe(r.actions);
+      }
+      return { mapa, compras, via: 'cuenta' };
+    }
+  } catch (e) {
+    errorCuenta = e.message || String(e);
+  }
+
+  // Camino 2: sumar campaña por campaña. Son más requests (una por campaña),
+  // pero es EXACTAMENTE el mismo endpoint que usa el gráfico de CTR, que sí
+  // responde en esta cuenta. Se incluyen las PAUSADAS a propósito: una campaña
+  // apagada hoy igual gastó plata mientras corría, y esa plata salió del mismo
+  // bolsillo que la de las activas.
+  let campanas;
+  try {
+    campanas = await listCampaigns();
+  } catch (e) {
+    // Los dos caminos caídos = el token no sirve para NADA de Meta, no es un
+    // permiso puntual del nodo de la cuenta. El mensaje tiene que decirlo, o
+    // el panel muestra el mismo texto en dos situaciones que se arreglan
+    // distinto: una cambiando de endpoint, la otra regenerando el token.
+    throw new Error(
+      'los dos caminos fallaron. Nivel cuenta: ' + (errorCuenta || 'sin datos') +
+      ' · Nivel campañas: ' + (e.message || e) +
+      '. El token de Meta no tiene acceso a nada — hay que regenerarlo en Render.'
+    );
+  }
+  const porCampana = await Promise.all(
+    campanas.map(c => getInsightsDiarios(c.id, dias).catch(() => []))
+  );
+  const mapa = {}, compras = {};
+  let filas = 0;
+  for (const dias_ of porCampana) {
+    filas += dias_.length;
+    for (const d of dias_) {
+      mapa[d.fecha] = (mapa[d.fecha] || 0) + (Number(d.gasto) || 0);
+      compras[d.fecha] = (compras[d.fecha] || 0) + (Number(d.compras) || 0);
+    }
+  }
+  // Campañas que responden pero sin una sola fila de insights: el permiso de
+  // insights está cortado aunque el de leer campañas no. Distinto problema.
+  if (campanas.length && !filas) {
+    throw new Error(
+      'se leyeron ' + campanas.length + ' campañas pero ninguna devolvió insights. ' +
+      'Nivel cuenta: ' + (errorCuenta || 'sin datos') + '. Falta el permiso ads_read sobre los insights.'
+    );
+  }
+  return { mapa, compras, via: 'campañas', campanas: campanas.length, errorCuenta };
+}
+
+// Gasto POR HORA de la cuenta, para la sección "en vivo" del panel. Mismo
+// esquema que getGastoDiarioCuenta: primero UNA llamada a nivel cuenta y, si
+// Meta la bloquea (pasa en esta cuenta), campaña por campaña sumando hora a
+// hora. Trae también impresiones y clics en el enlace, que son el "por qué"
+// de cada hora: gasto = impresiones × CPM, así que una hora gasta más porque
+// Meta mostró más el anuncio, porque cada impresión salió más cara, o ambas.
+// Las horas vienen en el huso de la CUENTA (America/Santiago).
+async function getGastoHorario(desde, hasta, { campanas } = {}) {
+  const params = {
+    fields: 'spend,impressions,inline_link_clicks',
+    breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+    time_increment: 1,
+    time_range: JSON.stringify({ since: desde, until: hasta })
+  };
+  const sumar = (mapa, filas) => {
+    for (const r of filas) {
+      const hora = Number(String(r.hourly_stats_aggregated_by_advertiser_time_zone || '0').slice(0, 2)) || 0;
+      const k = r.date_start + '|' + hora;
+      const a = mapa[k] || (mapa[k] = { fecha: r.date_start, hora, gasto: 0, impresiones: 0, clics: 0 });
+      a.gasto += Number(r.spend || 0);
+      a.impresiones += Number(r.impressions || 0);
+      a.clics += Number(r.inline_link_clicks || 0);
+    }
+  };
+  let errorCuenta = '';
+  try {
+    const { adAccountId } = creds();
+    const filas = await insightsCompletos(`/${adAccountId}/insights`, params);
+    if (filas.length) { const mapa = {}; sumar(mapa, filas); return { filas: Object.values(mapa), via: 'cuenta' }; }
+  } catch (e) {
+    errorCuenta = e.message || String(e);
+  }
+  const lista = campanas || await listCampaigns();
+  const res = await Promise.all(lista.map(c => insightsCompletos(`/${c.id}/insights`, params).catch(() => null)));
+  const mapa = {};
+  let ok = 0;
+  for (const filas of res) if (filas) { ok++; sumar(mapa, filas); }
+  if (lista.length && !ok) {
+    throw new Error('ninguna campaña devolvió el gasto por hora. Nivel cuenta: ' + (errorCuenta || 'sin datos'));
+  }
+  return { filas: Object.values(mapa), via: 'campañas', errorCuenta };
+}
+
+module.exports = { listCampaigns, listAds, getInsights, getInsightsDiarios, getCtrHorario, getGastoDiarioCuenta, getGastoHorario, setStatus, updateBudget, duplicateCampaign };

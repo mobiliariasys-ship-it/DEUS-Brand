@@ -43,6 +43,20 @@ const ventas = [];         // { monto, fecha, metodo, nombre, orden }
 // Tickets del sorteo. Se asigna 1 por compra confirmada (número correlativo),
 // automáticamente. { numero, nombre, orden, email, instagram, verificado, automatico, fecha }
 const tickets = [];
+// Ventas por FUERA de la web (hoy: Mercado Libre). Van en su propia lista a
+// propósito: son plata real y entran en la utilidad diaria, pero no pasaron
+// por el sitio ni por un anuncio. Mezcladas con `ventas` inflarían la
+// conversión, el embudo del checkout, el ticket promedio y los horarios de
+// compra de la web, y le darían un ticket del sorteo a alguien que no compró
+// en el sitio. El monto es lo que DEPOSITA el canal, ya sin su envío ni su
+// comisión. { monto, fecha, metodo, nombre, orden, unidades, soloTapones, externo: true }
+// Las que vienen del reporte de ML (importarMercadoLibre) traen además
+// fuente: 'reporte-ml', y pueden ser devolucion: true (monto negativo, sin
+// banda) o estimado: true (ML las mandó sin montos).
+const ventasExternas = [];
+// Reportes de Mercado Libre ya aplicados (sus id): cada uno se aplica una vez.
+const importacionesML = [];
+const esCanalExterno = metodo => /mercado\s*libre/i.test(String(metodo || ''));
 
 // Carga lo guardado (disco o base de datos) antes de que el servidor empiece
 // a recibir tráfico. server.js hace `await metrics.init()` al arrancar.
@@ -61,10 +75,12 @@ async function init() {
   conversionesOrdenes.push(...(guardado.conversionesOrdenes || []));
   ventas.push(...(guardado.ventas || []));
   tickets.push(...(guardado.tickets || []));
+  ventasExternas.push(...(guardado.ventasExternas || []));
+  importacionesML.push(...(guardado.importacionesML || []));
 }
 
 function guardar() {
-  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, eventosPorDia, conversiones, conversionesPorDia, conversionesN, conversionesOrdenes, ventas, tickets })
+  persist.save(DATA_FILE, { vistasTotal, vistasPorDia, duracionTotalMs, duracionN, checkoutsTotal, eventos, eventosPorDia, conversiones, conversionesPorDia, conversionesN, conversionesOrdenes, ventas, tickets, ventasExternas, importacionesML })
     .catch(e => console.error('[metrics] Error guardando:', e.message));
 }
 
@@ -219,25 +235,143 @@ function registrarConversion(acciones, orden, esOwner) {
 // sorteo (1 por compra). Devuelve el ticket asignado (con su número) para
 // poder mostrárselo al cliente en el correo de confirmación.
 function registrarVenta(v) {
+  if (esCanalExterno(v && v.metodo)) return registrarVentaExterna(v);
   // El paso final del embudo del checkout se cuenta como un evento más
   // (co:5pago) en vez de leer el total histórico de ventas: ese total incluye
   // compras anteriores a que existieran los eventos co:, y daba porcentajes
   // imposibles (45 pagos sobre 5 que abrieron = 900%). Así los 5 pasos
   // arrancan desde cero en el mismo momento y el embudo cuadra.
-  // Se cuenta solo la primera vez que se ve la orden (el webhook puede
-  // reintentar): si ya tenía ticket, es un reintento y no suma.
-  const yaContada = v.orden ? !!buscarTicketPorOrden(v.orden) : false;
+  // Se cuenta solo la primera vez que se ve la orden. Las pasarelas reavisan
+  // el MISMO pago más de una vez: MercadoPago manda 'payment.updated' días
+  // después (p. ej. al liberar el dinero retenido) y reintenta los webhooks
+  // que fallaron. El ticket del sorteo hace de registro de "esta orden ya se
+  // procesó" porque vive en el mismo almacén durable que el ledger.
+  //
+  // Antes este chequeo existía pero SOLO frenaba el contador del embudo: el
+  // ventas.push() de abajo corría igual, así que cada reaviso agregaba una
+  // venta fantasma al panel y a la utilidad diaria.
+  const yaVista = v.orden ? buscarTicketPorOrden(v.orden) : null;
+  if (yaVista) return yaVista;
+  // La fecha por defecto es AHORA, que es lo correcto para el webhook de una
+  // pasarela. Pero una venta cargada a mano se está reponiendo días después
+  // (una que el modo archivo perdió, o una presencial), y con el reloj del
+  // momento caería en el día equivocado: dejaría el día real igual de corto
+  // y de paso inflaría hoy. Por eso se puede pasar.
+  const cuando = v.fecha ? new Date(v.fecha) : null;
   ventas.push({
     monto: Number(v.monto) || 0,
-    fecha: new Date().toISOString(),
+    fecha: (cuando && !isNaN(cuando)) ? cuando.toISOString() : new Date().toISOString(),
     metodo: v.metodo || '',
     nombre: v.nombre || '',
-    orden: v.orden ? String(v.orden) : ''
+    orden: v.orden ? String(v.orden) : '',
+    // Unidades de BANDA del pedido (no de tapones): el costo de $17.000 es por
+    // banda, no por pedido, y un pedido de 3 cuesta el triple. Las ventas
+    // viejas no lo traen — ventasPorDia() las estima desde el monto.
+    unidades: Number(v.unidades) > 0 ? Number(v.unidades) : null,
+    soloTapones: !!v.soloTapones,
+    // Upsell de tapones sobre una compra de banda. Distinto de soloTapones,
+    // que marca un pedido SIN banda. Sin este dato no se puede saber qué
+    // proporción de los pedidos lo lleva, que es lo único que dice si vale la
+    // pena tocarle el precio.
+    tapones: !!v.tapones,
+    // Pares de correas extra (0, 1 o 2): el upsell del checkout desde el
+    // 27-oct-2026, en vez de los tapones. Se guarda por lo mismo.
+    correas: Number(v.correas) > 0 ? Number(v.correas) : 0
   });
   const ticket = asignarTicket({ nombre: v.nombre, orden: v.orden, email: v.email });
-  if (!yaContada) sumarEvento('co:5pago');
+  sumarEvento('co:5pago');
   guardar();
+  avisarVenta(ventas[ventas.length - 1]);
   return ticket;
+}
+
+// Quien quiera enterarse de cada venta NUEVA (no de los reavisos de la misma
+// orden) se anota acá; hoy, el aviso push al PC del dueño. Un error del aviso
+// nunca puede tumbar el registro de la venta.
+const alVenderCbs = [];
+function alVender(cb) { if (typeof cb === 'function') alVenderCbs.push(cb); }
+function avisarVenta(v) {
+  if (!alVenderCbs.length) return;
+  const resumen = resumenVentas();
+  for (const cb of alVenderCbs) {
+    try {
+      const r = cb(v, resumen);
+      if (r && typeof r.catch === 'function') r.catch(e => console.error('[metrics] aviso de venta:', e.message));
+    } catch (e) { console.error('[metrics] aviso de venta:', e.message); }
+  }
+}
+
+// Venta de Mercado Libre (u otro canal externo), cargada a mano desde el panel.
+// Idempotente por n° de orden, igual que las de la web. No suma el paso final
+// del embudo (co:5pago) ni da ticket del sorteo: no pasó por el checkout.
+function registrarVentaExterna(v) {
+  const orden = String(v.orden || '').trim();
+  if (orden && ventasExternas.some(x => x.orden === orden)) return null;
+  const cuando = v.fecha ? new Date(v.fecha) : null;
+  ventasExternas.push({
+    monto: Number(v.monto) || 0,
+    fecha: (cuando && !isNaN(cuando)) ? cuando.toISOString() : new Date().toISOString(),
+    metodo: v.metodo || '',
+    nombre: v.nombre || '',
+    orden,
+    unidades: Number(v.unidades) > 0 ? Number(v.unidades) : 1,
+    soloTapones: !!v.soloTapones,
+    externo: true
+  });
+  guardar();
+  return null;
+}
+
+// Reporte de ventas de Mercado Libre (services/datos/mercadolibre-*.json, lo
+// arma scripts/ml_reporte.py desde el Excel de ML). El reporte MANDA en sus
+// fechas: cada venta entra en su día de compra con lo que deposita ML; cada
+// devolución resta lo que cobró ML por los envíos y no cuenta banda (volvió);
+// las canceladas ni vienen. Las ventas de ML cargadas a mano en esas fechas se
+// reemplazan, porque no hay cómo cruzarlas con el reporte (el panel les pone
+// una orden "manual-…") y sumar las dos inflaría la utilidad. Se aplica UNA vez
+// por reporte: si después se carga a mano una venta de ML, un reinicio no la
+// borra; recién el próximo reporte, que ya la trae, la reemplaza.
+function importarMercadoLibre(lote) {
+  if (!lote || !lote.id || !Array.isArray(lote.ventas) || !lote.ventas.length) return null;
+  if (importacionesML.includes(lote.id)) return { aplicado: false, id: lote.id };
+  const dia = f => new Date(f).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+  const dias = lote.ventas.map(v => dia(v.fecha)).sort();
+  const desde = dias[0], hasta = dias[dias.length - 1];
+  let reemplazadas = 0;
+  for (let i = ventasExternas.length - 1; i >= 0; i--) {
+    const x = ventasExternas[i], d = dia(x.fecha);
+    if (esCanalExterno(x.metodo) && x.fuente !== 'reporte-ml' && d >= desde && d <= hasta) {
+      ventasExternas.splice(i, 1);
+      reemplazadas++;
+    }
+  }
+  let nuevas = 0, actualizadas = 0;
+  for (const v of lote.ventas) {
+    const reg = {
+      monto: Number(v.monto) || 0,
+      fecha: new Date(v.fecha).toISOString(),
+      metodo: 'Mercado Libre', nombre: '', orden: String(v.orden),
+      unidades: v.devolucion ? 0 : (Number(v.unidades) > 0 ? Number(v.unidades) : 1),
+      soloTapones: false, externo: true, fuente: 'reporte-ml'
+    };
+    if (v.devolucion) reg.devolucion = true;
+    if (v.estimado) reg.estimado = true;
+    // Una venta que en el reporte anterior iba como venta y ahora volvió como
+    // devolución se actualiza: la última foto de ML es la que vale.
+    const i = ventasExternas.findIndex(x => x.orden === reg.orden);
+    if (i >= 0) { ventasExternas[i] = reg; actualizadas++; } else { ventasExternas.push(reg); nuevas++; }
+  }
+  importacionesML.push(lote.id);
+  guardar();
+  return { aplicado: true, id: lote.id, nuevas, actualizadas, reemplazadas, desde, hasta };
+}
+
+// ¿Esta orden ya está cargada? Mira las ventas de la web (por su ticket) y las
+// de canales externos. Es lo que usa la carga manual para no sumar dos veces.
+function ventaYaRegistrada(orden) {
+  const o = String(orden || '').trim();
+  if (!o) return false;
+  return !!buscarTicketPorOrden(o) || ventasExternas.some(x => x.orden === o);
 }
 
 // Busca un ticket por n° de orden (calce exacto o por sufijo, como en
@@ -332,6 +466,59 @@ function resumenVentas() {
   };
 }
 
+// Ventas agrupadas por día de Chile, para la utilidad diaria del panel.
+// Devuelve SIEMPRE los últimos `dias` días, con ceros incluidos: un día sin
+// ventas igual gastó en publicidad y tiene que aparecer en rojo, no faltar.
+//
+// Incluye las ventas de canales externos (Mercado Libre), marcadas aparte:
+// su monto ya viene sin envío ni comisión, así que la utilidad no les vuelve a
+// restar envío ni pasarela, y el costo por venta de los anuncios no las cuenta.
+function ventasPorDia(dias = 14) {
+  const precio = require('./precio').precioBanda();
+  const vacio = d => ({ fecha: d, pedidos: 0, unidades: 0, ingresos: 0, conTapones: 0, conCorreas: 0, estimado: false,
+                        pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0,
+                        devoluciones: 0, mlEstimado: false });
+  const mapa = {};
+  for (const v of ventas.concat(ventasExternas)) {
+    const d = new Date(v.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    if (!mapa[d]) mapa[d] = vacio(d);
+    if (v.estimado) mapa[d].mlEstimado = true;
+    if (v.devolucion) {
+      // Devolución (hoy, de Mercado Libre) en su día de compra: no es un
+      // pedido ni se fue una banda (volvió); resta lo que cobró el canal.
+      mapa[d].devoluciones += 1;
+      mapa[d].ingresos += v.monto;
+      mapa[d].ingresosExternos += v.monto;
+      continue;
+    }
+    mapa[d].pedidos += 1;
+    mapa[d].ingresos += v.monto;
+    if (v.externo) {
+      mapa[d].pedidosExternos += 1;
+      mapa[d].ingresosExternos += v.monto;
+      if (!v.soloTapones) mapa[d].unidadesExternas += v.unidades || 1;
+    }
+    if (v.tapones) mapa[d].conTapones += 1;
+    if (v.correas) mapa[d].conCorreas += 1;
+    if (v.soloTapones) {
+      // Pedido de tapones: no lleva banda, así que no suma costo de banda.
+    } else if (v.unidades) {
+      mapa[d].unidades += v.unidades;
+    } else {
+      // Venta anterior a que se guardara la cantidad: se estima desde el monto.
+      mapa[d].unidades += Math.max(1, Math.round((v.monto || 0) / precio));
+      mapa[d].estimado = true;
+    }
+  }
+  const salida = [];
+  const ahora = Date.now();
+  for (let i = dias - 1; i >= 0; i--) {
+    const d = new Date(ahora - i * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    salida.push(mapa[d] || vacio(d));
+  }
+  return salida;
+}
+
 // Vistas diarias de los últimos 30 días (fecha Chile, día por día).
 function ultimos30Dias() {
   const dias = [];
@@ -380,6 +567,25 @@ function ventasPorMomento() {
     if (d !== undefined) dias[d]++;
   }
   return { horas, dias };
+}
+
+// Ventas por HORA (hora de Chile): las de hoy y las de los 7 días anteriores
+// sumadas. El panel las cruza con el gasto por hora de Meta para ver si las
+// horas en que más se gasta son las mismas en que se vende.
+function ventasPorHora() {
+  const dia = n => new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+  const hoyStr = dia(0), desde = dia(7), hasta = dia(1);
+  const hoy = new Array(24).fill(0), ultimos7 = new Array(24).fill(0);
+  for (const v of ventas) {
+    const f = new Date(v.fecha);
+    if (isNaN(f)) continue;
+    const d = f.toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    const h = Number(f.toLocaleString('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false })) % 24;
+    if (isNaN(h)) continue;
+    if (d === hoyStr) hoy[h]++;
+    else if (d >= desde && d <= hasta) ultimos7[h]++;
+  }
+  return { hoy, ultimos7 };
 }
 
 // Cuántas ventas cerró cada medio de pago. Cruzado con los co:m-* (por dónde
@@ -458,8 +664,8 @@ function snapshot() {
 }
 
 module.exports = {
-  init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo,
-  asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden,
+  init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo, ventasPorDia,
+  asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden, ventaYaRegistrada, importarMercadoLibre,
   resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
-  registrarFalloChat
+  registrarFalloChat, ventasPorHora, alVender
 };

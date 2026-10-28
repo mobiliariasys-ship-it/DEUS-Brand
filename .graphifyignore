@@ -1,2 +1,4 @@
 img/
 !graphify-src/
+# Skills de terceros (p. ej. impeccable): no son código de la web
+.claude/skills/

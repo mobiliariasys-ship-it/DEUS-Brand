@@ -45,6 +45,9 @@
   .h-title p{margin:5px 0 0;color:var(--muted);font-size:.85rem;}
   .h-actions{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
   .updated{font-size:.64rem;color:var(--faint);letter-spacing:.5px;}
+  .aviso-btn{background:#161616;border:1px solid #2c2c2c;color:#aaa;border-radius:20px;padding:6px 14px;font-size:.72rem;cursor:pointer;font-family:inherit;}
+  .aviso-btn:hover{border-color:#444;color:#ddd;}
+  .aviso-btn.on{border-color:rgba(143,206,74,.45);color:var(--green);}
   .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3a3a3a;margin-right:7px;}
   .dot.on{background:var(--green);box-shadow:0 0 0 0 rgba(143,206,74,.6);animation:pulse 2s infinite;}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(143,206,74,.5)}70%{box-shadow:0 0 0 7px rgba(143,206,74,0)}100%{box-shadow:0 0 0 0 rgba(143,206,74,0)}}
@@ -62,6 +65,18 @@
   section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:15px;}
   .sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;}
   .sec-h h2{font-size:1rem;letter-spacing:.2px;color:#fff;margin:0;font-weight:700;}
+  .sec-act{font-size:.7rem;color:#8a8a8a;margin:-10px 0 14px;}
+  .sec-act b{color:#cfcfcf;font-weight:600;}
+  /* Gasto por hora (en vivo) */
+  #chartGastoH{display:block;width:100%;cursor:crosshair;}
+  .gh-ley{display:flex;gap:14px;flex-wrap:wrap;font-size:.68rem;color:#9a9a9a;margin-bottom:10px;}
+  .gh-ley span{display:inline-flex;align-items:center;gap:6px;}
+  .gh-sw{display:inline-block;width:10px;height:10px;border-radius:2px;}
+  .gh-sw.prom{height:2px;border-radius:0;background:repeating-linear-gradient(90deg,#9a9a9a 0 4px,transparent 4px 7px);}
+  .gh-sw.venta{border-radius:50%;}
+  .gh-porque{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.8rem;line-height:1.6;color:#d6d6d6;margin-bottom:6px;}
+  .gh-porque b{color:#fff;}
+  .gh-porque:empty{display:none;}
   .pill{font-size:.62rem;padding:4px 11px;border-radius:20px;border:none;color:#fff;letter-spacing:.3px;background:var(--pill);font-variant-numeric:tabular-nums;font-weight:600;}
 
   /* Funnel bars */
@@ -99,8 +114,28 @@
   .cb-lbl{width:120px;flex:none;font-size:.8rem;color:#c9c9c9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .cb-track{flex:1;background:#0b0b0b;border:1px solid #1e1e1e;border-radius:7px;height:22px;overflow:hidden;}
   .cb-bar{height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--cyan-soft),var(--cyan));transition:width .7s cubic-bezier(.2,.7,.2,1);}
-  .cb-val{width:80px;flex:none;text-align:right;font-weight:700;font-size:.84rem;font-variant-numeric:tabular-nums;color:#fff;}
+  .cb-val{width:62px;flex:none;text-align:right;font-weight:700;font-size:.84rem;font-variant-numeric:tabular-nums;color:#fff;}
   .cb-val small{color:var(--muted);font-weight:400;font-size:.7rem;}
+  /* Sub-linea de cada fila de "Que lleva a comprar". Un "18%" suelto no se
+     puede leer: hace falta el conteo en palabras y contra que compararlo. */
+  .cb-item{margin:9px 0;}
+  .cb-item .cb-row{margin:0;}
+  .cb-sub{margin:2px 0 0 131px;font-size:.66rem;color:#7d7d86;font-variant-numeric:tabular-nums;}
+  .cb-sub b{color:#6fd0f5;font-weight:700;}
+  .cb-sub .peor{color:#e0857f;}
+  .cb-flojo{font-size:.55rem;color:#c9a86a;background:#2a2320;border:1px solid #4a3a2e;
+    border-radius:20px;padding:1px 7px;margin-left:6px;white-space:nowrap;}
+  @media(max-width:620px){ .cb-sub{margin-left:0;} }
+  /* Seleccion de dias en el grafico de conversion */
+  .sel-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 0;}
+  .sel-res{margin:12px 0 0;background:#15161a;border:1px solid #2a2c33;border-radius:10px;
+    padding:13px 16px;font-size:.8rem;color:#ccc;line-height:1.55;}
+  .sel-res .big{font-weight:700;font-size:1.45rem;color:#9b8cff;margin-right:9px;
+    font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+  .sel-res small{color:#7d7d86;font-size:.71rem;display:block;margin-top:5px;line-height:1.5;}
+  .sel-res .vs{color:#6fd0f5;font-weight:700;}
+  .sel-res .vs.peor{color:#e0857f;}
+  #chartConv{cursor:pointer;}
 
   /* Buttons */
   .btn{background:var(--green);color:#0c1a06;border:none;padding:9px 16px;border-radius:9px;font-weight:700;font-size:.74rem;cursor:pointer;letter-spacing:.3px;}
@@ -124,6 +159,127 @@
   .mtr-row.total .mtr-val{font-size:1.05rem;color:var(--green);}
   .ads-presu-row{display:flex;align-items:center;gap:8px;margin-top:12px;}
   .ads-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  /* Gráfico de CTR diario por campaña. Paleta categórica fija (azul, naranja,
+     aqua, amarillo, magenta) validada contra este fondo: banda de luminosidad,
+     piso de croma, separación para daltonismo y contraste ≥3:1. No se cicla ni
+     se reordena — cada campaña conserva su color aunque se pause otra. */
+  .ctr-wrap{background:#0b0b0b;border-radius:12px;padding:14px;border:1px solid var(--border-soft);margin-bottom:14px;}
+  #chartCtr{width:100%;height:auto;display:block;min-width:520px;cursor:crosshair;}
+  .ctr-scroll{overflow-x:auto;}
+  .ctr-chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  /* Ficha estilo cotización: nombre, CTR de hoy y variación contra ayer. */
+  .ctr-chip{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;min-width:150px;}
+  .ctr-chip-n{display:flex;align-items:center;gap:6px;font-size:.72rem;color:#9a9a9a;margin-bottom:3px;}
+  .ctr-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+  .ctr-chip-v{font-size:1.15rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;}
+  .ctr-chip-d{font-size:.72rem;font-weight:600;font-variant-numeric:tabular-nums;}
+  .ctr-sube{color:#8fc98f;} .ctr-baja{color:#f0736f;} .ctr-igual{color:#777;}
+  /* Utilidad diaria. Usa las mismas cajas que la tabla del CTR para que el
+     panel no se vea como dos productos distintos pegados. */
+  .util-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;}
+  .util-kpi{background:var(--card,#141418);border:1px solid var(--border-soft,#2a2a32);border-radius:9px;padding:11px 13px;}
+  .util-kpi .k{font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:#8a8a92;margin-bottom:6px;}
+  .util-kpi .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;color:#e8e8ee;}
+  .util-kpi .s{font-size:.62rem;color:#8a8a92;margin-top:5px;line-height:1.35;}
+  .util-kpi.bien .v{color:#69c46d;} .util-kpi.mal .v{color:#e07a6a;}
+  .util-tabla{overflow-x:auto;}
+  /* Días elegidos en el gráfico de Conversión: mismo violeta que esa selección,
+     para que se lea que una manda sobre la otra. */
+  .util-sel{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0 0 12px;padding:10px 14px;
+    background:#17162a;border:1px solid #3a3466;border-radius:10px;font-size:.78rem;color:#d6d2ff;line-height:1.45;}
+  .util-sel b{color:#b3a8ff;}
+  .util-sel button{background:transparent;border:1px solid #4a4380;color:#d6d2ff;border-radius:7px;padding:5px 10px;
+    font-size:.72rem;font-weight:600;cursor:pointer;}
+  .util-sel button:hover{border-color:#9b8cff;color:#fff;}
+  .sel-res .sel-util{margin-top:10px;padding-top:10px;border-top:1px solid #2a2c33;}
+  .sel-util .pos{color:#69c46d;} .sel-util .neg{color:#e07a6a;}
+  .sel-util a{color:#9b8cff;text-decoration:none;white-space:nowrap;}
+  /* Alta manual de ventas: el panel solo ve lo que pasó por una pasarela. Las
+     presenciales y las que se pierden cuando persist.js cae a modo archivo hay
+     que reponerlas a mano, y en el DÍA que ocurrieron. */
+  .util-add{background:transparent;border:1px solid var(--border);color:var(--faint);width:22px;height:22px;
+    border-radius:6px;cursor:pointer;font-size:.8rem;line-height:1;padding:0;}
+  .util-add:hover{border-color:var(--green);color:var(--green);}
+  /* overflow + margin:auto: centrado si cabe; si no cabe (celular), se desplaza
+     y el botón Agregar siempre se alcanza. */
+  .vm-fondo{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:18px;overflow-y:auto;}
+  .vm-fondo.on{display:flex;}
+  .vm-caja{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:400px;margin:auto;}
+  .vm-caja h3{margin:0 0 4px;font-size:.92rem;color:#fff;}
+  .vm-dia{font-size:.72rem;color:var(--cyan);margin-bottom:16px;}
+  /* Un toque marca la venta como de Mercado Libre (ver vmToggleML). */
+  .vm-ml-btn{display:block;width:100%;margin:-4px 0 16px;padding:11px 12px;border:1px dashed #3a3a3a;border-radius:8px;background:transparent;color:#bdbdbd;font-size:.78rem;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;-webkit-tap-highlight-color:transparent;}
+  .vm-ml-btn:hover{border-color:#e7cf9c;color:#e7cf9c;}
+  .vm-ml-btn.on{border-style:solid;border-color:#e7cf9c;background:rgba(231,207,156,.12);color:#e7cf9c;}
+  .vm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .vm-campo{display:flex;flex-direction:column;gap:4px;}
+  .vm-campo.ancho{grid-column:1/-1;}
+  .vm-campo label{font-size:.64rem;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;}
+  .vm-campo input,.vm-campo select{background:var(--card2);border:1px solid var(--border);color:var(--ink);
+    padding:8px 10px;border-radius:7px;font-size:.78rem;font-family:inherit;width:100%;}
+  .vm-campo input:focus,.vm-campo select:focus{outline:none;border-color:var(--cyan);}
+  .vm-chk{display:flex;align-items:center;gap:7px;font-size:.72rem;color:#bbb;grid-column:1/-1;}
+  .vm-chk input{width:auto;}
+  .vm-msg{font-size:.7rem;margin-top:12px;min-height:16px;}
+  .vm-pie{display:flex;gap:9px;justify-content:flex-end;margin-top:14px;}
+  /* Reseñas cargadas desde el panel */
+  .rp-form{max-width:600px;margin-bottom:20px;}
+  .rp-form .vm-pie{justify-content:flex-start;}
+  .vm-campo textarea{background:var(--card2);border:1px solid var(--border);color:var(--ink);padding:8px 10px;border-radius:7px;font-size:.78rem;font-family:inherit;width:100%;min-height:76px;resize:vertical;line-height:1.45;}
+  .vm-campo textarea:focus{outline:none;border-color:var(--cyan);}
+  .vm-campo input[type=file]{padding:7px;font-size:.72rem;}
+  #rp-prev{max-width:150px;max-height:190px;border-radius:8px;margin-top:8px;object-fit:cover;}
+  .rp-item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--border);}
+  .rp-item img,.rp-sinfoto{width:56px;height:70px;border-radius:6px;flex:none;object-fit:cover;}
+  .rp-sinfoto{background:var(--card2);display:grid;place-items:center;color:var(--faint);font-size:1.4rem;}
+  .rp-cuerpo{flex:1;min-width:0;}
+  .rp-cuerpo b{font-size:.8rem;color:var(--ink);}
+  .rp-cuerpo p{font-size:.76rem;color:#cfcfcf;margin:3px 0 5px;line-height:1.45;overflow-wrap:anywhere;}
+  .rp-meta{font-size:.66rem;color:var(--muted);line-height:1.5;}
+  .rp-acc{display:flex;flex-direction:column;gap:6px;flex:none;}
+  .rp-oculta img,.rp-oculta .rp-cuerpo{opacity:.45;}
+  .rp-h{margin:6px 0 4px;font-size:.86rem;color:#fff;}
+  .rp-ayuda{font-size:.72rem;color:var(--muted);line-height:1.5;margin:0 0 6px;}
+  .rp-sub{margin:16px 0 2px;font-size:.66rem;color:var(--cyan);letter-spacing:.5px;text-transform:uppercase;font-weight:600;}
+  .rp-pos{width:20px;flex:none;font-size:.78rem;font-weight:700;color:var(--muted);text-align:right;padding-top:4px;font-variant-numeric:tabular-nums;}
+  .rp-cuerpo p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .rp-tag{display:inline-block;font-size:.58rem;letter-spacing:.4px;text-transform:uppercase;color:var(--faint);border:1px solid var(--border);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle;}
+  .rp-botones{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .rp-botones .btn{padding:7px 11px;}
+  .rp-flecha{min-width:40px;font-size:.9rem;line-height:1;}
+  .rp-flecha:disabled{opacity:.3;cursor:default;}
+  .rp-movida{animation:rpMovida .5s ease-out;}
+  @keyframes rpMovida{from{background:rgba(30,200,240,.14);}to{background:transparent;}}
+  .rp-guardar{position:sticky;bottom:12px;z-index:5;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px;padding:10px 12px;border-radius:12px;background:#1d1d1d;border:1px solid var(--cyan);box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  .rp-guardar[hidden]{display:none;}
+  .rp-guardar span{font-size:.74rem;color:#ddd;margin-right:auto;}
+  @media (prefers-reduced-motion: reduce){.rp-movida{animation:none;}}
+  .util-tabla table{width:100%;border-collapse:collapse;font-size:.72rem;}
+  .util-tabla th,.util-tabla td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--border-soft,#2a2a32);font-variant-numeric:tabular-nums;color:#bbb;}
+  .util-tabla th{color:#9a9a9a;font-weight:600;}
+  .util-tabla th:first-child,.util-tabla td:first-child{text-align:left;}
+  .util-tabla td.gasto{color:#9a8f8f;}
+  .util-tabla td.util{font-weight:700;}
+  .util-tabla td.pos{color:#69c46d;} .util-tabla td.neg{color:#e07a6a;}
+  .util-tabla tr.hoy td{background:rgba(232,180,100,.06);}
+  .util-nota,.ctr-nota{font-size:.64rem;color:#7a7a82;margin-top:10px;line-height:1.5;}
+  .ctr-rango{display:flex;gap:6px;margin-bottom:12px;}
+  .ctr-rango button{background:transparent;border:1px solid var(--border);color:#9a9a9a;border-radius:7px;padding:4px 11px;font-size:.72rem;cursor:pointer;}
+  .ctr-rango button.on{border-color:#3987e5;color:#fff;}
+  /* Vista de tabla: el globo del cursor no puede ser la única forma de leer un
+     valor — con lector de pantalla o sin mouse no existe. */
+  /* Solo para lector de pantalla: da contexto a la tabla sin ocupar espacio. */
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  .ctr-tabla{margin-top:12px;overflow-x:auto;}
+  .ctr-tabla table{width:100%;border-collapse:collapse;font-size:.72rem;}
+  .ctr-tabla th,.ctr-tabla td{padding:5px 9px;text-align:right;border-bottom:1px solid var(--border-soft);font-variant-numeric:tabular-nums;color:#bbb;}
+  .ctr-tabla th{color:#9a9a9a;font-weight:600;text-align:right;}
+  .ctr-tabla th:first-child,.ctr-tabla td:first-child{text-align:left;}
+  .ctr-tabla th .ctr-dot{display:inline-block;margin-right:5px;vertical-align:middle;}
+  /* Globo del cursor: se posiciona sobre el canvas, no dentro. */
+  .ctr-tip{position:absolute;pointer-events:none;background:#141414;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.72rem;color:#ddd;white-space:nowrap;display:none;z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.5);}
+  .ctr-tip b{color:#fff;}
+  .ctr-tip-row{display:flex;align-items:center;gap:6px;margin-top:3px;}
 
   /* Tables */
   table{width:100%;border-collapse:collapse;font-size:.78rem;}
@@ -143,11 +299,13 @@
 
   /* Charts */
   .chart-container{width:100%;overflow-x:auto;background:#0b0b0b;border-radius:12px;padding:14px;border:1px solid var(--border-soft);}
-  #chartDias,#chartVentas{width:100%;height:auto;display:block;min-width:520px;}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+  #chartDias,#chartVentas,#chartConv{width:100%;height:auto;display:block;min-width:520px;}
+  /* minmax(0,1fr): con 1fr la columna no bajaba del ancho de los canvas (820px)
+     y en el celular el panel quedaba más ancho que la pantalla. */
+  .two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:15px;}
   .two-col section{margin-bottom:0;}
 
-  @media(max-width:980px){ .two-col{grid-template-columns:1fr;} }
+  @media(max-width:980px){ .two-col{grid-template-columns:minmax(0,1fr);} }
   @media(max-width:820px){
     .shell{flex-direction:column;}
     .sidebar{width:100%;height:auto;position:static;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border-soft);padding:12px;gap:4px;align-items:center;}
@@ -179,6 +337,7 @@
       <div class="side-logo"><span class="side-mark"></span>DEUS</div>
       <button class="nav-i active" onclick="irA('top',this)"><span class="ico">📊</span> Dashboard</button>
       <button class="nav-i" onclick="irA('sec-graficos',this)"><span class="ico">📈</span> Gráficos</button>
+      <button class="nav-i" onclick="irA('sec-utilidad',this)"><span class="ico">💰</span> Utilidad</button>
       <button class="nav-i" onclick="irA('sec-embudo',this)"><span class="ico">🫗</span> Embudo</button>
       <button class="nav-i" onclick="irA('sec-conducta',this)"><span class="ico">🧭</span> Conducta</button>
       <button class="nav-i" onclick="irA('sec-convierte',this)"><span class="ico">🎯</span> Convierte</button>
@@ -188,6 +347,7 @@
       <button class="nav-i" onclick="irA('sec-negocio',this)"><span class="ico">📦</span> Negocio</button>
       <button class="nav-i" onclick="irA('sec-pedidos',this)"><span class="ico">📦</span> Pedidos</button>
       <button class="nav-i" onclick="irA('sec-ads',this)"><span class="ico">📣</span> Ads</button>
+      <button class="nav-i" onclick="irA('sec-resenas',this)"><span class="ico">⭐</span> Reseñas</button>
       <div class="nav-sep"></div>
       <button class="nav-i" id="btn-self" onclick="toggleSelf()">Excluir mis vistas</button>
       <button class="nav-i" onclick="salir()"><span class="ico">↩</span> Salir</button>
@@ -195,7 +355,7 @@
     <main class="main" id="top">
     <header>
       <div class="h-title"><h1>Dashboard</h1><p>Resumen de tu tienda en tiempo real</p></div>
-      <div class="h-actions"><div class="updated" id="updated">—</div></div>
+      <div class="h-actions"><button type="button" class="aviso-btn" id="aviso-btn" onclick="activarAvisoVentas()">🔔 Activar aviso de ventas</button><div class="updated" id="updated">—</div></div>
     </header>
 
     <!-- Avisos: solo aparecen si hay algo roto. El chat se cayó una vez y el
@@ -218,7 +378,9 @@
       <div class="stat"><div class="k">Conversión histórica</div><div class="v" id="s-conv">— <small id="s-conv-d"></small></div></div>
       <!-- Ventas del periodo elegido arriba en la barra (semana, mes, etc.) -->
       <div class="stat gold"><div class="k" id="s-perv-k">Ventas del periodo</div><div class="v" id="s-perv">— <small id="s-perv-m"></small></div></div>
-      <div class="stat"><div class="k">Ticket promedio</div><div class="v" id="s-aov">—</div></div>
+      <!-- Utilidad: sin días elegidos en el gráfico de Conversión, la histórica
+           desde que los ads se cuentan con IVA; con días elegidos, la de esos días. -->
+      <div class="stat" style="cursor:pointer" onclick="verUtilHistorica()" title="Ver la utilidad día por día"><div class="k" id="s-util-k">Utilidad histórica</div><div class="v" id="s-util">— <small id="s-util-m"></small></div></div>
       <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
     </div>
 
@@ -247,6 +409,68 @@
       <div class="sec-h"><h2>💰 Ventas · últimos 30 días</h2><span class="pill" id="chart-ventas-total"></span></div>
       <div class="chart-container"><canvas id="chartVentas" width="820" height="200"></canvas></div>
     </section>
+    <section>
+      <div class="sec-h"><h2>📈 Conversión · últimos 30 días</h2><span class="pill" id="chart-conv-total"></span></div>
+      <div class="chart-container"><canvas id="chartConv" width="820" height="200"></canvas></div>
+      <p class="hint">Ventas ÷ visitas de cada día. La línea punteada es el promedio real del periodo — es la referencia, no las barras sueltas. Los días en gris tienen muy pocas visitas: ahí el porcentaje es ruido, no señal.</p>
+      <!-- Elegir días y sacarles el promedio. Se puede tocar barra por barra o
+           usar los atajos; el resultado se recalcula solo. -->
+      <div class="sel-bar">
+        <span class="rango-lbl">Promedio de</span>
+        <button class="rango-btn" id="selb-3" onclick="selUltimos(3)">Últimos 3</button>
+        <button class="rango-btn" id="selb-7" onclick="selUltimos(7)">Últimos 7</button>
+        <button class="rango-btn" id="selb-14" onclick="selUltimos(14)">Últimos 14</button>
+        <button class="rango-btn" id="selb-0" onclick="selUltimos(0)">Los 30</button>
+        <span class="rango-nota">o tocá las barras para elegir días sueltos</span>
+      </div>
+      <div class="sel-res" id="conv-sel-res"></div>
+    </section>
+    </div>
+
+    <section id="sec-utilidad">
+      <div class="sec-h"><h2>💰 Utilidad diaria</h2><button class="btn ghost" onclick="cargarUtilidad()">Actualizar</button></div>
+      <div class="sec-act" id="util-act"></div>
+      <div class="ctr-rango">
+        <button data-udias="7" onclick="cargarUtilidad(7)">7 días</button>
+        <button data-udias="14" class="on" onclick="cargarUtilidad(14)">14 días</button>
+        <button data-udias="30" onclick="cargarUtilidad(30)">30 días</button>
+        <!-- Todo lo que hay desde que los ads se cuentan con IVA (11-09-2026) -->
+        <button data-udias="iva" onclick="cargarUtilidad('iva')">Desde el IVA</button>
+      </div>
+      <!-- Con días elegidos en el gráfico de Conversión, la utilidad muestra
+           solo esos días (ver utilidadSegunSel). -->
+      <div class="util-sel" id="util-sel" style="display:none"></div>
+      <div class="util-kpis" id="util-kpis"></div>
+      <div class="util-tabla" id="util-tabla"></div>
+      <div class="util-nota" id="util-nota"></div>
+      <div class="empty" id="util-off" style="display:none">No se pudo cargar la utilidad.</div>
+    </section>
+
+    <div class="vm-fondo" id="vm-fondo" onclick="if(event.target===this)cerrarAltaVenta()">
+      <div class="vm-caja">
+        <h3>Agregar venta</h3>
+        <div class="vm-dia" id="vm-dia"></div>
+        <button type="button" class="vm-ml-btn" id="vm-ml-btn" aria-pressed="false" onclick="vmToggleML()">Venta de Mercado Libre</button>
+        <div class="vm-grid">
+          <div class="vm-campo"><label id="vm-monto-lbl">Monto cobrado</label><input id="vm-monto" type="number" inputmode="numeric" placeholder="68990"></div>
+          <div class="vm-campo"><label>Unidades</label><input id="vm-unidades" type="number" inputmode="numeric" value="1" min="1"></div>
+          <div class="vm-campo"><label>Medio de pago</label>
+            <select id="vm-metodo" onchange="vmMetodo()">
+              <option>MercadoPago</option><option>Webpay</option><option>Flow</option>
+              <option>Mercado Libre</option>
+              <option>Presencial</option><option>Transferencia</option><option>Otro</option>
+            </select></div>
+          <div class="vm-campo ancho" id="vm-ml-nota" style="display:none;font-size:.72rem;color:#e7cf9c;line-height:1.45;">Poné lo que te deja Mercado Libre, ya descontados el envío y la comisión. El panel solo le resta el costo de la banda, y la venta no entra en la conversión de la web ni en el sorteo.</div>
+          <div class="vm-campo"><label>Nombre (opcional)</label><input id="vm-nombre" placeholder="Cliente"></div>
+          <div class="vm-campo ancho"><label>ID de pago (opcional)</label><input id="vm-orden" placeholder="se genera solo si lo dejás vacío"></div>
+          <label class="vm-chk"><input type="checkbox" id="vm-tapones"> Es una compra de solo tapones</label>
+        </div>
+        <div class="vm-msg" id="vm-msg"></div>
+        <div class="vm-pie">
+          <button class="btn ghost" onclick="cerrarAltaVenta()">Cancelar</button>
+          <button class="btn" id="vm-ok" onclick="guardarVentaManual()">Agregar</button>
+        </div>
+      </div>
     </div>
 
     <section id="sec-embudo">
@@ -365,11 +589,104 @@
       <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
     </section>
 
+    <section id="sec-gastoh">
+      <div class="sec-h"><h2>⏱️ Gasto por hora · en vivo</h2><button class="btn ghost" onclick="cargarGastoHora(true)">Actualizar</button></div>
+      <div class="sec-act" id="gh-act"></div>
+      <div class="util-kpis" id="gh-kpis"></div>
+      <div class="ctr-wrap" id="gh-wrap" style="display:none;position:relative;">
+        <div class="gh-ley">
+          <span><i class="gh-sw" style="background:#1ec8f0"></i>Gasto de hoy</span>
+          <span><i class="gh-sw prom"></i>Promedio de los 7 días anteriores</span>
+          <span><i class="gh-sw venta" style="background:#8fce4a"></i>Venta del sitio</span>
+        </div>
+        <canvas id="chartGastoH"></canvas>
+        <div class="ctr-tip" id="gh-tip"></div>
+      </div>
+      <div class="gh-porque" id="gh-porque"></div>
+      <div class="util-nota" id="gh-nota"></div>
+      <div class="empty" id="gh-off" style="display:none"></div>
+    </section>
+
     <section id="sec-ads">
-      <div class="sec-h"><h2>📣 Ads Manager (Meta) · últimos 7 días</h2><button class="btn ghost" onclick="cargarAds()">Actualizar</button></div>
+      <div class="sec-h"><h2>📣 Ads Manager (Meta) · últimos 7 días, con hoy</h2><button class="btn ghost" onclick="cargarAds()">Actualizar</button></div>
+      <div class="sec-act" id="ads-act"></div>
       <div class="empty" id="ads-off" style="display:none">Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID).</div>
       <div class="empty" id="ads-empty" style="display:none">Sin campañas.</div>
+      <!-- CTR diario por campaña activa. El CTR es de clics en el ENLACE: el
+           "de todos los clics" sube con likes y comentarios sin que nadie haya
+           entrado al sitio, así que serviría para nada acá. -->
+      <div class="ctr-wrap" id="ctr-wrap" style="display:none;position:relative;">
+        <div class="ctr-rango">
+          <button data-dias="7" onclick="cargarCtr(7)">7 días</button>
+          <button data-dias="14" class="on" onclick="cargarCtr(14)">14 días</button>
+          <button data-dias="30" onclick="cargarCtr(30)">30 días</button>
+          <button id="ctr-btn-tabla" onclick="alternarTablaCtr()" style="margin-left:auto">Ver tabla</button>
+        </div>
+        <!-- Una metrica a la vez, nunca las dos con dos ejes: un eje en % y
+             otro en personas sobre el mismo dibujo hace que las lineas se
+             crucen por casualidad de escala y se lea una relacion falsa. -->
+        <div class="ctr-rango ctr-metricas">
+          <button data-metrica="ctr" class="on" onclick="metricaCtr('ctr')">CTR del enlace</button>
+          <button data-metrica="visitas" onclick="metricaCtr('visitas')">Visitas desde el anuncio</button>
+        </div>
+        <div class="ctr-chips" id="ctr-chips"></div>
+        <div class="ctr-scroll"><canvas id="chartCtr" width="820" height="230"></canvas></div>
+        <div class="ctr-tip" id="ctr-tip"></div>
+        <div class="ctr-tabla" id="ctr-tabla" style="display:none"></div>
+        <div class="ctr-nota" id="ctr-nota"></div>
+      </div>
+      <!-- CTR hora a hora del anuncio principal. El gráfico de arriba dice si
+           el anuncio sirve; este dice a qué HORA sirve. Se refresca solo cada
+           60 min: Meta publica la hora en curso con atraso, y pedirla más
+           seguido solo quema el rate limit de la cuenta. -->
+      <div class="ctr-wrap" id="hora-wrap" style="display:none;position:relative;">
+        <div class="ctr-rango">
+          <button data-hdias="1" onclick="cargarHora(1)">Hoy</button>
+          <button data-hdias="3" class="on" onclick="cargarHora(3)">3 días</button>
+          <button data-hdias="7" onclick="cargarHora(7)">7 días</button>
+          <button onclick="cargarHora()" style="margin-left:auto">Actualizar</button>
+        </div>
+        <div class="ctr-chips" id="hora-chips"></div>
+        <div class="ctr-scroll"><canvas id="chartHora" width="820" height="230"></canvas></div>
+        <div class="ctr-tip" id="hora-tip"></div>
+        <div class="ctr-nota" id="hora-nota"></div>
+      </div>
       <div class="ads-grid" id="ads-grid"></div>
+    </section>
+
+    <section id="sec-resenas">
+      <div class="sec-h"><h2>⭐ Reseñas · subir a la web</h2><span class="pill" id="rp-total"></span></div>
+      <div class="rp-form">
+        <div class="vm-grid">
+          <div class="vm-campo"><label for="rp-autor">Quién la escribió</label><input id="rp-autor" maxlength="60" placeholder="@usuario o nombre" autocomplete="off"></div>
+          <div class="vm-campo"><label for="rp-estrellas">Estrellas</label>
+            <select id="rp-estrellas"><option value="5">★★★★★ 5</option><option value="4">★★★★ 4</option><option value="3">★★★ 3</option><option value="2">★★ 2</option><option value="1">★ 1</option></select></div>
+          <div class="vm-campo ancho"><label for="rp-texto">Comentario</label><textarea id="rp-texto" maxlength="600" placeholder="Tal como lo escribió el cliente"></textarea></div>
+          <div class="vm-campo"><label for="rp-origen">Dónde la dejó</label>
+            <select id="rp-origen"><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="web">Formulario web</option><option value="otro">Otro</option></select></div>
+          <div class="vm-campo"><label for="rp-ubicacion">Ciudad o comuna (opcional)</label><input id="rp-ubicacion" maxlength="40" placeholder="Las Condes"></div>
+          <div class="vm-campo ancho"><label for="rp-foto">Foto (opcional)</label><input id="rp-foto" type="file" accept="image/*" onchange="rpVistaPrevia()"><img id="rp-prev" alt="Vista previa de la foto" style="display:none"></div>
+          <label class="vm-chk"><input type="checkbox" id="rp-editada" onchange="rpEditada()"> La foto está editada (la tarjeta lo avisa)</label>
+          <div class="vm-campo ancho" id="rp-nota-campo" style="display:none"><label for="rp-nota">Qué se editó (opcional)</label><input id="rp-nota" maxlength="60" placeholder="para mostrar la correa gris"></div>
+          <label class="vm-chk"><input type="checkbox" id="rp-cercano"> Es familia, amigo o del equipo (la tarjeta lo avisa)</label>
+        </div>
+        <div class="vm-msg" id="rp-msg" aria-live="polite"></div>
+        <div class="vm-pie"><button class="btn" id="rp-ok" onclick="publicarResena()">Publicar reseña</button></div>
+      </div>
+      <h3 class="rp-h">Orden en la web</h3>
+      <p class="rp-ayuda">Así se ven en el carrusel, de izquierda a derecha. Muévelas con ↑ ↓ y toca <b>Guardar orden</b>. Las nuevas entran primero hasta que las muevas.</p>
+      <div class="vm-msg" id="rp-orden-msg" aria-live="polite"></div>
+      <h4 class="rp-sub">Con foto o video · se ven primero</h4>
+      <div id="rp-lista-fotos"></div>
+      <h4 class="rp-sub">Solo texto · aparecen con "Ver más reseñas"</h4>
+      <div id="rp-lista-textos"></div>
+      <div id="rp-ocultas-caja" style="display:none"><h4 class="rp-sub">Ocultas · no se ven en la web</h4><div id="rp-lista-ocultas"></div></div>
+      <div class="empty" id="rp-vacia" style="display:none">Cargando reseñas…</div>
+      <div class="rp-guardar" id="rp-guardar" hidden>
+        <span>Cambiaste el orden</span>
+        <button class="btn ghost" onclick="rpDescartar()">Descartar</button>
+        <button class="btn" id="rp-guardar-ok" onclick="rpGuardarOrden()">Guardar orden</button>
+      </div>
     </section>
 
     <section id="sec-chat">
@@ -406,6 +723,226 @@
     cargar(true);
   }
   function salir(){ localStorage.removeItem('deus-admin-key'); location.reload(); }
+
+  // ── Reseñas cargadas desde el panel (services/resenas.js) ──
+  // Lo que se publica acá aparece en el carrusel de la web en menos de un minuto.
+  var rpFoto=null; // foto ya preparada para subir, como data URL
+  function rpVal(id){ return document.getElementById(id).value.trim(); }
+  function rpMsg(txt, color){ var m=document.getElementById('rp-msg'); m.style.color=color||'var(--muted)'; m.textContent=txt; }
+  function rpEditada(){ document.getElementById('rp-nota-campo').style.display=document.getElementById('rp-editada').checked?'':'none'; }
+  // La foto se prepara en el navegador antes de subir: nunca viajan los varios MB
+  // del celular. Lado largo de hasta 2000 px y calidad 0,9, así se ve nítida
+  // incluso a pantalla completa en el teléfono. Antes era 1000 px de un solo
+  // salto: al achicar 4 veces de golpe el navegador se saltea píxeles y la foto
+  // queda serruchada (lo que se veía "pixelado"). Ahora achica de a la mitad y
+  // con suavizado alto, como un editor de fotos.
+  // Pasar por el canvas además borra los datos ocultos de la foto (EXIF), entre
+  // ellos la ubicación GPS donde se sacó.
+  var RP_LADOS=[2000, 1600];            // si con 2000 px no entra en el peso, prueba con 1600
+  var RP_CALIDADES=[0.9, 0.82, 0.75];
+  var RP_MAX_BYTES=2.5*1024*1024;       // el servidor acepta hasta 3 MB
+  // WebP si el navegador sabe generarlo (Safari no: devuelve PNG); si no, JPEG.
+  var rpWebp=(function(){ try{ var c=document.createElement('canvas'); c.width=c.height=1; return c.toDataURL('image/webp').indexOf('data:image/webp')===0; }catch(e){ return false; } })();
+  function rpBytes(d){ return Math.floor((d.length-d.indexOf(',')-1)*3/4); }
+  function rpCanvas(w, h){
+    var c=document.createElement('canvas'); c.width=w; c.height=h; // el tamaño va antes: cambiarlo resetea el suavizado
+    var x=c.getContext('2d'); x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high';
+    return c;
+  }
+  function rpEscalar(img, w, h){
+    var src=img, sw=img.naturalWidth, sh=img.naturalHeight;
+    while(sw/2>=w && sh/2>=h){
+      var t=rpCanvas(Math.round(sw/2), Math.round(sh/2));
+      t.getContext('2d').drawImage(src, 0, 0, t.width, t.height);
+      if(src!==img) src.width=src.height=0; // libera el paso anterior (iOS no lo suelta solo)
+      src=t; sw=t.width; sh=t.height;
+    }
+    var c=rpCanvas(w, h), x=c.getContext('2d');
+    if(!rpWebp){ x.fillStyle='#fff'; x.fillRect(0, 0, w, h); } // JPEG no tiene transparencia: blanco, no negro
+    x.drawImage(src, 0, 0, w, h);
+    if(src!==img) src.width=src.height=0;
+    return c;
+  }
+  function rpAchicar(file){
+    return new Promise(function(ok, mal){
+      var url=URL.createObjectURL(file), img=new Image();
+      img.onload=function(){
+        try{
+          var tipo=rpWebp?'image/webp':'image/jpeg', lado=Math.max(img.naturalWidth, img.naturalHeight), r=null;
+          for(var i=0; i<RP_LADOS.length && !r; i++){
+            var k=Math.min(1, RP_LADOS[i]/lado), w=Math.round(img.naturalWidth*k), h=Math.round(img.naturalHeight*k);
+            var c=rpEscalar(img, w, h);
+            for(var j=0; j<RP_CALIDADES.length; j++){
+              var d=c.toDataURL(tipo, RP_CALIDADES[j]);
+              r={ datos:d, ancho:w, alto:h };
+              if(rpBytes(d)<=RP_MAX_BYTES) break;
+              if(j===RP_CALIDADES.length-1 && i<RP_LADOS.length-1) r=null; // no entró: otra vuelta más chica
+            }
+            c.width=c.height=0;
+          }
+          ok(r);
+        }catch(e){ mal(new Error('No se pudo preparar esa foto. Prueba con otra.')); }
+        finally{ URL.revokeObjectURL(url); }
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); mal(new Error('No se pudo leer esa imagen. Prueba con una foto JPG o PNG.')); };
+      img.src=url;
+    });
+  }
+  var rpTurno=0; // si se elige otra foto mientras se prepara la anterior, gana la última
+  function rpVistaPrevia(){
+    var f=document.getElementById('rp-foto').files[0], prev=document.getElementById('rp-prev'), turno=++rpTurno;
+    rpFoto=null; prev.style.display='none'; rpMsg('');
+    if(!f) return;
+    rpMsg('Preparando la foto…');
+    rpAchicar(f).then(function(r){
+      if(turno!==rpTurno) return;
+      rpFoto=r.datos; prev.src=r.datos; prev.style.display='block';
+      rpMsg('Foto lista: '+r.ancho+' × '+r.alto+' px · '+Math.round(rpBytes(r.datos)/1024)+' KB');
+    }).catch(function(e){ if(turno===rpTurno) rpMsg(e.message, 'var(--red)'); });
+  }
+  function rpLimpiar(){
+    ['rp-autor','rp-texto','rp-ubicacion','rp-nota','rp-foto'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.getElementById('rp-estrellas').value='5'; document.getElementById('rp-origen').value='instagram';
+    document.getElementById('rp-editada').checked=false; document.getElementById('rp-cercano').checked=false; rpEditada();
+    document.getElementById('rp-prev').style.display='none'; rpFoto=null; rpTurno++; // descarta una foto que se esté preparando
+  }
+  function publicarResena(){
+    var btn=document.getElementById('rp-ok'), hayArchivo=!!document.getElementById('rp-foto').files[0];
+    var datos={ autor:rpVal('rp-autor'), texto:rpVal('rp-texto'), estrellas:Number(rpVal('rp-estrellas')),
+      origen:rpVal('rp-origen'), ubicacion:rpVal('rp-ubicacion'), foto:rpFoto,
+      fotoEditada:hayArchivo && document.getElementById('rp-editada').checked, notaFoto:rpVal('rp-nota'),
+      cercano:document.getElementById('rp-cercano').checked };
+    if(!datos.autor || !datos.texto){ rpMsg('Completa quién la escribió y el comentario.', 'var(--red)'); return; }
+    if(hayArchivo && !rpFoto){ rpMsg('Espera a que cargue la foto…'); return; }
+    btn.disabled=true; rpMsg('Publicando…');
+    fetch(BASE+'/admin/resenas?clave='+encodeURIComponent(clave), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(datos) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok) throw new Error(j.error||'No se pudo publicar.'); return j; }); })
+      .then(function(){ rpLimpiar(); rpMsg('Publicada. Aparece en la web en menos de un minuto.', 'var(--green)'); cargarResenasPanel(); })
+      .catch(function(e){ rpMsg(e.message, 'var(--red)'); })
+      .then(function(){ btn.disabled=false; });
+  }
+  // ── Orden del carrusel ──
+  // Junta las reseñas fijas del HTML de la web (se leen de index.html, con su
+  // data-rid) con las subidas desde el panel, y las ordena con la MISMA regla que
+  // aplicarOrdenResenas() en index.html: las subidas que no están en el orden
+  // guardado van primero, después el orden guardado, y al final las fijas nuevas.
+  var rpSt={ panel:[], fijas:null, orden:{fotos:[],textos:[]}, local:null, vista:{fotos:[],textos:[]} };
+  function rpLeerFijas(){
+    if(rpSt.fijas) return Promise.resolve(rpSt.fijas);
+    return fetch('/index.html', {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(html){
+      var doc=new DOMParser().parseFromString(html, 'text/html');
+      rpSt.fijas=[].slice.call(doc.querySelectorAll('#reviewsCarr > .review-card[data-rid]')).map(function(c){
+        var im=c.querySelector('img.review-photo'), vi=c.querySelector('video');
+        return { rid:c.getAttribute('data-rid'), fija:true, visible:true, conFoto:!c.classList.contains('rv-sin-foto'),
+          autor:((c.querySelector('.review-ig')||{}).textContent||'').trim(),
+          texto:((c.querySelector('.review-text')||{}).textContent||'').trim().replace(/^"|"$/g,''),
+          thumb: im ? im.getAttribute('src') : (vi ? vi.getAttribute('data-poster') : ''), video:!!vi };
+      });
+      return rpSt.fijas;
+    });
+  }
+  function rpOrdenar(items, ids){
+    var porId={}, usados={}, res=[];
+    items.forEach(function(x){ porId[x.rid]=x; });
+    items.forEach(function(x){ if(!x.fija && ids.indexOf(x.rid)<0){ res.push(x); usados[x.rid]=1; } });
+    ids.forEach(function(id){ if(porId[id] && !usados[id]){ res.push(porId[id]); usados[id]=1; } });
+    items.forEach(function(x){ if(!usados[x.rid]) res.push(x); });
+    return res;
+  }
+  function cargarResenasPanel(){
+    var vacia=document.getElementById('rp-vacia');
+    Promise.all([
+      fetch(BASE+'/admin/resenas?clave='+encodeURIComponent(clave)).then(function(r){ return r.json(); }),
+      rpLeerFijas().catch(function(){ return []; })
+    ]).then(function(res){
+      var d=res[0]||{};
+      rpSt.panel=(d.resenas||[]).map(function(r){
+        return { rid:r.id, fija:false, visible:r.visible, conFoto:!!r.foto, autor:r.autor, texto:r.texto,
+          thumb: r.foto ? BASE+r.foto+'?clave='+encodeURIComponent(clave) : '', r:r };
+      });
+      if(d.orden) rpSt.orden=d.orden;
+      rpPintar();
+    }).catch(function(){ vacia.style.display='block'; vacia.textContent='No se pudieron cargar las reseñas. Revisa la conexión.'; });
+  }
+  function rpPintar(){
+    var o=rpSt.local||rpSt.orden;
+    var todas=rpSt.panel.concat(rpSt.fijas||[]);
+    var vis=todas.filter(function(x){ return x.visible; });
+    rpSt.vista={ fotos:rpOrdenar(vis.filter(function(x){ return x.conFoto; }), o.fotos||[]),
+                 textos:rpOrdenar(vis.filter(function(x){ return !x.conFoto; }), o.textos||[]) };
+    var ocultas=rpSt.panel.filter(function(x){ return !x.visible; });
+    rpLista('rp-lista-fotos', rpSt.vista.fotos, 'fotos');
+    rpLista('rp-lista-textos', rpSt.vista.textos, 'textos');
+    rpLista('rp-lista-ocultas', ocultas, null);
+    document.getElementById('rp-ocultas-caja').style.display=ocultas.length?'':'none';
+    document.getElementById('rp-vacia').style.display=vis.length?'none':'block';
+    document.getElementById('rp-vacia').textContent='Todavía no hay reseñas para mostrar.';
+    var subidas=rpSt.panel.filter(function(x){ return x.visible; }).length;
+    document.getElementById('rp-total').textContent=vis.length+' en la web'+(subidas?' · '+subidas+' subidas acá':'')+(ocultas.length?' · '+ocultas.length+' ocultas':'');
+    document.getElementById('rp-guardar').hidden=!rpSt.local;
+  }
+  // Se arma con nodos y textContent: lo que escribe un cliente nunca se interpreta como HTML.
+  function rpLista(idCont, arr, grupo){
+    var cont=document.getElementById(idCont); cont.textContent='';
+    arr.forEach(function(x, i){
+      var it=document.createElement('div'); it.className='rp-item'+(x.visible?'':' rp-oculta');
+      if(rpSt.ultimaMovida===x.rid){ it.classList.add('rp-movida'); }
+      var pos=document.createElement('span'); pos.className='rp-pos'; pos.textContent=grupo?(i+1):'–'; it.appendChild(pos);
+      if(x.thumb){ var im=document.createElement('img'); im.src=x.thumb; im.alt=''; im.loading='lazy'; it.appendChild(im); }
+      else { var sf=document.createElement('div'); sf.className='rp-sinfoto'; sf.textContent='“'; it.appendChild(sf); }
+      var cu=document.createElement('div'); cu.className='rp-cuerpo';
+      var b=document.createElement('b'); b.textContent=x.autor+(x.r ? '  '+'★'.repeat(x.r.estrellas) : '');
+      var tg=document.createElement('span'); tg.className='rp-tag'; tg.textContent=x.fija ? (x.video?'Fija · video':'Fija') : 'Subida acá'; b.appendChild(tg);
+      cu.appendChild(b);
+      var p=document.createElement('p'); p.textContent=x.texto; cu.appendChild(p);
+      if(x.r){
+        var m=document.createElement('div'); m.className='rp-meta';
+        m.textContent=[fecha(x.r.creada), x.r.origen, x.r.ubicacion, x.r.notaFoto, x.r.cercano?'Persona cercana a DEUS':''].filter(Boolean).join(' · ');
+        cu.appendChild(m);
+      }
+      var bt=document.createElement('div'); bt.className='rp-botones';
+      if(grupo){
+        bt.appendChild(rpBoton('↑', 'Subir', i===0, function(){ rpMover(grupo, i, -1); }, 'rp-flecha'));
+        bt.appendChild(rpBoton('↓', 'Bajar', i===arr.length-1, function(){ rpMover(grupo, i, 1); }, 'rp-flecha'));
+      }
+      if(!x.fija){
+        bt.appendChild(rpBoton(x.visible?'Ocultar':'Mostrar', '', false, function(){ rpAccion(x.rid, 'visible', {visible:!x.visible}); }));
+        bt.appendChild(rpBoton('Borrar', '', false, function(){ if(confirm('¿Borrar la reseña de '+x.autor+'? No se puede deshacer.')) rpAccion(x.rid, 'borrar', {}); }));
+      }
+      cu.appendChild(bt); it.appendChild(cu); cont.appendChild(it);
+    });
+  }
+  function rpBoton(txt, etiqueta, deshabilitado, fn, clase){
+    var b=document.createElement('button'); b.type='button'; b.className='btn ghost'+(clase?' '+clase:'');
+    b.textContent=txt; if(etiqueta) b.setAttribute('aria-label', etiqueta); b.disabled=deshabilitado; b.onclick=fn; return b;
+  }
+  function rpMover(grupo, i, d){
+    var arr=rpSt.vista[grupo].map(function(x){ return x.rid; }), j=i+d;
+    if(j<0 || j>=arr.length) return;
+    var t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+    rpSt.local={ fotos: grupo==='fotos'?arr:rpSt.vista.fotos.map(function(x){ return x.rid; }),
+                 textos: grupo==='textos'?arr:rpSt.vista.textos.map(function(x){ return x.rid; }) };
+    rpSt.ultimaMovida=t; rpOrdenMsg('');
+    rpPintar();
+    rpSt.ultimaMovida=null;
+  }
+  function rpOrdenMsg(txt, color){ var m=document.getElementById('rp-orden-msg'); m.style.color=color||'var(--muted)'; m.textContent=txt; }
+  function rpDescartar(){ rpSt.local=null; rpPintar(); rpOrdenMsg(''); }
+  function rpGuardarOrden(){
+    var btn=document.getElementById('rp-guardar-ok'); btn.disabled=true;
+    var cuerpo={ fotos:rpSt.vista.fotos.map(function(x){ return x.rid; }), textos:rpSt.vista.textos.map(function(x){ return x.rid; }) };
+    fetch(BASE+'/admin/resenas/orden?clave='+encodeURIComponent(clave), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(cuerpo) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok) throw new Error(j.error||'No se pudo guardar el orden.'); return j; }); })
+      .then(function(d){ rpSt.orden=d.orden; rpSt.local=null; rpPintar(); rpOrdenMsg('Orden guardado. La web lo muestra en menos de un minuto.', 'var(--green)'); })
+      .catch(function(e){ alert(e.message); })
+      .then(function(){ btn.disabled=false; });
+  }
+  function rpAccion(id, accion, body){
+    fetch(BASE+'/admin/resenas/'+encodeURIComponent(id)+'/'+accion+'?clave='+encodeURIComponent(clave), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d.error){ alert(d.error); return; } cargarResenasPanel(); })
+      .catch(function(){ alert('No se pudo. Revisa la conexión e intenta de nuevo.'); });
+  }
 
   function rows(tbodySel, arr, render, emptyId){
     var tb=document.querySelector(tbodySel+' tbody'); tb.innerHTML='';
@@ -507,6 +1044,12 @@
     var ex=document.getElementById('co-extra'); if(!ex) return;
     var apreto=conducta['co:4pago']||0, llego=conducta['co:45redir']||0;
     var err=conducta['co:4xerror']||0, pagaron=conducta['co:5pago']||0;
+    var errEnvio=conducta['co:4xenvio']||0;      // falló la cotización de envío
+    var rescatados=conducta['co:4xrescate']||0;  // …pero igual pudieron pagar
+    // Desde el arreglo del respaldo, que falle la cotización ya no bota la
+    // venta: se sigue con Starken y el pago continúa. Solo cuentan como
+    // frenados los que fallaron SIN rescate (versiones viejas de la página).
+    var frenadosEnvio=Math.max(errEnvio-rescatados,0);
     var nunca=Math.max(apreto-llego,0);
     // Si pagaron más de los que "llegaron a la pasarela", el evento se está
     // perdiendo y el número de abajo sería una alarma falsa.
@@ -522,9 +1065,23 @@
     } else if(apreto>0){
       h+='<div class="co-note">';
       if(nunca>0){
+        // Desglose por causa. Antes este número se atribuía entero al backend
+        // de pago, pero entre "apretó pagar" y "llegó a la pasarela" hay dos
+        // cosas que pueden fallar, y son arreglos distintos.
+        var sinCausa=Math.max(nunca-err-frenadosEnvio,0);
+        var causas=[];
+        if(frenadosEnvio>0) causas.push('<b>'+frenadosEnvio+'</b> por cotización de envío');
+        if(err>0) causas.push('<b>'+err+'</b> con error de conexión');
+        if(sinCausa>0) causas.push('<b>'+sinCausa+'</b> sin causa registrada');
+        if(rescatados>0){
+          h+='<div style="color:#8fc98f;margin-bottom:6px">🛟 <b>'+rescatados+'</b> pudieron pagar aunque se cayó la cotización de envío'+
+             '<br><small>El respaldo los despachó con Starken en vez de frenarlos. Sin él, eran '+rescatados+' ventas perdidas.</small></div>';
+        }
         h+='<b style="color:#f0736f">'+nunca+' apretaron pagar y no llegaron a la pasarela</b>'+
-           (err>0? ' · '+err+' con error de conexión':'')+
-           '<br><small>Si este número es alto, el problema es al crear el pago (tu backend o el gateway), no el cliente.</small>';
+           (causas.length? '<br>'+causas.join(' · ') : '')+
+           '<br><small>Cotización de envío: falló al revalidar la dirección y la página todavía no tenía el respaldo que deja pagar igual. '+
+           'Error de conexión: tu backend o el gateway al crear el pago. '+
+           'Sin causa: lo más probable es que hayan abandonado durante la espera.</small>';
       } else {
         h+='<b style="color:#7fd589">Todos los que apretaron pagar llegaron a la pasarela ✓</b>'+
            '<br><small>Entonces los que no pagan se pierden dentro de Flow/MercadoPago, no en tu web.</small>';
@@ -540,16 +1097,24 @@
 
   // Conducta del visitante: 4 bloques de barras a partir del mapa de eventos.
   var COND_LBL={
-    'hito:precio':'1 · Vio el precio','hito:reviews':'2 · Reseñas','hito:sensor':'3 · Cómo funciona (360°)',
-    'hito:app':'4 · La app','hito:mide':'5 · Qué mide + specs','hito:diseno':'6 · Diseño',
+    'hito:precio':'1 · Vio el precio','hito:reviews':'2 · Reseñas','hito:simple':'3 · Así de simple + funciones',
+    'hito:sensor':'4 · Cómo funciona (360°)','hito:app':'5 · La app','hito:diseno':'6 · Diseño',
+    'hito:mide':'Qué mide (sección retirada)',
     'hito:faq':'7 · Preguntas frecuentes','hito:final':'8 · Llegó al final',
     'accion:carrito':'Abrió carrito','accion:resenas':'Abrió reseñas','accion:girar':'Giró el 360°',
+    'accion:funciones':'Abrió una de las funciones','accion:ver-funciones':'Desplegó las funciones','accion:mas-resenas':'Tocó "Ver más reseñas"',
     'disp:movil':'📱 Móvil','disp:desktop':'💻 Escritorio'
   };
   // En ORDEN REAL de la página. Antes 'app' figuraba antes que 'reviews', pero
   // reseñas va primero: el embudo de scroll se leía al revés.
-  var ORDEN_HITO=['hito:precio','hito:reviews','hito:sensor','hito:app','hito:mide','hito:diseno','hito:faq','hito:final'];
+  var ORDEN_HITO=['hito:precio','hito:reviews','hito:simple','hito:sensor','hito:app','hito:diseno','hito:faq','hito:final'];
   function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+  // Si aparece un evento que COND_LBL todavia no conoce, se muestra
+  // presentable en vez de la clave cruda ("accion:tapones" -> "Tapones").
+  function lblCond(k){
+    if(COND_LBL[k]) return COND_LBL[k];
+    return cap(String(k).replace(/^(accion|hito|co|disp|fuente):/,'').replace(/[_-]+/g,' '));
+  }
   // embudo=true → además del %, muestra cuánta gente se pierde en cada
   // escalón y pinta en rojo el peor. Es lo que convierte la lista de scroll en
   // un diagnóstico: dice EN QUÉ SECCIÓN abandonan.
@@ -626,6 +1191,19 @@
     if (ULT_CONV) pintarConversion(ULT_CONV.convAcc, ULT_CONV.conducta, ULT_CONV.nComp);
   }
 
+  // Debajo de esta muestra el porcentaje es ruido: 3 de 4 da 75% y no
+  // significa nada. Esas filas van al final y avisadas, para que no encabecen
+  // la lista solo por tener el denominador chico.
+  var MIN_MUESTRA = 15;
+  // Conversion general del sitio (30 dias). Es contra esto que se leen las
+  // tasas: sin referencia, un 18% suelto no se puede interpretar.
+  var CONV_SITIO = 0;
+
+  function veces(x){
+    if(!(x>0)) return '';
+    return (x>=10 ? Math.round(x) : (Math.round(x*10)/10)).toLocaleString('es-CL');
+  }
+
   function pintarConversion(convAcc, conducta, nComp){
     convAcc=convAcc||{}; conducta=conducta||{};
     ULT_CONV = { convAcc:convAcc, conducta:conducta, nComp:nComp };
@@ -636,19 +1214,40 @@
       var base=conducta[k]||0, comp=convAcc[k]||0;
       // En modo "compradores" el denominador es el total de compras rastreadas.
       var den = porCompradores ? (nComp||0) : base;
-      return { lbl: COND_LBL[k]||k, base:base, comp:comp, den:den, rate: den? comp/den*100 : 0 };
+      return { lbl: lblCond(k), base:base, comp:comp, den:den,
+               rate: den? comp/den*100 : 0, flojo: den < MIN_MUESTRA };
     }).filter(function(x){ return porCompradores ? x.comp>0 : x.base>0; })
-      .sort(function(a,b){ return b.rate-a.rate; });
+      .sort(function(a,b){
+        // Los de muestra chica siempre abajo, por alto que sea su porcentaje.
+        if(a.flojo!==b.flojo) return a.flojo ? 1 : -1;
+        return b.rate-a.rate;
+      });
     document.getElementById('conv-empty').style.display=items.length?'none':'block';
     document.getElementById('conv-base').textContent = nComp ? (nComp+' compras rastreadas') : 'sin compras aún';
     items.forEach(function(it){
-      var pct=Math.round(it.rate);
+      // Un porcentaje bajo con un decimal se lee mejor que redondeado a 0%.
+      var txt = it.rate>=10 ? Math.round(it.rate)+'%' : pct1(it.rate);
       var grad = porCompradores ? 'linear-gradient(90deg,#7a5cd0,#a887f5)' : 'linear-gradient(90deg,#0f9fd0,#1ec8f0)';
-      var row=document.createElement('div'); row.className='cb-row';
-      row.innerHTML='<div class="cb-lbl" title="'+esc(it.lbl)+'">'+esc(it.lbl)+'</div>'+
-        '<div class="cb-track"><div class="cb-bar" style="width:'+Math.min(pct,100)+'%;background:'+grad+'"></div></div>'+
-        '<div class="cb-val">'+pct+'% <small>'+it.comp+'/'+it.den+'</small></div>';
-      cont.appendChild(row);
+      // El conteo en palabras: "9 de 50 compraron" se entiende, "9/50" no.
+      var sub = porCompradores
+        ? num0(it.comp)+' de '+num0(it.den)+' compradores hicieron esto'
+        : num0(it.comp)+' de '+num0(it.den)+' que lo hicieron, compraron';
+      // Cuantas veces mejor (o peor) que la conversion general del sitio.
+      if(!porCompradores && CONV_SITIO>0 && it.rate>0 && !it.flojo){
+        var x = it.rate / CONV_SITIO;
+        sub += x>=1
+          ? ' · <b>'+veces(x)+'×</b> el promedio del sitio'
+          : ' · <span class="peor">'+veces(1/x)+'× peor</span> que el promedio';
+      }
+      if(it.flojo) sub += ' <span class="cb-flojo">pocos datos</span>';
+      var item=document.createElement('div'); item.className='cb-item';
+      item.innerHTML='<div class="cb-row">'+
+        '<div class="cb-lbl" title="'+esc(it.lbl)+'">'+esc(it.lbl)+'</div>'+
+        '<div class="cb-track"><div class="cb-bar" style="width:'+Math.min(it.rate,100)+'%;background:'+grad+
+          (it.flojo?';opacity:.45':'')+'"></div></div>'+
+        '<div class="cb-val"'+(it.flojo?' style="color:#8b8b93"':'')+'>'+txt+'</div>'+
+        '</div><div class="cb-sub">'+sub+'</div>';
+      cont.appendChild(item);
     });
   }
 
@@ -792,6 +1391,7 @@
 
   function pintar(d){
     ULT_DATA = d;
+    pintarNotaCtr();   // el total del sitio cambia cada 5s, el de Meta no
     // Ventas del periodo elegido: cuenta y facturación. Sale de ventasRecientes
     // (últimos 45 días con fecha), así que semana y mes salen exactos.
     pintarVentasPeriodo(d);
@@ -879,7 +1479,11 @@
       if(peds){
         porColor={}; porComuna={}; totPed=peds.length;
         peds.forEach(function(p){
-          porColor[p.c]=(porColor[p.c]||0)+1;
+          // p.c trae las UNIDADES del pedido (un color por banda). Los pedidos
+          // guardados antes de los colores por unidad traen un string suelto,
+          // así que se acepta cualquiera de las dos formas.
+          var us = Array.isArray(p.c) ? p.c : [p.c];
+          us.forEach(function(c){ porColor[c]=(porColor[c]||0)+1; });
           porComuna[p.cm]=(porComuna[p.cm]||0)+1;
         });
       }
@@ -970,7 +1574,6 @@
     pintarCanales(convAcc, conducta);
     pintarNegocio(d, RANGO_DIAS);
     pintarAlertas(d);
-    document.getElementById('s-aov').textContent = d.__aovRango ? money(d.__aovRango) : '—';
     var st=document.getElementById('s-stock');
     if(st) st.textContent = (d.stock===undefined||d.stock===null) ? '—' : d.stock;
     var cb=document.getElementById('canal-base');
@@ -987,17 +1590,156 @@
     var totalV=0, totalM=0; v30.forEach(function(x){ totalV+=x.ventas; totalM+=x.monto; });
     document.getElementById('chart-ventas-total').textContent=totalV+' ventas · '+money(totalM);
     dibujarBarras('chartVentas', v30.map(function(x){ return { fecha:x.fecha, valor:x.ventas }; }), '#0f9fd0');
+    // Conversión diaria = ventas ÷ visitas de ESE día. Ojo con los dias de
+    // poco trafico: 1 venta sobre 3 visitas da 33% y no significa nada, asi
+    // que esos van atenuados y NO entran en la escala del grafico.
+    var MIN_VISITAS = 30;
+    var ventasPorFecha = {};
+    v30.forEach(function(x){ ventasPorFecha[x.fecha] = x.ventas; });
+    var convDias = u30.map(function(x){
+      return {
+        fecha: x.fecha,
+        valor: x.vistas ? (ventasPorFecha[x.fecha]||0) / x.vistas * 100 : 0,
+        // Se guardan los crudos: el promedio de una seleccion se saca sumando
+        // ventas y visitas, NO promediando porcentajes (ver promedioSel).
+        ventas: ventasPorFecha[x.fecha]||0,
+        visitas: x.vistas||0,
+        tenue: x.vistas < MIN_VISITAS
+      };
+    });
+    CONV_DIAS = convDias;
+    // El promedio se calcula sobre los totales, no promediando los dias: un dia
+    // de 3 visitas no puede pesar lo mismo que uno de 700.
+    var convProm = totalVistas ? totalV / totalVistas * 100 : 0;
+    document.getElementById('chart-conv-total').textContent =
+      pct1(convProm) + ' promedio · ' + totalV + ' de ' + totalVistas;
+    // Referencia del sitio para "Que lleva a comprar": se fija aca porque es
+    // donde estan los totales de 30 dias, y se repinta esa seccion con ella.
+    CONV_SITIO = convProm;
+    if (ULT_CONV) pintarConversion(ULT_CONV.convAcc, ULT_CONV.conducta, ULT_CONV.nComp);
+    dibujarBarras('chartConv', convDias, '#9b8cff',
+      { ref: convProm, refLbl: 'promedio', sinCifras: true, sel: CONV_SEL, onClick: toggleDiaConv });
+    refrescarSel();
     document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
+  }
+
+  // ── Seleccion de dias en el grafico de conversion ────────────────────────
+  // Se pueden tocar barras sueltas o usar los atajos. El promedio de lo
+  // elegido se recalcula solo.
+  var CONV_DIAS = [];   // [{fecha, valor, ventas, visitas, tenue}] mas viejo -> mas nuevo
+  var CONV_SEL = {};    // fecha -> true
+
+  // El promedio se saca sumando ventas y visitas de los dias elegidos, NO
+  // promediando sus porcentajes: un dia de 3 visitas no puede pesar lo mismo
+  // que uno de 700. Se devuelve tambien el promedio simple para poder avisar
+  // cuando los dos numeros se separan mucho (senal de un dia raro).
+  function promedioSel(){
+    var v=0, s=0, n=0, sumaPct=0;
+    CONV_DIAS.forEach(function(d){
+      if(!CONV_SEL[d.fecha]) return;
+      v+=d.visitas; s+=d.ventas; n++; sumaPct+=d.valor;
+    });
+    return { dias:n, ventas:s, visitas:v,
+             pond: v? s/v*100 : 0,
+             simple: n? sumaPct/n : 0 };
+  }
+
+  function selUltimos(n){
+    CONV_SEL = {};
+    var arr = (n>0) ? CONV_DIAS.slice(-n) : CONV_DIAS;
+    arr.forEach(function(d){ CONV_SEL[d.fecha]=true; });
+    refrescarSel();
+  }
+
+  function toggleDiaConv(i){
+    var d=CONV_DIAS[i]; if(!d) return;
+    if(CONV_SEL[d.fecha]) delete CONV_SEL[d.fecha]; else CONV_SEL[d.fecha]=true;
+    refrescarSel();
+  }
+
+  function refrescarSel(){
+    var caja=document.getElementById('conv-sel-res');
+    if(!caja) return;
+    // Marca el atajo que coincide exactamente con lo elegido (si es que alguno).
+    var elegidos=Object.keys(CONV_SEL).length;
+    [3,7,14,0].forEach(function(n){
+      var b=document.getElementById('selb-'+n); if(!b) return;
+      var cant = n>0 ? n : CONV_DIAS.length;
+      // Sin dias cargados (o sin nada elegido) no se marca ningun atajo: si no,
+      // "Los 30" aparecia activo con el grafico vacio.
+      var coincide = cant>0 && elegidos===cant &&
+        CONV_DIAS.slice(-cant).every(function(d){ return CONV_SEL[d.fecha]; });
+      b.classList.toggle('active', coincide);
+    });
+    var r=promedioSel();
+    if(!r.dias){
+      caja.innerHTML='<span style="color:#7d7d86">Tocá las barras del gráfico o usá un atajo para ver el promedio de esos días.</span>';
+    } else {
+      var txt='<span class="big">'+pct1(r.pond)+'</span>'+
+        'promedio de '+r.dias+(r.dias===1?' día':' días')+
+        '<small>'+r.ventas+(r.ventas===1?' venta':' ventas')+' ÷ '+num0(r.visitas)+' visitas. '+
+        'Se suman ventas y visitas en vez de promediar los porcentajes de cada día: si no, un día de 3 visitas pesaría igual que uno de 700.';
+      // Comparacion contra los 30 dias completos, que es lo que dice si el
+      // periodo elegido va mejor o peor de lo normal.
+      if(CONV_SITIO>0 && r.pond>0){
+        var dif=r.pond-CONV_SITIO;
+        // Menos de una decima no es una diferencia: decir "0% por encima"
+        // seria ruido con forma de dato.
+        if(Math.abs(dif)<0.05){
+          txt+='<br>En línea con el promedio de los 30 días ('+pct1(CONV_SITIO)+').';
+        } else {
+          txt+='<br><span class="vs'+(dif>0?'':' peor')+'">'+(dif>0?'▲ ':'▼ ')+pct1(Math.abs(dif))+'</span> '+
+               (dif>0?'por encima':'por debajo')+' del promedio de los 30 días ('+pct1(CONV_SITIO)+').';
+        }
+      }
+      // Cuando el ponderado y el promedio simple se separan, es que los dias
+      // elegidos tienen trafico muy desparejo. Se dice el hecho, sin inventar
+      // cual dia lo causa.
+      if(r.dias>1 && Math.abs(r.pond-r.simple)>=0.4){
+        txt+='<br>Promediando los días por igual daría '+pct1(r.simple)+
+             ' — los días elegidos tienen tráfico muy desparejo.';
+      }
+      // Debajo, la plata de esos mismos días (ver utilidadSegunSel).
+      caja.innerHTML=txt+'</small><div class="sel-util" id="conv-sel-util"></div>';
+    }
+    // Repinta el grafico para que se vea que quedo elegido.
+    if(charts['chartConv']) { charts['chartConv'].opts.sel=CONV_SEL; arrancarChart('chartConv'); }
+    utilidadSegunSel();
   }
 
   // Gráficos de barras (estilo ecualizador): un estado por canvas.
   // datos = [{fecha:'YYYY-MM-DD', valor:N}]; colorBase = color de la base del degradado.
   var charts={};
-  function dibujarBarras(id, datos, colorBase){
+  function dibujarBarras(id, datos, colorBase, opts){
     var st=charts[id]||(charts[id]={alturas:[],corriendo:false});
-    st.datos=datos; st.colorBase=colorBase;
+    st.datos=datos; st.colorBase=colorBase; st.opts=opts||{};
     if(st.alturas.length!==datos.length) st.alturas=new Array(datos.length).fill(0);
-    if(!st.corriendo && datos.length){ st.corriendo=true; requestAnimationFrame(function(){ frameBarras(id); }); }
+    // El click se engancha una sola vez por canvas: dibujarBarras se llama en
+    // cada refresco y si no, se irian apilando listeners.
+    var cv=document.getElementById(id);
+    if(cv && st.opts.onClick && !st.clickeable){
+      st.clickeable=true;
+      cv.addEventListener('click', function(e){
+        var q=charts[id]; if(!q||!q.datos.length||!q.opts.onClick) return;
+        // El canvas se escala por CSS (width:100%), asi que hay que llevar la
+        // coordenada del click al sistema interno antes de buscar la barra.
+        var r=cv.getBoundingClientRect();
+        var x=(e.clientX-r.left)*(cv.width/r.width);
+        var n=q.datos.length, padX=10, gap=3;
+        var barW=(cv.width-padX*2-gap*(n-1))/n;
+        var i=Math.floor((x-padX)/(barW+gap));
+        if(i>=0 && i<n) q.opts.onClick(i);
+      });
+    }
+    arrancarChart(id);
+  }
+  // Vuelve a poner en marcha la animacion de un canvas ya dibujado (se usa al
+  // cambiar la seleccion, que no cambia los datos pero si como se pintan).
+  function arrancarChart(id){
+    var st=charts[id];
+    if(st && !st.corriendo && st.datos && st.datos.length){
+      st.corriendo=true; requestAnimationFrame(function(){ frameBarras(id); });
+    }
   }
   function frameBarras(id){
     var st=charts[id], canvas=document.getElementById(id);
@@ -1010,10 +1752,14 @@
     for(var gl=0;gl<=4;gl++){ var gy=padT+(h-padB-padT)*gl/4; ctx.beginPath(); ctx.moveTo(padX,gy+.5); ctx.lineTo(w-padX,gy+.5); ctx.stroke(); }
     var n=st.datos.length;
     var gap=3, barW=(w-padX*2-gap*(n-1))/n;
-    var maxV=1; st.datos.forEach(function(d){ if(d.valor>maxV) maxV=d.valor; });
+    // Un dia de poca muestra con 33% no puede aplastar la escala del resto.
+    var maxV=0; st.datos.forEach(function(d){ if(!d.tenue && d.valor>maxV) maxV=d.valor; });
+    if(st.opts.ref>maxV) maxV=st.opts.ref;
+    if(!(maxV>0)) maxV=1;
+    var haySel = !!(st.opts.sel && Object.keys(st.opts.sel).length);
     var quieto=true;
     for(var i=0;i<n;i++){
-      var objetivo=(st.datos[i].valor/maxV)*(h-padB-padT);
+      var objetivo=Math.min(st.datos[i].valor/maxV,1)*(h-padB-padT);
       st.alturas[i]+=(objetivo-st.alturas[i])*0.18;
       if(Math.abs(objetivo-st.alturas[i])>0.5) quieto=false;
       var barH=Math.max(2,st.alturas[i]);
@@ -1021,19 +1767,42 @@
       var g=ctx.createLinearGradient(0,y,0,h-padB);
       g.addColorStop(0,'#7fd8f2'); g.addColorStop(1,st.colorBase);
       ctx.fillStyle=g;
-      ctx.globalAlpha=st.datos[i].valor?0.95:0.22;
+      ctx.globalAlpha=st.datos[i].valor?(st.datos[i].tenue?0.28:0.95):0.22;
+      // Con una seleccion activa, los dias que quedaron fuera se apagan para
+      // que se vea de un golpe cuales estan entrando en el promedio.
+      var elegido = !haySel || !!st.opts.sel[st.datos[i].fecha];
+      if(haySel && !elegido) ctx.globalAlpha*=0.2;
       ctx.fillRect(x,y,barW,barH);
       ctx.globalAlpha=1;
+      if(haySel && elegido){
+        ctx.strokeStyle='#cfc6ff'; ctx.globalAlpha=0.85; ctx.lineWidth=1;
+        ctx.strokeRect(x+.5,y+.5,barW-1,barH-1);
+        ctx.globalAlpha=1;
+      }
       // Cifra sobre la barra (solo si hay valor)
-      if(st.datos[i].valor){
+      if(st.datos[i].valor && !st.opts.sinCifras){
         ctx.fillStyle='#ddd'; ctx.font='10px monospace'; ctx.textAlign='center';
         ctx.fillText(String(st.datos[i].valor),x+barW/2,y-4);
       }
       // Día del mes bajo la barra (uno de cada dos para no saturar)
-      if(i%2===0){
-        ctx.fillStyle='#777'; ctx.font='9px monospace'; ctx.textAlign='center';
+      if(i%2===0 || (haySel && elegido)){
+        ctx.fillStyle=(haySel&&elegido)?'#cfc6ff':'#777';
+        ctx.font='9px monospace'; ctx.textAlign='center';
         ctx.fillText(st.datos[i].fecha.slice(8),x+barW/2,h-10);
       }
+    }
+    // Linea de referencia (el promedio real del periodo). Va encima de las
+    // barras: es contra esto que hay que leerlas, no contra el dia mas alto.
+    if(st.opts.ref>0){
+      var ry=h-padB-Math.min(st.opts.ref/maxV,1)*(h-padB-padT);
+      ctx.save();
+      ctx.strokeStyle=st.colorBase; ctx.globalAlpha=0.75;
+      ctx.setLineDash([5,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(padX,ry+.5); ctx.lineTo(w-padX,ry+.5); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha=1;
+      ctx.fillStyle='#b9b9b9'; ctx.font='10px monospace'; ctx.textAlign='left';
+      ctx.fillText(pct1(st.opts.ref)+' '+(st.opts.refLbl||''),padX+4,ry-5);
+      ctx.restore();
     }
     ctx.strokeStyle='#262626'; ctx.beginPath();
     ctx.moveTo(padX,h-padB+.5); ctx.lineTo(w-padX,h-padB+.5); ctx.stroke();
@@ -1059,11 +1828,186 @@
       if(r.status===403||r.status===404){ throw new Error('clave'); }
       return r.json();
     }).then(function(d){
-      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); }
+      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); pintarAvisoBtn(); activarPush(); }
       pintar(d);
+      avisarVentas(d);
       cargarChats();
     }).catch(function(e){
       if(e.message==='clave'){ document.getElementById('loginErr').textContent='Clave incorrecta.'; localStorage.removeItem('deus-admin-key'); }
+    });
+  }
+
+  // Aviso de venta nueva: notificación del sistema (la de Windows o Mac).
+  // Llega por dos caminos que se cubren entre sí:
+  //  1. Push (sw-avisos.js + services/avisos-push.js): el servidor avisa apenas
+  //     entra la venta, AUNQUE EL PANEL ESTÉ CERRADO (basta el navegador
+  //     corriendo, que en Windows sigue en segundo plano al cerrar la ventana).
+  //  2. El propio panel abierto, que ve subir el total de ventas al refrescar.
+  // Los dos usan la misma etiqueta (tag) por venta, así que si llegan ambos el
+  // segundo reemplaza al primero sin volver a sonar. `sonado` evita que el
+  // ka-ching suene dos veces por la misma venta.
+  var avisoVentas = { visto: null, sonado: 0, push: false, reg: null };
+  // Sonido de venta: un "ka-ching" de caja registradora armado con Web Audio
+  // (sin archivo). Chrome solo deja sonar después de un clic en la página, así
+  // que el audio se habilita con el primer clic en el panel (o en el botón del
+  // aviso). Mientras no esté habilitado, la notificación usa el sonido de Windows.
+  var audioVenta = null;
+  function ctxAudio(){
+    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    if (!audioVenta) audioVenta = new AC();
+    if (audioVenta.state === 'suspended') audioVenta.resume();
+    return audioVenta;
+  }
+  document.addEventListener('pointerdown', function(){ ctxAudio(); }, { once: true });
+  function sonarVenta(){
+    var c = ctxAudio(); if (!c) return;
+    var t = c.currentTime + 0.03;
+    // "ka": golpecito suave de ruido filtrado (banda media, no chillón)
+    var largo = Math.floor(c.sampleRate * 0.05), buf = c.createBuffer(1, largo, c.sampleRate), ch = buf.getChannelData(0);
+    for (var i = 0; i < largo; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / largo);
+    var ruido = c.createBufferSource(); ruido.buffer = buf;
+    var hp = c.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = 1400; hp.Q.value = 0.8;
+    var gr = c.createGain(); gr.gain.value = 0.14;
+    ruido.connect(hp); hp.connect(gr); gr.connect(c.destination); ruido.start(t);
+    // "ching": dos notas (Mi y La medios, una octava más grave que antes),
+    // cada una con un armónico suave, para que suene redondo y no agudo
+    [[659.25, 0.08], [880, 0.2]].forEach(function(nota){
+      [[1, 0.26, 0.9], [2, 0.05, 0.3]].forEach(function(p){
+        var o = c.createOscillator(), g = c.createGain(), t0 = t + nota[1];
+        o.type = 'sine'; o.frequency.value = nota[0] * p[0];
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(p[1], t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + p[2]);
+        o.connect(g); g.connect(c.destination);
+        o.start(t0); o.stop(t0 + p[2] + 0.05);
+      });
+    });
+  }
+  // Compara el total con el último visto. `nuevas` trae el detalle (las más
+  // nuevas primero); son como mucho 12, que es lo que manda d.ventas.ultimas.
+  function ventasNuevas(antes, d){
+    var tot = d && d.ventas && d.ventas.total ? d.ventas.total.count : null;
+    if (typeof tot !== 'number') return { total: antes, n: 0, nuevas: [] };
+    if (antes === null || tot <= antes) return { total: tot, n: 0, nuevas: [] };
+    var n = tot - antes;
+    return { total: tot, n: n, nuevas: (d.ventas.ultimas || []).slice(0, Math.min(n, 12)) };
+  }
+  function avisarVentas(d){
+    var r = ventasNuevas(avisoVentas.visto, d);
+    avisoVentas.visto = r.total;
+    if (!r.n || !('Notification' in window) || Notification.permission !== 'granted') return;
+    if (r.total <= avisoVentas.sonado) return;   // ya avisó el push
+    avisoVentas.sonado = r.total;
+    // Con el ka-ching habilitado, la notificación va en silencio para que no
+    // suenen dos cosas a la vez; si no, suena la de Windows.
+    var conSonido = !!(audioVenta && audioVenta.state === 'running');
+    if (conSonido) sonarVenta();
+    var hoy = d.ventas.hoy || {};
+    var resumenHoy = 'Hoy llevas ' + (hoy.count || 0) + (hoy.count === 1 ? ' venta' : ' ventas') + ' · ' + money(hoy.monto);
+    var titulo, cuerpo;
+    if (r.n === 1 && r.nuevas[0]) {
+      var v = r.nuevas[0];
+      var que = v.soloTapones ? 'Tapones' : ((v.unidades > 1 ? v.unidades + ' bandas' : '1 banda') + (v.tapones ? ' + tapones' : '') + (v.correas ? ' + correas' : ''));
+      var nombre = String(v.nombre || '').trim().split(/\s+/)[0];
+      titulo = '💰 Nueva venta · ' + money(v.monto);
+      cuerpo = [que, v.metodo, nombre].filter(Boolean).join(' · ') + '\n' + resumenHoy;
+    } else {
+      var suma = r.nuevas.reduce(function(t, v){ return t + (Number(v.monto) || 0); }, 0);
+      titulo = '💰 ' + r.n + ' ventas nuevas' + (r.nuevas.length === r.n ? ' · ' + money(suma) : '');
+      cuerpo = resumenHoy;
+    }
+    try {
+      // tag: si hay dos pestañas del panel abiertas, la segunda reemplaza a la
+      // primera en vez de duplicar el aviso.
+      var nt = new Notification(titulo, { body: cuerpo, tag: 'deus-venta-' + r.total, silent: conSonido });
+      nt.onclick = function(){ window.focus(); nt.close(); };
+    } catch (e) {}
+  }
+  // Aviso que llegó por push con el panel abierto: el service worker lo
+  // mostró en silencio y le pasa la venta al panel para que suene el ka-ching.
+  // Si el audio del panel todavía no está habilitado (no hubo clic desde que
+  // se abrió), se repite el mismo aviso con el sonido de Windows.
+  function ventaPorPush(m){
+    if (!m || m.tipo !== 'venta' || typeof m.total !== 'number') return;
+    if (avisoVentas.visto !== null) avisoVentas.visto = Math.max(avisoVentas.visto, m.total);
+    if (m.total <= avisoVentas.sonado) return;
+    avisoVentas.sonado = m.total;
+    if (audioVenta && audioVenta.state === 'running') { sonarVenta(); return; }
+    if (avisoVentas.reg && m.title) {
+      avisoVentas.reg.showNotification(m.title, { body: m.body, tag: m.tag, renotify: true, silent: false, data: { url: '/admin.html' } }).catch(function(){});
+    }
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function(e){ ventaPorPush(e.data); });
+    if (navigator.serviceWorker.startMessages) navigator.serviceWorker.startMessages();
+  }
+  function b64aBytes(b64){
+    var s = atob((b64 + '==='.slice((b64.length + 3) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
+    var out = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+  // Suscribe este navegador al aviso por push. Solo corre con el permiso ya
+  // dado (no vuelve a preguntar) y se repite cada vez que se abre el panel,
+  // así el servidor siempre tiene la suscripción al día.
+  function activarPush(){
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window) || Notification.permission !== 'granted') return Promise.resolve(false);
+    var clv;
+    return navigator.serviceWorker.register('/sw-avisos.js', { scope: '/admin' }).then(function(){
+      return navigator.serviceWorker.ready;
+    }).then(function(reg){
+      avisoVentas.reg = reg;
+      return fetch(BASE + '/admin/push/clave?clave=' + encodeURIComponent(clave)).then(function(r){ return r.json(); }).then(function(k){
+        if (!k || !k.publicKey) throw new Error('el servidor no dio la clave');
+        clv = b64aBytes(k.publicKey);
+        return reg.pushManager.getSubscription();
+      }).then(function(sub){
+        // Si la suscripción es de otras llaves (se regeneraron en el servidor), se rehace
+        var actual = sub && sub.options && sub.options.applicationServerKey ? new Uint8Array(sub.options.applicationServerKey) : null;
+        var igual = actual && actual.length === clv.length && Array.prototype.every.call(actual, function(x, i){ return x === clv[i]; });
+        if (sub && igual) return sub;
+        return (sub ? sub.unsubscribe() : Promise.resolve()).then(function(){
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: clv });
+        });
+      });
+    }).then(function(sub){
+      return fetch(BASE + '/admin/push/suscribir?clave=' + encodeURIComponent(clave), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub)
+      });
+    }).then(function(r){
+      avisoVentas.push = r.ok; pintarAvisoBtn(); return r.ok;
+    }).catch(function(e){
+      console.warn('[aviso push]', e && e.message);
+      avisoVentas.push = false; pintarAvisoBtn(); return false;
+    });
+  }
+  function pintarAvisoBtn(){
+    var b = document.getElementById('aviso-btn'); if (!b) return;
+    if (!('Notification' in window)) { b.style.display = 'none'; return; }
+    var ok = Notification.permission === 'granted';
+    b.classList.toggle('on', ok);
+    b.textContent = !ok ? '🔔 Activar aviso de ventas'
+      : avisoVentas.push ? '🔔 Aviso de ventas activado' : '🔔 Aviso activado · solo con el panel abierto';
+    b.title = !ok ? 'Te llega una notificación con sonido en el PC cada vez que entra una venta'
+      : avisoVentas.push ? 'Te llega aunque el panel esté cerrado. Toca para escuchar el sonido y mandar un aviso de prueba.'
+      : 'Este navegador no aceptó el aviso con el panel cerrado. Toca para reintentar.';
+  }
+  function activarAvisoVentas(){
+    // El clic habilita el audio y de paso se escucha cómo suena una venta
+    ctxAudio(); sonarVenta();
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'denied') {
+      alert('Las notificaciones están bloqueadas para esta página. Actívalas en el candado de la barra de direcciones → Notificaciones → Permitir, y recarga el panel.');
+      return;
+    }
+    Notification.requestPermission().then(function(p){
+      pintarAvisoBtn();
+      if (p !== 'granted') return;
+      activarPush().then(function(ok){
+        // La prueba hace el mismo camino que una venta real (servidor → push → PC)
+        if (ok) return fetch(BASE + '/admin/push/probar?clave=' + encodeURIComponent(clave), { method: 'POST' });
+        try { new Notification('🔔 Aviso de ventas activado', { body: 'Así te va a llegar cada venta mientras el panel esté abierto (aunque esté minimizado).', tag: 'deus-venta-prueba', silent: true }); } catch (e) {}
+      });
     });
   }
 
@@ -1111,14 +2055,1076 @@
       .catch(function(){});
   }
 
-  // Ads Manager (Meta): carga manual (botón "Actualizar"), no auto-refresh
-  // cada 5s como el resto del panel, para no gastar el rate limit de Meta.
+  // ── CTR diario por campaña (gráfico de líneas) ─────────────────────────
+  // Paleta categórica fija de 5 slots, validada contra el fondo #0b0b0b
+  // (banda de luminosidad, croma, separación para daltonismo y contraste).
+  // El color se asigna por POSICIÓN en la lista del backend, que viene
+  // ordenada por id = orden de creación: así el color sigue a la campaña y no
+  // a su ranking, y pausar una no repinta a las demás.
+  var CTR_COLORES = ['#3987e5','#d95926','#199e70','#c98500','#d55181'];
+  var ctrSt = { series: [], fechas: [], dias: 14, metrica: 'ctr', hover: null, reveal: 0, corriendo: false };
+
+  // Las dos métricas que sabe graficar el panel. Comparten el gráfico pero se
+  // ven de a una: comparten también el eje, y un eje sirve para una sola
+  // unidad. 'sec' es el dato de apoyo que se muestra en el tooltip — cuando
+  // mirás una, la otra es justamente el contexto que falta.
+  var CTR_METRICAS = {
+    ctr: {
+      lbl: 'CTR del enlace', campo: 'ctr',
+      val: function(v){ return v.toFixed(2) + '%'; },
+      eje: function(v){ return v.toFixed(1) + '%'; },
+      sec: function(d){ return num0(d.clics) + ' clics'; }
+    },
+    visitas: {
+      lbl: 'Visitas desde el anuncio', campo: 'visitas',
+      val: function(v){ return num0(v); },
+      eje: function(v){ return num0(v); },
+      sec: function(d){ return d.ctr.toFixed(2) + '% CTR'; }
+    }
+  };
+  function mCtr(){ return CTR_METRICAS[ctrSt.metrica] || CTR_METRICAS.ctr; }
+  function valCtr(d){ return d ? (Number(d[mCtr().campo]) || 0) : 0; }
+
+  function metricaCtr(m){
+    if(!CTR_METRICAS[m] || m === ctrSt.metrica) return;
+    ctrSt.metrica = m;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-metrica]'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-metrica') === m);
+    });
+    ctrSt.reveal = 0;                       // se vuelve a dibujar desde la base
+    pintarChipsCtr(); pintarTablaCtr(); pintarNotaCtr();
+    if(!ctrSt.corriendo){ ctrSt.corriendo = true; requestAnimationFrame(frameCtr); }
+  }
+
+  // ── Utilidad diaria ────────────────────────────────────────────────────
+  // Lo que queda después de TODO: bandas, envíos, pasarela y publicidad. El
+  // gasto de ads es el real de la cuenta de Meta, no el presupuesto puesto —
+  // un día que no gastó el presupuesto completo no tiene por qué cargarlo.
+  var utilSt = { dias: 14, ult30: null, t30: 0, pidiendo30: false, selClave: '' };
+  var UTIL30_VIGENCIA = 5 * 60000;
+
+  // ── Utilidad de los días elegidos en el gráfico de Conversión ──
+  // Si hay días elegidos ahí (barras sueltas o atajos), esta sección muestra
+  // solo esos días: cuánto se ganó en los días que uno quiera. Los 30 días se
+  // piden UNA vez y cada toque solo filtra y suma; pedirlos en cada toque sería
+  // una llamada a Meta por barra. Sin selección, vuelve a 7/14/30.
+  function diasElegidosUtil(){ return Object.keys(CONV_SEL).sort(); }
+
+  // Filas y total de esos días. Suma lo que el servidor ya calculó día por día
+  // (services/utilidad.js): acá no se recalcula ningún costo. Un test compara
+  // este total con totalizar() del servidor, campo por campo.
+  function utilDeDias(filas, fechas){
+    var set = {}; fechas.forEach(function(x){ set[x] = 1; });
+    var f = filas.filter(function(x){ return set[x.fecha]; });
+    var campos = ['pedidos','unidades','conTapones','conCorreas','devoluciones','pedidosExternos','unidadesExternas','ingresosExternos',
+      'ingresos','costoBandas','costoEnvios','pasarela','adsNeto','ivaAds','ads','comprasMeta','utilidad'];
+    var t = {};
+    campos.forEach(function(k){ t[k] = 0; });
+    f.forEach(function(x){ campos.forEach(function(k){ t[k] += Number(x[k]) || 0; }); });
+    return { filas: f, total: t };
+  }
+
+  // Lo llama refrescarSel en cada cambio de la selección y también en cada
+  // refresco del panel: por eso compara con la selección anterior antes de
+  // pedir o repintar nada.
+  function utilidadSegunSel(){
+    var sel = diasElegidosUtil(), k = sel.join(',');
+    if (k !== utilSt.selClave) {
+      utilSt.selClave = k;
+      if (!sel.length) cargarUtilidad();
+      else {
+        if (utilSt.ult30) pintarUtilidad(utilSt.ult30);   // al toque, con lo que hay
+        if (!utilSt.ult30 || Date.now() - utilSt.t30 > UTIL30_VIGENCIA) cargarUtilidad();
+      }
+    }
+    pintarUtilSelResumen();
+    cargarUtilHist();
+    pintarUtilTarjeta();
+  }
+
+  // La utilidad de la selección, en el mismo recuadro del promedio de conversión.
+  function pintarUtilSelResumen(){
+    var el = document.getElementById('conv-sel-util');
+    if (!el) return;
+    var sel = diasElegidosUtil();
+    if (!sel.length) { el.innerHTML = ''; return; }
+    if (!utilSt.ult30) { el.textContent = '💰 Utilidad de esos días: calculando…'; return; }
+    var t = utilDeDias(utilSt.ult30.filas || [], sel).total;
+    el.innerHTML = '💰 Utilidad de esos días: <b class="' + (t.utilidad >= 0 ? 'pos' : 'neg') + '">' +
+      (t.utilidad >= 0 ? '' : '−') + money0(Math.abs(t.utilidad)) + '</b>' +
+      ' · vendido ' + money0(t.ingresos) + ' · ads ' + money0(t.ads) +
+      ' · <a href="#sec-utilidad" onclick="irA(\'sec-utilidad\');return false;">ver día por día ↓</a>';
+  }
+
+  // ── Tarjeta "Utilidad" de arriba (antes "Ticket promedio") ──
+  // Sin días elegidos en el gráfico de Conversión: la utilidad acumulada desde
+  // que los ads se cuentan con IVA (IVA_DESDE en services/utilidad.js). Con días
+  // elegidos: la de esos días. Es la misma cuenta que "Utilidad diaria": suma
+  // las filas que el servidor ya calculó día por día.
+  // El panel se refresca cada pocos segundos: esto pide a Meta como mucho cada
+  // 10 min (o 1 min si la última vez falló), no en cada refresco.
+  var utilHist = { d: null, proximo: 0, pidiendo: false, fallo: false };
+  function cargarUtilHist(){
+    if (utilHist.pidiendo || Date.now() < utilHist.proximo) return;
+    utilHist.pidiendo = true;
+    fetch(BASE+'/admin/utilidad-diaria?dias=iva&clave='+encodeURIComponent(clave))
+      .then(function(r){ if(!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(function(d){
+        // Un servidor sin actualizar ignora dias=iva y responde 14 días: eso no
+        // es la histórica, así que no se muestra como tal.
+        if (!d || !d.desde) throw new Error('falta actualizar el servidor');
+        utilHist.d = d; utilHist.fallo = false; utilHist.pidiendo = false;
+        utilHist.proximo = Date.now() + 10 * 60000;
+        pintarUtilTarjeta();
+      })
+      .catch(function(e){
+        utilHist.fallo = (e && e.message) || 'sin datos'; utilHist.pidiendo = false;
+        utilHist.proximo = Date.now() + 60000;
+        pintarUtilTarjeta();
+      });
+  }
+  // Qué muestra la tarjeta. `hist` = respuesta de /admin/utilidad-diaria?dias=iva.
+  function utilTarjeta(hist, sel){
+    if (!hist) return null;
+    var filas = hist.filas || [];
+    if (sel && sel.length) {
+      var u = utilDeDias(filas, sel);
+      return { etiqueta: 'Utilidad · ' + u.filas.length + (u.filas.length === 1 ? ' día elegido' : ' días elegidos'),
+               utilidad: u.total.utilidad, nota: 'en Conversión', adsOk: hist.adsOk !== false };
+    }
+    return { etiqueta: 'Utilidad histórica', utilidad: hist.total ? hist.total.utilidad : utilDeDias(filas, []).total.utilidad,
+             nota: (hist.dias ? hist.dias + (hist.dias === 1 ? ' día' : ' días') + ' · ' : '') + 'con IVA',
+             adsOk: hist.adsOk !== false };
+  }
+  // Tocar la tarjeta: sin días elegidos abre el histórico día por día; con días
+  // elegidos, la sección ya muestra esos días.
+  function verUtilHistorica(){
+    if(!diasElegidosUtil().length) cargarUtilidad('iva');
+    irA('sec-utilidad');
+  }
+  window.verUtilHistorica = verUtilHistorica;
+
+  function pintarUtilTarjeta(){
+    var v = document.getElementById('s-util'); if (!v) return;
+    var k = document.getElementById('s-util-k'), m = document.getElementById('s-util-m');
+    var r = utilTarjeta(utilHist.d, diasElegidosUtil());
+    if (!r) {
+      v.childNodes[0].nodeValue = '— ';
+      if (m) m.textContent = utilHist.fallo || 'calculando…';
+      v.style.color = '';
+      return;
+    }
+    if (k) k.textContent = r.etiqueta;
+    v.childNodes[0].nodeValue = (r.utilidad < 0 ? '−' : '') + money0(Math.abs(r.utilidad)) + ' ';
+    v.style.color = r.utilidad < 0 ? '#e07a6a' : '#69c46d';
+    // Sin el gasto de Meta la utilidad saldría inflada: se avisa en vez de callar.
+    if (m) m.textContent = r.adsOk ? r.nota : '⚠ sin gasto de Meta';
+  }
+
+  // Con días elegidos no queda marcado ningún 7/14/30: la tabla no es ninguno de esos.
+  function marcarRangoUtil(sel){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-udias]'), function(b){
+      b.classList.toggle('on', !sel && b.getAttribute('data-udias') === String(utilSt.dias));
+    });
+  }
+
+  function cargarUtilidad(dias){
+    var sel = diasElegidosUtil().length > 0;
+    if(dias){
+      utilSt.dias = dias;
+      // 7/14/30 = "los últimos N días": suelta la selección del gráfico de
+      // Conversión (refrescarSel vuelve a llamar acá, ya sin selección).
+      if(sel){ CONV_SEL = {}; refrescarSel(); return; }
+    }
+    marcarRangoUtil(sel);
+    var pedir = sel ? 30 : utilSt.dias;
+    // Una sola consulta de 30 días a la vez, aunque se toquen varias barras seguidas.
+    if(pedir === 30 && utilSt.pidiendo30) return;
+    if(pedir === 30) utilSt.pidiendo30 = true;
+    fetch(BASE+'/admin/utilidad-diaria?dias='+pedir+'&clave='+encodeURIComponent(clave))
+      .then(function(r){ if(!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(function(d){
+        if(pedir === 30) utilSt.pidiendo30 = false;
+        if(d.dias === 30 && !d.desde){ utilSt.ult30 = d; utilSt.t30 = Date.now(); }
+        // La del IVA también le sirve a la tarjeta de arriba: una consulta menos.
+        if(d.desde){ utilHist.d = d; utilHist.fallo = false; utilHist.proximo = Date.now() + 10 * 60000; pintarUtilTarjeta(); }
+        pintarUtilidad(d);
+        pintarUtilSelResumen();
+      })
+      .catch(function(){
+        if(pedir === 30) utilSt.pidiendo30 = false;
+        document.getElementById('util-off').style.display='';
+        document.getElementById('util-tabla').innerHTML='';
+        document.getElementById('util-kpis').innerHTML='';
+      });
+  }
+
+  // Proyección mensual: "si el mes entero fuera como estos días". Promedio por
+  // día de lo que se está mirando (los días elegidos en Conversión, o los
+  // últimos 7/14/30) llevado a 30 días. No es un pronóstico: solo escala.
+  function proyeccionMensual(utilidad, dias){ return dias ? utilidad / dias * 30 : 0; }
+
+  function pintarUtilidad(d){
+    var sel = diasElegidosUtil();
+    // Respuesta que ya no corresponde (se eligieron o soltaron días mientras
+    // viajaba): con selección hacen falta los 30 días, sin ella el rango elegido.
+    if(sel.length && d.dias !== 30){ cargarUtilidad(); return; }
+    if(!sel.length && (utilSt.dias === 'iva' ? !d.desde : d.dias !== utilSt.dias)) return;
+    marcarRangoUtil(sel.length > 0);
+    marcarAct('util-act');
+    document.getElementById('util-off').style.display='none';
+    var t = d.total, f = d.filas || [], titulo = 'Utilidad ' + d.dias + ' días';
+    // Histórico: los días transcurridos desde que los ads van con IVA.
+    if(d.desde) titulo = 'Utilidad histórica · ' + d.dias + (d.dias === 1 ? ' día' : ' días');
+    var aviso = document.getElementById('util-sel');
+    if(sel.length){
+      var u = utilDeDias(f, sel);
+      f = u.filas; t = u.total;
+      titulo = 'Utilidad · ' + f.length + (f.length === 1 ? ' día elegido' : ' días elegidos');
+      aviso.innerHTML = '<span>📌 Mostrando <b>' + (f.length === 1 ? 'el día elegido' : 'los ' + f.length + ' días elegidos') +
+        '</b> en el gráfico de Conversión.</span>' +
+        '<button onclick="cargarUtilidad(utilSt.dias)">' + (utilSt.dias === 'iva' ? 'Ver desde el IVA' : 'Ver últimos ' + utilSt.dias + ' días') + '</button>';
+      aviso.style.display = '';
+    } else {
+      aviso.style.display = 'none';
+      aviso.innerHTML = '';
+    }
+    var dias = f.length || 1;
+    // Costo por venta de los ANUNCIOS: las bandas vendidas por Mercado Libre no
+    // vinieron de un anuncio, así que no entran en la división.
+    var unidadesAds = t.unidades - (t.unidadesExternas || 0);
+    var pedidosWeb = t.pedidos - (t.pedidosExternos || 0);
+    var cpa = unidadesAds ? t.ads / unidadesAds : 0;
+    var hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+    // Hoy todavía no termina: si entra en el promedio, la proyección queda corta.
+    var conHoy = f.some(function(r){ return r.fecha === hoy; });
+
+    document.getElementById('util-kpis').innerHTML =
+      kpi(titulo, money0(t.utilidad), t.utilidad >= 0 ? 'bien' : 'mal') +
+      kpi('Promedio por día', money0(t.utilidad / dias), t.utilidad >= 0 ? 'bien' : 'mal') +
+      kpi('Proyección mensual', f.length ? money0(proyeccionMensual(t.utilidad, f.length)) : '—', t.utilidad >= 0 ? 'bien' : 'mal',
+        f.length ? 'promedio de ' + (f.length === 1 ? '1 día' : f.length + ' días') + ' × 30' +
+                   (conHoy ? ' · incluye hoy (en curso)' : '') : '') +
+      kpi('Vendido', money0(t.ingresos), '') +
+      kpi('Gastado en ads', money0(t.ads), '') +
+      kpi('de eso, IVA', money0(t.ivaAds || 0), '') +
+      kpi('Costo por venta', unidadesAds ? money0(cpa) : '—', '') +
+      // Costo por compra SEGÚN META: lo que muestra Ads Manager (gasto sin
+      // IVA ÷ compras que Meta atribuye a los anuncios). Distinto del "Costo
+      // por venta" de al lado, que divide el gasto con IVA por las bandas que
+      // de verdad se vendieron; si Meta se atribuye menos o más compras que
+      // las reales, los dos números se separan y eso también es un dato.
+      kpi('Costo por compra · Meta', t.comprasMeta ? money0(t.adsNeto / t.comprasMeta) : '—', '',
+        t.comprasMeta ? t.comprasMeta + (t.comprasMeta === 1 ? ' compra' : ' compras') + ' según Meta · sin IVA'
+                      : (d.adsOk ? 'Meta no registró compras' : 'Meta no respondió')) +
+      // Attach del upsell de tapones. Se mide para saber si mover su precio
+      // sirve de algo: con un attach bajo, el upsell casi no mueve la
+      // contribución por pedido y bajarle el precio es pelear por migajas.
+      // Solo pedidos de la web: el upsell se ofrece en el checkout del sitio, y
+      // las ventas de Mercado Libre no pasan por ahí (bajarían el % sin razón).
+      // Desde el 27-oct-2026 el upsell son las correas extra; el de tapones
+      // queda a la vista solo si en el rango hubo pedidos que los llevaron.
+      kpi('Pedidos con correas', pedidosWeb
+            ? (t.conCorreas || 0) + ' de ' + pedidosWeb + ' · ' + Math.round(((t.conCorreas || 0) / pedidosWeb) * 100) + '%'
+            : '—', '') +
+      (t.conTapones ? kpi('Pedidos con tapones', pedidosWeb
+            ? (t.conTapones || 0) + ' de ' + pedidosWeb + ' · ' + Math.round(((t.conTapones || 0) / pedidosWeb) * 100) + '%'
+            : '—', '') : '');
+
+    var filas = f.slice().reverse().map(function(r){
+      var cls = r.utilidad >= 0 ? 'pos' : 'neg';
+      return '<tr' + (r.fecha === hoy ? ' class="hoy"' : '') + '>' +
+        '<td>' + r.fecha.slice(5) + (r.fecha === hoy ? ' · hoy' : '') + (r.estimado || r.mlEstimado ? ' *' : '') + '</td>' +
+        '<td>' + r.pedidos + (r.pedidosExternos ? ' <small style="color:#e7cf9c" title="Ventas de Mercado Libre">(' + r.pedidosExternos + ' ML)</small>' : '') +
+          (r.devoluciones ? ' <small style="color:#e07a6a" title="Devoluciones de Mercado Libre: restan lo que cobró ML por los envíos">(' + r.devoluciones + ' dev.)</small>' : '') + '</td>' +
+        '<td>' + r.unidades + '</td>' +
+        '<td>' + money0(r.ingresos) + '</td>' +
+        '<td class="gasto">−' + money0(r.costoBandas) + '</td>' +
+        '<td class="gasto">−' + money0(r.costoEnvios) + '</td>' +
+        '<td class="gasto">−' + money0(r.pasarela) + '</td>' +
+        '<td class="gasto">−' + money0(r.ads) + '</td>' +
+        '<td class="util ' + cls + '">' + (r.utilidad >= 0 ? '' : '−') + money0(Math.abs(r.utilidad)) + '</td>' +
+        '<td><button class="util-add" title="Agregar una venta al ' + r.fecha + '" onclick="abrirAltaVenta(\'' + r.fecha + '\')">+</button></td>' +
+      '</tr>';
+    }).join('');
+
+    document.getElementById('util-tabla').innerHTML =
+      '<table><thead><tr>' +
+      '<th>Día</th><th>Pedidos</th><th>Unid.</th><th>Vendido</th>' +
+      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th><th>Ads +IVA</th><th>Utilidad</th><th></th>' +
+      '</tr></thead><tbody>' + filas + '</tbody><tfoot><tr>' +
+      '<th>Total</th><th>' + t.pedidos + '</th><th>' + t.unidades + '</th><th>' + money0(t.ingresos) + '</th>' +
+      '<th>−' + money0(t.costoBandas) + '</th><th>−' + money0(t.costoEnvios) + '</th>' +
+      '<th>−' + money0(t.pasarela) + '</th><th>−' + money0(t.ads) + '</th>' +
+      '<th style="color:' + (t.utilidad >= 0 ? '#69c46d' : '#e07a6a') + '">' +
+      (t.utilidad >= 0 ? '' : '−') + money0(Math.abs(t.utilidad)) + '</th><th></th>' +
+      '</tr></tfoot></table>';
+
+    var nota = 'Banda ' + money0(d.costos.banda) + ' por unidad · envío ' + money0(d.costos.envio) +
+      ' por pedido · pasarela ' + (d.costos.pasarela * 100).toFixed(1).replace('.', ',') + '%' +
+      ' · ads = gasto real de Meta + ' + Math.round((d.costos.iva || 0.19) * 100) + '% de IVA' +
+      ' (la API reporta sin IVA, el cobro llega con IVA).';
+    if (!d.adsOk) nota += ' ⚠️ El gasto en ads figura en 0 y la utilidad está inflada. Motivo: ' +
+      (d.adsError || 'Meta no respondió') + '.';
+    else if (d.diagnostico) nota += ' Meta reportó ' + d.diagnostico.diasQueCalzan + ' de ' + d.dias +
+      ' días con gasto' + (d.diagnostico.via === 'campañas' ? ', sumando campaña por campaña' : '') + '.';
+    if (f.some(function(x){ return x.estimado; })) nota += ' Los días con * tienen ventas anteriores a que se guardara la cantidad: las unidades van estimadas desde el monto.';
+    if (f.some(function(x){ return x.mlEstimado; })) nota += ' Algunos días con * tienen ventas de Mercado Libre que el reporte de ML trajo sin montos: van estimadas con el precio de ese día menos el 12% de ML y el envío.';
+    if (f.some(function(x){ return x.devoluciones; })) nota += ' Las devoluciones de Mercado Libre van en su día de compra: no cuentan como pedido ni banda, y restan lo que cobró ML por los envíos.';
+    document.getElementById('util-nota').textContent = nota;
+  }
+
+  // ── Alta manual de ventas ────────────────────────────────────────────────
+  // El panel solo registra lo que pasó por una pasarela. Quedan afuera las
+  // ventas presenciales y las que se pierden en cada reinicio de Render
+  // mientras persist.js está en modo archivo. Esto las repone EN SU DÍA: si
+  // se cargaran con la fecha de hoy, el día real quedaría igual de corto y
+  // encima hoy saldría inflado.
+  var vmFecha = null;
+
+  function abrirAltaVenta(fecha){
+    vmFecha = fecha;
+    document.getElementById('vm-dia').textContent = 'Se suma al ' + fecha;
+    document.getElementById('vm-monto').value = '';
+    document.getElementById('vm-unidades').value = '1';
+    document.getElementById('vm-nombre').value = '';
+    document.getElementById('vm-orden').value = '';
+    document.getElementById('vm-tapones').checked = false;
+    document.getElementById('vm-msg').textContent = '';
+    vmMetodo();
+    document.getElementById('vm-fondo').classList.add('on');
+    document.getElementById('vm-monto').focus();
+  }
+
+  // Mercado Libre se carga con lo que deposita ML (neto), no con el precio de
+  // venta: el formulario lo dice para que no se cargue el bruto.
+  function vmMetodo(){
+    var ml = document.getElementById('vm-metodo').value === 'Mercado Libre';
+    var b = document.getElementById('vm-ml-btn');
+    b.classList.toggle('on', ml);
+    b.setAttribute('aria-pressed', ml ? 'true' : 'false');
+    b.textContent = ml ? '✓ Venta de Mercado Libre · solo se resta la banda' : 'Venta de Mercado Libre';
+    document.getElementById('vm-monto-lbl').textContent = ml ? 'Lo que te deja Mercado Libre' : 'Monto cobrado';
+    document.getElementById('vm-monto').placeholder = ml ? '57000' : '68990';
+    document.getElementById('vm-ml-nota').style.display = ml ? '' : 'none';
+  }
+
+  // El botón de arriba del formulario: un toque y la venta queda como de
+  // Mercado Libre (es lo mismo que elegirlo en "Medio de pago").
+  function vmToggleML(){
+    var sel = document.getElementById('vm-metodo');
+    sel.value = sel.value === 'Mercado Libre' ? 'MercadoPago' : 'Mercado Libre';
+    vmMetodo();
+    document.getElementById('vm-monto').focus();
+  }
+
+  function cerrarAltaVenta(){
+    document.getElementById('vm-fondo').classList.remove('on');
+    vmFecha = null;
+  }
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && document.getElementById('vm-fondo').classList.contains('on')) cerrarAltaVenta();
+  });
+
+  function guardarVentaManual(){
+    var msg = document.getElementById('vm-msg');
+    var btn = document.getElementById('vm-ok');
+    var monto = parseInt(document.getElementById('vm-monto').value, 10);
+    if (!monto || monto <= 0) { msg.style.color = '#e07a6a'; msg.textContent = 'Poné el monto que se cobró.'; return; }
+    var unidades = parseInt(document.getElementById('vm-unidades').value, 10) || 1;
+    // Mediodía de Chile: cae dentro del día elegido sin importar el horario de
+    // verano, que en septiembre cambia.
+    var fechaISO = vmFecha + 'T12:00:00-03:00';
+    // Sin ID de pago se genera una referencia única. Es la llave anti-duplicado
+    // del backend: dos ventas distintas del mismo día necesitan llaves distintas.
+    var orden = (document.getElementById('vm-orden').value || '').trim() ||
+                ('manual-' + vmFecha + '-' + Date.now().toString(36));
+
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    msg.style.color = '#9a9a9a'; msg.textContent = 'Guardando...';
+    fetch(BASE + '/admin/venta?clave=' + encodeURIComponent(clave), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        monto: monto, fecha: fechaISO, unidades: unidades,
+        metodo: document.getElementById('vm-metodo').value,
+        nombre: (document.getElementById('vm-nombre').value || '').trim(),
+        orden: orden, soloTapones: document.getElementById('vm-tapones').checked
+      })
+    })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res){
+      btn.disabled = false; btn.textContent = 'Agregar';
+      if (!res.ok || !res.d.ok) { msg.style.color = '#e07a6a'; msg.textContent = res.d.error || 'No se pudo guardar.'; return; }
+      if (res.d.duplicada) { msg.style.color = '#e7cf9c'; msg.textContent = 'Ese ID de pago ya estaba cargado — no se sumó de nuevo.'; return; }
+      cerrarAltaVenta();
+      cargarUtilidad();
+    })
+    .catch(function(){
+      btn.disabled = false; btn.textContent = 'Agregar';
+      msg.style.color = '#e07a6a'; msg.textContent = 'No se pudo conectar con el servidor.';
+    });
+  }
+
+  function kpi(k, v, cls, sub){
+    return '<div class="util-kpi ' + (cls || '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div>' +
+      (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>';
+  }
+
+  function cargarCtr(dias){
+    if(dias) ctrSt.dias = dias;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-dias]'), function(b){
+      b.classList.toggle('on', Number(b.getAttribute('data-dias')) === ctrSt.dias);
+    });
+    fetch(BASE+'/admin/ads/ctr-diario?dias='+ctrSt.dias+'&clave='+encodeURIComponent(clave))
+      .then(function(r){ if(!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(function(d){ prepararCtr(d.series||[]); })
+      .catch(function(){ document.getElementById('ctr-wrap').style.display='none'; });
+  }
+
+  function prepararCtr(series){
+    var wrap = document.getElementById('ctr-wrap');
+    // Con una sola campaña activa el gráfico igual sirve (ver su propia
+    // variación), pero sin ninguna no hay nada que dibujar.
+    if(!series.length){ wrap.style.display='none'; return; }
+    wrap.style.display='';
+    // La paleta tiene 5 slots y generar un 6º color rompería la separación
+    // validada, así que se grafican las 5 más antiguas y se avisa del resto.
+    var fuera = Math.max(0, series.length - CTR_COLORES.length);
+    ctrSt.series = series.slice(0, CTR_COLORES.length).map(function(s, i){
+      var porFecha = {};
+      (s.dias||[]).forEach(function(d){ porFecha[d.fecha] = d; });
+      return { id:s.id, nombre:s.nombre, color:CTR_COLORES[i], porFecha:porFecha };
+    });
+    // Unión de fechas: si una campaña arrancó después, sus días previos quedan
+    // como hueco y la línea se corta ahí en vez de inventar un cero.
+    var set = {};
+    series.forEach(function(s){ (s.dias||[]).forEach(function(d){ set[d.fecha]=1; }); });
+    ctrSt.fechas = Object.keys(set).sort();
+    ctrSt.fuera = fuera;
+    ctrSt.reveal = 0;
+    pintarChipsCtr();
+    pintarTablaCtr();
+    pintarNotaCtr();
+    engancharCtr();
+    if(!ctrSt.corriendo){ ctrSt.corriendo = true; requestAnimationFrame(frameCtr); }
+  }
+
+  // Fichas estilo cotización: CTR del último día con dato y su variación
+  // contra el día anterior. Hacen de leyenda (color + nombre), así que la
+  // identidad de cada línea nunca depende solo del color.
+  function pintarChipsCtr(){
+    var cont = document.getElementById('ctr-chips');
+    cont.innerHTML = ctrSt.series.map(function(s){
+      var vals = ctrSt.fechas.map(function(f){ return s.porFecha[f]; }).filter(Boolean);
+      var hoy = vals.length ? valCtr(vals[vals.length-1]) : 0;
+      var ayer = vals.length > 1 ? valCtr(vals[vals.length-2]) : null;
+      var d = (ayer === null || !ayer) ? null : (hoy - ayer) / ayer * 100;
+      var cls = d === null ? 'ctr-igual' : (d > 0.5 ? 'ctr-sube' : (d < -0.5 ? 'ctr-baja' : 'ctr-igual'));
+      var flecha = d === null ? '·' : (d > 0.5 ? '▲' : (d < -0.5 ? '▼' : '='));
+      var txt = d === null ? 'sin comparación' : flecha+' '+Math.abs(d).toFixed(1)+'% vs ayer';
+      return '<div class="ctr-chip">'+
+        '<div class="ctr-chip-n"><span class="ctr-dot" style="background:'+s.color+'"></span>'+esc(s.nombre)+'</div>'+
+        '<div class="ctr-chip-v">'+mCtr().val(hoy)+'</div>'+
+        '<div class="ctr-chip-d '+cls+'">'+txt+'</div>'+
+      '</div>';
+    }).join('') + (ctrSt.fuera ? '<div class="ctr-chip"><div class="ctr-chip-n">+'+ctrSt.fuera+' campaña(s) fuera del gráfico</div></div>' : '');
+  }
+
+  // Los mismos datos del gráfico, día por día. Se pinta siempre aunque esté
+  // oculta: así al abrirla ya está lista y no parpadea.
+  function pintarTablaCtr(){
+    var filas = ctrSt.fechas.slice().reverse().map(function(f){
+      return '<tr><td>'+f+'</td>' + ctrSt.series.map(function(s){
+        var d = s.porFecha[f];
+        return '<td>'+(d ? mCtr().val(valCtr(d)) : '—')+'</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    document.getElementById('ctr-tabla').innerHTML =
+      '<table><caption class="sr-only">'+mCtr().lbl+' por día y campaña</caption><thead><tr><th>Día</th>' +
+      ctrSt.series.map(function(s){
+        return '<th><span class="ctr-dot" style="background:'+s.color+'"></span>'+esc(s.nombre)+'</th>';
+      }).join('') + '</tr></thead><tbody>'+filas+'</tbody></table>';
+  }
+  // La comparación que no aparece en ningún otro lado del panel: de toda la
+  // gente que entró hoy al sitio, cuánta vino del anuncio. El resto es
+  // orgánico, directo, o gente que vio el anuncio y después entró por su
+  // cuenta — y esa diferencia es la que hace que el número de Meta nunca
+  // coincida con el contador de visitas del sitio.
+  function pintarNotaCtr(){
+    var el = document.getElementById('ctr-nota');
+    if(!el) return;
+    if(!ctrSt.fechas.length){ el.textContent = ''; return; }
+    var hoy = diasChile(1)[0];
+    var desdeAd = 0, hayAd = false;
+    ctrSt.series.forEach(function(s){
+      var d = s.porFecha[hoy];
+      if(d){ desdeAd += Number(d.visitas) || 0; hayAd = true; }
+    });
+    var total = (ULT_DATA && ULT_DATA.vistasPorDia && ULT_DATA.vistasPorDia[hoy]) || 0;
+    if(!hayAd && !total){ el.textContent = ''; return; }
+    var txt = 'Hoy entraron <b>' + num0(desdeAd) + '</b> personas desde el anuncio';
+    if(total){
+      var pct = total ? Math.round(desdeAd / total * 100) : 0;
+      txt += ' y <b>' + num0(total) + '</b> al sitio en total — el ' + pct + '% del tráfico es pagado.';
+      if(desdeAd > total) txt += ' Meta cuenta más de las que registra el sitio: los bloqueadores de anuncios le tapan el píxel a una parte.';
+    } else {
+      txt += '.';
+    }
+    txt += ' El gráfico y la tabla de arriba son SOLO tráfico del anuncio — no incluyen orgánico ni directo.';
+    el.innerHTML = txt;
+  }
+
+  function alternarTablaCtr(){
+    var t = document.getElementById('ctr-tabla'), b = document.getElementById('ctr-btn-tabla');
+    var abierta = t.style.display !== 'none';
+    t.style.display = abierta ? 'none' : '';
+    b.textContent = abierta ? 'Ver tabla' : 'Ocultar tabla';
+    b.classList.toggle('on', !abierta);
+  }
+
+  // El cursor se engancha una sola vez: cargarCtr se llama en cada refresco y
+  // si no, se irían apilando listeners sobre el mismo canvas.
+  function engancharCtr(){
+    var cv = document.getElementById('chartCtr');
+    if(!cv || cv.dataset.enganchado) return;
+    cv.dataset.enganchado = '1';
+    cv.addEventListener('mousemove', function(e){
+      if(!ctrSt.fechas.length) return;
+      var r = cv.getBoundingClientRect();
+      var x = (e.clientX - r.left) * (cv.width / r.width);
+      var g = geoCtr(cv);
+      var n = ctrSt.fechas.length;
+      var i = n === 1 ? 0 : Math.round((x - g.padL) / ((cv.width - g.padL - g.padR) / (n-1)));
+      ctrSt.hover = (i >= 0 && i < n) ? i : null;
+      moverTipCtr(cv, r);
+      if(!ctrSt.corriendo){ ctrSt.corriendo = true; requestAnimationFrame(frameCtr); }
+    });
+    cv.addEventListener('mouseleave', function(){
+      ctrSt.hover = null;
+      document.getElementById('ctr-tip').style.display = 'none';
+      if(!ctrSt.corriendo){ ctrSt.corriendo = true; requestAnimationFrame(frameCtr); }
+    });
+  }
+
+  function geoCtr(cv){ return { padL:38, padR:12, padT:14, padB:26, w:cv.width, h:cv.height }; }
+
+  function maxCtr(){
+    var m = 0;
+    ctrSt.series.forEach(function(s){ ctrSt.fechas.forEach(function(f){
+      var d = s.porFecha[f]; if(d && valCtr(d) > m) m = valCtr(d);
+    }); });
+    return m > 0 ? m * 1.15 : 1;
+  }
+
+  function moverTipCtr(cv, rect){
+    var tip = document.getElementById('ctr-tip');
+    if(ctrSt.hover === null){ tip.style.display='none'; return; }
+    var f = ctrSt.fechas[ctrSt.hover];
+    var filas = ctrSt.series.map(function(s){
+      var d = s.porFecha[f];
+      return '<div class="ctr-tip-row"><span class="ctr-dot" style="background:'+s.color+'"></span>'+
+        esc(s.nombre)+' <b>'+(d ? mCtr().val(valCtr(d)) : '—')+'</b>'+
+        (d ? ' <span style="color:#888">('+mCtr().sec(d)+')</span>' : '')+'</div>';
+    }).join('');
+    tip.innerHTML = '<b>'+f+'</b>'+filas;
+    tip.style.display = 'block';
+    // Se posiciona dentro de .ctr-wrap (position:relative), convirtiendo la x
+    // interna del canvas a px de pantalla por la escala del CSS.
+    var g = geoCtr(cv), n = ctrSt.fechas.length;
+    var esc_ = rect.width / cv.width;
+    var xi = n === 1 ? g.padL : g.padL + (cv.width - g.padL - g.padR) * ctrSt.hover / (n-1);
+    var left = cv.offsetLeft + xi * esc_ + 14;
+    if(left + tip.offsetWidth > cv.offsetLeft + rect.width) left -= tip.offsetWidth + 28;
+    tip.style.left = left + 'px';
+    tip.style.top = (cv.offsetTop + 10) + 'px';
+  }
+
+  function frameCtr(){
+    var cv = document.getElementById('chartCtr');
+    if(!cv || !ctrSt.fechas.length){ ctrSt.corriendo = false; return; }
+    var ctx = cv.getContext('2d'), g = geoCtr(cv);
+    var max = maxCtr(), n = ctrSt.fechas.length;
+    var areaW = g.w - g.padL - g.padR, areaH = g.h - g.padT - g.padB;
+    ctrSt.reveal += (1 - ctrSt.reveal) * 0.12;
+    var listo = ctrSt.reveal > 0.995;
+    if(listo) ctrSt.reveal = 1;
+    ctx.clearRect(0,0,g.w,g.h);
+
+    // Rejilla recesiva + escala en % a la izquierda.
+    ctx.strokeStyle = '#181818'; ctx.lineWidth = 1;
+    ctx.fillStyle = '#666'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+    for(var l=0; l<=4; l++){
+      var gy = g.padT + areaH * l/4;
+      ctx.beginPath(); ctx.moveTo(g.padL, gy+.5); ctx.lineTo(g.w-g.padR, gy+.5); ctx.stroke();
+      ctx.fillText(mCtr().eje(max*(1-l/4)), g.padL-6, gy+3);
+    }
+
+    var px = function(i){ return n===1 ? g.padL+areaW/2 : g.padL + areaW*i/(n-1); };
+    var py = function(v){ return g.padT + areaH - (Math.min(v,max)/max)*areaH*ctrSt.reveal; };
+
+    // Cruz del cursor, por debajo de las líneas.
+    if(ctrSt.hover !== null){
+      ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px(ctrSt.hover)+.5, g.padT); ctx.lineTo(px(ctrSt.hover)+.5, g.padT+areaH); ctx.stroke();
+    }
+
+    // Una línea por campaña. Los días sin dato cortan la línea en vez de
+    // bajarla a cero, que sería inventar una caída que no pasó.
+    ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctrSt.series.forEach(function(s){
+      ctx.strokeStyle = s.color;
+      ctx.beginPath();
+      var abierto = false;
+      for(var i=0;i<n;i++){
+        var d = s.porFecha[ctrSt.fechas[i]];
+        if(!d){ abierto = false; continue; }
+        var x = px(i), y = py(valCtr(d));
+        if(!abierto){ ctx.moveTo(x,y); abierto = true; } else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    });
+
+    // Marcadores solo en el día señalado. El anillo del color del fondo
+    // separa dos campañas que ese día tuvieron el mismo CTR y quedarían
+    // pisadas una sobre otra.
+    if(ctrSt.hover !== null){
+      ctrSt.series.forEach(function(s){
+        var d = s.porFecha[ctrSt.fechas[ctrSt.hover]];
+        if(!d) return;
+        var x = px(ctrSt.hover), y = py(valCtr(d));
+        ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
+        ctx.fillStyle = s.color; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = '#0b0b0b'; ctx.stroke();
+      });
+      ctx.lineWidth = 2;
+    }
+
+    // Fechas abajo: una de cada dos con 14 días, una de cada cuatro con 30,
+    // para que no se pisen entre ellas.
+    var paso = n > 20 ? 4 : (n > 10 ? 2 : 1);
+    ctx.font = '9px monospace'; ctx.textAlign = 'center';
+    for(var k=0;k<n;k++){
+      if(k % paso && k !== n-1) continue;
+      ctx.fillStyle = (ctrSt.hover === k) ? '#fff' : '#777';
+      ctx.fillText(ctrSt.fechas[k].slice(5).replace('-','/'), px(k), g.h-9);
+    }
+
+    if(!listo) requestAnimationFrame(frameCtr); else ctrSt.corriendo = false;
+  }
+
+  // ── CTR hora a hora del anuncio principal (GIRATORIO) ──────────────────
+  // Una sola serie, un solo anuncio. El corte por hora existe para una
+  // decisión concreta: en qué franja el creativo rinde y en cuál se quema.
+  var horaSt = { puntos: [], dias: 3, nombre: '', exacto: true, buscado: '', hover: null, reveal: 0, corriendo: false, leido: 0 };
+  var HORA_COLOR = '#3987e5';
+
+  function cargarHora(dias){
+    if(dias) horaSt.dias = dias;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hdias]'), function(b){
+      b.classList.toggle('on', Number(b.getAttribute('data-hdias')) === horaSt.dias);
+    });
+    fetch(BASE+'/admin/ads/ctr-horario?dias='+horaSt.dias+'&clave='+encodeURIComponent(clave))
+      .then(function(rp){ if(!rp.ok) throw new Error('sin datos'); return rp.json(); })
+      .then(pintarHora)
+      .catch(function(){ document.getElementById('hora-wrap').style.display='none'; });
+  }
+
+  function pintarHora(d){
+    horaSt.puntos  = d.horas || [];
+    horaSt.nombre  = (d.anuncio && d.anuncio.nombre) || 'anuncio';
+    horaSt.exacto  = d.exacto !== false;
+    horaSt.buscado = d.buscado || '';
+    horaSt.leido   = Date.now();
+    horaSt.hover   = null;
+    horaSt.reveal  = 0;
+    document.getElementById('hora-wrap').style.display = horaSt.puntos.length ? '' : 'none';
+    pintarChipsHora(); pintarNotaHora();
+    if(!horaSt.corriendo){ horaSt.corriendo = true; requestAnimationFrame(frameHora); }
+  }
+
+  // CTR de un conjunto de horas: se suman clics e impresiones y se divide UNA
+  // vez. Promediar los CTR hora a hora le daría el mismo peso a una hora de 50
+  // impresiones que a una de 900, y así salen los "8% de CTR" de madrugada.
+  function ctrDe(lista){
+    var c = 0, i = 0;
+    lista.forEach(function(p){ c += p.clics; i += p.impresiones; });
+    return i ? c / i * 100 : 0;
+  }
+
+  function pintarChipsHora(){
+    var cont = document.getElementById('hora-chips'), ps = horaSt.puntos;
+    if(!ps.length){ cont.innerHTML = ''; return; }
+
+    var ultima = ps[ps.length-1], previa = ps.length > 1 ? ps[ps.length-2] : null;
+    var dif = (previa && previa.ctr) ? (ultima.ctr - previa.ctr) / previa.ctr * 100 : null;
+    var cls = dif === null ? 'ctr-igual' : (dif > 0.5 ? 'ctr-sube' : (dif < -0.5 ? 'ctr-baja' : 'ctr-igual'));
+    var fle = dif === null ? '·' : (dif > 0.5 ? '▲' : (dif < -0.5 ? '▼' : '='));
+
+    // Mejor y peor franja del día, agregando todas las veces que se repitió
+    // esa hora en la ventana. Se exigen 300 impresiones para entrar: con menos
+    // el CTR es ruido y el "mejor horario" cambia en cada refresco. Con la
+    // ventana de "Hoy" casi ninguna franja llega, y está bien: un solo día no
+    // alcanza para declarar el mejor horario.
+    var porHora = {};
+    ps.forEach(function(p){ (porHora[p.hora] = porHora[p.hora] || []).push(p); });
+    var franjas = Object.keys(porHora).map(function(h){
+      var l = porHora[h], imp = l.reduce(function(a,x){ return a + x.impresiones; }, 0);
+      return { hora: Number(h), ctr: ctrDe(l), imp: imp };
+    }).filter(function(f){ return f.imp >= 300; }).sort(function(a,b){ return b.ctr - a.ctr; });
+
+    var html = '<div class="ctr-chip">'+
+      '<div class="ctr-chip-n"><span class="ctr-dot" style="background:'+HORA_COLOR+'"></span>'+esc(horaSt.nombre)+' · última hora</div>'+
+      '<div class="ctr-chip-v">'+ultima.ctr.toFixed(2)+'%</div>'+
+      '<div class="ctr-chip-d '+cls+'">'+(dif === null ? 'sin comparación' : fle+' '+Math.abs(dif).toFixed(0)+'% vs la hora anterior')+'</div>'+
+    '</div>';
+    html += '<div class="ctr-chip">'+
+      '<div class="ctr-chip-n">Promedio de la ventana</div>'+
+      '<div class="ctr-chip-v">'+ctrDe(ps).toFixed(2)+'%</div>'+
+      '<div class="ctr-chip-d ctr-igual">'+ps.length+' horas con entrega</div>'+
+    '</div>';
+    if(franjas.length >= 2){
+      var mej = franjas[0], peo = franjas[franjas.length-1];
+      html += '<div class="ctr-chip">'+
+        '<div class="ctr-chip-n">Mejor franja</div>'+
+        '<div class="ctr-chip-v">'+mej.hora+':00</div>'+
+        '<div class="ctr-chip-d ctr-sube">'+mej.ctr.toFixed(2)+'% de CTR</div>'+
+      '</div>';
+      html += '<div class="ctr-chip">'+
+        '<div class="ctr-chip-n">Peor franja</div>'+
+        '<div class="ctr-chip-v">'+peo.hora+':00</div>'+
+        '<div class="ctr-chip-d ctr-baja">'+peo.ctr.toFixed(2)+'% de CTR</div>'+
+      '</div>';
+    }
+    cont.innerHTML = html;
+  }
+
+  function pintarNotaHora(){
+    var el = document.getElementById('hora-nota'); if(!el) return;
+    var hh = new Date(horaSt.leido).toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/Santiago' });
+    var t = '';
+    if(!horaSt.exacto){
+      t += '⚠️ No encontré un anuncio que se llame «'+esc(horaSt.buscado)+'»; se está graficando <b>'+esc(horaSt.nombre)+'</b>. ';
+    }
+    t += 'Última lectura a las <b>'+hh+'</b> (hora de Chile) · se actualiza sola cada hora. ';
+    t += 'Meta publica la hora en curso con unos minutos de atraso, así que el último punto siempre queda corto y sube después. ';
+    t += 'Las horas sin entrega no dibujan punto: la línea se <b>corta</b> en vez de caer a 0% — una campaña pausada no es un CTR de cero. ';
+    t += 'El CTR es de clics en el ENLACE, igual que el gráfico de arriba.';
+    el.innerHTML = t;
+  }
+
+  function geoHora(cv){ return { padL:38, padR:12, padT:14, padB:26, w:cv.width, h:cv.height }; }
+
+  function frameHora(){
+    var cv = document.getElementById('chartHora');
+    if(!cv || !horaSt.puntos.length){ horaSt.corriendo = false; return; }
+    var ctx = cv.getContext('2d'), g = geoHora(cv), ps = horaSt.puntos, n = ps.length;
+    var max = 0; ps.forEach(function(p){ if(p.ctr > max) max = p.ctr; });
+    max = max > 0 ? max * 1.15 : 1;
+    var areaW = g.w - g.padL - g.padR, areaH = g.h - g.padT - g.padB;
+    horaSt.reveal += (1 - horaSt.reveal) * 0.12;
+    var listo = horaSt.reveal > 0.995; if(listo) horaSt.reveal = 1;
+    ctx.clearRect(0,0,g.w,g.h);
+
+    ctx.strokeStyle = '#181818'; ctx.lineWidth = 1;
+    ctx.fillStyle = '#666'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+    for(var l=0; l<=4; l++){
+      var gy = g.padT + areaH * l/4;
+      ctx.beginPath(); ctx.moveTo(g.padL, gy+.5); ctx.lineTo(g.w-g.padR, gy+.5); ctx.stroke();
+      ctx.fillText((max*(1-l/4)).toFixed(1)+'%', g.padL-6, gy+3);
+    }
+
+    var px = function(i){ return n===1 ? g.padL+areaW/2 : g.padL + areaW*i/(n-1); };
+    var py = function(v){ return g.padT + areaH - (Math.min(v,max)/max)*areaH*horaSt.reveal; };
+
+    // Separador vertical en cada cambio de día: sin esto, 168 horas seguidas
+    // se leen como un solo día larguísimo.
+    ctx.strokeStyle = '#222';
+    for(var b=1;b<n;b++){
+      if(ps[b].fecha === ps[b-1].fecha) continue;
+      ctx.beginPath(); ctx.moveTo(px(b)+.5, g.padT); ctx.lineTo(px(b)+.5, g.padT+areaH); ctx.stroke();
+    }
+
+    // Promedio de la ventana, punteado: la referencia contra la que se lee si
+    // una hora fue buena o solo se ve alta.
+    var prom = ctrDe(ps);
+    if(prom > 0 && prom < max){
+      ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle = '#4a4a4a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(g.padL, py(prom)+.5); ctx.lineTo(g.w-g.padR, py(prom)+.5); ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = '#6a6a6a'; ctx.font = '9px monospace'; ctx.textAlign = 'left';
+      ctx.fillText('prom '+prom.toFixed(2)+'%', g.padL+4, py(prom)-4);
+    }
+
+    if(horaSt.hover !== null){
+      ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px(horaSt.hover)+.5, g.padT); ctx.lineTo(px(horaSt.hover)+.5, g.padT+areaH); ctx.stroke();
+    }
+
+    // La línea se corta entre horas NO consecutivas (hubo un hueco sin
+    // entrega) por la misma razón que el gráfico diario corta los días sin
+    // dato: unir los extremos dibujaría una caída que nunca ocurrió.
+    ctx.strokeStyle = HORA_COLOR; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath();
+    var abierto = false;
+    for(var i=0;i<n;i++){
+      var seguido = i === 0 || (ps[i].fecha === ps[i-1].fecha && ps[i].hora === ps[i-1].hora + 1)
+        || (ps[i].fecha !== ps[i-1].fecha && ps[i].hora === 0 && ps[i-1].hora === 23);
+      var x = px(i), y = py(ps[i].ctr);
+      if(!seguido || !abierto){ ctx.moveTo(x,y); abierto = true; } else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    if(horaSt.hover !== null){
+      var hp = ps[horaSt.hover];
+      ctx.beginPath(); ctx.arc(px(horaSt.hover), py(hp.ctr), 5, 0, Math.PI*2);
+      ctx.fillStyle = HORA_COLOR; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#0b0b0b'; ctx.stroke();
+    }
+
+    // Eje X: la fecha en cada cambio de día, y la hora cada tantas para no
+    // pisarse entre ellas.
+    var paso = n > 96 ? 12 : (n > 40 ? 6 : 3);
+    ctx.font = '9px monospace'; ctx.textAlign = 'center';
+    for(var k=0;k<n;k++){
+      var esDia = k === 0 || ps[k].fecha !== ps[k-1].fecha;
+      if(!esDia && k % paso) continue;
+      ctx.fillStyle = (horaSt.hover === k) ? '#fff' : (esDia ? '#9a9a9a' : '#777');
+      ctx.fillText(esDia ? ps[k].fecha.slice(8)+'/'+ps[k].fecha.slice(5,7) : ps[k].hora+'h', px(k), g.h-9);
+    }
+
+    if(!listo) requestAnimationFrame(frameHora); else horaSt.corriendo = false;
+  }
+
+  // El cursor se engancha UNA vez: cargarHora() corre en cada refresco y
+  // enganchar acá dentro acumularía un listener por hora transcurrida.
+  (function(){
+    var cv = document.getElementById('chartHora'); if(!cv) return;
+    cv.addEventListener('mousemove', function(ev){
+      if(!horaSt.puntos.length) return;
+      var rect = cv.getBoundingClientRect(), g = geoHora(cv);
+      var x = (ev.clientX - rect.left) * (cv.width / rect.width);
+      var n = horaSt.puntos.length;
+      var i = n === 1 ? 0 : Math.round((x - g.padL) / ((cv.width - g.padL - g.padR) / (n-1)));
+      horaSt.hover = (i >= 0 && i < n) ? i : null;
+      moverTipHora(cv, rect);
+      if(!horaSt.corriendo){ horaSt.corriendo = true; requestAnimationFrame(frameHora); }
+    });
+    cv.addEventListener('mouseleave', function(){
+      horaSt.hover = null;
+      document.getElementById('hora-tip').style.display = 'none';
+      if(!horaSt.corriendo){ horaSt.corriendo = true; requestAnimationFrame(frameHora); }
+    });
+  })();
+
+  function moverTipHora(cv, rect){
+    var tip = document.getElementById('hora-tip');
+    if(horaSt.hover === null){ tip.style.display='none'; return; }
+    var p = horaSt.puntos[horaSt.hover];
+    tip.innerHTML = '<b>'+p.fecha.slice(5).replace('-','/')+' · '+String(p.hora).padStart(2,'0')+':00</b>'+
+      '<div class="ctr-tip-row"><span class="ctr-dot" style="background:'+HORA_COLOR+'"></span>CTR <b>'+p.ctr.toFixed(2)+'%</b></div>'+
+      '<div class="ctr-tip-row" style="color:#999">'+num0(p.clics)+' clics · '+num0(p.impresiones)+' impresiones</div>'+
+      '<div class="ctr-tip-row" style="color:#999">'+money0(p.gasto)+' gastados</div>';
+    tip.style.display = 'block';
+    var g = geoHora(cv), n = horaSt.puntos.length, k = rect.width / cv.width;
+    var xi = n === 1 ? g.padL : g.padL + (cv.width - g.padL - g.padR) * horaSt.hover / (n-1);
+    var left = cv.offsetLeft + xi * k + 14;
+    if(left + tip.offsetWidth > cv.offsetLeft + rect.width) left -= tip.offsetWidth + 28;
+    tip.style.left = left + 'px';
+    tip.style.top = (cv.offsetTop + 10) + 'px';
+  }
+
+  // ── Gasto por hora (en vivo) ─────────────────────────────────────────────
+  // Hoy hora a hora contra el promedio de los 7 días anteriores, con lo que
+  // explica cada hora: impresiones (cuánto mostró Meta el anuncio), CPM (cuánto
+  // costó cada mil), clics al sitio y ventas. Se relee cada minuto con el panel
+  // a la vista; el servidor guarda la lectura 55 s, así que más pestañas no
+  // significan más llamadas a Meta.
+  var ghSt = { d: null, hover: null, leido: 0 };
+  var GH_HOY = '#1ec8f0', GH_PROM = '#9a9a9a', GH_VENTA = '#8fce4a';
+  function pad2(n){ return (n < 10 ? '0' : '') + n; }
+  function cpmDe(g, i){ return i ? g / i * 1000 : 0; }
+  function moneyK(n){ n = Number(n) || 0; return n >= 1000 ? '$' + (Math.round(n / 100) / 10).toLocaleString('es-CL') + 'k' : '$' + Math.round(n); }
+  function sumaDe(l, k){ return l.reduce(function(a, x){ return a + (Number(x[k]) || 0); }, 0); }
+
+  function cargarGastoHora(forzar){
+    ghSt.leido = Date.now();
+    fetch(BASE + '/admin/ads/gasto-horario?clave=' + encodeURIComponent(clave) + (forzar ? '&forzar=1' : ''))
+      .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d && d.error ? d.error : 'Meta respondió ' + r.status); return d; }); })
+      .then(function(d){ ghSt.d = d; pintarGastoHora(); })
+      .catch(function(e){
+        var off = document.getElementById('gh-off');
+        off.textContent = /no configurad/i.test(e.message || '') ? 'Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID en Render).'
+          : '⚠️ Meta no respondió: ' + (e.message || 'error desconocido') + '. Se vuelve a intentar en un minuto.';
+        off.style.display = 'block';
+      });
+  }
+
+  function pintarGastoHora(){
+    var d = ghSt.d; if(!d) return;
+    document.getElementById('gh-off').style.display = 'none';
+    var hoy = d.horasHoy, prom = d.promedio7, ah = d.horaActual;
+    var ventasHoy = (d.ventas && d.ventas.hoy) || [];
+    var total = sumaDe(hoy, 'gasto'), nVentas = ventasHoy.reduce(function(a, x){ return a + x; }, 0);
+    var top = hoy.reduce(function(b, x){ return x.gasto > b.gasto ? x : b; }, hoy[0]);
+    var aEstaHora = sumaDe(prom.slice(0, ah + 1), 'gasto');
+    document.getElementById('gh-kpis').innerHTML =
+      kpi('Gasto de hoy', money0(total)) +
+      kpi('A esta hora se solía llevar', money0(aEstaHora)) +
+      kpi('Hora de más gasto hoy', top.gasto > 0 ? pad2(top.hora) + ':00 · ' + money0(top.gasto) : '—') +
+      kpi('Ventas de hoy', nVentas ? nVentas + ' · ' + money0(total / nVentas) + ' de ads c/u' : '0');
+    var hh = new Date(d.leidoHoy || Date.now()).toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone:'America/Santiago' });
+    document.getElementById('gh-act').innerHTML = 'Última lectura de Meta a las <b>' + hh + '</b> (hora de Chile) · se actualiza sola cada minuto';
+    document.getElementById('gh-wrap').style.display = '';
+    dibujarGastoHora();
+    document.getElementById('gh-porque').innerHTML = textoPorque(d);
+    document.getElementById('gh-nota').textContent =
+      'Meta publica el gasto con unos minutos de atraso, así que la hora en curso siempre queda corta y sube después. ' +
+      'Gasto = impresiones × CPM: una hora gasta más porque Meta mostró más el anuncio, porque cada impresión salió más cara, o las dos. ' +
+      (d.histError ? '⚠️ No se pudo leer el historial de 7 días: ' + d.histError + '.' : '');
+  }
+
+  // La explicación sale del promedio de 7 días (un solo día es ruido).
+  function textoPorque(d){
+    var prom = d.promedio7, tot = sumaDe(prom, 'gasto'), totImp = sumaDe(prom, 'impresiones');
+    if(!tot || !totImp) return '';
+    var cpmProm = cpmDe(tot, totImp);
+    var top = prom.reduce(function(b, x){ return x.gasto > b.gasto ? x : b; }, prom[0]);
+    var cpmTop = cpmDe(top.gasto, top.impresiones);
+    var shareG = Math.round(top.gasto / tot * 100), shareI = Math.round(top.impresiones / totImp * 100);
+    // La impresión más cara, entre las horas con entrega que pesa (≥2% del día)
+    var caras = prom.filter(function(x){ return x.impresiones >= totImp * 0.02; });
+    var cara = caras.reduce(function(b, x){ return cpmDe(x.gasto, x.impresiones) > cpmDe(b.gasto, b.impresiones) ? x : b; }, caras[0] || top);
+    var v7 = (d.ventas && d.ventas.ultimos7) || [];
+    var maxV = Math.max.apply(null, v7.concat([0])), horaV = v7.indexOf(maxV);
+    var t = 'En los últimos 7 días la hora que más gasta es las <b>' + pad2(top.hora) + ':00</b> (' + money0(top.gasto) + ' en promedio, el ' + shareG + '% del gasto del día). ';
+    if(cpmTop > cpmProm * 1.15){
+      t += 'Gasta más porque Meta muestra más el anuncio a esa hora (el ' + shareI + '% de las impresiones del día) <b>y además cada impresión sale más cara</b>: CPM ' + money0(cpmTop) + ' contra ' + money0(cpmProm) + ' de promedio, hay más avisadores compitiendo por el mismo público. ';
+    } else {
+      t += 'No es que ahí cueste más (CPM ' + money0(cpmTop) + ', parecido al promedio de ' + money0(cpmProm) + '): Meta reparte el presupuesto donde espera más resultados y a esa hora <b>muestra más el anuncio</b> (el ' + shareI + '% de las impresiones del día), porque hay más gente conectada. ';
+    }
+    if(cara && cara.hora !== top.hora) t += 'La impresión más cara es a las <b>' + pad2(cara.hora) + ':00</b> (CPM ' + money0(cpmDe(cara.gasto, cara.impresiones)) + '). ';
+    if(maxV > 0){
+      t += 'La hora con más ventas del sitio en esos días es las <b>' + pad2(horaV) + ':00</b> (' + maxV + (maxV === 1 ? ' venta' : ' ventas') + ')';
+      var dist = Math.min(Math.abs(horaV - top.hora), 24 - Math.abs(horaV - top.hora));
+      t += dist >= 3 ? ': si el gasto fuerte no coincide con las horas en que se vende, conviene programar el anuncio para esas horas.' : ', cerca de la hora de más gasto: el presupuesto está cayendo donde se vende.';
+    }
+    return t;
+  }
+
+  function dibujarGastoHora(){
+    var d = ghSt.d, cv = document.getElementById('chartGastoH'); if(!d || !cv) return;
+    var wrap = document.getElementById('gh-wrap');
+    var W = Math.max(320, wrap.clientWidth - 28), H = 230, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)){ cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px'; }
+    var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    var g = { padL: 44, padR: 10, padT: 18, padB: 24 }, aw = W - g.padL - g.padR, ah = H - g.padT - g.padB;
+    var hoy = d.horasHoy, prom = d.promedio7, ventas = (d.ventas && d.ventas.hoy) || [], hA = d.horaActual;
+    var max = 0; for(var i = 0; i < 24; i++){ max = Math.max(max, hoy[i].gasto, prom[i].gasto); }
+    max = max > 0 ? max * 1.18 : 1000;
+    var slot = aw / 24, bw = Math.max(4, slot * 0.62);
+    var xC = function(h){ return g.padL + slot * h + slot / 2; }, yV = function(v){ return g.padT + ah - (v / max) * ah; };
+    ctx.font = '9px monospace'; ctx.textAlign = 'right'; ctx.strokeStyle = '#1c1c1c'; ctx.fillStyle = '#6a6a6a'; ctx.lineWidth = 1;
+    for(var l = 0; l <= 4; l++){
+      var gy = g.padT + ah * l / 4;
+      ctx.beginPath(); ctx.moveTo(g.padL, gy + .5); ctx.lineTo(W - g.padR, gy + .5); ctx.stroke();
+      ctx.fillText(moneyK(max * (1 - l / 4)), g.padL - 6, gy + 3);
+    }
+    if(ghSt.hover !== null){ ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fillRect(g.padL + slot * ghSt.hover, g.padT, slot, ah); }
+    for(var h = 0; h < 24; h++){
+      if(h > hA) continue;   // horas que todavía no pasan
+      var v = hoy[h].gasto; if(!v) continue;
+      var y = yV(v);
+      ctx.fillStyle = h === hA ? 'rgba(30,200,240,.45)' : GH_HOY;   // la hora en curso, más clara: todavía no cierra
+      ctx.fillRect(xC(h) - bw / 2, y, bw, g.padT + ah - y);
+    }
+    // Promedio de los 7 días: línea punteada
+    ctx.save(); ctx.setLineDash([4, 3]); ctx.strokeStyle = GH_PROM; ctx.lineWidth = 1.5; ctx.beginPath();
+    for(var p = 0; p < 24; p++){ var py = yV(prom[p].gasto); if(p === 0) ctx.moveTo(xC(p), py); else ctx.lineTo(xC(p), py); }
+    ctx.stroke(); ctx.restore();
+    // Ventas de hoy: punto verde sobre la hora, con la cantidad si es más de una
+    for(var s = 0; s < 24; s++){
+      if(!ventas[s]) continue;
+      var vy = Math.min(yV(hoy[s].gasto), yV(prom[s].gasto)) - 9;
+      ctx.beginPath(); ctx.arc(xC(s), Math.max(g.padT - 6, vy), 4, 0, Math.PI * 2); ctx.fillStyle = GH_VENTA; ctx.fill();
+      if(ventas[s] > 1){ ctx.fillStyle = '#cfe8b4'; ctx.textAlign = 'center'; ctx.fillText(String(ventas[s]), xC(s), Math.max(g.padT - 6, vy) - 7); }
+    }
+    ctx.fillStyle = '#7a7a7a'; ctx.textAlign = 'center';
+    for(var x = 0; x < 24; x += 3){ ctx.fillText(pad2(x) + 'h', xC(x), H - 8); }
+  }
+
+  function tipGastoHora(h){
+    var d = ghSt.d, tip = document.getElementById('gh-tip'); if(!d){ return; }
+    if(h === null){ tip.style.display = 'none'; return; }
+    var x = d.horasHoy[h], p = d.promedio7[h], vh = (d.ventas.hoy || [])[h] || 0, v7 = (d.ventas.ultimos7 || [])[h] || 0;
+    var futura = h > d.horaActual;
+    var html = '<b>' + pad2(h) + ':00 – ' + pad2((h + 1) % 24) + ':00</b>' + (h === d.horaActual ? ' · en curso' : '');
+    html += futura ? '<div class="ctr-tip-row" style="color:#999">Todavía no llega esta hora</div>'
+      : '<div class="ctr-tip-row">Gasto <b>' + money0(x.gasto) + '</b> (promedio ' + money0(p.gasto) + ')</div>' +
+        '<div class="ctr-tip-row">' + Math.round(x.impresiones).toLocaleString('es-CL') + ' impresiones · CPM ' + money0(cpmDe(x.gasto, x.impresiones)) + '</div>' +
+        '<div class="ctr-tip-row">' + Math.round(x.clics) + ' clics al sitio' + (x.impresiones ? ' (CTR ' + (x.clics / x.impresiones * 100).toFixed(2).replace('.', ',') + '%)' : '') + '</div>';
+    html += '<div class="ctr-tip-row" style="color:#8fce4a">' + vh + (vh === 1 ? ' venta' : ' ventas') + ' hoy · ' + v7 + ' en los 7 días anteriores</div>';
+    tip.innerHTML = html; tip.style.display = 'block';
+    var cv = document.getElementById('chartGastoH'), wrap = document.getElementById('gh-wrap');
+    var slot = (cv.clientWidth - 54) / 24, left = cv.offsetLeft + 44 + slot * h + slot / 2 - tip.offsetWidth / 2;
+    tip.style.left = Math.max(4, Math.min(wrap.clientWidth - tip.offsetWidth - 4, left)) + 'px';
+    tip.style.top = (cv.offsetTop + 6) + 'px';
+  }
+  (function(){
+    var cv = document.getElementById('chartGastoH'); if(!cv) return;
+    function horaDe(e){
+      var r = cv.getBoundingClientRect(), x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      var h = Math.floor((x - 44) / ((r.width - 54) / 24));
+      return (h >= 0 && h < 24) ? h : null;
+    }
+    function mover(e){ var h = horaDe(e); if(h !== ghSt.hover){ ghSt.hover = h; dibujarGastoHora(); tipGastoHora(h); } }
+    cv.addEventListener('mousemove', mover);
+    cv.addEventListener('touchstart', mover, { passive: true });
+    cv.addEventListener('mouseleave', function(){ ghSt.hover = null; dibujarGastoHora(); tipGastoHora(null); });
+    window.addEventListener('resize', function(){ if(ghSt.d) dibujarGastoHora(); });
+  })();
+
+  // Ads Manager (Meta): se actualiza solo cada UNA HORA (ver el setInterval al
+  // final) y con el botón "Actualizar"; no cada 5s como el resto del panel,
+  // para no gastar el rate limit de Meta.
   function money0(n){ return '$'+Math.round(Number(n)||0).toLocaleString('es-CL'); }
-  function cargarAds(){
+  var adsLeido = 0;   // cuándo se pidió por última vez todo lo de Meta
+  function marcarAct(id){
+    var el = document.getElementById(id); if(!el) return;
+    var hh = new Date().toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/Santiago' });
+    el.innerHTML = 'Actualizado a las <b>'+hh+'</b> (hora de Chile) · incluye el gasto de hoy · se actualiza solo cada 5 minutos';
+  }
+  // soloTarjetas = solo las tarjetas de campañas (el refresco de cada 5 min);
+  // sin él se recarga además el CTR diario y horario y la utilidad (cada hora).
+  function cargarAds(soloTarjetas){
+    if(!soloTarjetas) adsLeido = Date.now();
+    // El .catch vacío que había acá se tragaba TODO: con el token de Meta
+    // caído, la sección quedaba en blanco como si no hubiera campañas, y no
+    // había forma de saber desde el panel que el problema era el token. Es el
+    // mismo fallo silencioso que tuvo la utilidad diaria.
+    var off = document.getElementById('ads-off');
     fetch(BASE+'/admin/ads/campaigns?clave='+encodeURIComponent(clave)).then(function(r){
-      if(r.status===503){ document.getElementById('ads-off').style.display='block'; document.getElementById('ads-grid').style.display='none'; throw new Error('off'); }
-      return r.json();
-    }).then(function(d){ pintarAds(d.campaigns||[]); }).catch(function(){});
+      if(r.status===503){ off.textContent='Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID en Render).'; off.style.display='block'; document.getElementById('ads-grid').style.display='none'; throw new Error('off'); }
+      return r.json().then(function(d){
+        if(!r.ok) throw new Error(d && d.error ? d.error : 'Meta respondió '+r.status);
+        return d;
+      });
+    }).then(function(d){
+      off.style.display='none';
+      pintarAds(d.campaigns||[]);
+      marcarAct('ads-act');
+    }).catch(function(e){
+      if(e && e.message==='off') return;
+      off.textContent='⚠️ Meta no respondió: '+(e && e.message ? e.message : 'error desconocido')+'. Si dice que el acceso está bloqueado, hay que regenerar META_ADS_ACCESS_TOKEN en Render.';
+      off.style.display='block';
+      document.getElementById('ads-grid').style.display='none';
+    });
+    if(soloTarjetas) return;
+    cargarCtr();
+    cargarHora();
+    // La utilidad no depende de que Meta Ads este configurado: si no responde,
+    // igual muestra ventas y costos con el gasto en 0 y lo avisa.
+    cargarUtilidad();
   }
   // Vertical (una métrica por fila) en vez de la tabla horizontal de Meta Ads
   // Manager — más fácil de leer de un vistazo para decidir qué ajustar.
@@ -1209,6 +3215,26 @@
   document.getElementById('key').addEventListener('keydown',function(e){ if(e.key==='Enter') entrar(); });
   // Refresco en vivo
   setInterval(function(){ if(clave && document.getElementById('panel').style.display!=='none') cargar(false); }, 5000);
+  // Lo de Meta va aparte y MUCHO más lento: cada una hora se vuelve a pedir
+  // el gasto por campaña, el CTR diario y horario, y la utilidad con el gasto
+  // real del día (cargarAds() llama a los cuatro). Meta publica con atraso,
+  // así que pedirlo cada 5s no traería nada nuevo y quemaría el rate limit.
+  // Si la pestaña estuvo en segundo plano más de una hora, se pone al día
+  // apenas se vuelve a mirar, sin esperar al próximo turno.
+  var HORA_MS = 3600000;
+  function panelAbierto(){ return clave && document.getElementById('panel').style.display!=='none'; }
+  setInterval(function(){ if(panelAbierto()) cargarAds(); }, HORA_MS);
+  // El gasto en vivo va más rápido: cada minuto el gasto por hora y cada 5 la
+  // utilidad y las tarjetas de campañas, solo con el panel a la vista. El servidor
+  // guarda la lectura de Meta 55 s, así que esto no multiplica las llamadas.
+  var MIN_MS = 60000, utilLeido = 0;
+  setInterval(function(){ if(panelAbierto() && !document.hidden) cargarGastoHora(); }, MIN_MS);
+  setInterval(function(){ if(panelAbierto() && !document.hidden){ utilLeido = Date.now(); cargarUtilidad(); cargarAds(true); } }, 5 * MIN_MS);
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden || !panelAbierto()) return;
+    if(adsLeido && Date.now() - adsLeido >= HORA_MS) cargarAds();
+    if(Date.now() - ghSt.leido >= MIN_MS) cargarGastoHora();
+  });
 </script>
 </body>
 </html>

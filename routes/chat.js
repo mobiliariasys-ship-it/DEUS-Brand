@@ -9,7 +9,7 @@ const { getStock } = require('../services/stock');
 // Precio único: el MISMO que cobran server.js, flow.js y transbank.js. Si algún
 // día cambia, cambia acá también — el bot nunca debe decir un precio distinto
 // al que se cobra en la pasarela.
-const precioBanda = () => 54990;
+const { precioBanda } = require('../services/precio');
 
 function ipDe(req) {
   const fwd = req.headers['x-forwarded-for'];

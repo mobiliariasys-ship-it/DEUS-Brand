@@ -3,18 +3,16 @@ const router = express.Router();
 const https = require('https');
 const crypto = require('crypto');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarPagoFallido } = require('../services/email');
+const correo_ = require('../services/correo');
+const colores_ = require('../services/colores');
 const { decrementStock, getStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
 const metrics = require('../services/metrics');
 const metaCapi = require('../services/meta-capi');
 
-// Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile); después $44.990
-const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
-const PRODUCT_PRICE = 54990;
 // Precio único $54.990, con stock y en modo reserva (igual que server.js y
 // transbank.js, y que lo que muestra el sitio).
-const precioBanda = () => 54990;
-const TAPONES_PRICE = 14990; // compra de solo tapones de oído (sin banda)
+const { precioBanda, TAPONES_PRICE, calcularMonto, nombreProducto, llevaRegaloTapones } = require('../services/precio');
 const pedidosFlow = new Map();
 
 // Producción por defecto; sandbox si FLOW_ENV=sandbox
@@ -65,24 +63,34 @@ function flowReq(method, path, params) {
 
 // Iniciar pago con Flow
 router.post('/flow/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, correas, soloTapones, colores } = req.body;
+  // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
+  const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
+  const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
+  // Flow rechaza el pago ENTERO si el correo no le parece valido (code 1620):
+  // el cliente no puede pagar, no es que rebote el comprobante. Se corta aca
+  // con 400 y un mensaje accionable — con 500 fetchBackend reintentaria 4
+  // veces con 4s de espera y el cliente esperaria 12 segundos para leer un
+  // "no pudimos conectar" que no le dice que arreglar.
+  if (!correo_.esUsable(customerEmail)) {
+    return res.status(400).json({ error: correo_.MENSAJE, campo: 'email' });
+  }
   try {
-    const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
-    const amount = soloTapones
-      ? TAPONES_PRICE * qty + (Number(shippingCost) || 0)
-      : precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+    // Una sola fuente para lo que se cobra: misma función que usan Mercado
+    // Pago y Transbank, así las tres pasarelas no pueden cobrar distinto.
+    const m = calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost });
+    const qty = m.qty;
+    const amount = m.total;
     const commerceOrder = 'deus-' + Date.now();
     const base = getBaseUrl(req);
 
     const params = {
       apiKey: (process.env.FLOW_API_KEY || "").trim(),
       commerceOrder: commerceOrder,
-      subject: soloTapones
-        ? 'Tapones de oído DEUS' + (qty > 1 ? ' x' + qty : '')
-        : 'DEUS Band' + (qty > 1 ? ' x' + qty : '') + (tapones ? ' + Tapones' : ''),
+      subject: nombreProducto({ qty, tapones, correas: m.correas, soloTapones }),
       currency: 'CLP',
       amount: String(amount),
-      email: customerEmail || 'cliente@deusbrand.cl',
+      email: correo_.normalizar(customerEmail),
       urlConfirmation: base + '/flow/confirmacion',
       urlReturn: base + '/flow/retorno'
     };
@@ -95,12 +103,12 @@ router.post('/flow/crear', async (req, res) => {
     const pedido = {
       preference_id: commerceOrder,
       created_at: new Date().toISOString(),
-      product: soloTapones
-        ? 'Tapones de oído DEUS' + (qty > 1 ? ` x${qty}` : '')
-        : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
-      product_price: soloTapones ? TAPONES_PRICE * qty : precioBanda() * qty + (tapones ? 12990 : 0),
-      cantidad: qty, tapones: !!tapones, soloTapones: !!soloTapones,
-      color: selectedColor,
+      product: nombreProducto({ qty, tapones, correas: m.correas, soloTapones }),
+      product_price: m.productos,
+      cantidad: qty, tapones: !!tapones, correas: m.correas, soloTapones: !!soloTapones,
+      regaloTapones: llevaRegaloTapones({ soloTapones }), // promo: tapones DEUS gratis
+      color: colorPedido,
+      colores: coloresPedido,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
       shipping: { carrier: shippingCarrier, cost: shippingCost, address: shippingAddress },
       // Datos del navegador del cliente para la Conversions API de Meta (mejoran
@@ -112,6 +120,20 @@ router.post('/flow/crear', async (req, res) => {
       total: amount, status: 'pending', method: 'Flow'
     };
     pedidosFlow.set(commerceOrder, pedido);
+    // AddPaymentInfo a Meta desde el SERVIDOR, con el mismo event_id que acaba
+    // de emitir el píxel de index.html → Meta deduplica y cuenta uno solo.
+    // Acá el evento viaja con el emparejamiento completo (nombre, comuna,
+    // región, RUT), no solo con la IP y el user agent como el del navegador.
+    metaCapi.enviarAddPaymentInfo({
+      eventId: req.body && req.body.apiEventId,
+      valor: amount,
+      email: customerEmail, phone: customerPhone,
+      nombre: customerName, rut: customerRut,
+      comuna: shippingAddress && shippingAddress.commune,
+      region: shippingAddress && shippingAddress.region,
+      clientIp: pedido.clientIp, clientUa: pedido.clientUa,
+      fbp: pedido.fbp, fbc: pedido.fbc
+    }).catch(e => console.error('[capi]', e.message));
     enviarPedidoNuevo(pedido).catch(e => console.error('[email]', e.message));
     // Si en 10 min no hay pago confirmado, correo de recuperación al cliente
     programarRecuperacion(commerceOrder, pedido);
@@ -120,14 +142,21 @@ router.post('/flow/crear', async (req, res) => {
     res.json({ url: r.body.url + '?token=' + r.body.token });
   } catch (e) {
     console.error('[flow/crear] Error:', e.message);
+    // Si lo que se quejo fue el correo (1620), se le dice al cliente para que
+    // lo corrija. Cubre los tipeos que no estan en la lista de arriba.
+    if (/userEmail|is not valid|\b1620\b/i.test(e.message || '')) {
+      return res.status(400).json({ error: correo_.MENSAJE, campo: 'email' });
+    }
     // Aviso al dueño: el cliente se quedó sin poder pagar (venta rescatable)
     enviarPagoFallido({
       metodo: 'Webpay / Flow',
       error: e.message,
       cliente: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
-      producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
-      monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (Number(shippingCost) || 0),
-      color: selectedColor,
+      producto: nombreProducto({ qty: 1, tapones, correas, soloTapones }),
+      // Los extras (tapones, correas) tambien van en el aviso: si no, el monto
+      // de la venta rescatable sale menor al que el cliente iba a pagar.
+      monto: calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost }).total,
+      color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
     res.status(500).json({ error: 'No se pudo iniciar el pago con Flow' });
@@ -145,11 +174,18 @@ router.post('/flow/confirmacion', async (req, res) => {
     const pedido = pedidosFlow.get(st.commerceOrder);
     console.log('[flow/confirmacion] ' + st.commerceOrder + ' status=' + st.status);
     if (st.status === 2) {
+      // ¿Es un reaviso del MISMO pago? Hay que preguntarlo ANTES de
+      // registrar la venta, que es justo el paso que deja la marca. Sin esto,
+      // cada reintento reenviaba los dos correos — el del dueño y el del
+      // CLIENTE, que días después parece un segundo cobro.
+      const reaviso = !!metrics.buscarTicketPorOrden(st.commerceOrder);
+      if (reaviso) console.log('[flow/confirmacion] ya procesado — no se reenvían correos');
+
       if (pedido) pedido.status = 'paid';
       marcarPagado(st.commerceOrder); // cancela el correo de recuperación
       if (!(pedido && pedido.soloTapones)) decrementStock(st.commerceOrder); // solo tapones no descuenta stock de banda
       // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
-      const ticketFlow = metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder, email: (pedido && pedido.customer && pedido.customer.email) || st.payer });
+      const ticketFlow = metrics.registrarVenta({ monto: st.amount, metodo: 'Flow', nombre: pedido && pedido.customer && pedido.customer.name, orden: st.commerceOrder, email: (pedido && pedido.customer && pedido.customer.email) || st.payer, unidades: pedido && pedido.cantidad, soloTapones: pedido && pedido.soloTapones, tapones: pedido && pedido.tapones, correas: (pedido && pedido.correas || []).length });
       // Respaldo server-side del píxel (mismo event_id 'purchase-<orden>' que
       // success.html) por si el cliente no llega a disparar el píxel en el navegador.
       metaCapi.enviarPurchase({
@@ -164,13 +200,13 @@ router.post('/flow/confirmacion', async (req, res) => {
         region: pedido && pedido.shipping && pedido.shipping.address && pedido.shipping.address.region
       })
         .catch(e => console.error('[capi]', e.message));
-      enviarPagoConfirmado({
+      if (!reaviso) enviarPagoConfirmado({
         payer: { email: (st.payer) || (pedido && pedido.customer && pedido.customer.email) || '(Flow)' },
         transaction_amount: st.amount,
         id: st.commerceOrder
       }, pedido).catch(e => console.error('[email]', e.message));
       // Confirmación al cliente
-      enviarConfirmacionCliente({
+      if (!reaviso) enviarConfirmacionCliente({
         email: (pedido && pedido.customer && pedido.customer.email) || st.payer,
         name: pedido && pedido.customer && pedido.customer.name,
         monto: st.amount,
@@ -178,7 +214,9 @@ router.post('/flow/confirmacion', async (req, res) => {
         color: pedido && pedido.color,
         carrier: pedido && pedido.shipping && pedido.shipping.carrier,
         address: pedido && pedido.shipping && pedido.shipping.address,
-        ticket: ticketFlow && ticketFlow.numero
+        ticket: ticketFlow && ticketFlow.numero,
+        correas: (pedido && pedido.correas) || [],
+        regaloTapones: !!(pedido && pedido.regaloTapones)
       }).catch(e => console.error('[email] Confirmación cliente:', e.message));
     } else if (pedido) pedido.status = 'rejected';
   } catch (e) { console.error('[flow/confirmacion] Error:', e.message); }

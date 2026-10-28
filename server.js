@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const shippingRoutes = require('./routes/shipping');
@@ -8,22 +10,23 @@ const equipoRoutes = require('./routes/equipo');
 const chatRoutes = require('./routes/chat');
 const atletas = require('./services/atletas');
 const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico } = require('./services/email');
+const colores_ = require('./services/colores');
+const correo_ = require('./services/correo');
+const utilidad_ = require('./services/utilidad');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
 const persist = require('./services/persist');
 const { programarRecuperacion, marcarPagadoPorEmail } = require('./services/recovery');
 const metaCapi = require('./services/meta-capi');
 const metaAds = require('./services/meta-ads');
+const metricasLectura = require('./services/metricas-lectura');
+const avisosPush = require('./services/avisos-push');
+const resenas = require('./services/resenas');
 
-// Oferta de lanzamiento hasta el 17-jul-2026 07:00 (Chile). Al vencer, el
-// precio sube a $44.990 y el envío pasa a ser gratis (el front envía costo 0).
-// El front usa esta misma fecha, así el cambio ocurre solo y sincronizado.
-const OFERTA_END = new Date('2026-08-01T00:00:00-04:00').getTime();
-// Precio único $54.990, con stock y en modo reserva. Este es el precio
-// AUTORITATIVO que se cobra; el front muestra exactamente lo mismo, así no
-// puede volver a pasar que el sitio diga un precio y la pasarela cobre otro.
-const precioBanda = () => 54990;
-const TAPONES_PRICE = 14990; // compra de solo tapones de oído (sin banda)
+// Precio AUTORITATIVO: es el que se cobra, con stock y en modo reserva. El
+// sitio lo lee de /stock y muestra exactamente esto, así no puede pasar que la
+// página diga un precio y la pasarela cobre otro. Ver services/precio.js.
+const { precioBanda, precios, TAPONES_PRICE, UPSELL_TAPONES, CORREAS_PRICE, CORREAS, normalizarCorreas, nombreProducto, calcularMonto, llevaRegaloTapones } = require('./services/precio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -172,13 +175,24 @@ const pedidos = [];
 function guardarPedidos() { persist.save('pedidos.json', pedidos).catch(e => console.error('[pedidos] Error guardando:', e.message)); }
 
 app.post('/crear-preferencia', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, soloTapones, acciones } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, correas, soloTapones, acciones, colores } = req.body;
+  // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
+  // MercadoPago tambien recibe el correo. Mismo corte que en Flow: si la
+  // pasarela lo va a rechazar, mejor decirselo al cliente ahora y que lo
+  // arregle, en vez de que se lleve un error generico y abandone.
+  if (!correo_.esUsable(customerEmail)) {
+    return res.status(400).json({ error: correo_.MENSAJE, campo: 'email' });
+  }
+  const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
+  const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
 
   try {
     const preference = new Preference(client);
 
-    // Cantidad acotada a un rango razonable
-    const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
+    // Una sola fuente para lo que se cobra: misma función que usan Flow y
+    // Transbank, así las tres pasarelas no pueden cobrar distinto.
+    const m = calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost });
+    const qty = m.qty;
 
     // Compra de SOLO tapones (sin banda): el único ítem es el estuche de tapones.
     const items = soloTapones
@@ -205,7 +219,18 @@ app.post('/crear-preferencia', async (req, res) => {
       items.push({
         title: 'Tapones de oído DEUS',
         description: 'Tapones de oído — 3 tamaños incluidos',
-        unit_price: 12990,
+        unit_price: UPSELL_TAPONES,
+        quantity: 1,
+        currency_id: 'CLP'
+      });
+    }
+
+    // Correas extra: un ítem por par, con el mismo precio que suma calcularMonto.
+    for (const k of m.correas) {
+      items.push({
+        title: CORREAS[k].nombre,
+        description: CORREAS[k].detalle,
+        unit_price: CORREAS_PRICE,
         quantity: 1,
         currency_id: 'CLP'
       });
@@ -224,9 +249,7 @@ app.post('/crear-preferencia', async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const isLocalhost = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
 
-    const totalPedido = soloTapones
-      ? TAPONES_PRICE * qty + (Number(shippingCost) || 0)
-      : precioBanda() * qty + (tapones ? 12990 : 0) + (Number(shippingCost) || 0);
+    const totalPedido = m.total;
 
     const prefBody = {
       items,
@@ -234,12 +257,22 @@ app.post('/crear-preferencia', async (req, res) => {
       metadata: {
         customer_name: customerName,
         customer_rut: customerRut,
-        customer_email: customerEmail,
+        customer_email: correo_.normalizar(customerEmail),
         customer_phone: customerPhone,
-        selected_color: selectedColor,
+        selected_color: colorPedido,
+        // El detalle por unidad también viaja acá: la metadata es la fuente
+        // autoritativa del despacho, y sin esto un pedido mezclado llegaría
+        // al correo como '2 negra + 1 gris' sin decir cuántas de cada una.
+        colores: coloresPedido.join(','),
         cantidad: qty,
         tapones: !!tapones,
+        // Pares de correas extra ('negras,grises'): el webhook arma con esto
+        // el correo de despacho, así que viaja con el pago y no solo en memoria.
+        correas: m.correas.join(','),
         soloTapones: !!soloTapones,
+        // Regalo de la promo (tapones DEUS gratis). En snake_case porque así lo
+        // devuelve MercadoPago en el webhook.
+        regalo_tapones: llevaRegaloTapones({ soloTapones }),
         shipping_carrier: shippingCarrier,
         shipping_cost: shippingCost,
         shipping_address: shippingAddress,
@@ -275,18 +308,19 @@ app.post('/crear-preferencia', async (req, res) => {
     const pedido = {
       preference_id: result.id,
       created_at: new Date().toISOString(),
-      product: soloTapones
-        ? 'Tapones de oído DEUS' + (qty > 1 ? ` x${qty}` : '')
-        : 'DEUS Band' + (qty > 1 ? ` x${qty}` : '') + (tapones ? ' + Tapones de oído' : ''),
-      product_price: soloTapones ? TAPONES_PRICE * qty : precioBanda() * qty + (tapones ? 12990 : 0),
+      product: nombreProducto({ qty, tapones, correas: m.correas, soloTapones }),
+      product_price: m.productos,
       cantidad: qty,
       tapones: !!tapones,
+      correas: m.correas,
       soloTapones: !!soloTapones,
-      color: selectedColor,
+      regaloTapones: llevaRegaloTapones({ soloTapones }),
+      color: colorPedido,
+      colores: coloresPedido,
       customer: {
         name: customerName,
         rut: customerRut,
-        email: customerEmail,
+        email: correo_.normalizar(customerEmail),
         phone: customerPhone
       },
       shipping: {
@@ -298,6 +332,20 @@ app.post('/crear-preferencia', async (req, res) => {
       status: 'pending'
     };
     pedidos.push(pedido);
+    // AddPaymentInfo a Meta desde el SERVIDOR, con el mismo event_id que acaba
+    // de emitir el píxel de index.html → Meta deduplica y cuenta uno solo.
+    // Acá el evento viaja con el emparejamiento completo (nombre, comuna,
+    // región, RUT), no solo con la IP y el user agent como el del navegador.
+    metaCapi.enviarAddPaymentInfo({
+      eventId: req.body && req.body.apiEventId,
+      valor: totalPedido,
+      email: customerEmail, phone: customerPhone,
+      nombre: customerName, rut: customerRut,
+      comuna: shippingAddress && shippingAddress.commune,
+      region: shippingAddress && shippingAddress.region,
+      clientIp: prefBody.metadata.client_ip, clientUa: prefBody.metadata.client_ua,
+      fbp: prefBody.metadata.fbp, fbc: prefBody.metadata.fbc
+    }).catch(e => console.error('[capi]', e.message));
     guardarPedidos();
 
     // Enviar correo con los datos del pedido (no bloquea la respuesta)
@@ -314,9 +362,11 @@ app.post('/crear-preferencia', async (req, res) => {
       metodo: 'Mercado Pago',
       error: error.message || String(error),
       cliente: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
-      producto: soloTapones ? 'Tapones de oído DEUS' : 'DEUS Band',
-      monto: (soloTapones ? TAPONES_PRICE : precioBanda()) * Math.max(1, Math.min(10, parseInt(cantidad) || 1)) + (Number(shippingCost) || 0),
-      color: selectedColor,
+      producto: nombreProducto({ qty: 1, tapones, correas, soloTapones }),
+      // Los extras (tapones, correas) tambien van en el aviso: si no, el monto
+      // de la venta rescatable sale menor al que el cliente iba a pagar.
+      monto: calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost }).total,
+      color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
     res.status(500).json({ error: 'Error al crear la preferencia de pago' });
@@ -353,12 +403,17 @@ app.post('/notificaciones', async (req, res) => {
         const enMemoria = [...pedidos].reverse().find(p => (p.customer?.email || '').toLowerCase() === (emailCliente || '').toLowerCase()) || {};
         const taponesPago = meta.tapones !== undefined ? (meta.tapones === true || meta.tapones === 'true') : !!enMemoria.tapones;
         const soloTaponesPago = meta.soloTapones !== undefined ? (meta.soloTapones === true || meta.soloTapones === 'true') : !!enMemoria.soloTapones;
+        const correasPago = meta.correas !== undefined ? normalizarCorreas(String(meta.correas)) : normalizarCorreas(enMemoria.correas);
+        const regaloPago = meta.regalo_tapones !== undefined ? (meta.regalo_tapones === true || meta.regalo_tapones === 'true') : !!enMemoria.regaloTapones;
         const costoPago = (meta.shipping_cost !== undefined && meta.shipping_cost !== null && meta.shipping_cost !== '') ? Number(meta.shipping_cost) : enMemoria.shipping?.cost;
         const pedido = {
           product: enMemoria.product || 'DEUS Band',
           color: meta.selected_color || enMemoria.color,
+          colores: (meta.colores ? String(meta.colores).split(',').filter(Boolean) : null) || enMemoria.colores,
           cantidad: Number(meta.cantidad) || enMemoria.cantidad,
           tapones: taponesPago,
+          correas: correasPago,
+          regaloTapones: regaloPago,
           method: enMemoria.method || 'MercadoPago',
           customer: {
             name: meta.customer_name || enMemoria.customer?.name,
@@ -373,7 +428,16 @@ app.post('/notificaciones', async (req, res) => {
           }
         };
 
-        await enviarPagoConfirmado(info, pedido);
+        // ¿Es un reaviso del MISMO pago? MercadoPago manda más de una
+        // notificación por pago (payment.created, payment.updated días después
+        // al liberar el dinero, y reintentos de los que fallaron). Sin este
+        // corte, cada reaviso reenviaba los dos correos: el de "pago
+        // confirmado" al dueño y —peor— el de confirmación AL CLIENTE, que a
+        // los días parece un segundo cobro.
+        const reaviso = !!metrics.buscarTicketPorOrden(info.id);
+        if (reaviso) console.log('[webhook] Pago', info.id, 'ya procesado — no se reenvían correos');
+
+        if (!reaviso) await enviarPagoConfirmado(info, pedido);
         // Purchase a Meta desde el SERVIDOR (Conversions API): captura el 100%
         // de las ventas aunque el cliente no vuelva a success.html. Mismo
         // event_id que el píxel del navegador → Meta deduplica si llegan ambos.
@@ -392,11 +456,11 @@ app.post('/notificaciones', async (req, res) => {
         metrics.registrarConversion((meta.acciones_sesion || '').split(',').filter(Boolean), info.id, false);
         if (!soloTaponesPago) decrementStock(info.id, true); // esMP: la sincronización con MP ya cuenta este pago; solo tapones no descuenta stock de banda
         // Registra la venta y asigna automáticamente el ticket del sorteo (1 por compra)
-        const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: pedido.customer.name, orden: info.id, email: emailCliente });
+        const ticketMP = metrics.registrarVenta({ monto: info.transaction_amount, metodo: 'MercadoPago', nombre: pedido.customer.name, orden: info.id, email: emailCliente, unidades: pedido.cantidad, soloTapones: pedido.soloTapones, tapones: pedido.tapones, correas: pedido.correas.length });
 
         // Correo de confirmación al cliente (mismos datos autoritativos del pago).
         marcarPagadoPorEmail(emailCliente); // cancela el correo de recuperación
-        enviarConfirmacionCliente({
+        if (!reaviso) enviarConfirmacionCliente({
           email: emailCliente,
           name: pedido.customer.name,
           monto: info.transaction_amount,
@@ -404,7 +468,9 @@ app.post('/notificaciones', async (req, res) => {
           color: pedido.color,
           carrier: pedido.shipping.carrier,
           address: pedido.shipping.address,
-          ticket: ticketMP && ticketMP.numero
+          ticket: ticketMP && ticketMP.numero,
+          correas: pedido.correas,
+          regaloTapones: pedido.regaloTapones
         }).catch(err => console.error('[email] Confirmación cliente:', err.message));
       }
     } catch (err) {
@@ -514,15 +580,6 @@ app.get('/orden/estado', (req, res) => {
   res.json(venta ? { pagado: true, monto: venta.monto } : { pagado: false });
 });
 
-// Instrumentación TEMPORAL para diagnosticar el value corrupto que reporta
-// Meta: success.html manda esto cuando el monto crudo de la URL no coincide
-// con el monto verificado de /orden/estado. Solo loguea; no hace nada más.
-// Sacar este endpoint (y el sendBeacon en success.html) una vez resuelto.
-app.post('/pixel/monto-anomalo', (req, res) => {
-  console.log('[pixel] monto anomalo — crudo="' + (req.query.crudo || '') + '" srv=' + (req.query.srv || '') + ' orden=' + (req.query.orden || ''));
-  res.sendStatus(204);
-});
-
 // ── Panel de administración (protegido con STOCK_KEY) ──
 // Uso: /admin/stats?clave=MICLAVE
 app.get('/admin/stats', (req, res) => {
@@ -541,13 +598,21 @@ app.get('/admin/stats', (req, res) => {
   const corte45 = Date.now() - 45 * 86400000;
   const pedidosRecientes45 = [];
   for (const p of pedidos) {
+    // Cada unidad cuenta. Antes sumaba 1 por PEDIDO, así que un pedido de 3
+    // bandas pesaba lo mismo que uno de 1 y el "qué reponer" subestimaba las
+    // compras múltiples. Con colores mezclados, cada unidad va a su color.
     const c = (p.color || '—').toString().trim();
-    porColor[c] = (porColor[c] || 0) + 1;
+    const unidades = (Array.isArray(p.colores) && p.colores.length)
+      ? p.colores
+      : Array.from({ length: Math.max(1, parseInt(p.cantidad, 10) || 1) }, () => c);
+    for (const u of unidades) porColor[u] = (porColor[u] || 0) + 1;
     const cm = (p.shipping?.address?.commune || '—').toString().trim();
     porComuna[cm] = (porComuna[cm] || 0) + 1;
     // Versión compacta con fecha para que el panel filtre por periodo.
     const t = new Date(p.created_at).getTime();
-    if (!isNaN(t) && t >= corte45) pedidosRecientes45.push({ f: p.created_at, c, cm });
+    // c = unidades del pedido: el panel filtra por periodo y rearma el conteo
+    // por color desde acá, así que necesita el mismo detalle que porColor.
+    if (!isNaN(t) && t >= corte45) pedidosRecientes45.push({ f: p.created_at, c: unidades, cm });
   }
   res.json({
     ...snap,
@@ -569,6 +634,92 @@ app.post('/admin/reset-tiempo', (req, res) => {
   res.json({ ok: true });
 });
 
+// Carga manual de una venta, protegida con STOCK_KEY.
+//
+// Para qué existe: hay ventas REALES que el panel no ve. Las presenciales no
+// pasan por ninguna pasarela, y mientras persist.js está en modo archivo cada
+// reinicio de Render se lleva las del día. Esto las repone.
+//
+// NO le avisa a Meta. La CAPI ya mandó el Purchase cuando la venta ocurrió
+// (por eso Meta suele mostrar más ventas que el panel), y una presencial no
+// vino de un anuncio: en los dos casos reportarla acá sería contarla doble.
+//
+// Tampoco toca el stock — para eso está /stock/ajustar. Juntar las dos cosas
+// acá se arriesga a descontar dos veces la misma banda.
+//
+// `orden` es obligatoria porque es la llave de idempotencia: si la mandás dos
+// veces, la segunda no suma. Para una presencial sirve cualquier referencia
+// estable, ej. "presencial-2026-09-27-1".
+//
+// Mercado Libre (metodo "Mercado Libre"): el monto es lo que DEPOSITA ML, ya
+// sin su envío ni su comisión. metrics la guarda aparte: entra en la utilidad
+// (solo se le resta el costo de la banda) pero no en las métricas de la web.
+app.post('/admin/venta', (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+
+  const { monto, fecha, metodo, nombre, orden, email, unidades, soloTapones, tapones } = req.body || {};
+  const m = Number(monto);
+  if (!m || m <= 0) return res.status(400).json({ error: 'monto tiene que ser un número mayor a 0' });
+  if (!orden || !String(orden).trim()) return res.status(400).json({ error: 'orden es obligatoria (llave de idempotencia)' });
+  if (fecha && isNaN(new Date(fecha))) return res.status(400).json({ error: 'fecha inválida — usá ISO, ej. 2026-09-27T20:00:00-03:00' });
+
+  const yaEstaba = metrics.ventaYaRegistrada(String(orden).trim());
+  const ticket = metrics.registrarVenta({
+    monto: m, fecha, metodo: metodo || 'Manual', nombre: nombre || '',
+    orden: String(orden).trim(), email: email || '',
+    unidades: Number(unidades) > 0 ? Number(unidades) : null,
+    soloTapones: !!soloTapones, tapones: !!tapones
+  });
+  console.log('[admin/venta]', yaEstaba ? 'orden ya registrada, no se suma:' : 'venta cargada a mano:', orden, m);
+  res.json({ ok: true, duplicada: yaEstaba, ticket: ticket && ticket.numero || null });
+});
+
+// ── Aviso de venta por push (al PC del dueño, aunque el panel esté cerrado) ──
+// Con la misma clave del panel. Ver services/avisos-push.js.
+metrics.alVender((v, resumen) => avisosPush.enviar(avisosPush.textoVenta(v, resumen)));
+
+function clavePanelOk(req, res) {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) { res.status(404).json({ error: 'No disponible' }); return false; }
+  if ((req.query.clave || '') !== clave) { res.status(403).json({ error: 'Clave incorrecta' }); return false; }
+  return true;
+}
+
+app.get('/admin/push/clave', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try { res.json({ publicKey: await avisosPush.clavePublica() }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/admin/push/suscribir', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try { res.json({ ok: true, suscripciones: await avisosPush.suscribir(req.body) }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.post('/admin/push/desuscribir', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try { res.json({ ok: true, suscripciones: await avisosPush.desuscribir(String((req.body && req.body.endpoint) || '')) }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Aviso de prueba: pasa por el mismo camino que una venta real (servidor →
+// servicio de push → PC), así el botón del panel confirma que de verdad llega.
+app.post('/admin/push/probar', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try {
+    const r = await avisosPush.enviar({
+      tipo: 'prueba',
+      title: '🔔 Aviso de ventas activado',
+      body: 'Así te va a llegar cada venta, aunque el panel esté cerrado.',
+      tag: 'deus-venta-prueba'
+    });
+    res.json({ ok: true, ...r });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Ads Manager (Marketing API de Meta), protegido con STOCK_KEY ──
 function claveAdsOk(req, res) {
   const clave = (process.env.STOCK_KEY || '').trim();
@@ -586,6 +737,261 @@ function errorAds(res, e) {
 
 app.get('/admin/ads/campaigns', async (req, res) => {
   if (!claveAdsOk(req, res)) return;
+  try {
+    const campañas = await metaAds.listCampaigns();
+    const conInsights = await Promise.all(campañas.map(async c => ({
+      ...c,
+      insights: await metaAds.getInsights(c.id).catch(() => null)
+    })));
+    res.json({ campaigns: conInsights });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+// Serie diaria de CTR por campaña ACTIVA — alimenta el gráfico de líneas del
+// panel. Va aparte de /admin/ads/campaigns porque son N+1 llamadas a Meta
+// (una por campaña) y no conviene pagarlas en cada refresco de las tarjetas.
+app.get('/admin/ads/ctr-diario', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const dias = [7, 14, 30].includes(Number(req.query.dias)) ? Number(req.query.dias) : 14;
+    // Solo las activas: una campaña pausada aporta una línea que se corta y
+    // ensucia la lectura sin decir nada del presente.
+    const campanas = (await metaAds.listCampaigns()).filter(c => c.status === 'ACTIVE');
+    // Orden por id ascendente = orden de creación. El color de cada campaña
+    // sale de esta posición, así que al pausar o crear una, las que ya estaban
+    // NO cambian de color.
+    campanas.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    const series = await Promise.all(campanas.map(async c => ({
+      id: c.id,
+      nombre: c.name,
+      dias: await metaAds.getInsightsDiarios(c.id, dias).catch(() => [])
+    })));
+    res.json({ dias, series });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+// CTR hora a hora de UN anuncio — el gráfico "en vivo" del panel.
+//
+// Cuál anuncio: el id de META_AD_CTR_HORARIO_ID si está puesto; si no, el
+// primero cuyo nombre contenga lo buscado (?anuncio=, por defecto "giratorio");
+// y si tampoco aparece, el activo que salga primero. Se resuelve por NOMBRE y
+// no por id fijo a propósito: los creativos de Meta son inmutables, así que al
+// cambiar el video o el copy nace un anuncio NUEVO con otro id y un id escrito
+// a mano dejaría el gráfico mudo sin decir por qué.
+app.get('/admin/ads/ctr-horario', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const dias = [1, 3, 7].includes(Number(req.query.dias)) ? Number(req.query.dias) : 3;
+    const buscado = String(req.query.anuncio || 'giratorio');
+    const fijo = (process.env.META_AD_CTR_HORARIO_ID || '').trim();
+    const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const ads = await metaAds.listAds();
+    const anuncio = (fijo && ads.find(a => a.id === fijo))
+      || ads.find(a => norm(a.name).includes(norm(buscado)))
+      || ads.find(a => a.effective_status === 'ACTIVE')
+      || ads[0];
+    if (!anuncio) return res.status(404).json({ error: 'La cuenta de Meta no tiene anuncios.' });
+
+    const horas = await metaAds.getCtrHorario(anuncio.id, dias);
+    res.json({
+      dias,
+      anuncio: { id: anuncio.id, nombre: anuncio.name, estado: anuncio.effective_status },
+      // Aviso honesto en la respuesta: si lo que se está graficando NO es el
+      // anuncio pedido, el panel lo dice en vez de mostrar otra línea como si
+      // fuera la buena.
+      exacto: norm(anuncio.name).includes(norm(buscado)),
+      buscado,
+      horas
+    });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+// Gasto POR HORA de la cuenta — la sección "en vivo" del panel.
+//
+// Hoy se relee como mucho cada 55 s (15 s si se aprieta "Actualizar") y los 7
+// días anteriores, que dan el promedio de cada hora, cada 15 min. La caché vive
+// en el servidor: dos pestañas abiertas, o el panel en el celular y en el
+// computador a la vez, no multiplican las llamadas a Meta. Meta igual publica
+// el gasto con unos minutos de atraso, así que leer más seguido no traería
+// nada más nuevo y sí gastaría el rate limit de la cuenta.
+const gastoHoraCache = { hoy: null, hoyClave: '', tHoy: 0, hist: null, histClave: '', tHist: 0, campanas: null, tCamp: 0 };
+function diaChileStr(atras) {
+  return new Date(Date.now() - atras * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+}
+app.get('/admin/ads/gasto-horario', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const c = gastoHoraCache, ahora = Date.now();
+    const hoy = diaChileStr(0), desde = diaChileStr(7), ayer = diaChileStr(1);
+    // Campañas para el camino campaña por campaña: la lista se renueva cada
+    // 10 min. Las archivadas y borradas ya no gastan.
+    if (!c.campanas || ahora - c.tCamp > 10 * 60000) {
+      try {
+        c.campanas = (await metaAds.listCampaigns()).filter(x => x.status !== 'ARCHIVED' && x.status !== 'DELETED');
+        c.tCamp = ahora;
+      } catch (e) { c.campanas = null; }
+    }
+    const opts = c.campanas ? { campanas: c.campanas } : {};
+    const vence = req.query.forzar === '1' ? 15000 : 55000;
+    if (!c.hoy || c.hoyClave !== hoy || ahora - c.tHoy > vence) {
+      c.hoy = await metaAds.getGastoHorario(hoy, hoy, opts);
+      c.hoyClave = hoy; c.tHoy = ahora;
+    }
+    let histError = '';
+    if (!c.hist || c.histClave !== ayer || ahora - c.tHist > 15 * 60000) {
+      try {
+        c.hist = await metaAds.getGastoHorario(desde, ayer, opts);
+        c.histClave = ayer; c.tHist = ahora;
+      } catch (e) { histError = e.message || 'Meta no respondió'; }
+    }
+    const vacias = () => Array.from({ length: 24 }, (_, h) => ({ hora: h, gasto: 0, impresiones: 0, clics: 0 }));
+    const horasHoy = vacias(), promedio7 = vacias();
+    for (const f of c.hoy.filas) {
+      if (f.fecha !== hoy) continue;
+      const x = horasHoy[f.hora]; x.gasto += f.gasto; x.impresiones += f.impresiones; x.clics += f.clics;
+    }
+    // Promedio POR DÍA de los 7 anteriores (se divide por 7 aunque algún día
+    // no haya gastado: un día con los anuncios apagados también es un dato).
+    for (const f of (c.hist ? c.hist.filas : [])) {
+      const x = promedio7[f.hora]; x.gasto += f.gasto / 7; x.impresiones += f.impresiones / 7; x.clics += f.clics / 7;
+    }
+    res.json({
+      hoy,
+      horaActual: Number(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false })) % 24,
+      horasHoy, promedio7,
+      ventas: metrics.ventasPorHora(),
+      leidoHoy: c.tHoy, leidoHist: c.tHist, via: c.hoy.via, histError
+    });
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+// Utilidad diaria: cruza las ventas del panel con el gasto real en Meta.
+//
+// Costos por venta, en orden de tamaño:
+//   - banda      $17.000 por UNIDAD (un pedido de 3 cuesta el triple)
+//   - envío       $4.000 por PEDIDO (uno de 3 bandas se despacha una vez)
+//   - pasarela      3,5% del monto (Webpay/Flow/MercadoPago)
+//   - Mercado Libre se carga con lo que deposita ML (ya sin su envío ni su
+//     comisión), así que a esas ventas solo se les resta la banda
+//   - publicidad  el gasto REAL del día en la cuenta de Meta, no el presupuesto
+//
+// El gasto de Meta es de la cuenta completa, no de una campaña: una campaña
+// pausada hoy igual consumió plata mientras corría, y esa plata salió del
+// mismo bolsillo.
+// La usan el panel (clave admin) y las métricas de solo lectura (METRICAS_KEY).
+async function utilidadDiaria(diasParam) {
+  // dias=iva: desde que la utilidad cuenta los ads con IVA (tarjeta
+  // "Utilidad histórica" del panel). Si no, 7, 14 o 30.
+  const desdeIva = diasParam === 'iva';
+  const dias = desdeIva ? utilidad_.diasDesdeIva()
+    : [7, 14, 30].includes(Number(diasParam)) ? Number(diasParam) : 14;
+  const ventas = metrics.ventasPorDia(dias);
+  // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
+  // media verdad sirve más que un panel en blanco.
+  let gasto = {}, compras = {}, adsOk = true, adsError = '', via = '';
+  try {
+    const r = await metaAds.getGastoDiarioCuenta(dias);
+    gasto = r.mapa; compras = r.compras || {}; via = r.via;
+  }
+  catch (e) {
+    adsOk = false;
+    // El mensaje VIAJA al panel. Antes solo iba al log de Render, así que la
+    // columna de ads salía en 0 sin decir por qué y no había cómo saber si
+    // faltaba el token, si Meta rechazó la llamada o si no había datos.
+    adsError = e.message || 'Meta no respondió';
+    console.error('[utilidad] Meta no respondió:', adsError);
+  }
+
+  const filas = ventas.map(d => utilidad_.calcularDia(d, gasto[d.fecha], compras[d.fecha]));
+  const tot = utilidad_.totalizar(filas);
+
+  // Meta fecha por el huso de la CUENTA publicitaria, y las ventas se agrupan
+  // por día de Chile. Si los dos no coinciden, la llamada responde bien pero
+  // ninguna fecha calza y la columna de ads queda en cero igual — un fallo
+  // que se ve idéntico a "no hay datos". Se detecta y se informa.
+  const fechasMeta = Object.keys(gasto);
+  const calzan = ventas.filter(d => gasto[d.fecha] != null).length;
+  if (adsOk && fechasMeta.length && !calzan) {
+    adsOk = false;
+    adsError = 'Meta devolvió ' + fechasMeta.length + ' días (' + fechasMeta.sort()[0] +
+      ' a ' + fechasMeta.sort().slice(-1)[0] + ') pero ninguno coincide con los días del panel. ' +
+      'Revisa el huso horario de la cuenta publicitaria.';
+  }
+
+  return {
+    dias, desde: desdeIva ? utilidad_.IVA_DESDE : undefined, adsOk, adsError, filas, total: tot,
+    diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan, via },
+    costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA, iva: utilidad_.IVA }
+  };
+}
+
+app.get('/admin/utilidad-diaria', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    res.json(await utilidadDiaria(req.query.dias));
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+// ── Métricas de SOLO LECTURA (METRICAS_KEY) ──────────────────────────────
+// Para analizar la conversión sin la clave admin (ver services/metricas-lectura.js):
+// solo GET y solo números, nunca nombres, correos ni direcciones. La clave va en
+// la cabecera X-Metricas-Key y no en la URL, para que no quede en los logs ni en
+// el historial del navegador. Los intentos fallidos suman al mismo bloqueo por
+// IP que la clave admin. Sin METRICAS_KEY configurada, las rutas no existen (404).
+//   curl -H "X-Metricas-Key: $DEUS_METRICAS_KEY" https://deusbrand.cl/admin/metricas
+function claveMetricasOk(req, res) {
+  const real = (process.env.METRICAS_KEY || '').trim();
+  if (!real) { res.status(404).json({ error: 'No disponible' }); return false; }
+  const ip = ipDeLaPeticion(req), ahora = Date.now(), reg = intentosAdmin.get(ip);
+  if (reg && reg.n >= MAX_INTENTOS_ADMIN && ahora - reg.desde < BLOQUEO_ADMIN_MS) {
+    res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos.' });
+    return false;
+  }
+  // La clave llega en X-Metricas-Key o como "Authorization: Bearer <clave>"
+  // (el formato por defecto de los secretos de red del entorno de Claude).
+  const bearer = /^Bearer\s+(.+)$/i.exec(req.get('authorization') || '');
+  const enviada = req.get('x-metricas-key') || (bearer ? bearer[1].trim() : '');
+  if (!metricasLectura.claveValida(enviada, real)) {
+    if (!reg || ahora - reg.desde > BLOQUEO_ADMIN_MS) intentosAdmin.set(ip, { desde: ahora, n: 1 });
+    else reg.n += 1;
+    res.status(403).json({ error: 'Clave incorrecta' });
+    return false;
+  }
+  res.set('Cache-Control', 'no-store');
+  return true;
+}
+
+// Todo lo del panel que sirve para la conversión: visitas, embudo, checkout,
+// conducta, canales, ventas por día/hora/método, stock y pedidos por color/comuna.
+app.get('/admin/metricas', (req, res) => {
+  if (!claveMetricasOk(req, res)) return;
+  res.json(metricasLectura.armar(metrics.snapshot(), pedidos, getStock()));
+});
+
+// Utilidad día por día: ?dias=7|14|30|iva (igual que en el panel).
+app.get('/admin/metricas/utilidad', async (req, res) => {
+  if (!claveMetricasOk(req, res)) return;
+  try {
+    res.json(await utilidadDiaria(req.query.dias));
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+// Campañas de Meta con sus números de los últimos 7 días (solo lectura).
+app.get('/admin/metricas/anuncios', async (req, res) => {
+  if (!claveMetricasOk(req, res)) return;
   try {
     const campañas = await metaAds.listCampaigns();
     const conInsights = await Promise.all(campañas.map(async c => ({
@@ -690,12 +1096,14 @@ app.post('/envio/despachado', async (req, res) => {
   }
 });
 
-// Stock restante (para el contador de unidades en la web). Incluye `precio`
-// (lo que el backend cobraría AHORA) como diagnóstico: siempre debe venir
-// "precio":54990, con o sin stock, igual a lo que muestra el sitio.
+// Stock restante (para el contador de unidades en la web). Devuelve además el
+// precio, el ancla tachada y el % del sello: el sitio los pinta desde acá en
+// vez de decidirlo con el reloj del visitante, que puede estar mal y le
+// mostraría un precio distinto del que se le va a cobrar. El backend manda.
 app.get('/stock', (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.json({ remaining: getStock(), precio: precioBanda() });
+  const p = precios();
+  res.json({ remaining: getStock(), precio: p.precio, ancla: p.ancla, off: p.off, correas: CORREAS_PRICE });
 });
 
 // Ajuste manual del stock, protegido con la clave STOCK_KEY de Render.
@@ -762,11 +1170,101 @@ app.post('/resenas', async (req, res) => {
   }
 });
 
+// ── Reseñas cargadas desde el panel (services/resenas.js) ──
+// Las de /admin/* van con ?clave= (STOCK_KEY), como el resto del panel.
+function claveAdminOk(req) {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  return !!clave && (req.query.clave || '') === clave;
+}
+function exigirClave(req, res) {
+  if (!(process.env.STOCK_KEY || '').trim()) { res.status(404).json({ error: 'No disponible' }); return false; }
+  if (!claveAdminOk(req)) { res.status(403).json({ error: 'Clave incorrecta' }); return false; }
+  return true;
+}
+function errorResena(res, e) {
+  if (e instanceof resenas.ErrorResena) return res.status(400).json({ error: e.message });
+  console.error('[resenas] Error:', e.message);
+  res.status(500).json({ error: 'No se pudo guardar. Intenta de nuevo.' });
+}
+
+app.get('/admin/resenas', (req, res) => {
+  if (!exigirClave(req, res)) return;
+  res.json({ resenas: resenas.todas(), orden: resenas.verOrden() });
+});
+
+// Orden del carrusel: { fotos: [ids], textos: [ids] }.
+app.post('/admin/resenas/orden', async (req, res) => {
+  if (!exigirClave(req, res)) return;
+  try { res.json({ ok: true, orden: await resenas.guardarOrden(req.body) }); } catch (e) { errorResena(res, e); }
+});
+
+app.post('/admin/resenas', async (req, res) => {
+  if (!exigirClave(req, res)) return;
+  try { res.json({ ok: true, resena: await resenas.crear(req.body) }); } catch (e) { errorResena(res, e); }
+});
+
+app.post('/admin/resenas/:id/visible', async (req, res) => {
+  if (!exigirClave(req, res)) return;
+  try {
+    const r = await resenas.cambiarVisible(req.params.id, !!(req.body && req.body.visible));
+    if (!r) return res.status(404).json({ error: 'No existe esa reseña.' });
+    res.json({ ok: true, resena: r });
+  } catch (e) { errorResena(res, e); }
+});
+
+app.post('/admin/resenas/:id/borrar', async (req, res) => {
+  if (!exigirClave(req, res)) return;
+  try {
+    if (!(await resenas.borrar(req.params.id))) return res.status(404).json({ error: 'No existe esa reseña.' });
+    res.json({ ok: true });
+  } catch (e) { errorResena(res, e); }
+});
+
+// Públicas: la web las suma al carrusel. Un minuto de caché basta para que una
+// reseña recién subida aparezca enseguida sin consultar en cada visita.
+app.get('/resenas/lista', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=60');
+  res.json({ resenas: resenas.publicas(), orden: resenas.verOrden() });
+});
+
+// Cada foto tiene su id y nunca cambia: se cachea un año. Con la clave del
+// panel también se entregan las de reseñas ocultas (miniaturas), sin caché.
+app.get('/resenas/foto/:id', async (req, res) => {
+  try {
+    const admin = claveAdminOk(req);
+    const f = await resenas.foto(req.params.id, { incluirOcultas: admin });
+    if (!f) return res.status(404).send('No encontrada');
+    res.set('Content-Type', f.tipo);
+    res.set('Cache-Control', admin ? 'private, no-store' : 'public, max-age=31536000, immutable');
+    res.send(f.buf);
+  } catch (e) {
+    console.error('[resenas] foto:', e.message);
+    res.status(500).send('Error');
+  }
+});
+
+// Reportes de ventas de Mercado Libre (services/datos/mercadolibre-*.json, los
+// arma scripts/ml_reporte.py desde el Excel de ML). Van en orden de fecha y
+// cada uno se aplica una sola vez (metrics.importarMercadoLibre lo anota).
+function importarReportesML() {
+  const dir = path.join(__dirname, 'services', 'datos');
+  let archivos = [];
+  try { archivos = fs.readdirSync(dir).filter(f => /^mercadolibre-.*\.json$/.test(f)).sort(); } catch (e) { return; }
+  for (const f of archivos) {
+    try {
+      const r = metrics.importarMercadoLibre(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
+      if (r && r.aplicado) console.log('[mercadolibre]', f, 'aplicado:', r.nuevas, 'nuevas,', r.actualizadas, 'actualizadas,', r.reemplazadas, 'cargadas a mano reemplazadas (' + r.desde + ' a ' + r.hasta + ')');
+    } catch (e) { console.error('[mercadolibre] No se pudo aplicar', f + ':', e.message); }
+  }
+}
+
 // Carga lo guardado (disco o Postgres) antes de aceptar tráfico, así ninguna
 // venta/ticket/vista que llegue justo al arrancar se registra sobre datos vacíos.
 async function arrancar() {
   await metrics.init(); // carga ventas, tickets y vistas persistidos
+  importarReportesML();
   await atletas.init(); // carga equipos, atletas y sus días
+  await resenas.init(); // reseñas cargadas desde el panel
   const pedidosGuardados = await persist.load('pedidos.json', []);
   pedidos.push(...pedidosGuardados);
 

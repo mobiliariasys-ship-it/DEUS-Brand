@@ -36,6 +36,12 @@
   force = true
 
 [[redirects]]
+  from = "/automatizacion/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
   from = "/scripts/*"
   to = "/404.html"
   status = 404
@@ -129,9 +135,32 @@
   status = 200
   force = true
 
+# El chatbot: el front lo llama en el mismo origen (DEUS_API_BASE = ''), así
+# que sin estas dos reglas /chat nunca llega a Render y el bot queda muerto en
+# producción. Van dos (no solo /chat/*) porque el comodín no cubre /chat pelado,
+# igual que /stock y /stock/*.
+[[redirects]]
+  from = "/chat"
+  to = "https://deus-band.onrender.com/chat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/chat/*"
+  to = "https://deus-band.onrender.com/chat/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/resenas"
   to = "https://deus-band.onrender.com/resenas"
+  status = 200
+  force = true
+
+# Reseñas cargadas desde el panel: la lista que pinta la web y las fotos.
+[[redirects]]
+  from = "/resenas/*"
+  to = "https://deus-band.onrender.com/resenas/:splat"
   status = 200
   force = true
 
@@ -168,18 +197,36 @@
   status = 200
   force = true
 
-# Instrumentación temporal: success.html reporta acá cuando el monto crudo de
-# la URL no coincide con el monto verificado del servidor.
-[[redirects]]
-  from = "/pixel/*"
-  to = "https://deus-band.onrender.com/pixel/:splat"
-  status = 200
-  force = true
-
 # Canje del sorteo.
 [[redirects]]
   from = "/sorteo"
   to = "https://deus-band.onrender.com/sorteo"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/sorteo/*"
+  to = "https://deus-band.onrender.com/sorteo/:splat"
+  status = 200
+  force = true
+
+# Aviso de despacho (lo llama el script de Gmail), ficha del equipo/atletas
+# (equipo.html) y reinicio de métricas del panel: también viven en Render.
+[[redirects]]
+  from = "/envio/*"
+  to = "https://deus-band.onrender.com/envio/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/equipo/*"
+  to = "https://deus-band.onrender.com/equipo/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/metrics/*"
+  to = "https://deus-band.onrender.com/metrics/:splat"
   status = 200
   force = true
 
@@ -235,5 +282,13 @@
 # El HTML nunca se cachea: así un cambio en la web se ve al instante.
 [[headers]]
   for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# La portada se pide como "/" (no como "/index.html"), así que la regla de
+# arriba no la alcanza: sin esta, un navegador (el de Instagram, por ejemplo)
+# podía seguir mostrando una versión vieja de la web.
+[[headers]]
+  for = "/"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
