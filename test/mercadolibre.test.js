@@ -2,10 +2,10 @@
 // Ventas de Mercado Libre cargadas a mano en la utilidad diaria. Desde el
 // 28-oct-2026 se cargan con el PRECIO COMPLETO (bruto) y la utilidad les resta
 // los cargos de ML (30,4%: publicidad, comisión, envío y devoluciones) y la
-// banda: de $68.990 ML se queda $20.959, deposita $48.031 y quedan $31.031.
-// Las de antes (y las del reporte de ML) traen lo que DEPOSITA ML, ya sin su
-// envío ni su comisión: a esas solo se les resta la banda. Ej.: ML deposita
-// $57.000 y la utilidad es $57.000 − $17.000 = $40.000.
+// banda: de $68.990 ML se queda $20.956, deposita $48.034 y quedan $31.034.
+// Las de antes traen lo que DEPOSITA ML, ya sin su envío ni su comisión: a
+// esas solo se les resta la banda. Ej.: ML deposita $57.000 y la utilidad es
+// $57.000 − $17.000 = $40.000.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -87,32 +87,36 @@ const VENTA_ML_BRUTA = { pedidos: 1, unidades: 1, ingresos: 68990, pedidosExtern
 
 test('una venta de ML con precio completo descuenta los cargos de ML y la banda', () => {
   const r = u.calcularDia(VENTA_ML_BRUTA, 0);
-  assert.strictEqual(r.mlPublicidad, 8886);
-  assert.strictEqual(r.mlComision, 8279);
-  assert.strictEqual(r.mlEnvio, 3415);
-  assert.strictEqual(r.mlDevolucion, 379);
-  assert.strictEqual(r.cargosML, 20959);
+  assert.strictEqual(r.mlPublicidad, 8885);
+  assert.strictEqual(r.mlComision, 8278);
+  assert.strictEqual(r.mlEnvio, 3416);
+  assert.strictEqual(r.mlDevolucion, 377);
+  assert.strictEqual(r.cargosML, 20956);
   assert.strictEqual(r.costoBandas, u.COSTO_BANDA);
   assert.strictEqual(r.costoEnvios, 0, 'el envío de la web no corre: lo cobra ML');
   assert.strictEqual(r.pasarela, 0, 'tampoco la pasarela de la web');
   assert.strictEqual(r.ads, 0, 'la publicidad de ML no se mezcla con la de Meta');
-  assert.strictEqual(r.utilidad, 68990 - 20959 - 17000);
+  assert.strictEqual(r.utilidad, 68990 - 20956 - 17000);
   const t = u.totalizar([r, r]);
-  assert.strictEqual(t.cargosML, 2 * 20959);
-  assert.strictEqual(t.mlPublicidad, 2 * 8886);
+  assert.strictEqual(t.cargosML, 2 * 20956);
+  assert.strictEqual(t.mlPublicidad, 2 * 8885);
 });
 
-test('los cargos de ML calzan con su resumen de los últimos 30 días', () => {
-  // 17 ventas × $68.990 = $1.172.830 vendido; $356.257 de cargos e
-  // inversiones (30,4%); $816.573 recibido.
+test('los cargos de ML son los de su resumen de los últimos 30 días', () => {
+  // "Distribución de tus costos": 17 ventas × $68.990 = $1.172.830 vendido,
+  // $356.257 de cargos e inversiones y $816.573 recibido.
   const c = u.CARGOS_ML;
-  assert.ok(Math.abs(1172830 * (c.publicidad + c.comision + c.envio + c.devolucion) - 356257) < 100, '30,4% en total');
-  // "Distribución de tus costos": cada parte con su % de los cargos.
-  const parte = (k, pct) => assert.ok(Math.abs(1172830 * c[k] - 356257 * pct) < 200, k);
-  parte('publicidad', 0.424); parte('comision', 0.395); parte('envio', 0.163); parte('devolucion', 0.018);
-  // Lo que queda de cada venta es lo que ML dice que deposita en promedio.
-  const r = u.calcularDia(VENTA_ML_BRUTA, 0);
-  assert.ok(Math.abs((68990 - r.cargosML) - 816573 / 17) < 10);
+  assert.strictEqual(c.vendido, 17 * 68990);
+  assert.strictEqual(c.cargos, 356257);
+  assert.deepStrictEqual(c.partes, { publicidad: 0.424, comision: 0.395, envio: 0.163, devolucion: 0.018 });
+  // Lo vendido en esos 30 días da justo lo que ML cobró y depositó.
+  const mes = u.calcularDia({ ...VENTA_ML_BRUTA, pedidos: 17, unidades: 17, ingresos: 1172830,
+                              pedidosExternos: 17, unidadesExternas: 17, ingresosExternos: 1172830, brutoML: 1172830 }, 0);
+  assert.strictEqual(mes.cargosML, 356257);
+  assert.strictEqual(1172830 - mes.cargosML, 816573, '"Recibiste"');
+  assert.strictEqual(mes.mlPublicidad + mes.mlComision + mes.mlEnvio + mes.mlDevolucion, mes.cargosML, 'las partes suman el total');
+  // Cada venta deja lo que ML dice que deposita en promedio ($816.573 / 17).
+  assert.strictEqual(68990 - u.calcularDia(VENTA_ML_BRUTA, 0).cargosML, Math.round(816573 / 17));
 });
 
 test('cargada con precio completo, el día la suma en brutoML; con lo depositado, no', () => {
@@ -165,11 +169,11 @@ test('el formulario muestra cuánto se queda ML con la misma cuenta del servidor
   vm.createContext(ctx);
   vm.runInContext(['cargosDeML', 'vmCalcML', 'money0'].map(extraer).join('\n'), ctx);
   const calc = () => { vm.runInContext('vmCalcML()', ctx); return els['vm-ml-calc'].textContent; };
-  assert.strictEqual(calc(), 'Mercado Libre se queda $20.959 · te deposita $48.031 · menos la banda: $31.031');
+  assert.strictEqual(calc(), 'Mercado Libre se queda $20.956 · te deposita $48.034 · menos la banda: $31.034');
   els['vm-unidades'].value = '2'; els['vm-monto'].value = '137980';
-  assert.strictEqual(calc(), 'Mercado Libre se queda $41.919 · te deposita $96.061 · menos la banda: $62.061');
+  assert.strictEqual(calc(), 'Mercado Libre se queda $41.913 · te deposita $96.067 · menos la banda: $62.067');
   els['vm-tapones'].checked = true;
-  assert.strictEqual(calc(), 'Mercado Libre se queda $41.919 · te deposita $96.061', 'sin banda si son solo tapones');
+  assert.strictEqual(calc(), 'Mercado Libre se queda $41.913 · te deposita $96.067', 'sin banda si son solo tapones');
   els['vm-metodo'].value = 'Webpay';
   assert.strictEqual(calc(), '', 'fuera de ML no hay cuenta');
 });

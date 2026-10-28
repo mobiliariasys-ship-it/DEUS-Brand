@@ -2381,10 +2381,10 @@
       ' días con gasto' + (d.diagnostico.via === 'campañas' ? ', sumando campaña por campaña' : '') + '.';
     if (f.some(function(x){ return x.estimado; })) nota += ' Los días con * tienen ventas anteriores a que se guardara la cantidad: las unidades van estimadas desde el monto.';
     if (f.some(function(x){ return x.mlEstimado; })) nota += ' Algunos días con * tienen ventas de Mercado Libre que el reporte de ML trajo sin montos: van estimadas con el precio de ese día menos el 12% de ML y el envío.';
-    if (f.some(function(x){ return x.devoluciones; })) nota += ' Las devoluciones de Mercado Libre van en su día de compra: no cuentan como pedido ni banda, y restan lo que cobró ML por los envíos.';
-    if (conML) nota += ' Cargos ML: lo que se queda Mercado Libre de las ventas cargadas con su precio completo, ' +
+    if (f.some(function(x){ return x.devoluciones; })) nota += ' Las devoluciones de Mercado Libre van en su día de compra: no cuentan como pedido ni banda, y restan lo que cobró ML por los envíos (desde el 28-sep ese costo ya va dentro de los cargos de ML).';
+    if (conML) nota += ' Cargos ML: lo que se queda Mercado Libre de cada venta con su precio completo, ' +
       textoCargosML(d.costos.ml) + ', según su resumen de los últimos 30 días.' +
-      ' Las del reporte de ML ya vienen con lo depositado y no los llevan.';
+      ' Las ventas de ML de antes del 28-sep vienen con lo que depositó ML y no los llevan.';
     document.getElementById('util-nota').textContent = nota;
     if (d.costos) COSTOS_UTIL = d.costos;
   }
@@ -2393,19 +2393,18 @@
   // formulario de "Agregar venta" los usa para mostrar cuánto deja una venta
   // de ML; solo se abre desde la tabla, así que ya están cargados.
   var COSTOS_UTIL = null;
-  // Lo que se queda Mercado Libre (los % son utilidad.CARGOS_ML del servidor).
-  // Se redondea parte por parte, igual que en el servidor.
+  // Lo que se queda Mercado Libre (utilidad.CARGOS_ML del servidor: lo vendido
+  // y los cargos de su resumen, y cómo se reparten). Misma cuenta que el servidor.
   function cargosDeML(bruto, c){
     if (!c) return 0;
-    return Math.round(bruto * c.publicidad) + Math.round(bruto * c.comision) +
-           Math.round(bruto * c.envio) + Math.round(bruto * c.devolucion);
+    return Math.round(bruto * c.cargos / c.vendido);
   }
   function textoCargosML(c){
     if (!c) return '';
+    var total = c.cargos / c.vendido, p = c.partes;
     var pct = function(x){ return (x * 100).toFixed(2).replace(/\.?0+$/, '').replace('.', ','); };
-    var total = c.publicidad + c.comision + c.envio + c.devolucion;
-    return (total * 100).toFixed(1).replace('.', ',') + '% (publicidad ' + pct(c.publicidad) + '%, comisión ' +
-           pct(c.comision) + '%, envío ' + pct(c.envio) + '% y devoluciones ' + pct(c.devolucion) + '%)';
+    return (total * 100).toFixed(1).replace('.', ',') + '% (publicidad ' + pct(total * p.publicidad) + '%, comisión ' +
+           pct(total * p.comision) + '%, envío ' + pct(total * p.envio) + '% y devoluciones ' + pct(total * p.devolucion) + '%)';
   }
 
   // ── Alta manual de ventas ────────────────────────────────────────────────

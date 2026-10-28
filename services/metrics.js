@@ -51,10 +51,11 @@ const tickets = [];
 // en el sitio. El monto es lo que DEPOSITA el canal, ya sin su envío ni su
 // comisión. { monto, fecha, metodo, nombre, orden, unidades, soloTapones, externo: true }
 // Desde el 28-oct-2026 el panel las carga con el PRECIO COMPLETO y bruto: true;
-// a esas la utilidad les resta los cargos de ML (utilidad.CARGOS_ML).
+// a esas la utilidad les resta los cargos de ML (utilidad.CARGOS_ML). Las del
+// reporte desde el 28-sep-2026 entran igual (y guardan lo depositado aparte).
 // Las que vienen del reporte de ML (importarMercadoLibre) traen además
-// fuente: 'reporte-ml', y pueden ser devolucion: true (monto negativo, sin
-// banda) o estimado: true (ML las mandó sin montos).
+// fuente: 'reporte-ml', y pueden ser devolucion: true (monto negativo, o $0
+// desde el 28-sep; sin banda) o estimado: true (ML las mandó sin montos).
 const ventasExternas = [];
 // Reportes de Mercado Libre ya aplicados (sus id): cada uno se aplica una vez.
 const importacionesML = [];
@@ -337,10 +338,13 @@ function registrarVentaExterna(v) {
 // una orden "manual-…") y sumar las dos inflaría la utilidad. Se aplica UNA vez
 // por reporte: si después se carga a mano una venta de ML, un reinicio no la
 // borra; recién el próximo reporte, que ya la trae, la reemplaza.
-// OJO: las cargadas a mano van con precio completo y llevan los cargos de ML,
-// publicidad de ML incluida (utilidad.CARGOS_ML). Lo depositado del reporte ya
-// trae la comisión y el envío, pero NO la publicidad, que ML cobra aparte: al
-// reemplazarlas, esos días dejan de restar la publicidad de ML.
+// Desde ML_PRECIO_COMPLETO_DESDE el reporte entra igual que las cargadas a
+// mano: cada venta con su precio completo (`precio` del reporte) y los cargos
+// de ML del resumen (utilidad.CARGOS_ML), publicidad incluida, que lo
+// depositado no trae porque ML la cobra aparte. Las devoluciones de esas
+// fechas quedan en $0: su costo ya está en la parte "devoluciones" de los
+// cargos, como en el resumen de ML. Antes de esa fecha sigue lo depositado.
+const ML_PRECIO_COMPLETO_DESDE = '2026-09-28'; // los 30 días del resumen de ML
 function importarMercadoLibre(lote) {
   if (!lote || !lote.id || !Array.isArray(lote.ventas) || !lote.ventas.length) return null;
   if (importacionesML.includes(lote.id)) return { aplicado: false, id: lote.id };
@@ -366,6 +370,19 @@ function importarMercadoLibre(lote) {
     };
     if (v.devolucion) reg.devolucion = true;
     if (v.estimado) reg.estimado = true;
+    if (dia(v.fecha) >= ML_PRECIO_COMPLETO_DESDE) {
+      if (v.devolucion) {
+        reg.monto = 0;
+        delete reg.estimado;
+      } else if (Number(v.precio) > 0) {
+        // Con el precio no queda nada estimado: lo que ML no mostró era lo
+        // depositado, que acá no se usa.
+        reg.depositado = reg.monto;
+        reg.monto = Number(v.precio);
+        reg.bruto = true;
+        delete reg.estimado;
+      }
+    }
     // Una venta que en el reporte anterior iba como venta y ahora volvió como
     // devolución se actualiza: la última foto de ML es la que vale.
     const i = ventasExternas.findIndex(x => x.orden === reg.orden);
@@ -696,6 +713,6 @@ function snapshot() {
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo, ventasPorDia,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden, ventaYaRegistrada, importarMercadoLibre,
-  quitarMLNetasCargadasAMano, resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
+  quitarMLNetasCargadasAMano, ML_PRECIO_COMPLETO_DESDE, resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
   registrarFalloChat, ventasPorHora, alVender
 };

@@ -1,6 +1,6 @@
 {
- "id": "ml-2026-10-27",
- "reporte": "Ventas CL Mercado Libre y Mercado Shops al 2026-10-27",
+ "id": "ml-2026-10-27-v2",
+ "reporte": "Ventas CL Mercado Libre y Mercado Shops al 2026-10-27 (con precio completo desde el 2026-09-28)",
  "resumen": {
   "ventas": 33,
   "devoluciones": 5,
@@ -143,6 +143,7 @@
    "orden": "ml-2000015365750737",
    "fecha": "2026-10-05T19:54:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
@@ -164,30 +165,35 @@
    "orden": "ml-2000015489519757",
    "fecha": "2026-10-12T19:46:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015509679537",
    "fecha": "2026-10-13T22:11:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015516109209",
    "fecha": "2026-10-14T06:20:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015521929629",
    "fecha": "2026-10-14T16:20:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015532158201",
    "fecha": "2026-10-15T02:04:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
@@ -195,6 +201,7 @@
    "fecha": "2026-10-18T14:47:00Z",
    "estimado": true,
    "monto": 57561,
+   "precio": 68990,
    "unidades": 1
   },
   {
@@ -202,42 +209,49 @@
    "fecha": "2026-10-19T04:05:00Z",
    "estimado": true,
    "monto": 57561,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015594399433",
    "fecha": "2026-10-19T04:34:00Z",
    "monto": 57561,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015609795533",
    "fecha": "2026-10-20T00:50:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015695021209",
    "fecha": "2026-10-25T04:36:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015698197745",
    "fecha": "2026-10-25T15:43:00Z",
    "monto": 57561,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015701499729",
    "fecha": "2026-10-25T20:14:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
    "orden": "ml-2000015709867969",
    "fecha": "2026-10-26T13:26:00Z",
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
@@ -245,6 +259,7 @@
    "fecha": "2026-10-26T19:53:00Z",
    "estimado": true,
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   },
   {
@@ -252,6 +267,7 @@
    "fecha": "2026-10-27T07:43:00Z",
    "estimado": true,
    "monto": 57461,
+   "precio": 68990,
    "unidades": 1
   }
  ]

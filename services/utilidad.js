@@ -10,20 +10,20 @@ const COSTO_ENVIO = 4000;    // por PEDIDO
 const TASA_PASARELA = 0.035; // sobre el monto cobrado
 
 // Lo que se queda Mercado Libre de cada venta, sobre el PRECIO COMPLETO. Sale
-// del resumen de ML de los últimos 30 días al 28-oct-2026 (Métricas →
-// "Distribución de tus costos"): vendido $1.172.830 (17 × $68.990) y
-// cargos e inversiones $356.257 (30,4%), de los que publicidad es el 42,4%,
-// cargo por venta el 39,5%, envíos el 16,3% y devoluciones el 1,8%. Pasado a %
-// de lo vendido suma 30,4%: de $68.990 quedan $48.031, lo mismo que ML dice
-// que deposita en promedio ($816.573 / 17). El 12% de comisión calza además
-// con todas las filas del Excel de ML (ver scripts/ml_reporte.py).
-// Solo se aplica a las ventas de ML cargadas con su precio completo (bruto):
-// las del reporte de ML ya traen lo depositado.
+// tal cual del resumen de ML de los últimos 30 días al 28-oct-2026 (Métricas →
+// "Distribución de tus costos"): vendido $1.172.830 (17 × $68.990), cargos e
+// inversiones $356.257, repartidos en publicidad 42,4%, cargo por venta 39,5%,
+// envíos 16,3% y devoluciones 1,8%. Sobre lo vendido es el 30,4% (publicidad
+// 12,88%, comisión 12%, envío 4,95%, devoluciones 0,55%): de $68.990 ML se
+// queda $20.956 y deposita $48.034, lo mismo que ML dice que deposita en
+// promedio ($816.573 / 17). El 12% de comisión calza además con todas las
+// filas del Excel de ML (ver scripts/ml_reporte.py).
+// Solo se aplica a las ventas de ML con su precio completo (bruto): las de
+// antes del 28-sep-2026 traen lo que depositó ML.
 const CARGOS_ML = {
-  publicidad: 0.1288,
-  comision: 0.12,
-  envio: 0.0495,
-  devolucion: 0.0055
+  vendido: 1172830,
+  cargos: 356257,
+  partes: { publicidad: 0.424, comision: 0.395, envio: 0.163, devolucion: 0.018 }
 };
 
 // Meta REPORTA el gasto sin IVA pero COBRA con IVA. Verificado contra el
@@ -73,11 +73,15 @@ function calcularDia(d, ads, comprasMeta) {
   // la web, y la publicidad de ML sumada a la de Meta falsearía el costo por
   // venta de los anuncios.
   const brutoML = Number(d.brutoML) || 0;
-  const mlPublicidad = Math.round(brutoML * CARGOS_ML.publicidad);
-  const mlComision = Math.round(brutoML * CARGOS_ML.comision);
-  const mlEnvio = Math.round(brutoML * CARGOS_ML.envio);
-  const mlDevolucion = Math.round(brutoML * CARGOS_ML.devolucion);
-  const cargosML = mlPublicidad + mlComision + mlEnvio + mlDevolucion;
+  // Primero el total, con la proporción exacta del resumen (así lo vendido en
+  // esos 30 días da los mismos $356.257 de ML, sin los pesos de más que deja
+  // redondear cada parte), y después el desglose; devoluciones se lleva el
+  // resto para que las cuatro partes sumen justo el total.
+  const cargosML = Math.round(brutoML * CARGOS_ML.cargos / CARGOS_ML.vendido);
+  const mlPublicidad = Math.round(cargosML * CARGOS_ML.partes.publicidad);
+  const mlComision = Math.round(cargosML * CARGOS_ML.partes.comision);
+  const mlEnvio = Math.round(cargosML * CARGOS_ML.partes.envio);
+  const mlDevolucion = cargosML - mlPublicidad - mlComision - mlEnvio;
   return {
     fecha: d.fecha,
     pedidos, unidades, ingresos,

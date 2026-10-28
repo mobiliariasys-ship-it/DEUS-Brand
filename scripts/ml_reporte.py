@@ -10,8 +10,9 @@ metrics.importarMercadoLibre(): cada venta entra en su DÍA DE COMPRA con lo
 que deposita ML, cada devolución resta lo que cobró ML y no cuenta banda, y las
 canceladas no entran. services/ no se publica en Netlify (netlify.toml).
 
-Solo guarda n° de venta, fecha, monto, unidades y tipo: nada de nombres, RUT
-ni direcciones de los compradores, que el Excel sí trae.
+Solo guarda n° de venta, fecha, monto, precio de venta, unidades y
+tipo: nada de nombres, RUT ni direcciones de los compradores, que el Excel sí
+trae.
 
 El Excel de ML a veces viene con filas SIN montos ("No pudimos mostrar algunos
 datos"). Esas se estiman igual que las demás del reporte: precio de la
@@ -19,11 +20,12 @@ publicación ese día, menos el 12% de cargo de ML, menos el envío de las venta
 más cercanas en fecha; una devolución sin montos toma lo que cobró ML en la
 devolución más cercana. Quedan marcadas "estimado" y el panel las señala.
 
-OJO: lo depositado NO trae la publicidad de ML, que se cobra aparte. Desde el
-28-oct-2026 el panel carga las ventas de ML a mano con el precio completo y les
-descuenta los cargos de ML, publicidad incluida (services/utilidad.js,
-CARGOS_ML). Un reporte reemplaza las cargadas a mano en sus fechas, así que
-esos días dejan de restar la publicidad de ML.
+Lo depositado NO trae la publicidad de ML, que se cobra aparte. Por eso cada
+venta lleva también su precio completo (`precio`, "Ingresos por productos"): desde
+el 28-sep-2026 el servidor usa ese precio y le descuenta los cargos del resumen
+de ML, publicidad incluida (services/utilidad.js CARGOS_ML), igual que a las
+cargadas a mano, y deja en $0 las devoluciones de esas fechas (su costo ya va
+en esos cargos). Ver metrics.importarMercadoLibre.
 """
 import json
 import re
@@ -135,6 +137,11 @@ def armar(al, datos):
                 monto = precio - round(precio * CARGO_ML) - envio
                 reg['estimado'] = True
             reg.update({'monto': int(round(monto)), 'unidades': f['unidades']})
+            # Precio completo: lo que pagó el comprador. Viene aunque falten
+            # los montos de ML, desde el precio de la publicación.
+            total = f['ingresos'] or (f['precio'] or 0) * f['unidades']
+            if total:
+                reg['precio'] = int(round(total))
             resumen['ventas'] += 1
             resumen['depositado'] += int(round(monto))
         if reg.get('estimado'):
