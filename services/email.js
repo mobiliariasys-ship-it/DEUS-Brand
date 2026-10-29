@@ -135,11 +135,24 @@ async function diagnostico() {
   return info;
 }
 
+// Primera fila de los correos al dueño: el color de la banda. Gmail arma la
+// vista previa de la bandeja (y el aviso del celular) con el primer texto del
+// correo, así que el color se ve sin abrirlo. Antes lo primero era el
+// encabezado y el color quedaba a mitad del correo.
+function filaColor(pedido) {
+  const color = (pedido?.color || '').toString().trim();
+  const texto = color ? 'Color: ' + color.toUpperCase() : (pedido?.soloTapones ? 'Solo tapones · sin banda' : '');
+  return texto
+    ? `<div style="background:#f4f4f4;border-bottom:1px solid #e2e2e2;color:#111;padding:10px 24px;font-size:16px;font-weight:bold">${texto}</div>`
+    : '';
+}
+
 // ── Correo: nuevo pedido ──
 async function enviarPedidoNuevo(pedido) {
   const dir = pedido.shipping.address || {};
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee">
+      ${filaColor(pedido)}
       <div style="background:#080808;color:#fff;padding:20px 24px">
         <h2 style="margin:0;letter-spacing:2px">DEUS BAND — NUEVO PEDIDO</h2>
         <p style="margin:6px 0 0;color:#bbb;font-size:13px">Estado: PENDIENTE DE PAGO · ${pedido.method || 'MercadoPago'}</p>
@@ -193,6 +206,7 @@ async function enviarPagoConfirmado(payment, pedido) {
   const correas = normalizarCorreas(pedido?.correas);
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee">
+      ${filaColor(pedido)}
       <div style="background:#0a7d2c;color:#fff;padding:20px 24px">
         <h2 style="margin:0">✅ PAGO CONFIRMADO — DESPACHAR</h2>
       </div>
