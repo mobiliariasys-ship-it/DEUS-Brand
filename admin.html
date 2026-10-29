@@ -2265,6 +2265,16 @@
   // últimos 7/14/30) llevado a 30 días. No es un pronóstico: solo escala.
   function proyeccionMensual(utilidad, dias){ return dias ? utilidad / dias * 30 : 0; }
 
+  // % de ganancia sobre lo gastado: cuánto dejó cada peso que salió (bandas,
+  // envíos, pasarela, cargos de ML y ads con IVA). 50% = por cada $100
+  // gastados volvieron $150; −100% = se gastó y no se vendió nada. Un día sin
+  // gastos no tiene % (null).
+  function pctGanancia(r){
+    var gastos = (r.costoBandas || 0) + (r.costoEnvios || 0) + (r.pasarela || 0) + (r.cargosML || 0) + (r.ads || 0);
+    return gastos > 0 ? (r.utilidad || 0) / gastos * 100 : null;
+  }
+  function textoPct(p){ return p === null ? '—' : (p < 0 ? '−' : '') + Math.abs(Math.round(p)) + '%'; }
+
   function pintarUtilidad(d){
     var sel = diasElegidosUtil();
     // Respuesta que ya no corresponde (se eligieron o soltaron días mientras
@@ -2306,6 +2316,7 @@
       kpi('Proyección mensual', f.length ? money0(proyeccionMensual(t.utilidad, f.length)) : '—', t.utilidad >= 0 ? 'bien' : 'mal',
         f.length ? 'promedio de ' + (f.length === 1 ? '1 día' : f.length + ' días') + ' × 30' +
                    (conHoy ? ' · incluye hoy (en curso)' : '') : '') +
+      kpi('Ganancia sobre gastos', textoPct(pctGanancia(t)), t.utilidad >= 0 ? 'bien' : 'mal', 'utilidad ÷ todo lo gastado') +
       kpi('Vendido', money0(t.ingresos), '') +
       kpi('Gastado en ads', money0(t.ads), '') +
       kpi('de eso, IVA', money0(t.ivaAds || 0), '') +
@@ -2341,6 +2352,7 @@
     };
     var filas = f.slice().reverse().map(function(r){
       var cls = r.utilidad >= 0 ? 'pos' : 'neg';
+      var pct = pctGanancia(r);
       return '<tr' + (r.fecha === hoy ? ' class="hoy"' : '') + '>' +
         '<td>' + r.fecha.slice(5) + (r.fecha === hoy ? ' · hoy' : '') + (r.estimado || r.mlEstimado ? ' *' : '') + '</td>' +
         '<td>' + r.pedidos + (r.pedidosExternos ? ' <small style="color:#e7cf9c" title="Ventas de Mercado Libre">(' + r.pedidosExternos + ' ML)</small>' : '') +
@@ -2353,6 +2365,7 @@
         (conML ? '<td class="gasto"' + (r.cargosML ? ' title="' + detalleML(r) + '"' : '') + '>−' + money0(r.cargosML) + '</td>' : '') +
         '<td class="gasto">−' + money0(r.ads) + '</td>' +
         '<td class="util ' + cls + '">' + (r.utilidad >= 0 ? '' : '−') + money0(Math.abs(r.utilidad)) + '</td>' +
+        '<td class="' + (pct === null ? '' : cls) + '">' + textoPct(pct) + '</td>' +
         '<td><button class="util-add" title="Agregar una venta al ' + r.fecha + '" onclick="abrirAltaVenta(\'' + r.fecha + '\')">+</button></td>' +
       '</tr>';
     }).join('');
@@ -2360,7 +2373,8 @@
     document.getElementById('util-tabla').innerHTML =
       '<table><thead><tr>' +
       '<th>Día</th><th>Pedidos</th><th>Unid.</th><th>Vendido</th>' +
-      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th>' + (conML ? '<th>Cargos ML</th>' : '') + '<th>Ads +IVA</th><th>Utilidad</th><th></th>' +
+      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th>' + (conML ? '<th>Cargos ML</th>' : '') + '<th>Ads +IVA</th><th>Utilidad</th>' +
+      '<th title="Ganancia sobre gastos: utilidad ÷ todo lo gastado ese día">% gan.</th><th></th>' +
       '</tr></thead><tbody>' + filas + '</tbody><tfoot><tr>' +
       '<th>Total</th><th>' + t.pedidos + '</th><th>' + t.unidades + '</th><th>' + money0(t.ingresos) + '</th>' +
       '<th>−' + money0(t.costoBandas) + '</th><th>−' + money0(t.costoEnvios) + '</th>' +
@@ -2368,13 +2382,15 @@
       (conML ? '<th title="' + detalleML(t) + '">−' + money0(t.cargosML) + '</th>' : '') +
       '<th>−' + money0(t.ads) + '</th>' +
       '<th style="color:' + (t.utilidad >= 0 ? '#69c46d' : '#e07a6a') + '">' +
-      (t.utilidad >= 0 ? '' : '−') + money0(Math.abs(t.utilidad)) + '</th><th></th>' +
+      (t.utilidad >= 0 ? '' : '−') + money0(Math.abs(t.utilidad)) + '</th>' +
+      '<th style="color:' + (t.utilidad >= 0 ? '#69c46d' : '#e07a6a') + '">' + textoPct(pctGanancia(t)) + '</th><th></th>' +
       '</tr></tfoot></table>';
 
     var nota = 'Banda ' + money0(d.costos.banda) + ' por unidad · envío ' + money0(d.costos.envio) +
       ' por pedido · pasarela ' + (d.costos.pasarela * 100).toFixed(1).replace('.', ',') + '%' +
       ' · ads = gasto real de Meta + ' + Math.round((d.costos.iva || 0.19) * 100) + '% de IVA' +
-      ' (la API reporta sin IVA, el cobro llega con IVA).';
+      ' (la API reporta sin IVA, el cobro llega con IVA).' +
+      ' % gan. = utilidad ÷ todo lo gastado ese día (bandas, envíos, pasarela, cargos de ML y ads): 50% es que por cada $100 gastados volvieron $150.';
     if (!d.adsOk) nota += ' ⚠️ El gasto en ads figura en 0 y la utilidad está inflada. Motivo: ' +
       (d.adsError || 'Meta no respondió') + '.';
     else if (d.diagnostico) nota += ' Meta reportó ' + d.diagnostico.diasQueCalzan + ' de ' + d.dias +
