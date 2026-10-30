@@ -1,0 +1,111 @@
+'use strict';
+// Orden del panel (pedido del dueño, 30-oct-2026): el gasto por hora va justo
+// debajo de la utilidad diaria, las secciones van agrupadas (Plata,
+// Conversión, Operación) y las últimas ventas y los tickets del sorteo quedan
+// plegados al final.
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('fs');
+const path = require('path');
+
+const HTML = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
+const pos = id => { const i = HTML.indexOf('<section id="' + id + '"'); assert.ok(i >= 0, 'falta ' + id); return i; };
+
+test('el gasto por hora va justo debajo de la utilidad diaria', () => {
+  const ids = [...HTML.matchAll(/<section id="(sec-[a-z]+)"/g)].map(m => m[1]);
+  assert.strictEqual(ids[ids.indexOf('sec-utilidad') + 1], 'sec-gastoh');
+});
+
+test('las secciones van agrupadas y los registros plegados al final', () => {
+  const orden = ['sec-checkout', 'sec-utilidad', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-embudo', 'sec-conducta',
+    'sec-convierte', 'sec-negocio', 'sec-pedidos', 'sec-resenas', 'sec-chat', 'sec-ventas', 'sec-sorteo'];
+  const posiciones = orden.map(pos);
+  assert.deepStrictEqual(posiciones, posiciones.slice().sort((a, b) => a - b), 'orden de las secciones');
+  assert.strictEqual((HTML.match(/<div class="grupo-h">/g) || []).length, 4);
+  for (const id of ['sec-ventas', 'sec-sorteo']) {
+    assert.match(HTML, new RegExp('<section id="' + id + '" class="plegable cerrada">'), id + ' empieza plegada');
+    assert.match(HTML, new RegExp("onclick=\"plegar\\('" + id + "'\\)\">Mostrar ▾</button>"));
+  }
+});
+
+test('el conteo de tickets pasa a la sección plegada y la barra lateral la abre', () => {
+  assert.ok(!HTML.includes('<div class="k">Tickets sorteo</div>'), 'ya no va en las tarjetas de arriba');
+  assert.strictEqual((HTML.match(/id="s-tickets"/g) || []).length, 1);
+  assert.match(HTML, /function irA\(id, el\)\{ var t=document\.getElementById\(id\); if\(t && t\.classList\.contains\('cerrada'\)\) plegar\(id, true\);/);
+  // Barra lateral en el mismo orden que el panel.
+  const nav = [...HTML.matchAll(/onclick="irA\('(sec-[a-z]+)',this\)"/g)].map(m => m[1]).filter(id => id !== 'sec-graficos');
+  const enPanel = nav.slice().sort((a, b) => pos(a) - pos(b));
+  assert.deepStrictEqual(nav, enPanel);
+});
+
+test('el tema respeta los colores: sin verde ni violeta de adorno', () => {
+  const tema = HTML.slice(HTML.indexOf('/* ══ Tema vidrio'), HTML.indexOf('</style>'));
+  assert.ok(tema.length > 500, 'falta la capa del tema');
+  assert.match(tema, /backdrop-filter:blur/);
+  assert.ok(!/9b8cff|var\(--green\)|#8fce4a/.test(tema), 'el tema no usa verde ni violeta');
+  assert.ok(!/#9b8cff|#cfc6ff/.test(HTML), 'los gráficos no usan violeta');
+});
+
+test('el fondo de dragones existe, es liviano y va detrás del vidrio', () => {
+  const img = path.join(__dirname, '..', 'img', 'panel-dragones.webp');
+  assert.ok(fs.existsSync(img), 'falta img/panel-dragones.webp');
+  const kb = fs.statSync(img).size / 1024;
+  assert.ok(kb < 300, 'el fondo pesa ' + Math.round(kb) + ' KB: tiene que cargar rápido en el celular');
+  const tema = HTML.slice(HTML.indexOf('/* ══ Tema vidrio'), HTML.indexOf('</style>'));
+  // En un ::before fijo: background-attachment:fixed no anda en el iPhone.
+  assert.match(tema, /body::before\{content:'';position:fixed;inset:0;z-index:-1;[^}]*url\(img\/panel-dragones\.webp\)/);
+  assert.match(tema, /backdrop-filter:blur\(22px\)/);
+});
+
+test('el checkout va arriba de todo, antes de los gráficos', () => {
+  const ids = [...HTML.matchAll(/<section id="(sec-[a-z]+)"/g)].map(m => m[1]);
+  assert.strictEqual(ids[0], 'sec-checkout');
+  assert.ok(pos('sec-checkout') < HTML.indexOf('id="sec-graficos"'));
+});
+
+test('el checkout tiene su filtro propio: hoy, ayer, semana, mes y todo', () => {
+  const vm = require('vm');
+  const extraer = nombre => {
+    const i = HTML.search(new RegExp('function\\s+' + nombre + '\\s*\\('));
+    assert.ok(i >= 0, 'falta ' + nombre);
+    let prof = 0;
+    for (let k = HTML.indexOf('{', i); k < HTML.length; k++) {
+      if (HTML[k] === '{') prof++;
+      else if (HTML[k] === '}' && --prof === 0) return HTML.slice(i, k + 1);
+    }
+  };
+  for (const [n, txt] of [['1', 'Hoy'], ['ayer', 'Ayer'], ['semana', 'Esta semana'], ['mes', 'Este mes'], ['0', 'Todo']]) {
+    assert.ok(HTML.includes('data-co="' + n + '" onclick="setRangoCheckout(') && HTML.includes('>' + txt + '</button>'), 'falta ' + txt);
+  }
+  // Los días de Chile: hoy y ayer, para armar los datos de prueba.
+  const hoyCl = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+  const dia = n => { const d = new Date(hoyCl); d.setDate(hoyCl.getDate() - n); return d.toLocaleDateString('en-CA'); };
+  const data = {
+    conducta: { 'co:1abrio': 100, 'co:5pago': 9 },             // histórico
+    conductaPorDia: { [dia(0)]: { 'co:1abrio': 4, 'co:5pago': 1 }, [dia(1)]: { 'co:1abrio': 6, 'co:5pago': 2 } }
+  };
+  const botones = ['1', 'ayer', 'semana', 'mes', '0'].map(n => ({ n, on: false, getAttribute: () => n,
+    classList: { toggle(c, v) { this.d.on = !!v; } } }));
+  botones.forEach(b => { b.classList.d = b; });
+  const nota = { textContent: '' };
+  let pintado = null;
+  const ctx = { Date, Number, String, Object, localStorage: { getItem: () => null, setItem() {} },
+    document: { querySelectorAll: q => (q === '.co-rango' ? botones : []), getElementById: id => (id === 'co-nota' ? nota : null) },
+    pintarCheckout: c => { pintado = c; } };
+  vm.createContext(ctx);
+  const rangoLbl = HTML.match(/var RANGO_LBL = \{[^}]*\};/)[0];
+  vm.runInContext(rangoLbl + '\nvar ULT_DATA = null;\n' + ['diasChile', 'conductaRango', 'pintarCheckoutRango', 'setRangoCheckout'].map(extraer).join('\n') +
+    '\n' + HTML.match(/var CO_RANGO = \(function\(\)\{[\s\S]*?\}\)\(\);/)[0], ctx);
+  ctx.ULT_DATA = data;
+  // JSON: los objetos armados dentro del vm traen otro Object.prototype.
+  const ver = n => { vm.runInContext('setRangoCheckout(' + JSON.stringify(n) + ')', ctx); return JSON.parse(JSON.stringify(pintado)); };
+  assert.strictEqual(vm.runInContext('CO_RANGO', ctx), 'semana', 'arranca en esta semana');
+  assert.deepStrictEqual(ver(1), { 'co:1abrio': 4, 'co:5pago': 1 }, 'hoy');
+  assert.match(nota.textContent, /^hoy · 4 abrieron · 1 pagó$/);
+  assert.deepStrictEqual(ver('ayer'), { 'co:1abrio': 6, 'co:5pago': 2 }, 'ayer');
+  assert.deepStrictEqual(ver(0), data.conducta, 'todo = histórico');
+  assert.match(nota.textContent, /^acumulado histórico/);
+  assert.deepStrictEqual(botones.filter(b => b.on).map(b => b.n), ['0'], 'se marca el botón elegido');
+  // El periodo general no apaga los botones del checkout.
+  assert.match(HTML, /document\.querySelectorAll\('\.rango-btn\[data-rango\]'\)/);
+});

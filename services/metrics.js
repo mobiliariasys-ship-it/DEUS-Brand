@@ -279,7 +279,9 @@ function registrarVenta(v) {
     tapones: !!v.tapones,
     // Pares de correas extra (0, 1 o 2): el upsell del checkout desde el
     // 27-oct-2026, en vez de los tapones. Se guarda por lo mismo.
-    correas: Number(v.correas) > 0 ? Number(v.correas) : 0
+    correas: Number(v.correas) > 0 ? Number(v.correas) : 0,
+    // Cargada a mano desde el panel: es de las que el panel deja quitar.
+    manual: !!v.manual
   });
   const ticket = asignarTicket({ nombre: v.nombre, orden: v.orden, email: v.email });
   sumarEvento('co:5pago');
@@ -411,6 +413,44 @@ function quitarMLNetasCargadasAMano() {
   return { aplicado: true, quitadas: quitadas.map(x => ({ fecha: x.fecha, monto: x.monto, orden: x.orden })) };
 }
 
+// Ventas cargadas a mano desde el panel ("Agregar venta"): las únicas que el
+// panel deja quitar, por si se cargó mal una. Las de las pasarelas y las del
+// reporte de ML no se tocan desde ahí. Las de la web cargadas antes del
+// 30-oct-2026 no traen la marca `manual`: se reconocen por la orden "manual-…"
+// que les pone el panel cuando no se escribe un ID de pago.
+function esManual(v) {
+  return v.externo ? v.fuente !== 'reporte-ml' : (!!v.manual || /^manual-/.test(v.orden || ''));
+}
+const diaDe = f => new Date(f).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+
+function ventasManualesDelDia(fecha) {
+  return ventas.concat(ventasExternas)
+    .filter(v => esManual(v) && diaDe(v.fecha) === fecha)
+    .map(v => ({ orden: v.orden, monto: v.monto, metodo: v.metodo, nombre: v.nombre,
+                 unidades: v.unidades, soloTapones: !!v.soloTapones, bruto: !!v.bruto }));
+}
+
+// Saca una venta cargada a mano (por su orden). Si era de la web, se lleva su
+// ticket del sorteo; la numeración no se corre (el próximo es el mayor + 1).
+// El paso "pagó" del embudo (co:5pago) que sumó al cargarla queda como está:
+// se contó el día en que se cargó, que no se guarda.
+function quitarVentaManual(orden) {
+  const o = String(orden || '').trim();
+  if (!o) return null;
+  let quitada = null;
+  const ie = ventasExternas.findIndex(v => v.orden === o && esManual(v));
+  if (ie >= 0) quitada = ventasExternas.splice(ie, 1)[0];
+  else {
+    const iw = ventas.findIndex(v => v.orden === o && esManual(v));
+    if (iw < 0) return null;
+    quitada = ventas.splice(iw, 1)[0];
+    const it = tickets.findIndex(t => t.orden === o);
+    if (it >= 0) tickets.splice(it, 1);
+  }
+  guardar();
+  return quitada;
+}
+
 // ¿Esta orden ya está cargada? Mira las ventas de la web (por su ticket) y las
 // de canales externos. Es lo que usa la carga manual para no sumar dos veces.
 function ventaYaRegistrada(orden) {
@@ -523,12 +563,14 @@ function ventasPorDia(dias = 14) {
   const precio = require('./precio').precioBanda();
   const vacio = d => ({ fecha: d, pedidos: 0, unidades: 0, ingresos: 0, conTapones: 0, conCorreas: 0, estimado: false,
                         pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, brutoML: 0,
-                        devoluciones: 0, mlEstimado: false });
+                        devoluciones: 0, mlEstimado: false, manuales: 0 });
   const mapa = {};
   for (const v of ventas.concat(ventasExternas)) {
     const d = new Date(v.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
     if (!mapa[d]) mapa[d] = vacio(d);
     if (v.estimado) mapa[d].mlEstimado = true;
+    // Cuántas se cargaron a mano: el panel ofrece quitarlas solo en esos días.
+    if (esManual(v)) mapa[d].manuales += 1;
     if (v.devolucion) {
       // Devolución (hoy, de Mercado Libre) en su día de compra: no es un
       // pedido ni se fue una banda (volvió); resta lo que cobró el canal.
@@ -713,6 +755,6 @@ function snapshot() {
 module.exports = {
   init, ping, registrarVenta, ordenConfirmada, buscarVenta, snapshot, visitantesEnVivo, ventasPorDia,
   asignarTicket, reclamarInstagram, obtenerTickets, ticketsTotal, buscarTicketPorOrden, ventaYaRegistrada, importarMercadoLibre,
-  quitarMLNetasCargadasAMano, ML_PRECIO_COMPLETO_DESDE, resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
+  quitarMLNetasCargadasAMano, ML_PRECIO_COMPLETO_DESDE, ventasManualesDelDia, quitarVentaManual, resetTiempoPromedio, resetConducta, registrarCheckout, registrarEvento, registrarConversion,
   registrarFalloChat, ventasPorHora, alVender
 };

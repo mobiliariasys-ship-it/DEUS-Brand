@@ -745,9 +745,12 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 }
 
 /* ─── DETAIL SHEET ─── */
+/* minmax(0,1fr): sin esto la columna toma el ancho natural del carrusel y la
+   foto se sale de la tarjeta por la derecha. Esquinas redondeadas concéntricas
+   con las de la foto (10 px afuera, 9 px la foto, con el borde de 1 px). */
 .detail{
-  display:grid;grid-template-columns:1fr 1fr;
-  background:var(--card);border:1px solid var(--border);
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
   margin-bottom:2px;
 }
 
@@ -852,7 +855,8 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .cdot:hover{border-color:#fff;transform:scale(1.1);}
 
 @media(max-width:860px){
-  .hero-grid,.detail{grid-template-columns:1fr;}
+  .hero-grid{grid-template-columns:1fr;}
+  .detail{grid-template-columns:minmax(0,1fr);}
   header{height:64px;padding:8px 14px 8px 16px;position:relative;}
   .tabs{margin-left:0;margin-top:8px;}
   .info{padding:28px 22px;}
@@ -1367,7 +1371,7 @@ body.sb-on .wa-float{bottom:82px;}
 .cd-sep{font-size:1.3rem;color:#d4af6e;font-weight:bold;}
 @media(max-width:600px){.offer-banner{padding:14px 20px;}.offer-inner{justify-content:center;gap:16px;}.offer-text{align-items:center;text-align:center;}.cd-unit{min-width:46px;padding:6px 10px;}.cd-unit span{font-size:1.4rem;}}
 
-.gal-slider{position:relative;width:100%;height:auto;aspect-ratio:1200/1306;align-self:start;background:#1e1e1e;border-radius:8px;overflow:hidden;will-change:transform;}
+.gal-slider{position:relative;width:100%;min-width:0;height:auto;aspect-ratio:1200/1306;align-self:start;background:#1e1e1e;border-radius:9px;overflow:hidden;will-change:transform;}
 @media(min-width:861px){.detail{align-items:center;}.gal-slider{align-self:center;}}
 .slide{cursor:zoom-in;}
 .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:3000;align-items:center;justify-content:center;}
@@ -1385,9 +1389,29 @@ body.sb-on .wa-float{bottom:82px;}
 .lightbox-hint{position:fixed;bottom:16px;left:0;right:0;text-align:center;color:#aaa;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;pointer-events:none;}
 .slides{display:flex;height:100%;transition:transform 0.35s ease;touch-action:pan-y;}
 .slide{min-width:100%;width:100%;height:100%;object-fit:cover;background:#1e1e1e;display:block;user-select:none;-webkit-user-drag:none;}
+/* Cada foto con su capa de bandas que se mecen (bandasHero). */
+.slide-w{position:relative;min-width:100%;width:100%;height:100%;overflow:hidden;}
+.sl-arte{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;}
+.sl-arte.lista{opacity:1;}
+.sl-arte img{position:absolute;display:block;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+.sl-placa{top:0;height:100%;}
+/* El clavo de cada banda queda MUY arriba (fuera de la foto): así se mece de
+   lado, como colgada de lejos, y no gira sobre sí misma. La banda arranca un
+   poco por encima de la foto (top y transform-origin los pone bandasHero):
+   al ladearse, su borde de arriba no se ve. */
+.sl-banda{position:absolute;top:0;transform-origin:50% -80%;will-change:transform;pointer-events:auto;cursor:grab;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;}
+/* El toque cae en el contenedor, no en la imagen: si no, en iPhone mantener
+   presionada una banda la "levanta" como foto suelta (Guardar en Fotos,
+   Copiar sujeto). Tocarla para mecerla sigue igual (bandasHero.tocar busca
+   .sl-banda). */
+.sl-banda img{position:static;width:100%;height:auto;pointer-events:none;filter:drop-shadow(6px 5px 7px rgba(30,40,50,.16));}
 .slider-dots{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:8px;}
-.sdot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.25);cursor:pointer;transition:all 0.2s;}
-.sdot.active{background:#111;width:22px;border-radius:4px;}
+.sdot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.32);cursor:pointer;transition:all 0.2s;}
+/* Claros sobre la foto negra (fondo celeste gris mate); oscuros sobre la gris
+   y la rosada, que son claras (goSlide pone .foto-clara). */
+.sdot.active{background:#d5ebed;width:22px;border-radius:4px;}
+.gal-slider.foto-clara .sdot{background:rgba(40,45,50,0.25);}
+.gal-slider.foto-clara .sdot.active{background:#4a4f54;}
 
 .brand-head{display:flex;flex-direction:column;gap:6px;}
 .brand-head-top{font-size:0.7rem;letter-spacing:4px;color:#888;text-transform:uppercase;}
@@ -1397,7 +1421,7 @@ body.sb-on .wa-float{bottom:82px;}
 @media(max-width:600px){
   .slide{height:100%;}
   .gal-slider{height:auto;min-height:0;aspect-ratio:1200/1306;max-height:none;}
-  .detail{grid-template-columns:1fr;}
+  .detail{grid-template-columns:minmax(0,1fr);}
 }
 .shipping-section{margin:24px 0;border:1px solid var(--border);padding:20px;}.shipping-title{font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:#aaa;margin-bottom:16px;}.shipping-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}.shipping-input{background:#111;border:1px solid var(--border);color:var(--white);padding:10px 14px;font-family:"DM Sans",sans-serif;font-size:.78rem;width:100%;}.shipping-input:focus{outline:none;border-color:#555;}.btn-calcular{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;font-size:.6rem;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s;width:100%;grid-column:1/-1;}.btn-calcular:hover{border-color:#e8e8e8;color:#e8e8e8;}.carrier-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}.carrier-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);cursor:pointer;transition:border-color .2s;}.carrier-option:hover,.carrier-option.selected{border-color:#e8e8e8;}.carrier-name{font-weight:600;font-size:.78rem;flex:1;}.carrier-time{font-size:.65rem;color:#666;margin-top:2px;}.carrier-price{font-family:"Bebas Neue",sans-serif;font-size:1.2rem;color:#e8e8e8;}.total-row{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}.total-nota{font-size:.62rem;letter-spacing:1px;color:#7fc9a0;text-align:right;margin-top:4px;}.total-label{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:#aaa;}.total-price{font-family:"Bebas Neue",sans-serif;font-size:2rem;}.shipping-msg{font-size:.65rem;color:#666;letter-spacing:1px;margin-top:10px;text-align:center;}.shipping-error{color:#c0392b;font-size:.65rem;letter-spacing:1px;margin-top:10px;}.ac-wrap{position:relative;}.ac-list{position:absolute;top:100%;left:0;right:0;background:#111;border:1px solid #555;border-top:none;max-height:200px;overflow-y:auto;z-index:60;display:none;}.ac-list.show{display:block;}.ac-item{padding:9px 14px;font-size:.78rem;color:var(--white);cursor:pointer;border-bottom:1px solid #1a1a1a;}.ac-item:last-child{border-bottom:none;}.ac-item:hover{background:#1e1e1e;}
 /* Aviso de envío gratis dentro del checkout: se ve desde que se abre, sin
@@ -1620,11 +1644,44 @@ body.sb-on .wa-float{bottom:82px;}
 .upsell-btn:hover{border-color:#7fc9a0;color:#7fc9a0;}
 .upsell-card.added .upsell-btn{background:#7fc9a0;border-color:#7fc9a0;color:#0a0a0a;}
 .upsell-correas{flex-wrap:wrap;row-gap:10px;}
-.correas-color{flex-basis:100%;display:flex;align-items:center;gap:6px;padding-left:68px;}
+.correas-color{flex-basis:100%;display:flex;align-items:center;gap:6px;padding-left:78px;}
 .cc-k{font-size:.64rem;color:#888;margin-right:2px;}
 .cc-op{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid var(--border);border-radius:999px;background:transparent;color:#bdbdbd;font-size:.66rem;font-weight:600;cursor:pointer;font-family:inherit;}
 .cc-op i{display:block;width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,.35);}
 .cc-op.on{border-color:#7fc9a0;color:#fff;}
+/* ── Correas en un cuadro ────────────────────────────────────────────────
+   Una obra minimalista: las dos correas cuelgan de un hilo, cada una de su
+   clavo, sobre un paspartú claro dentro de un marco negro mate. Se mecen
+   como péndulos (cuadroCorreas) al cambiar el color o al agarrarlas. */
+.cq{position:relative;display:block;overflow:hidden;border-radius:2px;perspective:520px;
+  background:radial-gradient(120% 90% at 28% 12%,#f4f2ed 0%,#e5e2dc 55%,#d2cfc8 100%);
+  box-shadow:0 0 0 3px #111,0 0 0 4px #2b2b2b,0 6px 16px rgba(0,0,0,.55),inset 0 2px 6px rgba(0,0,0,.18);}
+.cq-mini{width:58px;height:86px;margin:4px;}
+.cq-col{position:absolute;top:0;display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;will-change:transform;}
+/* el clavo */
+.cq-col::before{content:'';width:4px;height:4px;border-radius:50%;margin-top:1px;
+  background:radial-gradient(circle at 35% 35%,#bdbdbd,#555);box-shadow:0 1px 1px rgba(0,0,0,.4);}
+.cq-hilo{display:block;width:1px;background:rgba(35,35,35,.5);}
+.cq-col img{display:block;height:auto;filter:drop-shadow(3px 5px 4px rgba(0,0,0,.32));
+  -webkit-user-drag:none;user-select:none;-webkit-user-select:none;pointer-events:none;}
+.cq-mini .cq-hilo{height:5px;}
+.cq-mini .cq-col img{width:10px;}
+.cq-mini .cq-sil{left:13px;} .cq-mini .cq-nyl{left:34px;}
+.cq-grande{flex-basis:100%;margin-top:2px;cursor:default;}
+.cq-grande[hidden]{display:none;}
+.cq-big{height:300px;margin:8px 7px 0;
+  box-shadow:0 0 0 6px #111,0 0 0 7px #2c2c2c,0 14px 30px rgba(0,0,0,.6),inset 0 3px 10px rgba(0,0,0,.2);}
+.cq-big .cq-hilo{height:24px;}
+.cq-big .cq-col img{width:28px;}
+.cq-big .cq-nyl img{width:27px;}
+/* Cerca del centro y con tope de ±0,4 rad: al tope rebotan sin salirse del marco. */
+.cq-big .cq-sil{left:calc(42% - 14px);} .cq-big .cq-nyl{left:calc(58% - 13px);}
+.cq-big .cq-col{touch-action:none;cursor:grab;}
+.cq-big .cq-col.agarrada{cursor:grabbing;}
+.cq-placa{position:absolute;left:50%;bottom:13px;transform:translateX(-50%);font-size:.54rem;letter-spacing:3px;
+  text-transform:uppercase;color:#77736c;white-space:nowrap;pointer-events:none;}
+.cq-pie{display:flex;justify-content:space-between;align-items:center;margin:14px 4px 0;font-size:.62rem;color:#888;}
+.cq-fotos{background:none;border:none;color:#e8b464;font-size:.64rem;font-weight:700;cursor:pointer;padding:4px;font-family:inherit;}
 .carrier-eta{font-size:.62rem;color:#7fc9a0;margin-top:3px;}
 .rescue-bar{display:none;margin:16px 28px 0;background:#101711;border:1px solid #2a4a32;border-radius:9px;padding:14px 16px;text-align:center;animation:slideUp .2s ease;}
 .rescue-bar.show{display:block;}
@@ -1698,7 +1755,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span></div></div>
 <div class="topbar" id="topbar">
 <header>
-  <img src="img/logo-a686e69b.svg" alt="DEUS Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
+  <img src="img/logo-deus-brand.svg" alt="DEUS Brand — Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
   <div class="hdr-right">
     <div class="hdr-pulse" title="Ritmo cardíaco en vivo"><span class="mon" aria-hidden="true"><svg class="hdr-pulse-heart" viewBox="0 0 138 18"><path d="M0 10H14L17 7L20 14L24 2L28 12L30 10H46M46 10H60L63 7L66 14L70 2L74 12L76 10H92M92 10H106L109 7L112 14L116 2L120 12L122 10H138"/></svg></span><b id="hdr-bpm">--</b><small>BPM</small></div>
   </div>
@@ -2054,10 +2111,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              las DOS, ~130 KB tirados en cada visita. Ahora el src ya es el
              definitivo y initSlides quedó sin nada que corregir.
              Gris y rosada traen data-srcset/data-src: las carga
-             cargarFotosCarrusel() al terminar la página o al cambiar de foto. -->
-        <img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/slide-negra-800.webp 800w, img/img-afadcb86.webp 1200w" src="img/slide-negra-800.webp" data-color="negra" alt="DEUS Band negra — smartband de salud color negro">
-        <img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/slide-gris-800.webp 800w, img/img-80cd4240.webp 1200w" data-src="img/slide-gris-800.webp" data-color="gris" alt="DEUS Band gris">
-        <img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/slide-rosada-800.webp 800w, img/img-rosada.webp 1178w" data-src="img/slide-rosada-800.webp" data-color="rosada" alt="DEUS Band rosada">
+             cargarFotosCarrusel() al terminar la página o al cambiar de foto.
+             .sl-arte: encima de cada foto, las dos bandas recortadas y un
+             parche del fondo sin ellas (img/hero-bandas). En reposo se ve
+             igual que la foto; las bandas se mecen como péndulos al cambiar
+             de color o al tocarlas (ver bandasHero). Se arma al terminar la
+             página: no compite con la foto principal. -->
+        <div class="slide-w"><img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/portada/negra-800.webp?v=10 800w, img/portada/negra-1200.webp?v=10 1200w" src="img/portada/negra-800.webp?v=10" data-color="negra" alt="DEUS Band negra — smartband de salud color negro"><div class="sl-arte" data-color="negra" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/gris-800.webp?v=10 800w, img/portada/gris-1200.webp?v=10 1200w" data-src="img/portada/gris-800.webp?v=10" data-color="gris" alt="DEUS Band gris"><div class="sl-arte" data-color="gris" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/rosada-800.webp?v=10 800w, img/portada/rosada-1200.webp?v=10 1178w" data-src="img/portada/rosada-800.webp?v=10" data-color="rosada" alt="DEUS Band rosada"><div class="sl-arte" data-color="rosada" aria-hidden="true"></div></div>
       </div>
       <div class="slider-dots">
         <span class="sdot active" onclick="goSlide(0,true)"></span>
@@ -2289,8 +2351,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                  en el checkout de "solo tapones". Lo que se cobra lo decide el
                  backend (services/precio.js) con la clave del color. -->
             <div class="upsell-card upsell-correas" id="upsell-correas" onclick="toggleCorreas()" style="cursor:pointer;">
-              <button type="button" class="upsell-zoom" onclick="verFotosCorreas(event)" aria-label="Ver en grande las correas extra">
-                <img id="correas-img" src="img/correas-negras-mini.webp" alt="Correas extra negras: silicona y nylon" class="upsell-img" width="56" height="56" loading="lazy" decoding="async">
+              <!-- Las correas como una obra en un cuadro: cuelgan de un hilo y se
+                   mecen como péndulos (ver cuadroCorreas). Tocar el cuadro abre
+                   uno grande donde se pueden agarrar y soltar. -->
+              <button type="button" class="upsell-zoom cq-abrir" onclick="abrirCuadroCorreas(event)" aria-label="Ver las correas extra en grande" aria-expanded="false">
+                <span class="cq cq-mini" role="img" aria-label="Correas extra negras: silicona y nylon">
+                  <span class="cq-col cq-sil"><i class="cq-hilo"></i><img src="img/correa-silicona.webp" alt="" width="10" height="72" loading="lazy" decoding="async"></span>
+                  <span class="cq-col cq-nyl"><i class="cq-hilo"></i><img class="cq-nylon" src="img/correa-nylon-negra.webp" alt="" width="10" height="72" loading="lazy" decoding="async"></span>
+                </span>
                 <span class="upsell-lupa" aria-hidden="true">⤢</span>
               </button>
               <div class="upsell-info">
@@ -2305,6 +2373,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <span class="cc-k">Color</span>
                 <button type="button" class="cc-op on" data-color="negras" role="radio" aria-checked="true" onclick="elegirColorCorreas(event,'negras')"><i style="background:#1b1b1b"></i>Negro</button>
                 <button type="button" class="cc-op" data-color="grises" role="radio" aria-checked="false" onclick="elegirColorCorreas(event,'grises')"><i style="background:#8d8d8d"></i>Gris</button>
+              </div>
+              <!-- El cuadro grande: se abre desde la miniatura, dentro del mismo
+                   recuadro (sin otra capa encima del checkout). Los toques acá
+                   no agregan ni quitan las correas. -->
+              <div class="cq-grande" id="cq-grande" onclick="event.stopPropagation()" hidden>
+                <div class="cq cq-big" role="img" aria-label="Correas extra negras: silicona y nylon">
+                  <span class="cq-col cq-sil"><i class="cq-hilo"></i><img src="img/correa-silicona.webp" alt="" width="28" height="198" loading="lazy" decoding="async"></span>
+                  <span class="cq-col cq-nyl"><i class="cq-hilo"></i><img class="cq-nylon" src="img/correa-nylon-negra.webp" alt="" width="27" height="198" loading="lazy" decoding="async"></span>
+                  <span class="cq-placa">DEUS · Silicona + Nylon</span>
+                </div>
+                <div class="cq-pie">
+                  <span>Arrastrá una correa y soltala</span>
+                  <button type="button" class="cq-fotos" onclick="verFotosCorreas(event)">Ver fotos ⤢</button>
+                </div>
               </div>
             </div>
 
@@ -2863,6 +2945,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           correaColor = 'negras';
           correaAgregada = false;
           pintarCorreas();
+          // El cuadro grande parte cerrado, y la miniatura se mece una vez
+          // cuando el checkout termina de aparecer: llama la atención sin texto.
+          const cqGrande = document.getElementById('cq-grande');
+          if (cqGrande) cqGrande.hidden = true;
+          if (!soloTapones) setTimeout(() => cuadroCorreas.empujar(1.5), 650);
           const upsellCorreas = document.getElementById('upsell-correas');
           // Las correas son extras de la banda: no van en un checkout de tapones.
           if (upsellCorreas) upsellCorreas.style.display = soloTapones ? 'none' : '';
@@ -3084,25 +3171,132 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             op.classList.toggle('on', on);
             op.setAttribute('aria-checked', on ? 'true' : 'false');
           });
-          const img = document.getElementById('correas-img');
-          if (img) {
-            img.src = 'img/correas-' + correaColor + '-mini.webp';
-            img.alt = correaColor === 'grises' ? 'Correas extra grises: silicona negra y nylon gris' : 'Correas extra negras: silicona y nylon';
-          }
+          // En los dos cuadros (miniatura y grande) cambia la correa de nylon.
+          const nylon = 'img/correa-nylon-' + (correaColor === 'grises' ? 'gris' : 'negra') + '.webp';
+          const desc = correaColor === 'grises' ? 'Correas extra grises: silicona negra y nylon gris' : 'Correas extra negras: silicona y nylon';
+          card.querySelectorAll('.cq-nylon').forEach(img => { if (img.getAttribute('src') !== nylon) img.src = nylon; });
+          card.querySelectorAll('.cq[role="img"]').forEach(c => c.setAttribute('aria-label', desc));
         }
         function toggleCorreas() {
           correaAgregada = !correaAgregada;
           pintarCorreas();
           actualizarTotalCheckout();
+          if (correaAgregada) cuadroCorreas.empujar(1.6);
         }
         // Elegir el color no agrega ni quita: si ya estaban agregadas, cambia
         // el color que se compra. stopPropagation: el toque no llega al recuadro.
         function elegirColorCorreas(ev, color) {
           if (ev) ev.stopPropagation();
+          const cambio = color !== correaColor;
           correaColor = color;
           pintarCorreas();
           actualizarTotalCheckout();
+          // El nylon cambia de color y las dos se mecen, como si las hubieran
+          // movido de la percha: invita a tocarlas.
+          if (cambio) cuadroCorreas.empujar(color === 'grises' ? 2.6 : -2.6);
         }
+        // La miniatura abre (o cierra) el cuadro grande dentro del recuadro.
+        function abrirCuadroCorreas(ev) {
+          if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+          const g = document.getElementById('cq-grande');
+          const btn = document.querySelector('.cq-abrir');
+          if (!g) return;
+          g.hidden = !g.hidden;
+          if (btn) btn.setAttribute('aria-expanded', g.hidden ? 'false' : 'true');
+          if (!g.hidden) cuadroCorreas.empujar(1.8);
+        }
+
+        // ── Las correas como péndulos ────────────────────────────────────────
+        // Cada correa cuelga de su clavo: ángulo th (rad) y velocidad w (rad/s),
+        // con gravedad (k = (2π/periodo)²) y roce (c). Se dibuja solo mientras
+        // algo se mueve; quieto no gasta nada. En el cuadro grande se agarran:
+        // mientras se arrastra, la correa apunta al dedo, y al soltarla sigue con
+        // la velocidad que traía. Un tope (lim) hace que reboten contra el marco
+        // en vez de salirse. Con "reducir movimiento" no se mecen.
+        const cuadroCorreas = (function () {
+          const quieto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+          let pend = null, corriendo = false, tPrev = 0;
+          function armar() {
+            if (pend) return pend;
+            pend = [];
+            document.querySelectorAll('.cq').forEach(cq => {
+              const grande = cq.classList.contains('cq-big');
+              cq.querySelectorAll('.cq-col').forEach(el => {
+                const p = { el, th: 0, w: 0, agarrada: false, grande,
+                            k: Math.pow(2 * Math.PI / (grande ? 1.75 : 1.15), 2),
+                            c: grande ? 0.85 : 1.25, lim: grande ? 0.4 : 0.42,
+                            sil: el.classList.contains('cq-sil') };
+                pend.push(p);
+                if (grande) agarrable(p);
+              });
+            });
+            return pend;
+          }
+          function dibujar(p) {
+            // rotateY según la velocidad: al mecerse, la correa gira un poco
+            // sobre su eje y se nota el volumen (el marco tiene perspective).
+            const giro = Math.max(-30, Math.min(30, p.w * 10));
+            p.el.style.transform = 'rotate(' + p.th.toFixed(4) + 'rad) rotateY(' + giro.toFixed(1) + 'deg)';
+          }
+          function paso(t) {
+            const dt = Math.min(0.033, Math.max(0.001, (t - tPrev) / 1000)); tPrev = t;
+            let sigue = false;
+            pend.forEach(p => {
+              if (!p.agarrada) {
+                p.w += (-p.k * Math.sin(p.th) - p.c * p.w) * dt;
+                p.th += p.w * dt;
+                if (p.th > p.lim) { p.th = p.lim; p.w = -Math.abs(p.w) * 0.45; }
+                if (p.th < -p.lim) { p.th = -p.lim; p.w = Math.abs(p.w) * 0.45; }
+              }
+              if (p.agarrada || Math.abs(p.th) > 0.0015 || Math.abs(p.w) > 0.003) sigue = true;
+              dibujar(p);
+            });
+            if (sigue) requestAnimationFrame(paso);
+            else { corriendo = false; pend.forEach(p => { p.th = 0; p.w = 0; dibujar(p); }); }
+          }
+          function andar() {
+            if (corriendo || quieto) return;
+            corriendo = true; tPrev = performance.now(); requestAnimationFrame(paso);
+          }
+          // Empujón: el nylon primero y la silicona un instante después, con
+          // menos fuerza, para que no se muevan como una sola pieza.
+          function empujar(fuerza) {
+            if (quieto) return;
+            armar().forEach(p => {
+              const f = (p.sil ? 0.55 : 1) * fuerza * (p.grande ? 0.8 : 1);
+              if (p.sil) setTimeout(() => { p.w += f; andar(); }, 110);
+              else p.w += f;
+            });
+            andar();
+          }
+          function agarrable(p) {
+            let ax = 0, ay = 0, ultimo = 0, thPrev = 0;
+            p.el.addEventListener('pointerdown', e => {
+              e.preventDefault(); e.stopPropagation();
+              const r = p.el.parentNode.getBoundingClientRect();
+              // El clavo: arriba al centro de la correa, sin la rotación actual.
+              ax = r.left + p.el.offsetLeft + p.el.offsetWidth / 2; ay = r.top + p.el.offsetTop;
+              p.agarrada = true; p.el.classList.add('agarrada'); thPrev = p.th; ultimo = performance.now();
+              try { p.el.setPointerCapture(e.pointerId); } catch (er) {}
+              andar();
+            });
+            p.el.addEventListener('pointermove', e => {
+              if (!p.agarrada) return;
+              const th = Math.max(-p.lim, Math.min(p.lim, Math.atan2(-(e.clientX - ax), Math.max(20, e.clientY - ay))));
+              const ahora = performance.now(), dt = Math.max(0.008, (ahora - ultimo) / 1000);
+              p.w = p.w * 0.4 + ((th - thPrev) / dt) * 0.6; p.th = th; thPrev = th; ultimo = ahora;
+            });
+            const soltar = () => {
+              if (!p.agarrada) return;
+              p.agarrada = false; p.el.classList.remove('agarrada');
+              p.w = Math.max(-7, Math.min(7, p.w)); andar();
+            };
+            p.el.addEventListener('pointerup', soltar);
+            p.el.addEventListener('pointercancel', soltar);
+            p.el.addEventListener('lostpointercapture', soltar);
+          }
+          return { empujar };
+        })();
         function subtotalCheckout() {
           if (checkoutTapones) return TAPONES_PRICE * checkoutQty;
           return precioBanda() * checkoutQty + CORREAS_PRICE * listaCorreas().length;
@@ -4823,10 +5017,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </main>
 
 <script>
+// Las fotos principales (scripts/recolorear-portada.py): negra en celeste gris
+// mate con los textos en celeste hielo; gris en uno más claro y rosada en
+// rosado pastel, las dos con los textos en gris mate.
 const bandImages = {
-  negra: "img/img-afadcb86.webp",
-  gris: "img/img-80cd4240.webp",
-  rosada: "img/img-rosada.webp",
+  negra: "img/portada/negra-1200.webp?v=10",
+  gris: "img/portada/gris-1200.webp?v=10",
+  rosada: "img/portada/rosada-1200.webp?v=10",
 };
 // Miniaturas para el recuadro de 64x64 del checkout. Antes ahí se usaba la
 // imagen grande (1200x1306, 95 KB) encogida por CSS: se descargaba entera en
@@ -5202,11 +5399,21 @@ else window.addEventListener('load', function () { setTimeout(cargarFotosCarruse
 // con el color equivocado (ver el detector de swipe más abajo).
 function goSlide(i, elegir) {
   cargarFotosCarrusel();
+  const antes = currentSlide;
   currentSlide = (i + colorOrder.length) % colorOrder.length;
+  // La galería se corre hacia un lado y las bandas que llegan se quedan un
+  // poco atrás, como cosas colgadas: se mecen hacia el lado contrario.
+  if (antes !== currentSlide && typeof bandasHero !== 'undefined') {
+    const haciaAdelante = (currentSlide - antes + colorOrder.length) % colorOrder.length === 1;
+    bandasHero.empujar(colorOrder[currentSlide], haciaAdelante ? -0.16 : 0.16);
+  }
   if (elegir) selectedColor = colorOrder[currentSlide];
   const slides = document.getElementById('slides');
   if (slides) slides.style.transform = `translateX(-${currentSlide*100}%)`;
   document.querySelectorAll('.sdot').forEach((d,idx) => d.classList.toggle('active', idx===currentSlide));
+  // Puntitos oscuros sobre las fotos de fondo claro (todas menos la negra).
+  const gal = document.getElementById('galSlider');
+  if (gal) gal.classList.toggle('foto-clara', colorOrder[currentSlide] !== 'negra');
   // Los círculos marcan el color ELEGIDO, no la foto visible.
   document.querySelectorAll('.cdot').forEach((d,idx) => d.classList.toggle('active', colorOrder[idx]===selectedColor));
   updateStockUI();
@@ -5244,6 +5451,141 @@ function actualizarAvisoColor() {
     ' <button type="button" class="pick-color" onclick="setColor(\'' + viendo + '\')">Elegir ' + n + '</button>';
 }
 
+// ── Las dos bandas de cada foto principal, como péndulos ───────────────────
+// Pedido del dueño: que las bandas de las 3 fotos se muevan con gravedad hacia
+// los lados al cambiar de color, como colgadas en un cuadro, para dar ganas de
+// tocarlas. Encima de cada foto va un parche del fondo sin bandas y las dos
+// bandas recortadas (scripts/recortar-bandas.py y recolorear-portada.py, que
+// les saca la sombra que traían del fondo claro), en el mismo lugar: quietas
+// se ven igual que la foto. Cada banda es un péndulo largo (gravedad + roce)
+// colgado de un clavo muy por encima de la foto: se mece de lado, poco. Si una
+// va contra la otra, chocan y se pasan el impulso (no se atraviesan).
+// x y w: posición y ancho de cada pieza en fracción del ancho de la foto; y y
+// h de cada banda, en fracción del alto: arrancan un 7% por encima de la foto
+// (lo tapa el borde) para que al ladearse no se vea dónde terminan.
+var BANDAS_HERO = {"negra":{"silicona":{"x":0.585,"w":0.16167,"y":-0.06968,"h":1.06891},"nylon":{"x":0.76583,"w":0.14833,"y":-0.06968,"h":1.06968},"placa":{"x":0.56833,"w":0.38833}},"gris":{"silicona":{"x":0.58583,"w":0.16167,"y":-0.07028,"h":1.06723},"nylon":{"x":0.76917,"w":0.145,"y":-0.07028,"h":1.07028},"placa":{"x":0.56833,"w":0.38833}},"rosada":{"silicona":{"x":0.5798,"w":0.16553,"y":-0.07031,"h":1.07031},"nylon":{"x":0.76655,"w":0.15365,"y":-0.07031,"h":1.07031},"placa":{"x":0.56791,"w":0.38879}}};
+var bandasHero = (function () {
+  var quieto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var K = Math.pow(2 * Math.PI / 2.3, 2);   // periodo ~2,3 s
+  var ROCE = 0.55, TOPE = 0.075;            // rad/s de roce; ángulo máximo (rad)
+  // Ángulo al que se tocan (hueco entre las dos ÷ distancia del clavo a la
+  // punta). Las dos medidas escalan igual con la foto, así que sirve a
+  // cualquier tamaño.
+  var CHOQUE = 0.018;
+  // El clavo, a cuánto alto de foto por encima del borde de arriba.
+  var CLAVO = 0.8;
+  var armadas = {}, corriendo = false, tPrev = 0, introHecha = false;
+  // ?v=10: recortes limpios, bordes rectos, barra del marco negra con esquinas redondas, puntas redondeadas
+  // (las imágenes se cachean 7 días: al cambiarlas se sube el número).
+  function srcset(c, pieza) { var b = 'img/hero-bandas2/' + c + '-' + pieza + '-'; return b + '800.webp?v=10 800w, ' + b + '1200.webp?v=10 1200w'; }
+  function pct(n) { return (n * 100).toFixed(3) + '%'; }
+  function armar(c) {
+    if (quieto || armadas[c] || !BANDAS_HERO[c]) return armadas[c];
+    var capa = document.querySelector('.sl-arte[data-color="' + c + '"]');
+    if (!capa) return null;
+    var conf = BANDAS_HERO[c], a = { lista: false, roto: false, pend: [], pendiente: 0 }, faltan = 3;
+    armadas[c] = a;
+    function cargo() {
+      if (a.roto || --faltan) return;
+      capa.classList.add('lista'); a.lista = true;
+      if (a.pendiente) { var f = a.pendiente; a.pendiente = 0; empujar(c, f); }
+      // La primera vez que se arma la foto que se está viendo, un vaivén suave
+      // avisa que se mueven, sin texto.
+      if (!introHecha && c === colorOrder[currentSlide]) { introHecha = true; setTimeout(function () { empujar(c, -0.1); }, 900); }
+    }
+    // Si algo no carga, la capa se va y queda la foto original, que es igual.
+    function fallo() { a.roto = true; capa.classList.remove('lista'); capa.innerHTML = ''; }
+    var pl = new Image(); pl.className = 'sl-placa'; pl.alt = ''; pl.decoding = 'async';
+    pl.style.left = pct(conf.placa.x); pl.style.width = pct(conf.placa.w);
+    pl.sizes = '(max-width:900px) 39vw, 233px'; pl.onload = cargo; pl.onerror = fallo; pl.srcset = srcset(c, 'fondo');
+    capa.appendChild(pl);
+    ['silicona', 'nylon'].forEach(function (n, i) {
+      var el = document.createElement('span'), im = new Image();
+      el.className = 'sl-banda'; el.style.left = pct(conf[n].x); el.style.width = pct(conf[n].w);
+      el.style.top = pct(conf[n].y); el.style.transformOrigin = '50% ' + pct((-CLAVO - conf[n].y) / conf[n].h);
+      im.alt = ''; im.decoding = 'async'; im.sizes = '(max-width:900px) 17vw, 98px';
+      im.onload = cargo; im.onerror = fallo; im.srcset = srcset(c, n);
+      el.appendChild(im); capa.appendChild(el);
+      // Periodos apenas distintos: se mueven juntas pero no como una sola pieza.
+      var p = { el: el, th: 0, w: 0, k: K * (i ? 1.02 : 1) };
+      a.pend.push(p);
+      // Con el mouse, pasar por encima la roza y la empuja para ese lado.
+      el.addEventListener('mousemove', function (e) {
+        if (!a.lista || !e.movementX) return;
+        p.w += Math.max(-0.04, Math.min(0.04, -e.movementX * 0.003)); andar();
+      });
+    });
+    return a;
+  }
+  function dibujar(p) {
+    var giro = Math.max(-14, Math.min(14, p.w * 40));
+    p.el.style.transform = 'rotate(' + p.th.toFixed(5) + 'rad) rotateY(' + giro.toFixed(1) + 'deg)';
+  }
+  function paso(t) {
+    var dt = Math.min(0.033, Math.max(0.001, (t - tPrev) / 1000)); tPrev = t;
+    var sigue = false;
+    Object.keys(armadas).forEach(function (c) {
+      var a = armadas[c]; if (!a.lista) return;
+      a.pend.forEach(function (p) {
+        p.w += (-p.k * Math.sin(p.th) - ROCE * p.w) * dt;
+        p.th += p.w * dt;
+        if (p.th > TOPE) { p.th = TOPE; p.w = -Math.abs(p.w) * 0.5; }
+        if (p.th < -TOPE) { p.th = -TOPE; p.w = Math.abs(p.w) * 0.5; }
+      });
+      // Rotar a la derecha (ángulo negativo) mueve la punta a la derecha. La
+      // silicona (0) está a la izquierda del nylon (1): se tocan cuando el
+      // nylon va a la izquierda y la silicona a la derecha más que CHOQUE.
+      var s = a.pend[0], n = a.pend[1];
+      var mete = (n.th - s.th) - CHOQUE;
+      if (mete > 0) {
+        s.th += mete / 2; n.th -= mete / 2;
+        if (n.w - s.w > 0) { var v = n.w; n.w = s.w * 0.85; s.w = v * 0.85; }
+      }
+      a.pend.forEach(function (p) {
+        if (Math.abs(p.th) > 0.0004 || Math.abs(p.w) > 0.001) sigue = true;
+        dibujar(p);
+      });
+    });
+    if (sigue) requestAnimationFrame(paso);
+    else {
+      corriendo = false;
+      Object.keys(armadas).forEach(function (c) { (armadas[c].pend || []).forEach(function (p) { p.th = 0; p.w = 0; dibujar(p); }); });
+    }
+  }
+  function andar() {
+    if (corriendo || quieto) return;
+    corriendo = true; tPrev = performance.now(); requestAnimationFrame(paso);
+  }
+  // f > 0 mueve las puntas a la izquierda; la de nylon recibe un poco menos.
+  function empujar(c, f) {
+    if (quieto) return;
+    var a = armar(c); if (!a || a.roto) return;
+    if (!a.lista) { a.pendiente = f; return; }
+    a.pend.forEach(function (p, i) { p.w += f * (i ? 0.85 : 1); });
+    andar();
+  }
+  // Tocar una banda la empuja hacia el lado contrario del toque. Devuelve
+  // true si el toque fue en una banda (entonces no abre el zoom).
+  function tocar(objetivo, x) {
+    var el = objetivo && objetivo.closest && objetivo.closest('.sl-banda');
+    if (!el) return false;
+    Object.keys(armadas).forEach(function (c) {
+      (armadas[c].pend || []).forEach(function (p) {
+        if (p.el !== el) return;
+        var r = el.getBoundingClientRect();
+        p.w += (x < r.left + r.width / 2 ? -1 : 1) * 0.22;
+      });
+    });
+    andar();
+    return true;
+  }
+  return { armar: armar, empujar: empujar, tocar: tocar };
+})();
+if (document.readyState === 'complete') setTimeout(function () { bandasHero.armar(colorOrder[currentSlide]); }, 700);
+else window.addEventListener('load', function () { setTimeout(function () { bandasHero.armar(colorOrder[currentSlide]); }, 700); });
+// Los otros dos colores, con la página ya tranquila.
+setTimeout(function () { colorOrder.forEach(function (c) { bandasHero.armar(c); }); }, 3500);
+
 // Swipe con el dedo
 (function() {
   let startX = 0, startY = 0, isDown = false;
@@ -5264,7 +5606,10 @@ function actualizarAvisoColor() {
     else if (horizontal && dx > 40) goSlide(currentSlide - 1, true);
     // Solo abre el zoom si fue un TOQUE real (poco movimiento en X y en Y),
     // no cuando el dedo pasa por encima haciendo scroll vertical.
-    else if (Math.abs(dx) < 12 && Math.abs(dy) < 12) abrirZoom();
+    else if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+      // Tocar una banda la mece; en el resto de la foto abre el zoom.
+      if (!bandasHero.tocar(e.target, e.changedTouches[0].clientX)) abrirZoom();
+    }
   }, {passive:true});
   // Mouse drag para desktop
   slider.addEventListener('mousedown', e => { startX = e.clientX; startY = e.clientY; isDown = true; });
@@ -5276,7 +5621,9 @@ function actualizarAvisoColor() {
     const horizontalM = Math.abs(dx) > Math.abs(dy) * 1.5;
     if (horizontalM && dx < -40) goSlide(currentSlide + 1, true);
     else if (horizontalM && dx > 40) goSlide(currentSlide - 1, true);
-    else if (Math.abs(dx) < 12 && Math.abs(dy) < 12) abrirZoom(); // clic simple abre el zoom
+    else if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+      if (!bandasHero.tocar(e.target, e.clientX)) abrirZoom(); // clic simple abre el zoom (en una banda, la mece)
+    }
   });
 
   let lbIndex = 0;

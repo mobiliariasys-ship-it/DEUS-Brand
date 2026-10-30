@@ -103,7 +103,10 @@ function calcularDia(d, ads, comprasMeta) {
     utilidad: ingresos - costoBandas - costoEnvios - pasarela - cargosML - gastoAds,
     estimado: !!d.estimado,
     // Montos de Mercado Libre estimados: el reporte de ML los trajo vacíos.
-    mlEstimado: !!d.mlEstimado
+    mlEstimado: !!d.mlEstimado,
+    // Ventas cargadas a mano ese día: el panel ofrece quitarlas. Es un dato del
+    // día, no plata: no se suma en el total.
+    manuales: Number(d.manuales) || 0
   };
 }
 

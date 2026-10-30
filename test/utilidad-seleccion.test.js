@@ -90,7 +90,7 @@ function montar() {
   vm.runInContext(
     estado[0] + '\n' + estadoHist[0] + '\n' +
     ['diasElegidosUtil', 'utilDeDias', 'utilidadSegunSel', 'pintarUtilSelResumen', 'marcarRangoUtil', 'cargarUtilidad',
-     'proyeccionMensual', 'pintarUtilidad', 'textoCargosML', 'kpi', 'money0', 'marcarAct',
+     'proyeccionMensual', 'pctGanancia', 'textoPct', 'pintarUtilidad', 'textoCargosML', 'kpi', 'money0', 'marcarAct',
      'cargarUtilHist', 'utilTarjeta', 'pintarUtilTarjeta', 'verUtilHistorica'].map(extraer).join('\n') +
     // Como en el panel: refrescarSel termina llamando a utilidadSegunSel.
     '\nfunction refrescarSel(){ utilidadSegunSel(); }', ctx);
@@ -269,4 +269,37 @@ test('arriba de "Utilidad diaria", "Desde el IVA" muestra el histórico día por
   assert.strictEqual(h.els['s-util-k'].textContent, 'Utilidad histórica');
   // Tocar la tarjeta lleva a la sección con el histórico
   assert.match(SRC, /onclick="verUtilHistorica\(\)"/);
+});
+
+test('el % de ganancia de cada día es la utilidad sobre todo lo gastado', async () => {
+  const h = montar();
+  const gastos = r => r.costoBandas + r.costoEnvios + r.pasarela + (r.cargosML || 0) + r.ads;
+  // La cuenta: 50% = por cada $100 gastados volvieron $150. Sin gastos, no hay %.
+  assert.strictEqual(run(h, 'pctGanancia({ utilidad: 50, costoBandas: 60, costoEnvios: 10, pasarela: 5, cargosML: 5, ads: 20 })'), 50);
+  assert.strictEqual(run(h, 'pctGanancia({ utilidad: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, ads: 0 })'), null);
+  assert.strictEqual(run(h, 'textoPct(-100)'), '−100%');
+  assert.strictEqual(run(h, 'textoPct(43.4)'), '43%');
+  assert.strictEqual(run(h, 'textoPct(null)'), '—');
+
+  run(h, 'cargarUtilidad(30)'); await esperar();
+  const html = h.els['util-tabla'].innerHTML;
+  assert.ok(html.includes('% gan.</th>'), 'falta la columna');
+  // Cada fila, en el orden del panel (el día más nuevo arriba), con su %.
+  const cuerpo = html.split('<tbody>')[1].split('</tbody>')[0];
+  const filasHtml = cuerpo.split('</tr>').filter(Boolean);
+  const f = h.filas30.slice().reverse();
+  assert.strictEqual(filasHtml.length, f.length);
+  f.forEach((r, i) => {
+    const g = gastos(r), esperado = g ? (r.utilidad < 0 ? '−' : '') + Math.abs(Math.round(r.utilidad / g * 100)) + '%' : '—';
+    assert.ok(filasHtml[i].includes('>' + esperado + '</td>'), r.fecha + ': esperaba ' + esperado);
+  });
+  // Total y tarjeta de arriba: sobre lo gastado en todo el rango.
+  const t = u.totalizar(h.filas30);
+  const pctT = Math.round(t.utilidad / gastos(t) * 100);
+  const txtT = (pctT < 0 ? '−' : '') + Math.abs(pctT) + '%';
+  assert.ok(html.split('<tfoot>')[1].includes('>' + txtT + '</th>'), 'el total');
+  assert.match(h.els['util-kpis'].innerHTML, new RegExp('Ganancia sobre gastos.*' + txtT));
+  // Encabezado y filas siguen con la misma cantidad de celdas.
+  const celdas = s => (s.match(/<t[hd][ >]/g) || []).length;
+  assert.strictEqual(celdas(filasHtml[0]), celdas(html.split('</thead>')[0]));
 });
