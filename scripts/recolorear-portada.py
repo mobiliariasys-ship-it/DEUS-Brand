@@ -2,7 +2,7 @@
 """Cambia el fondo de las 3 fotos principales y pasa sus textos a celeste hielo.
 
 Uso (desde la raíz del repo):
-    python3 scripts/recortar-bandas.py /tmp/bandas      # recortes de las bandas
+    python3 scripts/recortar-bandas.py /tmp/bandas      # dónde va cada banda (<color>.json)
     python3 scripts/recolorear-portada.py /tmp/bandas [variante]
 
 Pedido del dueño (30-oct-2026): partiendo del celeste grisáceo de las fotos
@@ -17,12 +17,15 @@ Se rehace cada foto por capas, a partir de la original:
     oscuro que el fondo, en el color de texto de cada foto, con su mismo
     borde suave;
   - dibujos de los íconos (blancos en la original): siguen blancos;
-  - bandas: los recortes de recortar-bandas.py, con una sombra suave.
+  - bandas: recortadas de nuevo de la original (recorte_limpio), con la
+    misma sombra que les pone la web.
 Escribe img/portada/<color>-{800,1200}.webp y, para las bandas que se mecen,
 img/hero-bandas2/<color>-{fondo,silicona,nylon}-{800,1200}.webp: el fondo sin
-bandas y los recortes sin la sombra que traían pegada. Sobre el fondo claro
-original esa sombra no se notaba; sobre un fondo más oscuro es un halo gris al
-lado de cada banda oscura. La sombra la pone ahora la web (drop-shadow del CSS).
+bandas y los recortes limpios. Cada banda se vuelve a sacar de la foto original
+(recorte_limpio): sin la sombra que hacía sobre el fondo claro (sobre los
+fondos nuevos era un halo o una franja sucia), con el borde liso y sin el color
+del fondo viejo en el contorno. La sombra la pone la web (drop-shadow del CSS)
+y, en la foto, una igual.
 """
 import json, os, sys
 import numpy as np
@@ -131,29 +134,108 @@ def fondo_nuevo(H, W, oscuro, claro, semilla):
     return out + np.random.default_rng(semilla).normal(0, 0.35, (H, W, 1))
 
 
-def sin_sombra(im):
-    """Deja en un recorte oscuro solo el cuerpo de la banda.
+def _img(m):
+    return Image.fromarray(np.clip(m * 255, 0, 255).astype(np.uint8))
 
-    El recorte trae, al costado, la sombra que la banda hacía sobre el fondo
-    claro (grises de 80 a 135). El cuerpo es lo bien oscuro; se cierra y se
-    rellenan sus huecos (perforaciones, brillos del marco, el perno) para no
-    perder nada de adentro. Las bandas claras (gris de nylon, rosadas) se
-    dejan como están: ahí la sombra se distingue poco del fondo nuevo.
-    """
-    a = np.asarray(im.getchannel('A')).astype(float) / 255
-    L = lum(np.asarray(im.convert('RGB')).astype(float))
-    if np.median(L[a > 0.5]) > 75:
-        return im
-    cuerpo = Image.fromarray((((L < 78) & (a > 0.5)) * 255).astype(np.uint8))
-    cuerpo = cuerpo.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.MinFilter(7))
-    lienzo = Image.new('L', (cuerpo.width + 2, cuerpo.height + 2), 0)
-    lienzo.paste(cuerpo, (1, 1))
+
+def _arr(im):
+    return np.asarray(im).astype(float) / 255
+
+
+def _rellenar(mask):
+    """Rellena los huecos de una máscara binaria (lo que no toca el borde)."""
+    lienzo = Image.new('L', (mask.shape[1] + 2, mask.shape[0] + 2), 0)
+    lienzo.paste(Image.fromarray((mask * 255).astype(np.uint8)), (1, 1))
     ImageDraw.floodfill(lienzo, (0, 0), 128)
-    lleno = (np.asarray(lienzo)[1:-1, 1:-1] != 128)
-    suave = np.asarray(Image.fromarray((lleno * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.7))).astype(float) / 255
-    out = np.asarray(im).copy()
-    out[..., 3] = (np.minimum(a, suave) * 255).astype(np.uint8)
-    return Image.fromarray(out, 'RGBA')
+    return np.asarray(lienzo)[1:-1, 1:-1] != 128
+
+
+def _mediana(v, k):
+    p = k // 2
+    e = np.pad(v, p, mode='edge')
+    return np.median(np.lib.stride_tricks.sliding_window_view(e, k), axis=1)
+
+
+def _media(v, k):
+    p = k // 2
+    e = np.pad(v, p, mode='edge')
+    return np.convolve(e, np.ones(k) / k, mode='valid')
+
+
+def bordes_rectos(alfa):
+    """Endereza el contorno de una correa: un tramo continuo por fila.
+
+    Se mide el borde izquierdo y derecho de cada fila con precisión de
+    subpíxel (donde el alfa cruza 0,5), se le sacan las muescas con una
+    mediana (que respeta los escalones reales, como el marco o la punta) y se
+    suaviza un poco; después se vuelve a dibujar cada fila con borde
+    antialiasado. Queda liso como un vector.
+    """
+    h, w = alfa.shape
+    xl = np.full(h, np.nan); xr = np.full(h, np.nan)
+    for y in range(h):
+        f = alfa[y]
+        ids = np.where(f >= 0.5)[0]
+        if len(ids) < 2:
+            continue
+        a, b = ids[0], ids[-1]
+        xl[y] = a - (f[a] - 0.5) / max(f[a] - (f[a - 1] if a > 0 else 0), 1e-3) if a > 0 else a - 0.5
+        xr[y] = b + (f[b] - 0.5) / max(f[b] - (f[b + 1] if b < w - 1 else 0), 1e-3) if b < w - 1 else b + 0.5
+    hay = ~np.isnan(xl)
+    if hay.sum() < 30:
+        return alfa
+    filas = np.where(hay)[0]
+    y0, y1 = filas[0], filas[-1] + 1
+    seg = slice(y0, y1)
+    l = np.interp(np.arange(y0, y1), filas, xl[filas]); r = np.interp(np.arange(y0, y1), filas, xr[filas])
+    l = _media(_mediana(l, 21), 7); r = _media(_mediana(r, 21), 7)
+    xs = np.arange(w)[None, :]
+    nuevo = np.zeros_like(alfa)
+    nuevo[seg] = np.clip(xs - l[:, None] + 0.5, 0, 1) * np.clip(r[:, None] - xs + 0.5, 0, 1)
+    # Primera y última fila: medio píxel de cobertura vertical, sin escalón.
+    nuevo[y0] *= np.clip(alfa[y0].max(), 0, 1)
+    nuevo[y1 - 1] *= np.clip(alfa[y1 - 1].max(), 0, 1)
+    return nuevo
+
+
+def recorte_limpio(C, B, escala=4):
+    """Banda sin sombra, con borde suave y sin el color del fondo viejo.
+
+    C: la zona de la foto original (H×W×3); B: el degradé de fondo en esa zona.
+    La sombra y el fondo tienen el mismo tinte (el fondo, oscurecido); la banda
+    es neutra (negra, gris) o rosada. Eso la separa de su sombra aunque tengan
+    el mismo brillo. Lo bien oscuro es banda siempre.
+    """
+    L, Lb = lum(C), lum(B)
+    sm = lambda a, r: _arr(_img(a).filter(ImageFilter.BoxBlur(r)))
+    tinte = (C[..., 0] - 0.5 * (C[..., 1] + C[..., 2])) / np.maximum(L, 1)
+    tinte_f = (B[..., 0] - 0.5 * (B[..., 1] + B[..., 2])) / np.maximum(Lb, 1)
+    t = sm(np.clip((tinte - tinte_f) / np.maximum(-tinte_f, 0.02) * 0.5, 0, 1), 1) * 2
+    s = np.maximum(np.clip(t, 0, 1), np.clip((80 - L) / 30, 0, 1))
+    # Núcleo: sin motas sueltas, con los huecos de adentro rellenos.
+    nuc = _img(s > 0.5).filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(5))
+    nuc = nuc.filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5))
+    nuc = _rellenar(np.asarray(nuc) > 127)
+    dentro = _arr(_img(nuc).filter(ImageFilter.MinFilter(5))) > 0.5
+    cerca = _arr(_img(nuc).filter(ImageFilter.MaxFilter(5))) > 0.5
+    campo = np.where(dentro, 1.0, np.where(cerca, _arr(_img(s).filter(ImageFilter.GaussianBlur(0.7))), 0.0))
+    # Borde liso: el campo se agranda 4x, se corta en 0,5 y se vuelve a achicar.
+    h, w = campo.shape
+    g = _img(campo).resize((w * escala, h * escala), Image.BICUBIC)
+    g = g.point(lambda v: 255 if v >= 128 else 0)
+    alfa = _arr(g.filter(ImageFilter.GaussianBlur(escala * 0.35)).resize((w, h), Image.BOX))
+    # Las correas son rectas: el contorno se endereza (sin muescas ni dientes).
+    alfa = bordes_rectos(alfa)
+    # Color del borde: el de adentro de la banda, corrido hacia afuera.
+    F = C.copy()
+    peso = (alfa > 0.97) & dentro
+    for _ in range(6):
+        num = np.stack([sm(F[..., k] / 255 * peso, 2) for k in range(3)], -1) * 255
+        den = sm(peso.astype(float), 2)[..., None]
+        nuevo = (~peso) & (den[..., 0] > 0.02)
+        F[nuevo] = (num / np.maximum(den, 1e-6))[nuevo]
+        peso = peso | nuevo
+    return np.dstack([F, alfa * 255]).clip(0, 255).astype(np.uint8)
 
 
 def procesar(color, ruta, recortes, variante, salida):
@@ -179,9 +261,15 @@ def procesar(color, ruta, recortes, variante, salida):
     info = json.load(open(f'{recortes}/{color}.json'))
     capa = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     os.makedirs(f'{salida}/hero-bandas2', exist_ok=True)
+    Bf = fondo_original(A)
     for pieza in ('silicona', 'nylon'):
         p = info['piezas'][pieza]
-        im = sin_sombra(Image.open(f'{recortes}/{color}-{pieza}.png').convert('RGBA'))
+        # Mismo encuadre que el recorte de recortar-bandas.py (BANDAS_HERO no
+        # cambia), alargado arriba en espejo igual que allá.
+        bx0 = int(round(p['x'] * W)); bx1 = bx0 + int(round(p['w'] * W))
+        by1 = int(round((p['y'] + p['h']) * H)); extra = int(round(-p['y'] * H))
+        rgba = recorte_limpio(A[:by1, bx0:bx1], Bf[:by1, bx0:bx1])
+        im = Image.fromarray(np.concatenate([rgba[:extra][::-1], rgba], axis=0), 'RGBA')
         im.save(f'{salida}/hero-bandas2/{color}-{pieza}-1200.webp', 'WEBP', quality=86, method=6)
         im.resize((max(1, round(im.width * 800 / W)), max(1, round(im.height * 800 / W))), Image.LANCZOS).save(
             f'{salida}/hero-bandas2/{color}-{pieza}-800.webp', 'WEBP', quality=86, method=6)
@@ -189,9 +277,13 @@ def procesar(color, ruta, recortes, variante, salida):
         # Los recortes arrancan por encima de la foto (y < 0): se pega desde adentro.
         capa.alpha_composite(im, (x, max(0, y)), (0, max(0, -y)))
     alfa = np.asarray(capa.getchannel('A')).astype(float) / 255
-    sombra = np.asarray(Image.fromarray((alfa * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(W / 110))).astype(float) / 255
-    sombra = np.roll(np.roll(sombra, int(W / 120), 1), int(W / 150), 0)[..., None]
-    out = out * (1 - 0.32 * sombra)
+    # La misma sombra que les pone la web (drop-shadow(6px 5px 7px
+    # rgba(30,40,50,.16)) con la foto a 358 px de ancho en el celular): así no
+    # salta cuando aparecen las bandas que se mecen.
+    k = W / 358
+    sombra = np.asarray(Image.fromarray((alfa * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(3.5 * k))).astype(float) / 255
+    sombra = np.roll(np.roll(sombra, int(round(6 * k)), 1), int(round(5 * k)), 0)[..., None] * 0.16
+    out = out * (1 - sombra) + np.array([30, 40, 50], float) * sombra
     rgb = np.asarray(capa.convert('RGB')).astype(float)
     out = out * (1 - alfa[..., None]) + rgb * alfa[..., None]
     os.makedirs(f'{salida}/portada', exist_ok=True)
