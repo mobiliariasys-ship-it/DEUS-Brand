@@ -39,23 +39,46 @@ test('el conteo de tickets pasa a la sección plegada y la barra lateral la abre
   assert.deepStrictEqual(nav, enPanel);
 });
 
+// Tema constelación (31-oct-2026): fondo con la foto del dragón de estrellas
+// del dueño y el panel en sus tonos (índigo, pervinca y celeste hielo).
+const tramoTema = () => {
+  const i = HTML.indexOf('/* ══ Tema constelación');
+  assert.ok(i >= 0, 'falta la capa del tema');
+  return HTML.slice(i, HTML.indexOf('</style>', i));
+};
+
 test('el tema respeta los colores: sin verde ni violeta de adorno', () => {
-  const tema = HTML.slice(HTML.indexOf('/* ══ Tema vidrio'), HTML.indexOf('</style>'));
+  const tema = tramoTema();
   assert.ok(tema.length > 500, 'falta la capa del tema');
   assert.match(tema, /backdrop-filter:blur/);
   assert.ok(!/9b8cff|var\(--green\)|#8fce4a/.test(tema), 'el tema no usa verde ni violeta');
   assert.ok(!/#9b8cff|#cfc6ff/.test(HTML), 'los gráficos no usan violeta');
 });
 
-test('el fondo de dragones existe, es liviano y va detrás del vidrio', () => {
-  const img = path.join(__dirname, '..', 'img', 'panel-dragones.webp');
-  assert.ok(fs.existsSync(img), 'falta img/panel-dragones.webp');
+test('el fondo del dragón de estrellas existe, es liviano y va detrás del vidrio', () => {
+  const img = path.join(__dirname, '..', 'img', 'panel-constelacion.webp');
+  assert.ok(fs.existsSync(img), 'falta img/panel-constelacion.webp');
   const kb = fs.statSync(img).size / 1024;
   assert.ok(kb < 300, 'el fondo pesa ' + Math.round(kb) + ' KB: tiene que cargar rápido en el celular');
-  const tema = HTML.slice(HTML.indexOf('/* ══ Tema vidrio'), HTML.indexOf('</style>'));
+  const tema = tramoTema();
   // En un ::before fijo: background-attachment:fixed no anda en el iPhone.
-  assert.match(tema, /body::before\{content:'';position:fixed;inset:0;z-index:-1;[^}]*url\(img\/panel-dragones\.webp\)/);
+  assert.match(tema, /body::before\{content:'';position:fixed;inset:0;z-index:-1;[^}]*url\(img\/panel-constelacion\.webp\)/);
+  assert.ok(!tema.includes('panel-dragones'), 'quedó el fondo anterior');
   assert.match(tema, /backdrop-filter:blur\(22px\)/);
+});
+
+test('las tarjetas de arriba van en bento: ventas, conversión de hoy y utilidad primero y más grandes', () => {
+  const grid = HTML.slice(HTML.indexOf('<div class="grid bento">'), HTML.indexOf('<div class="rango-bar">'));
+  const ids = [...grid.matchAll(/<div class="stat([^"]*)"[^>]*>.*?id="(s-[a-z-]+)"/g)].map(m => [m[2], m[1].trim()]);
+  assert.strictEqual(ids.length, 12, 'son 12 tarjetas');
+  assert.deepStrictEqual(ids.slice(0, 3).map(x => x[0]), ['s-vent-hoy', 's-conv-hoy', 's-util-k']);
+  for (const [id, cls] of ids.slice(0, 3)) assert.match(cls, /\bhero\b/, id + ' va grande');
+  assert.deepStrictEqual(ids.slice(-3).map(x => x[0]), ['s-conv-sem', 's-conv-mes', 's-conv']);
+  const tema = tramoTema();
+  assert.match(tema, /\.grid\.bento\{grid-template-columns:repeat\(12,minmax\(0,1fr\)\)/);
+  // Las fuentes son las del sitio: nada de afuera.
+  assert.match(tema, /url\(\/fonts\/michroma-400-lat\.woff2\)/);
+  assert.ok(!/fonts\.googleapis|fonts\.gstatic/.test(HTML));
 });
 
 test('el checkout ya no va arriba de todo: queda después de los gráficos, en el grupo de la plata', () => {

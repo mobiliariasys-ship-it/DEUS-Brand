@@ -340,99 +340,155 @@
   }
   @media(max-width:560px){.stat .v{font-size:1.7rem;} .fn-lbl{width:120px;font-size:.8rem;}}
 
-  /* ══ Tema vidrio (30-oct-2026) ══════════════════════════════════════════
-     Pedido del dueño, con un panel de BI de referencia: tarjetas translúcidas
-     sobre fondo negro, con los colores de la marca: azul y celeste de acento,
-     gris mate en textos y bordes. El verde y el rojo quedan SOLO para la plata
-     ganada o perdida (utilidad, % de ganancia, ok/no): son un dato, no adorno.
-     Va al final para pisar lo de arriba sin tocar la lógica. */
+  /* ══ Tema constelación (31-oct-2026) ══════════════════════════════════════
+     Pedido del dueño: de fondo su foto del dragón de estrellas, y el panel con
+     los tonos de esa foto (noche índigo, azul pervinca y celeste hielo).
+     Ideas de paneles 2026 que se aplican: oscuro primero y UN solo color de
+     acento (como Linear o Vercel); vidrio solo en tarjetas y barra lateral, y
+     siempre con contraste de sobra; las tarjetas de arriba en "bento" (las que
+     más se miran, más grandes) y números grandes de ancho fijo. El verde y el
+     rojo quedan SOLO para la plata ganada o perdida: son un dato, no adorno.
+     Tipografías propias del sitio (Michroma del logo y DM Sans), sin cargar
+     nada de afuera. Va al final para pisar lo de arriba sin tocar la lógica. */
+  @font-face{font-family:'DM Sans';font-style:normal;font-weight:100 1000;font-display:swap;src:url(/fonts/dm-sans-400-lat.woff2) format('woff2');}
+  @font-face{font-family:'Michroma';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/michroma-400-lat.woff2) format('woff2');}
   :root{
-    --bg:#04070c; --sidebar:rgba(8,13,22,.74); --card:rgba(16,24,37,.6); --card2:rgba(7,11,19,.62);
-    --border:rgba(140,170,205,.15); --border-soft:rgba(140,170,205,.09);
-    --azul:#2f74ff; --azul-deep:#1f4fd6;
-    --cyan:#1ec8f0; --cyan-soft:#7fd8f2; --cyan-deep:#1a8fd8;
-    --muted:#8e98a6; --faint:#5f6977; --pill:#2563eb;
-    /* Vidrio: un reflejo diagonal arriba + el cuerpo translúcido. Deja ver el
-       fondo de dragones borroso detrás de cada tarjeta. */
-    --vidrio:linear-gradient(115deg,rgba(255,255,255,.08),rgba(255,255,255,0) 38%),
-             linear-gradient(160deg,rgba(28,42,64,.46),rgba(8,13,22,.34));
-    --vidrio-borde:rgba(160,195,235,.2);
-    --vidrio-sombra:0 18px 44px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.1), inset 0 0 0 1px rgba(255,255,255,.02);
+    --bg:#060914; --sidebar:rgba(9,14,32,.6); --card:rgba(20,30,58,.55); --card2:rgba(8,12,28,.6);
+    --border:rgba(151,186,230,.16); --border-soft:rgba(151,186,230,.09);
+    /* Tonos de la foto: índigo de la noche, pervinca del cuerpo del dragón y
+       hielo de sus escamas y estrellas. */
+    --noche:#0a1022; --indigo:#1e2c4e; --pervinca:#576eb6; --pervinca-2:#6e8cd1;
+    --hielo:#97bae6; --hielo-2:#cfe0fb;
+    /* Compatibilidad: lo de arriba usa estos nombres. */
+    --azul:var(--pervinca); --azul-deep:#3d4f8f;
+    --cyan:var(--hielo); --cyan-soft:var(--hielo-2); --cyan-deep:var(--pervinca);
+    --ink:#eef3ff; --muted:#a3b0cc; --faint:#6f7c99; --pill:var(--pervinca);
+    --fuente:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;
+    --fuente-marca:'Michroma','DM Sans',system-ui,sans-serif;
+    /* Vidrio: reflejo frío arriba a la izquierda + cuerpo índigo translúcido. */
+    --vidrio:linear-gradient(118deg,rgba(207,224,251,.075),rgba(207,224,251,0) 40%),
+             linear-gradient(160deg,rgba(30,44,78,.52),rgba(8,12,28,.4));
+    --vidrio-borde:rgba(151,186,230,.18);
+    --vidrio-sombra:0 20px 50px rgba(2,4,12,.5), inset 0 1px 0 rgba(207,224,251,.1);
   }
-  /* Fondo: dragones azules entre nubes (img/panel-dragones.webp, generado para
-     el panel el 30-oct-2026). Va en un ::before fijo y no con
-     background-attachment:fixed, que el Safari del iPhone ignora y estiraba la
-     imagen a todo el alto de la página. El velo oscuro de encima mantiene el
-     contraste del texto; los dragones quedan en los bordes. */
+  body{font-family:var(--fuente);color:var(--ink);}
+  /* Fondo: el dragón de estrellas (img/panel-constelacion.webp). Va en un
+     ::before fijo y no con background-attachment:fixed, que el Safari del
+     iPhone ignora. El velo va oscuro hasta donde termina el contenido (barra
+     de 230 px + panel de hasta 1300 px) y se abre después: en un monitor
+     ancho el dragón brilla en el espacio libre, y en una notebook queda
+     suave detrás de los números. */
   html{background:var(--bg);}
   body{background:transparent;}
   body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
-    background:linear-gradient(180deg,rgba(3,6,11,.42),rgba(3,6,11,.62)),
-               url(img/panel-dragones.webp) center / cover no-repeat,
+    background:linear-gradient(90deg,rgba(6,9,20,.74) 0,rgba(6,9,20,.6) 1150px,rgba(6,9,20,.16) 1750px),
+               url(img/panel-constelacion.webp) 72% center / cover no-repeat,
                var(--bg);}
-  @media(max-width:820px){ body::before{background-position:center,18% center,center;} }
+  @media(max-width:820px){ body::before{background:linear-gradient(180deg,rgba(6,9,20,.55),rgba(6,9,20,.8)),
+    url(img/panel-constelacion.webp) 64% 30% / cover no-repeat,var(--bg);} }
   section,.stat,#login,.vm-caja{background:var(--vidrio);border:1px solid var(--vidrio-borde);box-shadow:var(--vidrio-sombra);
-    -webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);}
-  section{border-radius:16px;}
-  .stat{overflow:hidden;}
-  .stat::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;
-    background:linear-gradient(90deg,var(--azul),var(--cyan));opacity:.6;}
-  .stat .k,.util-kpi .k{text-transform:uppercase;letter-spacing:1.1px;font-size:.6rem;font-weight:600;color:var(--muted);}
-  .stat.live .v,.stat.gold .v{color:var(--cyan);}
-  .sec-h h2{text-transform:uppercase;letter-spacing:1.1px;font-size:.82rem;font-weight:800;}
-  .grupo-h{color:var(--cyan-soft);border-bottom:none;position:relative;}
+    -webkit-backdrop-filter:blur(22px) saturate(140%);backdrop-filter:blur(22px) saturate(140%);}
+  section{border-radius:18px;}
+  .stat{overflow:hidden;border-radius:16px;}
+  .stat::before{content:'';position:absolute;left:16px;right:16px;top:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(207,224,251,.55),transparent);}
+  .stat .k,.util-kpi .k{text-transform:uppercase;letter-spacing:1.2px;font-size:.62rem;font-weight:600;color:var(--muted);}
+  .stat .v{font-weight:700;letter-spacing:-.025em;color:var(--ink);}
+  .stat .v small{color:#b9c6e4;font-size:.78rem;font-weight:500;}
+  .stat.live .v,.stat.gold .v{color:var(--hielo-2);}
+  .sec-h h2{text-transform:uppercase;letter-spacing:1.2px;font-size:.8rem;font-weight:700;color:var(--ink);}
+  .grupo-h{font-family:var(--fuente-marca);font-size:.7rem;letter-spacing:2px;color:var(--hielo);border-bottom:none;position:relative;}
   .grupo-h::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
-    background:linear-gradient(90deg,rgba(30,200,240,.45),rgba(47,116,255,.25) 35%,transparent);}
+    background:linear-gradient(90deg,rgba(151,186,230,.5),rgba(87,110,182,.22) 35%,transparent);}
+
+  /* Tarjetas de arriba en bento: fila 1 lo que más se mira (ventas y
+     conversión de hoy, utilidad), fila 2 tráfico y stock, fila 3 la
+     conversión en sus otras ventanas. */
+  .grid.bento{grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;}
+  .bento .stat{grid-column:span 2;}
+  .bento .stat.hero,.bento .stat.ancha{grid-column:span 4;}
+  .bento .stat.hero{padding:20px 22px 21px;
+    background:radial-gradient(120% 140% at 0% 0%,rgba(110,140,209,.26),rgba(110,140,209,0) 58%),var(--vidrio);
+    border-color:rgba(151,186,230,.26);}
+  .bento .stat.hero .v{font-size:2.75rem;}
+  .bento .stat.hero .k{margin-bottom:16px;}
+  .bento .stat.hero .v small{font-size:.86rem;margin-left:4px;}
+  @media(max-width:1180px){
+    .grid.bento{grid-template-columns:repeat(6,minmax(0,1fr));}
+    .bento .stat,.bento .stat.hero,.bento .stat.ancha{grid-column:span 2;}
+    .bento .stat.hero .v{font-size:2.3rem;}
+  }
 
   /* Barra lateral y encabezado */
-  .sidebar{background:linear-gradient(180deg,rgba(10,16,27,.5),rgba(5,9,16,.42));border-right:1px solid var(--vidrio-borde);
-    -webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%);}
-  .side-mark{background:linear-gradient(135deg,var(--azul),var(--cyan));box-shadow:0 0 14px rgba(30,200,240,.45);}
-  .nav-i:hover{background:rgba(120,160,210,.08);color:#e6edf5;}
-  .nav-i.active{background:linear-gradient(90deg,rgba(47,116,255,.24),rgba(30,200,240,.05));color:var(--cyan);box-shadow:inset 2px 0 0 var(--cyan);}
-  .h-title h1{color:#fff;text-transform:uppercase;letter-spacing:1.6px;font-size:1.5rem;}
-  .h-title h1::after{content:'';display:block;width:48px;height:3px;border-radius:3px;margin-top:9px;
-    background:linear-gradient(90deg,var(--azul),var(--cyan));}
-  .aviso-btn,.rango-btn{background:rgba(255,255,255,.03);border-color:var(--border);color:#aeb8c4;}
-  .aviso-btn:hover,.rango-btn:hover{border-color:rgba(30,200,240,.45);color:#e6edf5;}
-  .aviso-btn.on{border-color:rgba(30,200,240,.5);color:var(--cyan);}
-  .rango-btn.active{background:rgba(47,116,255,.2);border-color:rgba(30,200,240,.55);color:var(--cyan);}
-  .dot.on{background:var(--cyan);animation:pulsoCeleste 2s infinite;}
-  @keyframes pulsoCeleste{0%{box-shadow:0 0 0 0 rgba(30,200,240,.55)}70%{box-shadow:0 0 0 7px rgba(30,200,240,0)}100%{box-shadow:0 0 0 0 rgba(30,200,240,0)}}
-  .self-tag{background:rgba(30,200,240,.12);border-color:rgba(30,200,240,.3);color:var(--cyan);}
+  .sidebar{background:linear-gradient(180deg,rgba(12,18,40,.55),rgba(6,9,22,.45));border-right:1px solid var(--vidrio-borde);
+    -webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%);}
+  .side-logo{font-family:var(--fuente-marca);letter-spacing:3px;}
+  .side-mark{background:linear-gradient(135deg,var(--pervinca),var(--hielo-2));box-shadow:0 0 16px rgba(151,186,230,.55);}
+  .nav-i{border-radius:12px;}
+  /* Íconos del menú en monocromo: con un solo color de acento, los emojis a
+     todo color competían con los datos. Se encienden al pasar o al elegir. */
+  .nav-i .ico{filter:grayscale(1) brightness(1.5);opacity:.62;transition:opacity .15s,filter .15s;}
+  .nav-i:hover .ico,.nav-i.active .ico{filter:none;opacity:1;}
+  .nav-i:hover{background:rgba(151,186,230,.08);color:var(--ink);}
+  .nav-i.active{background:linear-gradient(90deg,rgba(87,110,182,.32),rgba(87,110,182,.04));color:var(--hielo-2);box-shadow:inset 2px 0 0 var(--hielo);}
+  .h-title h1{font-family:var(--fuente-marca);font-weight:400;text-transform:uppercase;letter-spacing:3px;font-size:1.35rem;
+    background:linear-gradient(90deg,#fff,var(--hielo) 70%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .h-title h1::after{content:'';display:block;width:56px;height:2px;border-radius:2px;margin-top:12px;
+    background:linear-gradient(90deg,var(--hielo),transparent);}
+  .h-title p{color:var(--muted);}
+  .aviso-btn,.rango-btn{background:rgba(207,224,251,.04);border-color:var(--border);color:#c3cde3;}
+  .aviso-btn:hover,.rango-btn:hover{border-color:rgba(151,186,230,.5);color:var(--ink);}
+  .aviso-btn.on{border-color:rgba(151,186,230,.55);color:var(--hielo-2);}
+  .rango-btn.active{background:rgba(87,110,182,.32);border-color:rgba(151,186,230,.6);color:var(--hielo-2);}
+  .dot.on{background:var(--hielo);animation:pulsoHielo 2s infinite;}
+  @keyframes pulsoHielo{0%{box-shadow:0 0 0 0 rgba(151,186,230,.6)}70%{box-shadow:0 0 0 7px rgba(151,186,230,0)}100%{box-shadow:0 0 0 0 rgba(151,186,230,0)}}
+  .self-tag{background:rgba(151,186,230,.12);border-color:rgba(151,186,230,.3);color:var(--hielo-2);}
 
   /* Botones, pastillas y campos */
-  #login button,.btn{background:linear-gradient(135deg,var(--azul),var(--cyan-deep));color:#fff;box-shadow:0 6px 18px rgba(47,116,255,.25);}
+  #login button,.btn{background:linear-gradient(135deg,var(--pervinca),#3d4f8f);color:#fff;box-shadow:0 8px 22px rgba(87,110,182,.3);}
   .btn:hover{filter:brightness(1.12);}
-  .btn.ghost{background:rgba(255,255,255,.03);border:1px solid var(--border);color:#c3ccd7;box-shadow:none;}
-  .btn.ghost:hover{border-color:var(--cyan);color:var(--cyan);}
-  .pill{background:linear-gradient(135deg,var(--azul),var(--cyan-deep));}
-  #login input,.vm-campo input,.vm-campo select,.vm-campo textarea{background:rgba(3,7,13,.6);border-color:var(--border);}
-  .util-add:hover{border-color:var(--cyan);color:var(--cyan);}
+  .btn.ghost{background:rgba(207,224,251,.04);border:1px solid var(--border);color:#c3cde3;box-shadow:none;}
+  .btn.ghost:hover{border-color:var(--hielo);color:var(--hielo-2);}
+  .pill{background:linear-gradient(135deg,var(--pervinca),#3d4f8f);color:#fff;}
+  #login input,.vm-campo input,.vm-campo select,.vm-campo textarea{background:rgba(6,9,20,.6);border-color:var(--border);}
+  .util-add:hover{border-color:var(--hielo);color:var(--hielo-2);}
+  /* Se ve dónde está el foco al navegar con teclado. */
+  .nav-i:focus-visible,.rango-btn:focus-visible,.btn:focus-visible,.aviso-btn:focus-visible,.util-add:focus-visible{outline:2px solid var(--hielo);outline-offset:2px;}
 
   /* Barras, gráficos y recuadros internos: vidrio más oscuro */
-  .fn-track,.cb-track{background:rgba(3,7,13,.55);border-color:var(--border-soft);}
-  .fn-bar{background:linear-gradient(90deg,var(--azul-deep),var(--cyan));}
-  .cb-bar{background:linear-gradient(90deg,var(--azul),var(--cyan));}
-  .chart-container,.ctr-wrap{background:rgba(3,7,13,.42);border-color:var(--border-soft);}
-  .gh-porque,.co-note,.ads-card,.ctr-chip,.sel-res,.util-kpi{background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(4,8,14,.42));
-    border-color:var(--vidrio-borde);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);}
-  .conv-tabs{background:rgba(5,9,16,.6);border-color:var(--border);}
-  .conv-tab.active{background:rgba(47,116,255,.28);}
-  .ctr-tip{background:rgba(7,12,20,.96);border-color:var(--border);}
+  .fn-track,.cb-track{background:rgba(6,9,20,.55);border-color:var(--border-soft);}
+  .fn-bar,.cb-bar{background:linear-gradient(90deg,var(--pervinca),var(--hielo));}
+  .chart-container,.ctr-wrap{background:rgba(6,9,20,.5);border-color:var(--border-soft);}
+  .gh-porque,.co-note,.ads-card,.ctr-chip,.sel-res,.util-kpi{background:linear-gradient(160deg,rgba(207,224,251,.045),rgba(6,9,20,.45));
+    border-color:var(--vidrio-borde);box-shadow:inset 0 1px 0 rgba(207,224,251,.06);}
+  .conv-tabs{background:rgba(6,9,20,.6);border-color:var(--border);}
+  .conv-tab.active{background:rgba(87,110,182,.34);}
+  .ctr-tip{background:rgba(8,12,28,.96);border-color:var(--border);}
   .util-tabla th{color:var(--muted);text-transform:uppercase;font-size:.6rem;letter-spacing:.8px;}
-  .util-tabla tr.hoy td{background:rgba(30,200,240,.07);}
-  /* Checkout arriba de todo: los pasos con su nombre completo (con 120px se
+  .util-tabla tr.hoy td{background:rgba(151,186,230,.08);}
+  /* El embudo del checkout: los pasos con su nombre completo (con 120px se
      cortaban en "Abrió el check…"). */
   #co-funnel .cb-lbl{width:185px;}
   @media(max-width:560px){ #co-funnel .cb-lbl{width:128px;font-size:.74rem;} }
-  /* Celular: las tarjetas de arriba de a dos (de a una el resumen ocupaba
-     varias pantallas antes de llegar a la utilidad). */
+  /* Celular: tarjetas de a dos y las 3 principales a todo el ancho (de a una
+     el resumen ocupaba varias pantallas antes de llegar a la utilidad). El
+     vidrio con menos desenfoque: en el celular el blur grande cuesta fluidez. */
   @media(max-width:560px){
-    .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+    .grid.bento{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+    .bento .stat,.bento .stat.ancha{grid-column:span 1;}
+    .bento .stat.hero,.bento .stat.ancha:last-child{grid-column:span 2;}
+    .bento .stat.hero .v{font-size:2.1rem;}
     .stat{padding:14px 14px 13px;}
     .stat .v{font-size:1.45rem;}
     .stat .v small{display:block;margin-top:4px;font-size:.7rem;}
+    .bento .stat.hero .v small{display:inline;margin-top:0;}
+  }
+  @media(max-width:820px){
+    section,.stat,.vm-caja{-webkit-backdrop-filter:blur(12px) saturate(130%);backdrop-filter:blur(12px) saturate(130%);}
+  }
+  /* Si el sistema pide menos transparencias, tarjetas sólidas. */
+  @media(prefers-reduced-transparency:reduce){
+    section,.stat,#login,.vm-caja,.sidebar{background:#0f1730;-webkit-backdrop-filter:none;backdrop-filter:none;}
   }
 </style>
 </head>
@@ -483,25 +539,28 @@
          error únicamente se veía en los logs de Render. -->
     <div id="alertas"></div>
 
-    <div class="grid">
+    <!-- Tarjetas en "bento": las que más se miran, más grandes. -->
+    <div class="grid bento">
+      <!-- Fila 1: la plata y la conversión de hoy, y la utilidad. Utilidad:
+           sin días elegidos en el gráfico de Conversión, la histórica desde
+           que los ads se cuentan con IVA; con días elegidos, la de esos días. -->
+      <div class="stat gold hero"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
+      <div class="stat gold hero"><div class="k">Conversión hoy</div><div class="v" id="s-conv-hoy">— <small id="s-conv-hoy-d"></small></div></div>
+      <div class="stat hero" style="cursor:pointer" onclick="verUtilHistorica()" title="Ver la utilidad día por día"><div class="k" id="s-util-k">Utilidad histórica</div><div class="v" id="s-util">— <small id="s-util-m"></small></div></div>
+      <!-- Fila 2: tráfico en vivo, ventas y stock. Ventas del periodo = el
+           elegido en la barra de abajo (semana, mes, etc.). -->
       <div class="stat live"><div class="k"><span class="dot on"></span>Viendo ahora</div><div class="v" id="s-live">0</div></div>
       <div class="stat"><div class="k">Visitas hoy</div><div class="v" id="s-vhoy">0</div></div>
       <div class="stat"><div class="k">Tiempo promedio <span onclick="resetTiempo()" title="Reiniciar el promedio (limpia tu tiempo)" style="margin-left:auto;cursor:pointer;color:#777;font-size:.8rem">⟳</span></div><div class="v" id="s-tprom">—</div></div>
-      <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
-      <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
-      <!-- Conversión en las 4 ventanas, juntas y comparables: es la forma de
-           ver si un cambio movió la aguja (hoy vs. semana vs. mes vs. siempre)
-           sin tener que ir cambiando el filtro. -->
-      <div class="stat gold"><div class="k">Conversión hoy</div><div class="v" id="s-conv-hoy">— <small id="s-conv-hoy-d"></small></div></div>
-      <div class="stat gold"><div class="k">Conversión semana</div><div class="v" id="s-conv-sem">— <small id="s-conv-sem-d"></small></div></div>
-      <div class="stat gold"><div class="k">Conversión mes</div><div class="v" id="s-conv-mes">— <small id="s-conv-mes-d"></small></div></div>
-      <div class="stat"><div class="k">Conversión histórica</div><div class="v" id="s-conv">— <small id="s-conv-d"></small></div></div>
-      <!-- Ventas del periodo elegido arriba en la barra (semana, mes, etc.) -->
       <div class="stat gold"><div class="k" id="s-perv-k">Ventas del periodo</div><div class="v" id="s-perv">— <small id="s-perv-m"></small></div></div>
-      <!-- Utilidad: sin días elegidos en el gráfico de Conversión, la histórica
-           desde que los ads se cuentan con IVA; con días elegidos, la de esos días. -->
-      <div class="stat" style="cursor:pointer" onclick="verUtilHistorica()" title="Ver la utilidad día por día"><div class="k" id="s-util-k">Utilidad histórica</div><div class="v" id="s-util">— <small id="s-util-m"></small></div></div>
+      <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
       <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
+      <!-- Fila 3: la conversión en sus otras ventanas, juntas y comparables:
+           es la forma de ver si un cambio movió la aguja (hoy vs. semana vs.
+           mes vs. siempre) sin ir cambiando el filtro. -->
+      <div class="stat gold ancha"><div class="k">Conversión semana</div><div class="v" id="s-conv-sem">— <small id="s-conv-sem-d"></small></div></div>
+      <div class="stat gold ancha"><div class="k">Conversión mes</div><div class="v" id="s-conv-mes">— <small id="s-conv-mes-d"></small></div></div>
+      <div class="stat ancha"><div class="k">Conversión histórica</div><div class="v" id="s-conv">— <small id="s-conv-d"></small></div></div>
     </div>
 
     <!-- Filtro de periodo: aplica a la conducta y las ventas del periodo (el checkout tiene el suyo).
@@ -1777,11 +1836,11 @@
     var u30=d.ultimos30||[];
     var totalVistas=0; u30.forEach(function(x){ totalVistas+=x.vistas; });
     document.getElementById('chart-total').textContent=totalVistas+' vistas en 30 días';
-    dibujarBarras('chartDias', u30.map(function(x){ return { fecha:x.fecha, valor:x.vistas }; }), '#1ec8f0');
+    dibujarBarras('chartDias', u30.map(function(x){ return { fecha:x.fecha, valor:x.vistas }; }), COLOR_BARRAS);
     var v30=d.ventas30||[];
     var totalV=0, totalM=0; v30.forEach(function(x){ totalV+=x.ventas; totalM+=x.monto; });
     document.getElementById('chart-ventas-total').textContent=totalV+' ventas · '+money(totalM);
-    dibujarBarras('chartVentas', v30.map(function(x){ return { fecha:x.fecha, valor:x.ventas }; }), '#0f9fd0');
+    dibujarBarras('chartVentas', v30.map(function(x){ return { fecha:x.fecha, valor:x.ventas }; }), COLOR_BARRAS);
     // Conversión diaria = ventas ÷ visitas de ESE día. Ojo con los dias de
     // poco trafico: 1 venta sobre 3 visitas da 33% y no significa nada, asi
     // que esos van atenuados y NO entran en la escala del grafico.
@@ -1809,7 +1868,7 @@
     // donde estan los totales de 30 dias, y se repinta esa seccion con ella.
     CONV_SITIO = convProm;
     if (ULT_CONV) pintarConversion(ULT_CONV.convAcc, ULT_CONV.conducta, ULT_CONV.nComp);
-    dibujarBarras('chartConv', convDias, '#2f74ff',
+    dibujarBarras('chartConv', convDias, COLOR_BARRAS,
       { ref: convProm, refLbl: 'promedio', sinCifras: true, sel: CONV_SEL, onClick: toggleDiaConv });
     refrescarSel();
     document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
@@ -1935,7 +1994,11 @@
   }
   // Al cambiar el ancho de la ventana los graficos se redibujan a su tamaño nuevo.
   window.addEventListener('resize', function(){ Object.keys(charts).forEach(function(id){ arrancarChart(id); }); });
-  var FUENTE_GRAF="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif";
+  var FUENTE_GRAF="'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif";
+  // Un solo color para vistas, ventas y conversión: el pervinca del fondo
+  // (5,7:1 de contraste sobre el gráfico). Cada gráfico es una sola serie,
+  // así que el color no distingue nada: va el mismo en los tres.
+  var COLOR_BARRAS='#6e8cd1';
   function frameBarras(id){
     var st=charts[id], canvas=document.getElementById(id);
     if(!canvas||!st||!st.datos.length){ if(st) st.corriendo=false; return; }
@@ -1952,7 +2015,7 @@
     var padB=26, padT=22, padX=10;
     ctx.clearRect(0,0,w,h);
     // Líneas guía horizontales (estilo dashboard)
-    ctx.strokeStyle='rgba(140,170,205,.10)'; ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(151,186,230,.10)'; ctx.lineWidth=1;
     for(var gl=0;gl<=4;gl++){ var gy=padT+(h-padB-padT)*gl/4; ctx.beginPath(); ctx.moveTo(padX,gy+.5); ctx.lineTo(w-padX,gy+.5); ctx.stroke(); }
     var n=st.datos.length;
     var gap=3, barW=(w-padX*2-gap*(n-1))/n;
@@ -1974,7 +2037,7 @@
       var barH=Math.max(2,st.alturas[i]);
       var x=padX+i*(barW+gap), y=h-padB-barH;
       var g=ctx.createLinearGradient(0,y,0,h-padB);
-      g.addColorStop(0,'#7fd8f2'); g.addColorStop(1,st.colorBase);
+      g.addColorStop(0,'#cfe0fb'); g.addColorStop(1,st.colorBase);
       ctx.fillStyle=g;
       ctx.globalAlpha=st.datos[i].valor?(st.datos[i].tenue?0.28:0.95):0.22;
       // Con una seleccion activa, los dias que quedaron fuera se apagan para
@@ -1984,7 +2047,7 @@
       ctx.fillRect(x,y,barW,barH);
       ctx.globalAlpha=1;
       if(haySel && elegido){
-        ctx.strokeStyle='#bfeeff'; ctx.globalAlpha=0.85; ctx.lineWidth=1;
+        ctx.strokeStyle='#cfe0fb'; ctx.globalAlpha=0.85; ctx.lineWidth=1;
         ctx.strokeRect(x+.5,y+.5,barW-1,barH-1);
         ctx.globalAlpha=1;
       }
@@ -1993,7 +2056,7 @@
       if(st.datos[i].valor && !st.opts.sinCifras) cifras.push({ i:i, v:st.datos[i].valor, cx:x+barW/2, y:y });
       // Día del mes bajo la barra
       if((n-1-i)%pasoDia===0 || (haySel && elegido)){
-        ctx.fillStyle=(haySel&&elegido)?'#bfeeff':'#9fb2c6';
+        ctx.fillStyle=(haySel&&elegido)?'#cfe0fb':'#a3b0cc';
         ctx.font='500 11px '+FUENTE_GRAF; ctx.textAlign='center';
         ctx.fillText(st.datos[i].fecha.slice(8),x+barW/2,h-9);
       }
@@ -2028,7 +2091,7 @@
       ctx.fillText(pct1(st.opts.ref)+' '+(st.opts.refLbl||''),padX+4,ry-6);
       ctx.restore();
     }
-    ctx.strokeStyle='#262626'; ctx.beginPath();
+    ctx.strokeStyle='rgba(151,186,230,.22)'; ctx.beginPath();
     ctx.moveTo(padX,h-padB+.5); ctx.lineTo(w-padX,h-padB+.5); ctx.stroke();
     if(quieto){ st.corriendo=false; return; }
     requestAnimationFrame(function(){ frameBarras(id); });
