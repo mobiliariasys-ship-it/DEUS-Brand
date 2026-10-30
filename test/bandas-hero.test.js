@@ -9,16 +9,16 @@ const path = require('path');
 const vm = require('vm');
 
 const HTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const DIR = path.join(__dirname, '..', 'img', 'hero-bandas');
+const DIR = path.join(__dirname, '..', 'img', 'hero-bandas2');
 
 test('cada color tiene su parche de fondo y sus dos bandas, en dos tamaños y livianas', () => {
   let total800 = 0;
-  for (const c of ['negra', 'gris', 'rosada']) for (const pieza of ['placa', 'silicona', 'nylon']) for (const base of [800, 1200]) {
+  for (const c of ['negra', 'gris', 'rosada']) for (const pieza of ['fondo', 'silicona', 'nylon']) for (const base of [800, 1200]) {
     const f = path.join(DIR, `${c}-${pieza}-${base}.webp`);
     assert.ok(fs.existsSync(f), 'falta ' + path.basename(f));
     const b = fs.readFileSync(f);
     assert.strictEqual(b.toString('ascii', 8, 12), 'WEBP');
-    if (pieza !== 'placa') assert.ok(b.toString('ascii', 12, 16) === 'VP8X' && (b[20] & 0x10), path.basename(f) + ': la banda necesita fondo transparente');
+    if (pieza !== 'fondo') assert.ok(b.toString('ascii', 12, 16) === 'VP8X' && (b[20] & 0x10), path.basename(f) + ': la banda necesita fondo transparente');
     if (base === 800) total800 += b.length;
   }
   assert.ok(total800 < 220 * 1024, 'en el celular los 3 colores pesan ' + Math.round(total800 / 1024) + ' KB');
@@ -28,7 +28,7 @@ test('cada foto del carrusel lleva su capa de bandas, y la foto principal sigue 
   for (const c of ['negra', 'gris', 'rosada']) {
     assert.match(HTML, new RegExp('<div class="slide-w"><img class="slide" [^\\n]*data-color="' + c + '"[^\\n]*><div class="sl-arte" data-color="' + c + '" aria-hidden="true"></div></div>'));
   }
-  assert.match(HTML, /<img class="slide" loading="eager" fetchpriority="high"[^\n]*src="img\/slide-negra-800\.webp"/, 'la foto principal se sigue pidiendo primero');
+  assert.match(HTML, /<img class="slide" loading="eager" fetchpriority="high"[^\n]*src="img\/portada\/negra-800\.webp"/, 'la foto principal se sigue pidiendo primero');
   // La capa se arma recién con la página cargada.
   assert.match(HTML, /window\.addEventListener\('load', function \(\) \{ setTimeout\(function \(\) \{ bandasHero\.armar\(colorOrder\[currentSlide\]\); \}, 700\); \}\);/);
   assert.match(HTML, /if \(!bandasHero\.tocar\(e\.target, e\.changedTouches\[0\]\.clientX\)\) abrirZoom\(\);/, 'tocar una banda la mece; el resto abre el zoom');
@@ -158,4 +158,17 @@ test('mantener presionada una banda no la saca como foto (menú de imagen del iP
   assert.match(HTML, /\.sl-banda img\{[^}]*pointer-events:none/);
   assert.match(HTML, /\.sl-banda\{[^}]*-webkit-touch-callout:none/);
   assert.match(HTML, /\.sl-arte img\{[^}]*-webkit-touch-callout:none/);
+});
+
+test('fotos principales: fondo oscuro y textos en celeste hielo, con nombres nuevos (caché de 7 días)', () => {
+  // Pedido del dueño (30-oct-2026): negra en carbón, gris en gris mate,
+  // rosada en rosado mate; mismos textos, en celeste hielo. Se cachean una
+  // semana, así que van con nombres nuevos para no mezclar fotos viejas con el
+  // fondo nuevo de las bandas que se mecen.
+  for (const c of ['negra', 'gris', 'rosada']) {
+    for (const base of [800, 1200]) assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'portada', `${c}-${base}.webp`)), `falta portada/${c}-${base}`);
+    assert.match(HTML, new RegExp(`img/portada/${c}-800\\.webp 800w, img/portada/${c}-1200\\.webp`));
+    assert.match(HTML, new RegExp(`${c}: "img/portada/${c}-1200\\.webp"`), 'el zoom y el carrito usan la foto nueva');
+  }
+  assert.ok(!/img\/hero-bandas\//.test(HTML) && !/slide-(negra|gris|rosada)-800/.test(HTML), 'nada apunta a los archivos viejos');
 });
