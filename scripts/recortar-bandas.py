@@ -30,6 +30,11 @@ FONDO_IZQ, FONDO_DER = (0.53, 0.575), (0.95, 0.99)
 ZONA = (0.575, 0.95)
 # El hueco entre las dos bandas se busca en esta franja (fracción del ancho).
 HUECO = (0.72, 0.79)
+# Las bandas salen cortadas por el borde de arriba de la foto. Al mecerse se
+# inclinan y ese corte recto se veía: se alargan hacia arriba (fuera de la
+# foto, lo tapa el overflow) repitiendo en espejo su parte de arriba, que es
+# el mismo tejido. Fracción del alto de la foto.
+EXTRA_ARRIBA = 0.07
 
 
 def fondo(A):
@@ -121,8 +126,10 @@ def procesar(color, ruta, out):
         al = alfa[y0:y1, a:b] * propia
         rgba = np.dstack([F[y0:y1, a:b], al * 255]).astype(np.uint8)
         rgba[..., :3][al < 0.02] = 0
+        extra = int(round(H * EXTRA_ARRIBA))
+        rgba = np.concatenate([rgba[:extra][::-1], rgba], axis=0)
         Image.fromarray(rgba, 'RGBA').save(f'{out}/{color}-{nombre}.png')
-        info['piezas'][nombre] = {'x': a / W, 'y': y0 / H, 'w': (b - a) / W, 'h': (y1 - y0) / H}
+        info['piezas'][nombre] = {'x': a / W, 'y': (y0 - extra) / H, 'w': (b - a) / W, 'h': (y1 - y0 + extra) / H}
     # Placa: la franja de las bandas solo con fondo, con 8px de fundido a los costados.
     pa, pb = x0 - 8, x1 + 8
     placa = A[:, pa:pb].copy()
