@@ -172,19 +172,27 @@ def _recta(y, v, vueltas=5, tol=1.2):
     return a * y + b, res[usar].max() if usar.any() else 0
 
 
-def _por_tramos(v, salto=3.0):
+def _por_tramos(v, salto=3.0, lado=-1):
     """Tramos rectos entre escalones de verdad (marco, presillas).
 
     Un escalón es donde la mediana cambia más de `salto` px en 12 filas; ahí
-    el borde sigue a los datos (nítido, sin rampa). Cada tramo de 30 filas o
+    el borde sigue a lo medido tal cual (así la esquina redondeada del marco
+    queda redonda: la mediana la volvía escalera). Cada tramo de 30 filas o
     más entre escalones va como una recta; si no es recto (la punta redonda),
     sigue a la mediana.
+
+    Entre dos tramos rectos, el escalón se dibuja: la correa recta, la parte
+    ancha (marco, presilla) recta, y entre las dos la esquina de afuera como
+    un cuarto de círculo. Medido, el brillo del borde del marco dejaba ahí un
+    escaloncito. `lado`: -1 borde izquierdo (más ancho = x menor), +1 derecho.
     """
     n = len(v); ys = np.arange(n, dtype=float)
     m = _mediana(v, 41)
     d = np.zeros(n); d[6:-6] = np.abs(m[12:] - m[:-12])
     esc = np.convolve((d > salto).astype(float), np.ones(7), mode='same') > 0
-    out = _media(m, 3)
+    out = np.where(esc, _media(v, 3), _media(m, 3))
+    _por_tramos.esquinas = []   # (desde, hasta, fila de referencia, radio)
+    tramos = []   # (desde, hasta, recta como (a, b)) de los tramos rectos
     i = 0
     while i < n:
         if esc[i]:
@@ -196,7 +204,42 @@ def _por_tramos(v, salto=3.0):
             ajuste, desvio = _recta(ys[i:j], v[i:j])
             if desvio < 2.0:
                 out[i:j] = ajuste
+                a, b = np.polyfit(ys[i:j], ajuste, 1)
+                tramos.append((i, j, a, b))
         i = j
+    for (i1, j1, a1, b1), (i2, j2, a2, b2) in zip(tramos, tramos[1:]):
+        if i2 - j1 > 40:
+            continue          # no son vecinos: entre medio hay otra cosa
+        zona = np.arange(j1, i2)
+        if not len(zona):
+            continue
+        eA, eB = a1 * zona + b1, a2 * zona + b2
+        if np.abs(eA - eB).mean() < salto:
+            continue
+        # Esquina de afuera redondeada: un cuarto de círculo entre las dos
+        # rectas, desde donde el borde medido empieza a separarse de la
+        # correa (o hasta donde termina de llegar a ella, si la parte ancha
+        # queda arriba). Así la esquina real (redonda) queda redonda, y el
+        # rellano falso que dejaba el brillo del marco se va.
+        R = float(np.abs(eB - eA).mean())
+        abajo_ancho = (eB.mean() - eA.mean()) * lado > 0
+        if abajo_ancho:
+            sep = np.where(np.abs(v[zona] - eA) > 1.0)[0]
+            yt = int(zona[sep[0]]) if len(sep) else int(zona[len(zona) // 2])
+            out[zona] = np.where(zona < yt, eA, eB)
+            for y in range(yt, min(n, yt + int(np.ceil(R)))):
+                t = y - yt
+                eb = a2 * y + b2
+                out[y] = eb - lado * (R - np.sqrt(max(R * R - (R - t) ** 2, 0)))
+            _por_tramos.esquinas.append((yt, yt + int(np.ceil(R)) + 1, yt + int(np.ceil(R)) + 3, R))
+        else:
+            sep = np.where(np.abs(v[zona] - eB) > 1.0)[0]
+            yb = int(zona[sep[-1]]) if len(sep) else int(zona[len(zona) // 2])
+            out[zona] = np.where(zona > yb, eB, eA)
+            for y in range(max(0, yb - int(np.ceil(R)) + 1), yb + 1):
+                t = yb - y
+                ea = a1 * y + b1
+                out[y] = ea - lado * (R - np.sqrt(max(R * R - (R - t) ** 2, 0)))
     return out
 
 
@@ -247,16 +290,22 @@ def bordes_rectos(alfa, nylon=False):
         xl[y] = a - (f[a] - 0.5) / max(f[a] - (f[a - 1] if a > 0 else 0), 1e-3) if a > 0 else a - 0.5
         xr[y] = b + (f[b] - 0.5) / max(f[b] - (f[b + 1] if b < w - 1 else 0), 1e-3) if b < w - 1 else b + 0.5
     hay = ~np.isnan(xl)
+    bordes_rectos.esquinas = []
     if hay.sum() < 30:
         return alfa
     filas = np.where(hay)[0]
     y0, y1 = filas[0], filas[-1] + 1
     seg = slice(y0, y1)
     l = np.interp(np.arange(y0, y1), filas, xl[filas]); r = np.interp(np.arange(y0, y1), filas, xr[filas])
+    esquinas = []
     if nylon:
         l, r = _sin_lengueta(l, r)
     else:
-        l, r = _por_tramos(l), _por_tramos(r)
+        l = _por_tramos(l, lado=-1)
+        esquinas += [(-1, a + y0, b + y0, c + y0, R) for a, b, c, R in _por_tramos.esquinas]
+        r = _por_tramos(r, lado=1)
+        esquinas += [(1, a + y0, b + y0, c + y0, R) for a, b, c, R in _por_tramos.esquinas]
+    bordes_rectos.esquinas = esquinas
     xs = np.arange(w)[None, :]
     nuevo = np.zeros_like(alfa)
     nuevo[seg] = np.clip(xs - l[:, None] + 0.5, 0, 1) * np.clip(r[:, None] - xs + 0.5, 0, 1)
@@ -264,6 +313,80 @@ def bordes_rectos(alfa, nylon=False):
     nuevo[y0] *= np.clip(alfa[y0].max(), 0, 1)
     nuevo[y1 - 1] *= np.clip(alfa[y1 - 1].max(), 0, 1)
     return nuevo
+
+
+def canto_parejo(F, alfa, borde=7):
+    """Silicona: el canto de la correa del color del cuerpo.
+
+    La foto trae un brillo en el canto de la correa; sobre el fondo claro
+    original casi no se veía, sobre los fondos nuevos parece un halo. En las
+    filas de correa (ni el marco ni las presillas, que son más anchos, ni la
+    punta, más angosta) los `borde` px de cada lado toman el color del cuerpo,
+    medido un poco más adentro (antes de las perforaciones) y parejo a lo
+    largo de la correa.
+    """
+    h, w = alfa.shape
+    a = alfa >= 0.5
+    ancho = a.sum(1)
+    hay = ancho > 0
+    if hay.sum() < 30:
+        return F
+    med = np.median(ancho[hay])
+    correa = hay & (np.abs(ancho - med) <= 3)
+    # Cerca del marco y las presillas, las barras cruzan la correa unas filas
+    # antes de que se ensanchen: esas filas (de otro color que la correa) no.
+    cerca = np.convolve((hay & ~correa).astype(float), np.ones(25), mode='same') > 0
+    izq = np.full((h, 3), np.nan); der = np.full((h, 3), np.nan)
+    li = np.zeros(h, int); ri = np.zeros(h, int)
+    for y in np.where(correa)[0]:
+        xs = np.where(a[y])[0]
+        li[y], ri[y] = xs[0], xs[-1]
+        izq[y] = np.median(F[y, li[y] + borde:li[y] + borde + 5], 0)
+        der[y] = np.median(F[y, ri[y] - borde - 4:ri[y] - borde + 1], 0)
+    lejos = correa & ~cerca
+    if lejos.sum() > 15:
+        cuerpo = np.median(np.concatenate([izq[lejos], der[lejos]]), 0)
+        distinto = np.abs(np.nanmean([izq, der], 0) - cuerpo).mean(1) > 30
+        correa &= ~(cerca & distinto)
+        izq[~correa] = np.nan; der[~correa] = np.nan
+    for c in range(3):
+        for col in (izq, der):
+            v = col[:, c]; ok = ~np.isnan(v)
+            if ok.sum() > 15:
+                col[ok, c] = _mediana(v[ok], 15)
+    F = F.copy()
+    for y in np.where(correa)[0]:
+        F[y, max(0, li[y] - 2):li[y] + borde] = izq[y]
+        F[y, ri[y] - borde + 1:min(w, ri[y] + 3)] = der[y]
+    return F
+
+
+def esquinas_parejas(F, alfa, esquinas):
+    """Las esquinas del marco y las presillas, del color de su costado.
+
+    En la esquina, la foto trae el brillo de la cara de arriba del marco (una
+    mancha clara sobre los fondos nuevos). Cada fila de la esquina copia, en
+    las columnas del costado, el color de una fila donde el marco ya es recto.
+    Solo las esquinas de arriba (donde empieza la parte ancha): abajo está el
+    grabado DEUSBAND, que la copia tapaba.
+    """
+    h, w = alfa.shape
+    a = alfa >= 0.5
+    F = F.copy()
+    for lado, y0, y1, yref, R in esquinas:
+        if not (0 <= yref < h) or not a[yref].any():
+            continue
+        cols_ref = np.where(a[yref])[0]
+        ancho = int(np.ceil(R)) + 4
+        for y in range(max(0, y0), min(h, y1)):
+            if not a[y].any():
+                continue
+            if lado < 0:
+                x0 = cols_ref[0]; xs = np.arange(max(0, x0 - 1), min(w, x0 + ancho))
+            else:
+                x1 = cols_ref[-1]; xs = np.arange(max(0, x1 - ancho + 1), min(w, x1 + 2))
+            F[y, xs] = F[yref, xs]
+    return F
 
 
 def recorte_limpio(C, B, escala=4, nylon=False):
@@ -293,6 +416,7 @@ def recorte_limpio(C, B, escala=4, nylon=False):
     g = g.point(lambda v: 255 if v >= 128 else 0)
     alfa = _arr(g.filter(ImageFilter.GaussianBlur(escala * 0.35)).resize((w, h), Image.BOX))
     # Las correas son rectas: el contorno se endereza (sin muescas ni dientes).
+    datos = alfa >= 0.5
     alfa = bordes_rectos(alfa, nylon)
     # Color del borde. La foto trae ahí un brillo o un ribete (en el nylon,
     # con una costura punteada) cortado y disparejo, que sobre un fondo oscuro
@@ -312,13 +436,32 @@ def recorte_limpio(C, B, escala=4, nylon=False):
     F = C.copy()
     ok = borde & ~np.isnan(Vs[..., 0])
     F[ok] = Vs[ok]
-    peso = in2.copy()
-    for _ in range(6):
+    # Solo conserva su color lo que ya era banda en los datos: lo que agregó el
+    # contorno nuevo (esquinas redondeadas, muescas tapadas) era fondo o un
+    # brillo en la foto, y toma el color de la banda de al lado.
+    peso = in2 & datos
+    for _ in range(10):
         num = np.stack([sm(F[..., k2] / 255 * peso, 2) for k2 in range(3)], -1) * 255
         den = sm(peso.astype(float), 2)[..., None]
         nuevo = (~peso) & (den[..., 0] > 0.02)
         F[nuevo] = (num / np.maximum(den, 1e-6))[nuevo]
         peso = peso | nuevo
+    if not nylon:
+        F = canto_parejo(F, alfa)
+        F = esquinas_parejas(F, alfa, bordes_rectos.esquinas)
+    # Brillos en el contorno (el reflejo del borde del marco): sobre el fondo
+    # claro original pasaban; sobre los nuevos se ven como manchas blancas. En
+    # los 7 px del borde, nada más de 35 niveles más claro que la banda de al
+    # lado. Los brillos de adentro (la línea del marco, a ~12 px; el perno) no
+    # se tocan.
+    in4 = _arr(_img(adentro).filter(ImageFilter.MinFilter(15))) > 0.5
+    canto = (alfa > 0) & ~in4
+    ref = np.stack([sm(F[..., k2] / 255 * in4, 9) for k2 in range(3)], -1) * 255
+    den = sm(in4.astype(float), 9)[..., None]
+    ref = np.where(den > 0.05, ref / np.maximum(den, 1e-6), F)
+    exceso = lum(F) - lum(ref) - 35
+    k = np.where(exceso > 0, 35 / np.maximum(lum(F) - lum(ref), 1), 1.0)[..., None]
+    F = np.where(canto[..., None], ref + (F - ref) * k, F)
     return np.dstack([F, alfa * 255]).clip(0, 255).astype(np.uint8)
 
 
