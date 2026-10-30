@@ -39,8 +39,9 @@ test('el conteo de tickets pasa a la sección plegada y la barra lateral la abre
   assert.deepStrictEqual(nav, enPanel);
 });
 
-// Tema constelación (31-oct-2026): fondo con la foto del dragón de estrellas
-// del dueño y el panel en sus tonos (índigo, pervinca y celeste hielo).
+// Tema constelación (31-oct-2026): nació con la foto del dragón de estrellas
+// del dueño; el mismo día eligió de fondo una tinta líquida negra con vetas
+// turquesa, en movimiento (humo con brillo de gel), y el panel pasó a sus tonos.
 const tramoTema = () => {
   const i = HTML.indexOf('/* ══ Tema constelación');
   assert.ok(i >= 0, 'falta la capa del tema');
@@ -55,15 +56,24 @@ test('el tema respeta los colores: sin verde ni violeta de adorno', () => {
   assert.ok(!/#9b8cff|#cfc6ff/.test(HTML), 'los gráficos no usan violeta');
 });
 
-test('el fondo del dragón de estrellas existe, es liviano y va detrás del vidrio', () => {
-  const img = path.join(__dirname, '..', 'img', 'panel-constelacion.webp');
-  assert.ok(fs.existsSync(img), 'falta img/panel-constelacion.webp');
-  const kb = fs.statSync(img).size / 1024;
-  assert.ok(kb < 300, 'el fondo pesa ' + Math.round(kb) + ' KB: tiene que cargar rápido en el celular');
+test('el fondo de tinta existe en 1080 y 4K, liviano, y va detrás del vidrio', () => {
+  // Agrandado ×4 con Real-ESRGAN y exportado por alto (lo que manda en 16:9).
+  for (const [archivo, alto, maxKb] of [['panel-fondo.webp', 1080, 300], ['panel-fondo-4k.webp', 2160, 600]]) {
+    const img = path.join(__dirname, '..', 'img', archivo);
+    assert.ok(fs.existsSync(img), 'falta img/' + archivo);
+    const kb = fs.statSync(img).size / 1024;
+    assert.ok(kb < maxKb, archivo + ' pesa ' + Math.round(kb) + ' KB: tiene que cargar rápido');
+    // Alto del WebP (VP8 con pérdida: bytes 28-29 del archivo, 14 bits).
+    const buf = fs.readFileSync(img);
+    assert.strictEqual(buf.toString('ascii', 12, 16), 'VP8 ', archivo + ' no es un WebP con pérdida');
+    assert.strictEqual(buf.readUInt16LE(28) & 0x3fff, alto, archivo + ' no mide ' + alto + ' px de alto');
+  }
   const tema = tramoTema();
   // En un ::before fijo: background-attachment:fixed no anda en el iPhone.
-  assert.match(tema, /body::before\{content:'';position:fixed;inset:0;z-index:-1;[^}]*url\(img\/panel-constelacion\.webp\)/);
-  assert.ok(!tema.includes('panel-dragones'), 'quedó el fondo anterior');
+  assert.match(tema, /body::before\{content:'';position:fixed;inset:0;z-index:-1;[^}]*url\(img\/panel-fondo\.webp\)/);
+  // El 4K solo en pantallas grandes o de alta densidad.
+  assert.match(tema, /@media\(min-width:1921px\),\(min-width:821px\) and \(min-resolution:1\.5dppx\)\{\s*body::before\{[^}]*url\(img\/panel-fondo-4k\.webp\)/);
+  assert.ok(!/panel-dragones|panel-constelacion/.test(tema), 'quedó un fondo anterior');
   assert.match(tema, /backdrop-filter:blur\(22px\)/);
 });
 
@@ -132,4 +142,23 @@ test('el checkout tiene su filtro propio: hoy, ayer, semana, mes y todo', () => 
   assert.deepStrictEqual(botones.filter(b => b.on).map(b => b.n), ['0'], 'se marca el botón elegido');
   // El periodo general no apaga los botones del checkout.
   assert.match(HTML, /document\.querySelectorAll\('\.rango-btn\[data-rango\]'\)/);
+});
+
+test('la tinta del fondo se mueve en la PC, y queda quieta en el celular o con "reducir movimiento"', () => {
+  assert.ok(HTML.includes('<canvas id="fondo-vivo" aria-hidden="true"></canvas>'));
+  const i = HTML.indexOf('// ── Fondo vivo');
+  assert.ok(i >= 0, 'falta el script del fondo vivo');
+  const js = HTML.slice(i, HTML.indexOf('</script>', i));
+  assert.match(js, /prefers-reduced-motion: reduce/);
+  assert.match(js, /\(max-width:820px\)/);
+  assert.match(js, /if \(ahora - ultimo < 33\) return;/, 'tope de 30 cuadros por segundo');
+  assert.match(js, /3840\*2160/, 'el canvas con tope en 4K');
+  assert.match(js, /webglcontextlost/);
+  assert.match(js, /img\/panel-fondo-4k\.webp/);
+  // Solo con la tinta andando se saca la foto quieta del ::before.
+  assert.match(tramoTema(), /html\.fondo-vivo body::before\{background:linear-gradient\([^)]*\)[^;]*\);\}/);
+});
+
+test('las métricas usan todo el ancho de la pantalla', () => {
+  assert.match(tramoTema(), /\.main\{max-width:none;\}/);
 });
