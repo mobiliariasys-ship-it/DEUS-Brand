@@ -130,7 +130,7 @@
   .sel-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 0;}
   .sel-res{margin:12px 0 0;background:#15161a;border:1px solid #2a2c33;border-radius:10px;
     padding:13px 16px;font-size:.8rem;color:#ccc;line-height:1.55;}
-  .sel-res .big{font-weight:700;font-size:1.45rem;color:#9b8cff;margin-right:9px;
+  .sel-res .big{font-weight:700;font-size:1.45rem;color:#2f74ff;margin-right:9px;
     font-variant-numeric:tabular-nums;letter-spacing:.5px;}
   .sel-res small{color:#7d7d86;font-size:.71rem;display:block;margin-top:5px;line-height:1.5;}
   .sel-res .vs{color:#6fd0f5;font-weight:700;}
@@ -186,20 +186,37 @@
   /* Días elegidos en el gráfico de Conversión: mismo violeta que esa selección,
      para que se lea que una manda sobre la otra. */
   .util-sel{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0 0 12px;padding:10px 14px;
-    background:#17162a;border:1px solid #3a3466;border-radius:10px;font-size:.78rem;color:#d6d2ff;line-height:1.45;}
+    background:rgba(47,116,255,.10);border:1px solid rgba(47,116,255,.35);border-radius:10px;font-size:.78rem;color:#cfe2ff;line-height:1.45;}
   .util-sel b{color:#b3a8ff;}
-  .util-sel button{background:transparent;border:1px solid #4a4380;color:#d6d2ff;border-radius:7px;padding:5px 10px;
+  .util-sel button{background:transparent;border:1px solid rgba(47,116,255,.45);color:#cfe2ff;border-radius:7px;padding:5px 10px;
     font-size:.72rem;font-weight:600;cursor:pointer;}
-  .util-sel button:hover{border-color:#9b8cff;color:#fff;}
+  .util-sel button:hover{border-color:#2f74ff;color:#fff;}
   .sel-res .sel-util{margin-top:10px;padding-top:10px;border-top:1px solid #2a2c33;}
   .sel-util .pos{color:#69c46d;} .sel-util .neg{color:#e07a6a;}
-  .sel-util a{color:#9b8cff;text-decoration:none;white-space:nowrap;}
+  .sel-util a{color:#2f74ff;text-decoration:none;white-space:nowrap;}
   /* Alta manual de ventas: el panel solo ve lo que pasó por una pasarela. Las
      presenciales y las que se pierden cuando persist.js cae a modo archivo hay
      que reponerlas a mano, y en el DÍA que ocurrieron. */
   .util-add{background:transparent;border:1px solid var(--border);color:var(--faint);width:22px;height:22px;
     border-radius:6px;cursor:pointer;font-size:.8rem;line-height:1;padding:0;}
   .util-add:hover{border-color:var(--green);color:var(--green);}
+  /* Grupos del panel: Plata, Conversión, Operación y Registros. */
+  .grupo-h{margin:38px 0 14px;padding-bottom:9px;border-bottom:1px solid var(--border-soft);color:var(--faint);
+    font-size:.72rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+  /* Secciones plegables (Últimas ventas y Tickets del sorteo): cerradas solo
+     se ve el título; el botón Mostrar/Ocultar las abre (ver plegar()). */
+  .plegable.cerrada > :not(.sec-h){display:none !important;}
+  .plegable.cerrada .solo-abierta{display:none;}
+  .plegable.cerrada .sec-h{margin-bottom:0;}
+  .sec-h-acc{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  /* "−": quitar una venta cargada a mano. Solo aparece en los días que tienen. */
+  .util-quitar{margin-left:4px;}
+  .util-quitar:hover{border-color:#e07a6a;color:#e07a6a;}
+  .util-tabla td:last-child{white-space:nowrap;}
+  .qv-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-soft,#2a2a32);font-size:.85rem;}
+  .qv-item small{color:var(--faint);display:block;margin-top:2px;}
+  .qv-btn{background:transparent;border:1px solid #e07a6a;color:#e07a6a;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.78rem;flex-shrink:0;}
+  .qv-btn:hover{background:rgba(224,122,106,.12);}
   /* overflow + margin:auto: centrado si cabe; si no cabe (celular), se desplaza
      y el botón Agregar siempre se alcanza. */
   .vm-fondo{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:18px;overflow-y:auto;}
@@ -317,6 +334,87 @@
     .h-actions{align-items:flex-start;}
   }
   @media(max-width:560px){.stat .v{font-size:1.7rem;} .fn-lbl{width:120px;font-size:.8rem;}}
+
+  /* ══ Tema vidrio (30-oct-2026) ══════════════════════════════════════════
+     Pedido del dueño, con un panel de BI de referencia: tarjetas translúcidas
+     sobre fondo negro, con los colores de la marca: azul y celeste de acento,
+     gris mate en textos y bordes. El verde y el rojo quedan SOLO para la plata
+     ganada o perdida (utilidad, % de ganancia, ok/no): son un dato, no adorno.
+     Va al final para pisar lo de arriba sin tocar la lógica. */
+  :root{
+    --bg:#04070c; --sidebar:rgba(8,13,22,.74); --card:rgba(16,24,37,.6); --card2:rgba(7,11,19,.62);
+    --border:rgba(140,170,205,.15); --border-soft:rgba(140,170,205,.09);
+    --azul:#2f74ff; --azul-deep:#1f4fd6;
+    --cyan:#1ec8f0; --cyan-soft:#7fd8f2; --cyan-deep:#1a8fd8;
+    --muted:#8e98a6; --faint:#5f6977; --pill:#2563eb;
+    --vidrio:linear-gradient(160deg,rgba(24,35,53,.66),rgba(9,14,23,.5));
+    --vidrio-sombra:0 14px 36px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  /* Los brillos de fondo son lo que el vidrio deja ver borroso. */
+  body{background:
+      radial-gradient(1100px 640px at 6% -10%, rgba(47,116,255,.17), transparent 60%),
+      radial-gradient(900px 560px at 102% 8%, rgba(30,200,240,.11), transparent 62%),
+      radial-gradient(900px 640px at 40% 112%, rgba(31,79,214,.13), transparent 60%),
+      var(--bg);
+    background-attachment:fixed;}
+  section,.stat,#login,.vm-caja{background:var(--vidrio);border:1px solid var(--border);box-shadow:var(--vidrio-sombra);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);}
+  section{border-radius:16px;}
+  .stat{overflow:hidden;}
+  .stat::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;
+    background:linear-gradient(90deg,var(--azul),var(--cyan));opacity:.6;}
+  .stat .k,.util-kpi .k{text-transform:uppercase;letter-spacing:1.1px;font-size:.6rem;font-weight:600;color:var(--muted);}
+  .stat.live .v,.stat.gold .v{color:var(--cyan);}
+  .sec-h h2{text-transform:uppercase;letter-spacing:1.1px;font-size:.82rem;font-weight:800;}
+  .grupo-h{color:var(--cyan-soft);border-bottom:none;position:relative;}
+  .grupo-h::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
+    background:linear-gradient(90deg,rgba(30,200,240,.45),rgba(47,116,255,.25) 35%,transparent);}
+
+  /* Barra lateral y encabezado */
+  .sidebar{background:var(--sidebar);border-right:1px solid var(--border-soft);
+    -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);}
+  .side-mark{background:linear-gradient(135deg,var(--azul),var(--cyan));box-shadow:0 0 14px rgba(30,200,240,.45);}
+  .nav-i:hover{background:rgba(120,160,210,.08);color:#e6edf5;}
+  .nav-i.active{background:linear-gradient(90deg,rgba(47,116,255,.24),rgba(30,200,240,.05));color:var(--cyan);box-shadow:inset 2px 0 0 var(--cyan);}
+  .h-title h1{color:#fff;text-transform:uppercase;letter-spacing:1.6px;font-size:1.5rem;}
+  .h-title h1::after{content:'';display:block;width:48px;height:3px;border-radius:3px;margin-top:9px;
+    background:linear-gradient(90deg,var(--azul),var(--cyan));}
+  .aviso-btn,.rango-btn{background:rgba(255,255,255,.03);border-color:var(--border);color:#aeb8c4;}
+  .aviso-btn:hover,.rango-btn:hover{border-color:rgba(30,200,240,.45);color:#e6edf5;}
+  .aviso-btn.on{border-color:rgba(30,200,240,.5);color:var(--cyan);}
+  .rango-btn.active{background:rgba(47,116,255,.2);border-color:rgba(30,200,240,.55);color:var(--cyan);}
+  .dot.on{background:var(--cyan);animation:pulsoCeleste 2s infinite;}
+  @keyframes pulsoCeleste{0%{box-shadow:0 0 0 0 rgba(30,200,240,.55)}70%{box-shadow:0 0 0 7px rgba(30,200,240,0)}100%{box-shadow:0 0 0 0 rgba(30,200,240,0)}}
+  .self-tag{background:rgba(30,200,240,.12);border-color:rgba(30,200,240,.3);color:var(--cyan);}
+
+  /* Botones, pastillas y campos */
+  #login button,.btn{background:linear-gradient(135deg,var(--azul),var(--cyan-deep));color:#fff;box-shadow:0 6px 18px rgba(47,116,255,.25);}
+  .btn:hover{filter:brightness(1.12);}
+  .btn.ghost{background:rgba(255,255,255,.03);border:1px solid var(--border);color:#c3ccd7;box-shadow:none;}
+  .btn.ghost:hover{border-color:var(--cyan);color:var(--cyan);}
+  .pill{background:linear-gradient(135deg,var(--azul),var(--cyan-deep));}
+  #login input,.vm-campo input,.vm-campo select,.vm-campo textarea{background:rgba(3,7,13,.6);border-color:var(--border);}
+  .util-add:hover{border-color:var(--cyan);color:var(--cyan);}
+
+  /* Barras, gráficos y recuadros internos: vidrio más oscuro */
+  .fn-track,.cb-track{background:rgba(3,7,13,.55);border-color:var(--border-soft);}
+  .fn-bar{background:linear-gradient(90deg,var(--azul-deep),var(--cyan));}
+  .cb-bar{background:linear-gradient(90deg,var(--azul),var(--cyan));}
+  .chart-container,.ctr-wrap{background:rgba(3,7,13,.42);border-color:var(--border-soft);}
+  .gh-porque,.co-note,.ads-card,.ctr-chip,.sel-res,.util-kpi{background:rgba(5,9,16,.55);border-color:var(--border);}
+  .conv-tabs{background:rgba(5,9,16,.6);border-color:var(--border);}
+  .conv-tab.active{background:rgba(47,116,255,.28);}
+  .ctr-tip{background:rgba(7,12,20,.96);border-color:var(--border);}
+  .util-tabla th{color:var(--muted);text-transform:uppercase;font-size:.6rem;letter-spacing:.8px;}
+  .util-tabla tr.hoy td{background:rgba(30,200,240,.07);}
+  /* Celular: las tarjetas de arriba de a dos (de a una el resumen ocupaba
+     varias pantallas antes de llegar a la utilidad). */
+  @media(max-width:560px){
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+    .stat{padding:14px 14px 13px;}
+    .stat .v{font-size:1.45rem;}
+    .stat .v small{display:block;margin-top:4px;font-size:.7rem;}
+  }
 </style>
 </head>
 <body>
@@ -337,17 +435,20 @@
       <div class="side-logo"><span class="side-mark"></span>DEUS</div>
       <button class="nav-i active" onclick="irA('top',this)"><span class="ico">📊</span> Dashboard</button>
       <button class="nav-i" onclick="irA('sec-graficos',this)"><span class="ico">📈</span> Gráficos</button>
+      <!-- Mismo orden que el panel: Plata, Conversión, Operación y Registros. -->
       <button class="nav-i" onclick="irA('sec-utilidad',this)"><span class="ico">💰</span> Utilidad</button>
+      <button class="nav-i" onclick="irA('sec-gastoh',this)"><span class="ico">⏱️</span> Gasto por hora</button>
+      <button class="nav-i" onclick="irA('sec-ads',this)"><span class="ico">📣</span> Ads</button>
+      <button class="nav-i" onclick="irA('sec-canales',this)"><span class="ico">💸</span> Canales</button>
       <button class="nav-i" onclick="irA('sec-embudo',this)"><span class="ico">🫗</span> Embudo</button>
       <button class="nav-i" onclick="irA('sec-conducta',this)"><span class="ico">🧭</span> Conducta</button>
       <button class="nav-i" onclick="irA('sec-convierte',this)"><span class="ico">🎯</span> Convierte</button>
-      <button class="nav-i" onclick="irA('sec-sorteo',this)"><span class="ico">🎟️</span> Sorteo</button>
-      <button class="nav-i" onclick="irA('sec-ventas',this)"><span class="ico">💳</span> Ventas</button>
-      <button class="nav-i" onclick="irA('sec-canales',this)"><span class="ico">💸</span> Canales</button>
       <button class="nav-i" onclick="irA('sec-negocio',this)"><span class="ico">📦</span> Negocio</button>
-      <button class="nav-i" onclick="irA('sec-pedidos',this)"><span class="ico">📦</span> Pedidos</button>
-      <button class="nav-i" onclick="irA('sec-ads',this)"><span class="ico">📣</span> Ads</button>
+      <button class="nav-i" onclick="irA('sec-pedidos',this)"><span class="ico">🚚</span> Pedidos</button>
       <button class="nav-i" onclick="irA('sec-resenas',this)"><span class="ico">⭐</span> Reseñas</button>
+      <button class="nav-i" onclick="irA('sec-chat',this)"><span class="ico">💬</span> Chat</button>
+      <button class="nav-i" onclick="irA('sec-ventas',this)"><span class="ico">💳</span> Ventas</button>
+      <button class="nav-i" onclick="irA('sec-sorteo',this)"><span class="ico">🎟️</span> Sorteo</button>
       <div class="nav-sep"></div>
       <button class="nav-i" id="btn-self" onclick="toggleSelf()">Excluir mis vistas</button>
       <button class="nav-i" onclick="salir()"><span class="ico">↩</span> Salir</button>
@@ -368,7 +469,6 @@
       <div class="stat"><div class="k">Tiempo promedio <span onclick="resetTiempo()" title="Reiniciar el promedio (limpia tu tiempo)" style="margin-left:auto;cursor:pointer;color:#777;font-size:.8rem">⟳</span></div><div class="v" id="s-tprom">—</div></div>
       <div class="stat gold"><div class="k">Ventas hoy</div><div class="v" id="s-vent-hoy">0 <small id="s-vent-hoy-m"></small></div></div>
       <div class="stat"><div class="k">Ventas totales</div><div class="v" id="s-vent-tot">0 <small id="s-vent-tot-m"></small></div></div>
-      <div class="stat gold"><div class="k">Tickets sorteo</div><div class="v" id="s-tickets">0</div></div>
       <!-- Conversión en las 4 ventanas, juntas y comparables: es la forma de
            ver si un cambio movió la aguja (hoy vs. semana vs. mes vs. siempre)
            sin tener que ir cambiando el filtro. -->
@@ -427,6 +527,8 @@
     </section>
     </div>
 
+    <!-- Plata: utilidad, gasto en ads por hora, Ads Manager y qué canal deja plata. -->
+    <div class="grupo-h">💰 Plata · cuánto queda y en qué se va</div>
     <section id="sec-utilidad">
       <div class="sec-h"><h2>💰 Utilidad diaria</h2><button class="btn ghost" onclick="cargarUtilidad()">Actualizar</button></div>
       <div class="sec-act" id="util-act"></div>
@@ -473,121 +575,16 @@
       </div>
     </div>
 
-    <section id="sec-embudo">
-      <div class="sec-h"><h2>🫗 Embudo · dónde se caen</h2><span class="pill" id="funnel-conv"></span></div>
-      <div id="funnel">
-        <div class="fn-row"><div class="fn-lbl">👀 Visitas</div><div class="fn-track"><div class="fn-bar" id="fn-vis"></div></div><div class="fn-val" id="fn-vis-v">0</div></div>
-        <div class="fn-row"><div class="fn-lbl">🛒 Abrieron checkout</div><div class="fn-track"><div class="fn-bar" id="fn-co"></div></div><div class="fn-val" id="fn-co-v">0</div></div>
-        <div class="fn-row"><div class="fn-lbl">✅ Pagaron</div><div class="fn-track"><div class="fn-bar" id="fn-pay"></div></div><div class="fn-val" id="fn-pay-v">0</div></div>
+    <!-- Quitar una venta cargada a mano (botón "−" de la tabla de utilidad). -->
+    <div class="vm-fondo" id="qv-fondo" onclick="if(event.target===this)cerrarQuitarVenta()">
+      <div class="vm-caja">
+        <h3>Quitar una venta</h3>
+        <div class="vm-dia" id="qv-dia"></div>
+        <div id="qv-lista"></div>
+        <div class="vm-msg" id="qv-msg"></div>
+        <div class="vm-pie"><button class="btn ghost" onclick="cerrarQuitarVenta()">Cerrar</button></div>
       </div>
-    </section>
-
-    <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió -->
-    <section id="sec-checkout">
-      <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
-      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
-      <div id="co-funnel"></div>
-      <div id="co-extra"></div>
-      <div class="empty" id="co-empty" style="display:none">Aún sin datos del checkout. Se llena con las próximas visitas al checkout.</div>
-    </section>
-
-    <section id="sec-conducta">
-      <div class="sec-h"><h2>🧭 Conducta del visitante</h2><span class="pill" id="cond-base"></span></div>
-      <div class="cond-grid">
-        <div class="cond-col">
-          <h3 class="cond-h">📜 Hasta dónde llegan (scroll)</h3>
-          <div id="cond-scroll"></div>
-        </div>
-        <div class="cond-col">
-          <h3 class="cond-h">👆 Qué tocan</h3>
-          <div id="cond-accion"></div>
-        </div>
-        <div class="cond-col">
-          <h3 class="cond-h">📱 Dispositivo</h3>
-          <div id="cond-disp"></div>
-        </div>
-        <div class="cond-col">
-          <h3 class="cond-h">📍 De dónde llegan</h3>
-          <div id="cond-fuente"></div>
-        </div>
-      </div>
-      <div class="empty" id="cond-empty" style="display:none">Aún no hay datos de conducta. Se llenan con las próximas visitas.</div>
-    </section>
-
-    <!-- Conversión por fuente y dispositivo. El dato ya se guardaba (cuando
-         alguien compra viaja su sesión entera, incluido fuente: y disp:) pero
-         el panel lo descartaba. Es lo que dice DÓNDE poner la plata. -->
-    <section id="sec-canales">
-      <div class="sec-h"><h2>💸 Qué canal deja plata</h2><span class="pill" id="canal-base"></span></div>
-      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De cada 100 visitas de ese canal, cuántas compraron. Es el dato para decidir dónde invertir en publicidad. <b style="color:#6fd0f5">Respeta el filtro de periodo</b> — compradores y visitantes se cuentan en la misma ventana.</p>
-      <div class="cond-grid">
-        <div class="cond-col">
-          <h3 class="cond-h">📍 Conversión por fuente</h3>
-          <div id="conv-fuente"></div>
-        </div>
-        <div class="cond-col">
-          <h3 class="cond-h">📱 Conversión por dispositivo</h3>
-          <div id="conv-disp"></div>
-        </div>
-      </div>
-      <div class="empty" id="canal-empty" style="display:none">Aún sin compras rastreadas por canal.</div>
-    </section>
-
-    <!-- Negocio: ticket promedio, stock, medios de pago y cuándo compran -->
-    <section id="sec-negocio">
-      <div class="sec-h"><h2>📦 Negocio · stock, pagos y horarios</h2><span class="pill" id="neg-ticket"></span></div>
-      <div class="cond-grid">
-        <div class="cond-col">
-          <h3 class="cond-h">🎨 Pedidos por color</h3>
-          <div id="neg-color"></div>
-        </div>
-        <div class="cond-col">
-          <h3 class="cond-h">💳 Ventas por medio de pago</h3>
-          <div id="neg-metodo"></div>
-        </div>
-        <div class="cond-col">
-          <h3 class="cond-h">📍 Top comunas</h3>
-          <div id="neg-comuna"></div>
-        </div>
-      </div>
-      <h3 class="cond-h" style="margin-top:20px">🕐 A qué hora compran</h3>
-      <div id="neg-horas"></div>
-      <h3 class="cond-h" style="margin-top:18px">📅 Qué día compran</h3>
-      <div id="neg-dias"></div>
-    </section>
-
-    <section id="sec-convierte">
-      <div class="sec-h"><h2>🎯 Qué lleva a comprar</h2><span class="pill" id="conv-base"></span></div>
-      <!-- Dos formas de leer lo mismo:
-           "Tasa de conversión" = de los que hicieron la acción, cuántos compraron.
-           "% de compradores"   = de los que compraron, cuántos hicieron la acción. -->
-      <div class="conv-tabs">
-        <button class="conv-tab active" id="tab-tasa" onclick="setModoConv('tasa')">Tasa de conversión</button>
-        <button class="conv-tab" id="tab-comp" onclick="setModoConv('compradores')">% de compradores</button>
-      </div>
-      <p style="color:#777;font-size:.78rem;margin:0 0 14px" id="conv-desc">De los que hicieron cada acción, cuántos compraron. Lo de arriba es lo que más convierte → ponlo primero.</p>
-      <div id="conv-accion"></div>
-      <div class="empty" id="conv-empty" style="display:none">Aún no hay compras rastreadas para cruzar. Se llena con las próximas ventas.</div>
-    </section>
-
-    <section id="sec-sorteo">
-      <div class="sec-h"><h2>🎟️ Tickets del sorteo</h2><button class="btn" onclick="elegirGanador()">Elegir ganador 🎲</button></div>
-      <div class="winner" id="winner"></div>
-      <div class="scroll"><table id="t-tickets"><thead><tr><th>N° ticket</th><th>Nombre</th><th>Instagram</th><th>N° orden</th><th>Fecha</th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="tickets-empty" style="display:none">Aún no hay tickets canjeados.</div>
-    </section>
-
-    <section id="sec-ventas">
-      <div class="sec-h"><h2>💳 Últimas ventas</h2></div>
-      <div class="scroll"><table id="t-ventas"><thead><tr><th>Fecha</th><th>Cliente</th><th>Método</th><th>Monto</th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="ventas-empty" style="display:none">Sin ventas registradas todavía.</div>
-    </section>
-
-    <section id="sec-pedidos">
-      <div class="sec-h"><h2>📦 Pedidos recientes</h2></div>
-      <div class="scroll"><table id="t-pedidos"><thead><tr><th>Fecha</th><th>Cliente</th><th>Comuna</th><th>Color</th><th>Total</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
-    </section>
+    </div>
 
     <section id="sec-gastoh">
       <div class="sec-h"><h2>⏱️ Gasto por hora · en vivo</h2><button class="btn ghost" onclick="cargarGastoHora(true)">Actualizar</button></div>
@@ -654,6 +651,113 @@
       <div class="ads-grid" id="ads-grid"></div>
     </section>
 
+    <!-- Conversión por fuente y dispositivo. El dato ya se guardaba (cuando
+         alguien compra viaja su sesión entera, incluido fuente: y disp:) pero
+         el panel lo descartaba. Es lo que dice DÓNDE poner la plata. -->
+    <section id="sec-canales">
+      <div class="sec-h"><h2>💸 Qué canal deja plata</h2><span class="pill" id="canal-base"></span></div>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De cada 100 visitas de ese canal, cuántas compraron. Es el dato para decidir dónde invertir en publicidad. <b style="color:#6fd0f5">Respeta el filtro de periodo</b> — compradores y visitantes se cuentan en la misma ventana.</p>
+      <div class="cond-grid">
+        <div class="cond-col">
+          <h3 class="cond-h">📍 Conversión por fuente</h3>
+          <div id="conv-fuente"></div>
+        </div>
+        <div class="cond-col">
+          <h3 class="cond-h">📱 Conversión por dispositivo</h3>
+          <div id="conv-disp"></div>
+        </div>
+      </div>
+      <div class="empty" id="canal-empty" style="display:none">Aún sin compras rastreadas por canal.</div>
+    </section>
+
+    <!-- Conversión: embudo, checkout, conducta y qué lleva a comprar. -->
+    <div class="grupo-h">🫗 Conversión · dónde se cae la venta</div>
+    <section id="sec-embudo">
+      <div class="sec-h"><h2>🫗 Embudo · dónde se caen</h2><span class="pill" id="funnel-conv"></span></div>
+      <div id="funnel">
+        <div class="fn-row"><div class="fn-lbl">👀 Visitas</div><div class="fn-track"><div class="fn-bar" id="fn-vis"></div></div><div class="fn-val" id="fn-vis-v">0</div></div>
+        <div class="fn-row"><div class="fn-lbl">🛒 Abrieron checkout</div><div class="fn-track"><div class="fn-bar" id="fn-co"></div></div><div class="fn-val" id="fn-co-v">0</div></div>
+        <div class="fn-row"><div class="fn-lbl">✅ Pagaron</div><div class="fn-track"><div class="fn-bar" id="fn-pay"></div></div><div class="fn-val" id="fn-pay-v">0</div></div>
+      </div>
+    </section>
+
+    <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió -->
+    <section id="sec-checkout">
+      <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
+      <div id="co-funnel"></div>
+      <div id="co-extra"></div>
+      <div class="empty" id="co-empty" style="display:none">Aún sin datos del checkout. Se llena con las próximas visitas al checkout.</div>
+    </section>
+
+    <section id="sec-conducta">
+      <div class="sec-h"><h2>🧭 Conducta del visitante</h2><span class="pill" id="cond-base"></span></div>
+      <div class="cond-grid">
+        <div class="cond-col">
+          <h3 class="cond-h">📜 Hasta dónde llegan (scroll)</h3>
+          <div id="cond-scroll"></div>
+        </div>
+        <div class="cond-col">
+          <h3 class="cond-h">👆 Qué tocan</h3>
+          <div id="cond-accion"></div>
+        </div>
+        <div class="cond-col">
+          <h3 class="cond-h">📱 Dispositivo</h3>
+          <div id="cond-disp"></div>
+        </div>
+        <div class="cond-col">
+          <h3 class="cond-h">📍 De dónde llegan</h3>
+          <div id="cond-fuente"></div>
+        </div>
+      </div>
+      <div class="empty" id="cond-empty" style="display:none">Aún no hay datos de conducta. Se llenan con las próximas visitas.</div>
+    </section>
+
+    <section id="sec-convierte">
+      <div class="sec-h"><h2>🎯 Qué lleva a comprar</h2><span class="pill" id="conv-base"></span></div>
+      <!-- Dos formas de leer lo mismo:
+           "Tasa de conversión" = de los que hicieron la acción, cuántos compraron.
+           "% de compradores"   = de los que compraron, cuántos hicieron la acción. -->
+      <div class="conv-tabs">
+        <button class="conv-tab active" id="tab-tasa" onclick="setModoConv('tasa')">Tasa de conversión</button>
+        <button class="conv-tab" id="tab-comp" onclick="setModoConv('compradores')">% de compradores</button>
+      </div>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px" id="conv-desc">De los que hicieron cada acción, cuántos compraron. Lo de arriba es lo que más convierte → ponlo primero.</p>
+      <div id="conv-accion"></div>
+      <div class="empty" id="conv-empty" style="display:none">Aún no hay compras rastreadas para cruzar. Se llena con las próximas ventas.</div>
+    </section>
+
+    <!-- Operación del día a día. -->
+    <div class="grupo-h">📦 Operación · stock, pedidos y clientes</div>
+    <!-- Negocio: ticket promedio, stock, medios de pago y cuándo compran -->
+    <section id="sec-negocio">
+      <div class="sec-h"><h2>📦 Negocio · stock, pagos y horarios</h2><span class="pill" id="neg-ticket"></span></div>
+      <div class="cond-grid">
+        <div class="cond-col">
+          <h3 class="cond-h">🎨 Pedidos por color</h3>
+          <div id="neg-color"></div>
+        </div>
+        <div class="cond-col">
+          <h3 class="cond-h">💳 Ventas por medio de pago</h3>
+          <div id="neg-metodo"></div>
+        </div>
+        <div class="cond-col">
+          <h3 class="cond-h">📍 Top comunas</h3>
+          <div id="neg-comuna"></div>
+        </div>
+      </div>
+      <h3 class="cond-h" style="margin-top:20px">🕐 A qué hora compran</h3>
+      <div id="neg-horas"></div>
+      <h3 class="cond-h" style="margin-top:18px">📅 Qué día compran</h3>
+      <div id="neg-dias"></div>
+    </section>
+
+    <section id="sec-pedidos">
+      <div class="sec-h"><h2>📦 Pedidos recientes</h2></div>
+      <div class="scroll"><table id="t-pedidos"><thead><tr><th>Fecha</th><th>Cliente</th><th>Comuna</th><th>Color</th><th>Total</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
+    </section>
+
     <section id="sec-resenas">
       <div class="sec-h"><h2>⭐ Reseñas · subir a la web</h2><span class="pill" id="rp-total"></span></div>
       <div class="rp-form">
@@ -695,10 +799,26 @@
       <div class="empty" id="chat-empty" style="display:none">Todavía nadie ha usado el chat.</div>
     </section>
 
+    <!-- Registros que no se miran a diario: empiezan plegados (ver plegar()). -->
+    <div class="grupo-h">🗂️ Registros · plegados</div>
+    <section id="sec-ventas" class="plegable cerrada">
+      <div class="sec-h"><h2>💳 Últimas ventas</h2><button class="btn ghost plegar-btn" onclick="plegar('sec-ventas')">Mostrar ▾</button></div>
+      <div class="scroll"><table id="t-ventas"><thead><tr><th>Fecha</th><th>Cliente</th><th>Método</th><th>Monto</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ventas-empty" style="display:none">Sin ventas registradas todavía.</div>
+    </section>
+
+    <section id="sec-sorteo" class="plegable cerrada">
+      <div class="sec-h"><h2>🎟️ Tickets del sorteo</h2><div class="sec-h-acc"><span class="pill" id="s-tickets">0</span><button class="btn solo-abierta" onclick="elegirGanador()">Elegir ganador 🎲</button><button class="btn ghost plegar-btn" onclick="plegar('sec-sorteo')">Mostrar ▾</button></div></div>
+      <div class="winner" id="winner"></div>
+      <div class="scroll"><table id="t-tickets"><thead><tr><th>N° ticket</th><th>Nombre</th><th>Instagram</th><th>N° orden</th><th>Fecha</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="tickets-empty" style="display:none">Aún no hay tickets canjeados.</div>
+    </section>
+
     <p style="font-size:.66rem;color:#666;line-height:1.5;margin-top:18px">
       Las visitas en vivo son en tiempo real. Ventas, pedidos y conducta se guardan en base de datos
       y sobreviven a los reinicios del servidor; además cada venta y cada ticket también te llegan por correo (respaldo permanente).
     </p>
+
     </main>
    </div>
   </div>
@@ -714,7 +834,17 @@
   function fecha(s){ try{ return new Date(s).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return '—'; } }
 
   // Navegación del sidebar (scroll a la sección + estado activo)
-  function irA(id, el){ var t=document.getElementById(id); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); if(el){ var ns=document.querySelectorAll('.nav-i'); for(var i=0;i<ns.length;i++) ns[i].classList.remove('active'); el.classList.add('active'); } }
+  // Secciones plegables (Últimas ventas y Tickets del sorteo): empiezan
+  // cerradas para que el panel muestre primero lo que se mira a diario.
+  // Sin `abrir` alterna; con true/false abre o cierra.
+  function plegar(id, abrir){
+    var s=document.getElementById(id); if(!s) return;
+    var cerrar = abrir===undefined ? !s.classList.contains('cerrada') : !abrir;
+    s.classList.toggle('cerrada', cerrar);
+    var b=s.querySelector('.plegar-btn'); if(b) b.textContent = cerrar ? 'Mostrar ▾' : 'Ocultar ▴';
+  }
+  // Ir desde la barra lateral a una sección plegada la abre.
+  function irA(id, el){ var t=document.getElementById(id); if(t && t.classList.contains('cerrada')) plegar(id, true); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); if(el){ var ns=document.querySelectorAll('.nav-i'); for(var i=0;i<ns.length;i++) ns[i].classList.remove('active'); el.classList.add('active'); } }
 
   function entrar(){
     var k=document.getElementById('key').value.trim();
@@ -1553,7 +1683,7 @@
     document.getElementById('s-vent-hoy-m').textContent=money(d.ventas.hoy.monto);
     document.getElementById('s-vent-tot').childNodes[0].nodeValue=d.ventas.total.count+' ';
     document.getElementById('s-vent-tot-m').textContent=money(d.ventas.total.monto);
-    document.getElementById('s-tickets').textContent=d.ticketsTotal;
+    document.getElementById('s-tickets').textContent=d.ticketsTotal+(d.ticketsTotal===1?' ticket':' tickets');
     // Las 4 conversiones (hoy / semana / mes / histórica). Antes esto era un
     // textContent que habría borrado el detalle "n de N" de cada tarjeta.
     pintarConversiones(d);
@@ -1617,7 +1747,7 @@
     // donde estan los totales de 30 dias, y se repinta esa seccion con ella.
     CONV_SITIO = convProm;
     if (ULT_CONV) pintarConversion(ULT_CONV.convAcc, ULT_CONV.conducta, ULT_CONV.nComp);
-    dibujarBarras('chartConv', convDias, '#9b8cff',
+    dibujarBarras('chartConv', convDias, '#2f74ff',
       { ref: convProm, refLbl: 'promedio', sinCifras: true, sel: CONV_SEL, onClick: toggleDiaConv });
     refrescarSel();
     document.getElementById('updated').textContent='Actualizado '+new Date().toLocaleTimeString('es-CL');
@@ -1748,7 +1878,7 @@
     var w=canvas.width, h=canvas.height, padB=26, padT=14, padX=10;
     ctx.clearRect(0,0,w,h);
     // Líneas guía horizontales (estilo dashboard)
-    ctx.strokeStyle='#181818'; ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(140,170,205,.10)'; ctx.lineWidth=1;
     for(var gl=0;gl<=4;gl++){ var gy=padT+(h-padB-padT)*gl/4; ctx.beginPath(); ctx.moveTo(padX,gy+.5); ctx.lineTo(w-padX,gy+.5); ctx.stroke(); }
     var n=st.datos.length;
     var gap=3, barW=(w-padX*2-gap*(n-1))/n;
@@ -1775,7 +1905,7 @@
       ctx.fillRect(x,y,barW,barH);
       ctx.globalAlpha=1;
       if(haySel && elegido){
-        ctx.strokeStyle='#cfc6ff'; ctx.globalAlpha=0.85; ctx.lineWidth=1;
+        ctx.strokeStyle='#bfeeff'; ctx.globalAlpha=0.85; ctx.lineWidth=1;
         ctx.strokeRect(x+.5,y+.5,barW-1,barH-1);
         ctx.globalAlpha=1;
       }
@@ -1786,7 +1916,7 @@
       }
       // Día del mes bajo la barra (uno de cada dos para no saturar)
       if(i%2===0 || (haySel && elegido)){
-        ctx.fillStyle=(haySel&&elegido)?'#cfc6ff':'#777';
+        ctx.fillStyle=(haySel&&elegido)?'#bfeeff':'#777';
         ctx.font='9px monospace'; ctx.textAlign='center';
         ctx.fillText(st.datos[i].fecha.slice(8),x+barW/2,h-10);
       }
@@ -2366,7 +2496,9 @@
         '<td class="gasto">−' + money0(r.ads) + '</td>' +
         '<td class="util ' + cls + '">' + (r.utilidad >= 0 ? '' : '−') + money0(Math.abs(r.utilidad)) + '</td>' +
         '<td class="' + (pct === null ? '' : cls) + '">' + textoPct(pct) + '</td>' +
-        '<td><button class="util-add" title="Agregar una venta al ' + r.fecha + '" onclick="abrirAltaVenta(\'' + r.fecha + '\')">+</button></td>' +
+        '<td><button class="util-add" title="Agregar una venta al ' + r.fecha + '" onclick="abrirAltaVenta(\'' + r.fecha + '\')">+</button>' +
+          (r.manuales ? '<button class="util-add util-quitar" title="Quitar una venta cargada a mano el ' + r.fecha + '" onclick="abrirQuitarVenta(\'' + r.fecha + '\')">−</button>' : '') +
+        '</td>' +
       '</tr>';
     }).join('');
 
@@ -2491,7 +2623,65 @@
 
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape' && document.getElementById('vm-fondo').classList.contains('on')) cerrarAltaVenta();
+    if (e.key === 'Escape' && document.getElementById('qv-fondo').classList.contains('on')) cerrarQuitarVenta();
   });
+
+  // ── Quitar una venta cargada a mano ─────────────────────────────────────
+  // Por si se cargó mal una. Solo aparecen las cargadas desde "Agregar venta":
+  // las de las pasarelas y las del reporte de ML el servidor ni las lista.
+  var qvFecha = null, qvLista = [];
+
+  function abrirQuitarVenta(fecha){
+    qvFecha = fecha;
+    document.getElementById('qv-dia').textContent = 'Ventas cargadas a mano el ' + fecha;
+    document.getElementById('qv-msg').textContent = '';
+    document.getElementById('qv-lista').innerHTML = '<div class="empty">Cargando...</div>';
+    document.getElementById('qv-fondo').classList.add('on');
+    cargarQuitarVenta();
+  }
+
+  function cargarQuitarVenta(){
+    return fetch(BASE + '/admin/ventas-manuales?fecha=' + qvFecha + '&clave=' + encodeURIComponent(clave))
+      .then(function(r){ if (!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(function(d){ pintarQuitarVenta(d.ventas || []); })
+      .catch(function(){ document.getElementById('qv-lista').innerHTML = '<div class="empty">No se pudo cargar.</div>'; });
+  }
+
+  function pintarQuitarVenta(lista){
+    qvLista = lista;
+    var el = document.getElementById('qv-lista');
+    if (!lista.length) { el.innerHTML = '<div class="empty">Este día no quedan ventas cargadas a mano.</div>'; return; }
+    el.innerHTML = lista.map(function(v, i){
+      var det = esc(v.metodo) + (v.soloTapones ? ' · solo tapones' : ' · ' + (v.unidades || 1) + ' u.') +
+                (v.nombre ? ' · ' + esc(v.nombre) : '');
+      return '<div class="qv-item"><div><b>' + money0(v.monto) + '</b><small>' + det + '</small></div>' +
+        '<button class="qv-btn" onclick="quitarVenta(' + i + ')">Quitar</button></div>';
+    }).join('');
+  }
+
+  function quitarVenta(i){
+    var v = qvLista[i];
+    if (!v) return;
+    if (!confirm('¿Quitar la venta de ' + money0(v.monto) + ' (' + v.metodo + ') del ' + qvFecha + '? No se puede deshacer.')) return;
+    var msg = document.getElementById('qv-msg');
+    msg.style.color = '#9a9a9a'; msg.textContent = 'Quitando...';
+    return fetch(BASE + '/admin/venta/quitar?clave=' + encodeURIComponent(clave), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orden: v.orden })
+    })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res){
+      if (!res.ok || !res.d.ok) { msg.style.color = '#e07a6a'; msg.textContent = res.d.error || 'No se pudo quitar.'; return; }
+      msg.style.color = '#69c46d'; msg.textContent = 'Listo: se quitó la venta de ' + money0(v.monto) + '.';
+      cargarQuitarVenta();
+      cargarUtilidad();
+    })
+    .catch(function(){ msg.style.color = '#e07a6a'; msg.textContent = 'No se pudo conectar con el servidor.'; });
+  }
+
+  function cerrarQuitarVenta(){
+    document.getElementById('qv-fondo').classList.remove('on');
+    qvFecha = null;
+  }
 
   function guardarVentaManual(){
     var msg = document.getElementById('vm-msg');

@@ -673,10 +673,32 @@ app.post('/admin/venta', (req, res) => {
     monto: m, fecha, metodo: metodo || 'Manual', nombre: nombre || '',
     orden: String(orden).trim(), email: email || '',
     unidades: Number(unidades) > 0 ? Number(unidades) : null,
-    soloTapones: !!soloTapones, tapones: !!tapones, bruto: !!bruto
+    soloTapones: !!soloTapones, tapones: !!tapones, bruto: !!bruto, manual: true
   });
   console.log('[admin/venta]', yaEstaba ? 'orden ya registrada, no se suma:' : 'venta cargada a mano:', orden, m);
   res.json({ ok: true, duplicada: yaEstaba, ticket: ticket && ticket.numero || null });
+});
+
+// Ventas cargadas a mano en un día, para quitar una que se cargó mal. Solo
+// las del panel: las de las pasarelas y las del reporte de ML no aparecen
+// (ver metrics.esManual).
+app.get('/admin/ventas-manuales', (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  const fecha = String(req.query.fecha || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return res.status(400).json({ error: 'fecha inválida — usá AAAA-MM-DD' });
+  res.json({ fecha, ventas: metrics.ventasManualesDelDia(fecha) });
+});
+
+// Quita una venta cargada a mano (por su orden). Tampoco toca Meta ni el
+// stock, igual que /admin/venta al cargarla.
+app.post('/admin/venta/quitar', (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  const orden = String((req.body && req.body.orden) || '').trim();
+  if (!orden) return res.status(400).json({ error: 'falta la orden de la venta' });
+  const q = metrics.quitarVentaManual(orden);
+  if (!q) return res.status(404).json({ error: 'No hay una venta cargada a mano con esa orden.' });
+  console.log('[admin/venta/quitar] venta cargada a mano quitada:', orden, q.monto, q.metodo);
+  res.json({ ok: true, quitada: { orden: q.orden, monto: q.monto, metodo: q.metodo } });
 });
 
 // ── Aviso de venta por push (al PC del dueño, aunque el panel esté cerrado) ──
