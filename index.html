@@ -5455,8 +5455,6 @@ var bandasHero = (function () {
   var CHOQUE = 0.018;
   // El clavo, a cuánto alto de foto por encima del borde de arriba.
   var CLAVO = 0.8;
-  // Ángulo en el que se quedan colgando: 0, salvo que el celular se mueva.
-  var lado = 0;
   var armadas = {}, corriendo = false, tPrev = 0, introHecha = false;
   function srcset(c, pieza) { var b = 'img/hero-bandas/' + c + '-' + pieza + '-'; return b + '800.webp 800w, ' + b + '1200.webp 1200w'; }
   function pct(n) { return (n * 100).toFixed(3) + '%'; }
@@ -5508,7 +5506,7 @@ var bandasHero = (function () {
     Object.keys(armadas).forEach(function (c) {
       var a = armadas[c]; if (!a.lista) return;
       a.pend.forEach(function (p) {
-        p.w += (-p.k * Math.sin(p.th - lado) - ROCE * p.w) * dt;
+        p.w += (-p.k * Math.sin(p.th) - ROCE * p.w) * dt;
         p.th += p.w * dt;
         if (p.th > TOPE) { p.th = TOPE; p.w = -Math.abs(p.w) * 0.5; }
         if (p.th < -TOPE) { p.th = -TOPE; p.w = Math.abs(p.w) * 0.5; }
@@ -5523,14 +5521,14 @@ var bandasHero = (function () {
         if (n.w - s.w > 0) { var v = n.w; n.w = s.w * 0.85; s.w = v * 0.85; }
       }
       a.pend.forEach(function (p) {
-        if (Math.abs(p.th - lado) > 0.0004 || Math.abs(p.w) > 0.001) sigue = true;
+        if (Math.abs(p.th) > 0.0004 || Math.abs(p.w) > 0.001) sigue = true;
         dibujar(p);
       });
     });
     if (sigue) requestAnimationFrame(paso);
     else {
       corriendo = false;
-      Object.keys(armadas).forEach(function (c) { (armadas[c].pend || []).forEach(function (p) { p.th = lado; p.w = 0; dibujar(p); }); });
+      Object.keys(armadas).forEach(function (c) { (armadas[c].pend || []).forEach(function (p) { p.th = 0; p.w = 0; dibujar(p); }); });
     }
   }
   function andar() {
@@ -5545,75 +5543,11 @@ var bandasHero = (function () {
     a.pend.forEach(function (p, i) { p.w += f * (i ? 0.85 : 1); });
     andar();
   }
-  // Al mover el celular se mecen igual (pedido del dueño). Una banda colgada
-  // apunta hacia donde el teléfono "siente" la gravedad, que junta la
-  // inclinación y los envíones al moverlo (accelerationIncludingGravity, de
-  // lado). Lo lento es inclinación: las deja apenas ladeadas hacia el lado que
-  // baja (una fracción, con tope, para que no se salgan de la foto). Lo rápido
-  // es un envión: las empuja como a un péndulo de verdad, que se queda atrás.
-  var LADO_MAX = 0.06, GANANCIA = 0.35, ENVION = 0.6;
-  var ladoLento = null, signo = 0, enVista = true, recibe = false, pedido = false;
-  function alMover(e) {
-    var g = e.accelerationIncludingGravity;
-    if (!g || g.x == null) return;
-    recibe = true;
-    // Solo con la pantalla vertical (de lado, el eje x del teléfono ya no es
-    // el ancho de la foto) y con la foto a la vista.
-    var so = window.screen && window.screen.orientation;
-    var giro = (so && so.angle) || window.orientation || 0;
-    if (!enVista || giro) return;
-    // iPhone entrega los valores con el signo al revés que Android. Con el
-    // celular en la mano (parado o boca arriba), y + z tiene siempre el mismo
-    // signo en cada uno: con eso se corrige.
-    var ref = (g.y || 0) + (g.z || 0);
-    if (Math.abs(ref) > 4) signo = ref > 0 ? 1 : -1;
-    if (!signo) return;
-    var x = Math.max(-1, Math.min(1, signo * g.x / 9.81));
-    if (ladoLento === null) ladoLento = x;
-    ladoLento += (x - ladoLento) * 0.08;
-    var golpe = x - ladoLento, mueve = false;
-    // Un envión a la derecha deja las puntas atrás (a la izquierda: ángulo
-    // positivo). Los temblores de la mano no llegan a 0,3 m/s²: no cuentan.
-    if (Math.abs(golpe) > 0.03) {
-      Object.keys(armadas).forEach(function (c) {
-        if (armadas[c].lista) armadas[c].pend.forEach(function (p, i) { p.w += golpe * p.k * ENVION / 60 * (i ? 0.85 : 1); });
-      });
-      mueve = true;
-    }
-    var nuevo = Math.max(-LADO_MAX, Math.min(LADO_MAX, ladoLento * GANANCIA));
-    if (Math.abs(nuevo - lado) >= 0.002) { lado = nuevo; mueve = true; }
-    if (mueve) andar();
-  }
-  var pidePermiso = !!(window.DeviceMotionEvent && typeof window.DeviceMotionEvent.requestPermission === 'function' &&
-    window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-  var marco = document.getElementById('galSlider');
-  if (!quieto && window.DeviceMotionEvent) window.addEventListener('devicemotion', alMover);
-  if (!quieto && marco && window.IntersectionObserver) {
-    new IntersectionObserver(function (es) { enVista = es[0].isIntersecting; }).observe(marco);
-  }
-  function negado() { try { return localStorage.getItem('deus-mov') === 'no'; } catch (e) { return false; } }
-  // En iPhone, Apple no entrega el movimiento hasta que la persona da permiso,
-  // y solo deja pedirlo al tocar algo: se pide al tocar una banda o al
-  // deslizar la foto (sin botón: el dueño lo encontró raro). Si dicen que no,
-  // no se vuelve a pedir. Si el toque no le sirve a Apple (falla sin
-  // preguntar), se reintenta en el próximo.
-  function pedirMovimiento() {
-    if (quieto || pedido || recibe || !pidePermiso || negado()) return;
-    pedido = true;
-    window.DeviceMotionEvent.requestPermission().then(function (r) {
-      if (r === 'granted') {
-        window.removeEventListener('devicemotion', alMover);
-        window.addEventListener('devicemotion', alMover);
-        empujar(colorOrder[currentSlide], -0.12); // responden: ya se mueven
-      } else try { localStorage.setItem('deus-mov', 'no'); } catch (e) {}
-    }).catch(function () { pedido = false; });
-  }
   // Tocar una banda la empuja hacia el lado contrario del toque. Devuelve
   // true si el toque fue en una banda (entonces no abre el zoom).
   function tocar(objetivo, x) {
     var el = objetivo && objetivo.closest && objetivo.closest('.sl-banda');
     if (!el) return false;
-    pedirMovimiento();
     Object.keys(armadas).forEach(function (c) {
       (armadas[c].pend || []).forEach(function (p) {
         if (p.el !== el) return;
@@ -5624,7 +5558,7 @@ var bandasHero = (function () {
     andar();
     return true;
   }
-  return { armar: armar, empujar: empujar, tocar: tocar, pedirMovimiento: pedirMovimiento };
+  return { armar: armar, empujar: empujar, tocar: tocar };
 })();
 if (document.readyState === 'complete') setTimeout(function () { bandasHero.armar(colorOrder[currentSlide]); }, 700);
 else window.addEventListener('load', function () { setTimeout(function () { bandasHero.armar(colorOrder[currentSlide]); }, 700); });
@@ -5647,7 +5581,6 @@ setTimeout(function () { colorOrder.forEach(function (c) { bandasHero.armar(c); 
     // cualquier desvío lateral de 40px cambiaba de banda — y como deslizar
     // ahora también elige el color, eso sería comprar el color equivocado.
     const horizontal = Math.abs(dx) > Math.abs(dy) * 1.5;
-    if (horizontal && Math.abs(dx) > 40) bandasHero.pedirMovimiento();
     if (horizontal && dx < -40) goSlide(currentSlide + 1, true);
     else if (horizontal && dx > 40) goSlide(currentSlide - 1, true);
     // Solo abre el zoom si fue un TOQUE real (poco movimiento en X y en Y),

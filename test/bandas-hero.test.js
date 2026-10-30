@@ -33,7 +33,6 @@ test('cada foto del carrusel lleva su capa de bandas, y la foto principal sigue 
   assert.match(HTML, /window\.addEventListener\('load', function \(\) \{ setTimeout\(function \(\) \{ bandasHero\.armar\(colorOrder\[currentSlide\]\); \}, 700\); \}\);/);
   assert.match(HTML, /if \(!bandasHero\.tocar\(e\.target, e\.changedTouches\[0\]\.clientX\)\) abrirZoom\(\);/, 'tocar una banda la mece; el resto abre el zoom');
   assert.match(HTML, /bandasHero\.empujar\(colorOrder\[currentSlide\], haciaAdelante \? -0\.16 : 0\.16\);/, 'cambiar de color las mece');
-  assert.match(HTML, /if \(horizontal && Math\.abs\(dx\) > 40\) bandasHero\.pedirMovimiento\(\);/, 'deslizar la foto pide el permiso del movimiento (iPhone)');
 });
 
 function motor(reducir, ventana) {
@@ -148,125 +147,8 @@ test('las bandas arrancan por encima de la foto: al ladearse no se ve dónde ter
   }
 });
 
-// Un celular parado e inclinado `grados` hacia la derecha (positivo: baja el
-// costado derecho). Android entrega la reacción a la gravedad (+9,81 hacia
-// arriba del teléfono); iPhone, lo mismo con el signo al revés.
-function inclinado(grados, iphone) {
-  const r = grados * Math.PI / 180, s = iphone ? -1 : 1;
-  return { accelerationIncludingGravity: { x: s * -9.81 * Math.sin(r), y: s * 9.81 * Math.cos(r), z: 0 } };
-}
-function conSensor(extra) {
-  const oyentes = {};
-  const m = motor(false, Object.assign({
-    DeviceMotionEvent: function () {},
-    addEventListener: (ev, f) => { oyentes[ev] = f; },
-    removeEventListener: () => {}
-  }, extra));
-  // El sensor manda ~60 lecturas por segundo, intercaladas con los cuadros.
-  m.mover = (ev, n = 40) => {
-    for (let k = 0; k < n; k++) {
-      oyentes.devicemotion(ev);
-      m.cuadro();
-    }
-  };
-  return m;
-}
-
-test('al inclinar el celular se ladean hacia el lado que baja, igual en Android y en iPhone', () => {
-  const lados = [false, true].map(iphone => {
-    const m = conSensor();
-    m.ctx.bandasHero.armar('negra');
-    m.mover(inclinado(10, iphone));
-    const n = m.correr('negra');
-    assert.ok(n < 2500, 'se quedan quietas solas: ' + n + ' cuadros');
-    return m.bandas('negra').map(m.ang);
-  });
-  const max = Number(HTML.match(/LADO_MAX = ([\d.]+)/)[1]);
-  for (const a of lados[0]) assert.ok(a < -0.01 && a >= -max - 1e-9, 'la punta va a la derecha, poco: ' + a);
-  assert.deepStrictEqual(lados[1], lados[0], 'iPhone igual que Android');
-});
-
-test('moverlo de golpe las mece; con la pantalla de lado no hace nada', () => {
-  const m = conSensor();
-  m.ctx.bandasHero.armar('gris');
-  // Un envión a la derecha (6 m/s² por 0,15 s): las puntas se quedan atrás (a
-  // la izquierda) y vuelven.
-  m.mover(inclinado(0), 5);
-  m.mover({ accelerationIncludingGravity: { x: 6, y: 9.81, z: 0 } }, 9);
-  m.mover(inclinado(0));
-  const sil = [];
-  m.correr('gris', a => sil.push(a[0]));
-  assert.ok(Math.max(...sil) > 0.02, 'se mece: ' + Math.max(...sil));
-  assert.ok(sil.some(a => a < 0), 'y vuelve para el otro lado');
-  const tope = Number(HTML.match(/TOPE = ([\d.]+);/)[1]);
-  assert.ok(Math.max(...sil.map(Math.abs)) <= tope + 1e-9, 'no pasa del tope');
-
-  const echado = conSensor({ screen: { orientation: { angle: 90 } } });
-  echado.ctx.bandasHero.armar('gris');
-  echado.mover(inclinado(30));
-  assert.strictEqual(echado.cola.length, 0, 'de lado no se mueven');
-});
-
-test('en iPhone pide permiso para el movimiento al tocar una banda, una sola vez', async () => {
-  let pedidos = 0;
-  const m = conSensor({
-    DeviceMotionEvent: { requestPermission: () => { pedidos++; return Promise.resolve('granted'); } },
-    matchMedia: q => ({ matches: /coarse/.test(q) })
-  });
-  m.ctx.bandasHero.armar('rosada');
-  const [sil] = m.bandas('rosada');
-  m.ctx.bandasHero.tocar(null, 0);
-  assert.strictEqual(pedidos, 0, 'tocar la foto (zoom) no pide nada');
-  m.ctx.bandasHero.tocar(sil, 1);
-  m.ctx.bandasHero.tocar(sil, 1);
-  assert.strictEqual(pedidos, 1);
-
-  // Si ya dijo que no, no se le vuelve a preguntar.
-  let otra = 0;
-  const no = conSensor({
-    DeviceMotionEvent: { requestPermission: () => { otra++; return Promise.resolve('denied'); } },
-    matchMedia: q => ({ matches: /coarse/.test(q) })
-  });
-  no.ctx.localStorage = { getItem: () => 'no', setItem() {} };
-  no.ctx.bandasHero.armar('rosada');
-  no.ctx.bandasHero.tocar(no.bandas('rosada')[0], 1);
-  assert.strictEqual(otra, 0);
-});
-
-// iPhone: DeviceMotionEvent.requestPermission y pantalla táctil.
-function iphone(responde) {
-  const pedidos = [];
-  const m = conSensor({
-    DeviceMotionEvent: { requestPermission: () => { pedidos.push(1); return responde(pedidos.length); } },
-    matchMedia: q => ({ matches: /coarse/.test(q) })
-  });
-  m.pedidos = pedidos;
-  return m;
-}
-const tick = () => new Promise(r => setImmediate(r));
-
-test('en iPhone no hay botón: tocar una banda pide el permiso y, al darlo, responden', async () => {
-  // El dueño encontró raro el botón "Activar movimiento": se quitó.
-  assert.ok(!/sl-mov|Activar movimiento/.test(HTML), 'sin botón');
-  const m = iphone(() => Promise.resolve('granted'));
-  m.ctx.bandasHero.armar('negra');
-  m.timers.forEach(f => f());
-  assert.strictEqual(m.marco.hijos.length, 0, 'no se agrega nada sobre la foto');
-  m.correr('negra'); // quietas
-  m.ctx.bandasHero.tocar(m.bandas('negra')[0], 1);
-  assert.strictEqual(m.pedidos.length, 1);
-  m.correr('negra');
-  await tick();
-  assert.ok(m.cola.length > 0, 'con el permiso dado, se mecen como respuesta');
-});
-
-test('si Apple rechaza el pedido sin preguntar (toque que no cuenta), se reintenta en el próximo', async () => {
-  const m = iphone(n => (n === 1 ? Promise.reject(new Error('requiere un gesto')) : Promise.resolve('granted')));
-  m.ctx.bandasHero.armar('gris');
-  m.ctx.bandasHero.pedirMovimiento();
-  await tick();
-  m.ctx.bandasHero.pedirMovimiento();
-  await tick();
-  m.ctx.bandasHero.pedirMovimiento();
-  assert.strictEqual(m.pedidos.length, 2, 'reintenta una vez y, con el permiso dado, no vuelve a pedir');
+test('no usan el movimiento del celular ni piden permiso', () => {
+  // El dueño probó que se movieran con el celular y prefirió sacarlo: que no
+  // pida permiso (iPhone) y que no se muevan al mover el teléfono.
+  assert.ok(!/devicemotion|deviceorientation|requestPermission/i.test(HTML));
 });
