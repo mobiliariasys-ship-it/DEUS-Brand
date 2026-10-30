@@ -27,7 +27,7 @@ fondos nuevos era un halo o una franja sucia), con el borde liso y sin el color
 del fondo viejo en el contorno. La sombra la pone la web (drop-shadow del CSS)
 y, en la foto, una igual.
 """
-import json, os, sys
+import json, os, sys, warnings
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -188,7 +188,15 @@ def bordes_rectos(alfa):
     y0, y1 = filas[0], filas[-1] + 1
     seg = slice(y0, y1)
     l = np.interp(np.arange(y0, y1), filas, xl[filas]); r = np.interp(np.arange(y0, y1), filas, xr[filas])
-    l = _media(_mediana(l, 21), 7); r = _media(_mediana(r, 21), 7)
+    # Ventana larga: las muescas medían hasta ~40 filas. La mediana igual
+    # respeta lo que dura más de media ventana (marco ~200 filas, presillas
+    # ~70) y lo que cambia parejo (la punta redonda). Lo que se aparta menos de
+    # 2,5 px de una mediana aún más larga es un escalón falso (las partes de
+    # verdad, marco y presillas, sobresalen 5 a 10 px): ahí manda la larga.
+    def recto(v):
+        m81, m151 = _mediana(v, 81), _mediana(v, 151)
+        return _media(np.where(np.abs(m151 - m81) < 2.5, m151, m81), 9)
+    l = recto(l); r = recto(r)
     xs = np.arange(w)[None, :]
     nuevo = np.zeros_like(alfa)
     nuevo[seg] = np.clip(xs - l[:, None] + 0.5, 0, 1) * np.clip(r[:, None] - xs + 0.5, 0, 1)
@@ -226,11 +234,27 @@ def recorte_limpio(C, B, escala=4):
     alfa = _arr(g.filter(ImageFilter.GaussianBlur(escala * 0.35)).resize((w, h), Image.BOX))
     # Las correas son rectas: el contorno se endereza (sin muescas ni dientes).
     alfa = bordes_rectos(alfa)
-    # Color del borde: el de adentro de la banda, corrido hacia afuera.
+    # Color del borde. La foto trae ahí un brillo o un ribete (en el nylon,
+    # con una costura punteada) cortado y disparejo, que sobre un fondo oscuro
+    # se veía carcomido. Se suaviza a lo largo de la correa (vertical): de 2 a
+    # 6 px del borde queda como una línea recta y pareja; los 2 px de afuera
+    # (con el fondo viejo mezclado) toman ese color. El interior no se toca.
+    adentro = alfa > 0.5
+    in2 = _arr(_img(adentro).filter(ImageFilter.MinFilter(5))) > 0.5
+    in6 = _arr(_img(adentro).filter(ImageFilter.MinFilter(13))) > 0.5
+    borde = in2 & ~in6
+    V = np.where(in2[..., None], C, np.nan).astype(np.float32)
+    k = 15
+    Vp = np.pad(V, ((k // 2, k // 2), (0, 0), (0, 0)), mode='edge')
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', RuntimeWarning)   # columnas sin banda: todo NaN
+        Vs = np.nanmedian(np.lib.stride_tricks.sliding_window_view(Vp, k, axis=0), axis=-1)
     F = C.copy()
-    peso = (alfa > 0.97) & dentro
+    ok = borde & ~np.isnan(Vs[..., 0])
+    F[ok] = Vs[ok]
+    peso = in2.copy()
     for _ in range(6):
-        num = np.stack([sm(F[..., k] / 255 * peso, 2) for k in range(3)], -1) * 255
+        num = np.stack([sm(F[..., k2] / 255 * peso, 2) for k2 in range(3)], -1) * 255
         den = sm(peso.astype(float), 2)[..., None]
         nuevo = (~peso) & (den[..., 0] > 0.02)
         F[nuevo] = (num / np.maximum(den, 1e-6))[nuevo]
