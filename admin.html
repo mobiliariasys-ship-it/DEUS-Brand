@@ -448,10 +448,10 @@
     <aside class="sidebar">
       <div class="side-logo"><span class="side-mark"></span>DEUS</div>
       <button class="nav-i active" onclick="irA('top',this)"><span class="ico">📊</span> Dashboard</button>
-      <button class="nav-i" onclick="irA('sec-checkout',this)"><span class="ico">🧾</span> Checkout</button>
       <button class="nav-i" onclick="irA('sec-graficos',this)"><span class="ico">📈</span> Gráficos</button>
       <!-- Mismo orden que el panel: Plata, Conversión, Operación y Registros. -->
       <button class="nav-i" onclick="irA('sec-utilidad',this)"><span class="ico">💰</span> Utilidad</button>
+      <button class="nav-i" onclick="irA('sec-checkout',this)"><span class="ico">🧾</span> Checkout</button>
       <button class="nav-i" onclick="irA('sec-gastoh',this)"><span class="ico">⏱️</span> Gasto por hora</button>
       <button class="nav-i" onclick="irA('sec-ads',this)"><span class="ico">📣</span> Ads</button>
       <button class="nav-i" onclick="irA('sec-canales',this)"><span class="ico">💸</span> Canales</button>
@@ -515,25 +515,6 @@
       <span class="rango-nota" id="rango-nota"></span>
     </div>
 
-    <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió.
-         Va arriba de todo (pedido del dueño): es lo primero que se mira. -->
-    <section id="sec-checkout">
-      <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
-      <!-- Filtro propio del checkout: no mueve el periodo del resto del panel. -->
-      <div class="rango-bar co-filtros">
-        <button class="rango-btn co-rango" data-co="1" onclick="setRangoCheckout(1)">Hoy</button>
-        <button class="rango-btn co-rango" data-co="ayer" onclick="setRangoCheckout('ayer')">Ayer</button>
-        <button class="rango-btn co-rango" data-co="semana" onclick="setRangoCheckout('semana')">Esta semana</button>
-        <button class="rango-btn co-rango" data-co="mes" onclick="setRangoCheckout('mes')">Este mes</button>
-        <button class="rango-btn co-rango" data-co="0" onclick="setRangoCheckout(0)">Todo</button>
-        <span class="rango-nota" id="co-nota"></span>
-      </div>
-      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
-      <div id="co-funnel"></div>
-      <div id="co-extra"></div>
-      <div class="empty" id="co-empty" style="display:none">Nadie abrió el checkout en este periodo.</div>
-    </section>
-
     <div class="two-col" id="sec-graficos">
     <section>
       <div class="sec-h"><h2>📊 Vistas · últimos 30 días</h2><span class="pill" id="chart-total"></span></div>
@@ -580,6 +561,26 @@
       <div class="util-tabla" id="util-tabla"></div>
       <div class="util-nota" id="util-nota"></div>
       <div class="empty" id="util-off" style="display:none">No se pudo cargar la utilidad.</div>
+    </section>
+
+    <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió.
+         Va justo debajo de la tabla de utilidad diaria (pedido del dueño,
+         30-oct-2026; antes iba arriba de todo). -->
+    <section id="sec-checkout">
+      <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
+      <!-- Filtro propio del checkout: no mueve el periodo del resto del panel. -->
+      <div class="rango-bar co-filtros">
+        <button class="rango-btn co-rango" data-co="1" onclick="setRangoCheckout(1)">Hoy</button>
+        <button class="rango-btn co-rango" data-co="ayer" onclick="setRangoCheckout('ayer')">Ayer</button>
+        <button class="rango-btn co-rango" data-co="semana" onclick="setRangoCheckout('semana')">Esta semana</button>
+        <button class="rango-btn co-rango" data-co="mes" onclick="setRangoCheckout('mes')">Este mes</button>
+        <button class="rango-btn co-rango" data-co="0" onclick="setRangoCheckout(0)">Todo</button>
+        <span class="rango-nota" id="co-nota"></span>
+      </div>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
+      <div id="co-funnel"></div>
+      <div id="co-extra"></div>
+      <div class="empty" id="co-empty" style="display:none">Nadie abrió el checkout en este periodo.</div>
     </section>
 
     <div class="vm-fondo" id="vm-fondo" onclick="if(event.target===this)cerrarAltaVenta()">

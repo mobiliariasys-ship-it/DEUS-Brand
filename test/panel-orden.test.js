@@ -1,8 +1,8 @@
 'use strict';
-// Orden del panel (pedido del dueño, 30-oct-2026): el gasto por hora va justo
-// debajo de la utilidad diaria, las secciones van agrupadas (Plata,
-// Conversión, Operación) y las últimas ventas y los tickets del sorteo quedan
-// plegados al final.
+// Orden del panel (pedido del dueño, 30-oct-2026): "Dentro del checkout" va
+// justo debajo de la utilidad diaria y el gasto por hora después, las
+// secciones van agrupadas (Plata, Conversión, Operación) y las últimas ventas
+// y los tickets del sorteo quedan plegados al final.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -11,13 +11,14 @@ const path = require('path');
 const HTML = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
 const pos = id => { const i = HTML.indexOf('<section id="' + id + '"'); assert.ok(i >= 0, 'falta ' + id); return i; };
 
-test('el gasto por hora va justo debajo de la utilidad diaria', () => {
+test('el checkout va justo debajo de la utilidad diaria y el gasto por hora después', () => {
   const ids = [...HTML.matchAll(/<section id="(sec-[a-z]+)"/g)].map(m => m[1]);
-  assert.strictEqual(ids[ids.indexOf('sec-utilidad') + 1], 'sec-gastoh');
+  const u = ids.indexOf('sec-utilidad');
+  assert.deepStrictEqual(ids.slice(u, u + 3), ['sec-utilidad', 'sec-checkout', 'sec-gastoh']);
 });
 
 test('las secciones van agrupadas y los registros plegados al final', () => {
-  const orden = ['sec-checkout', 'sec-utilidad', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-embudo', 'sec-conducta',
+  const orden = ['sec-utilidad', 'sec-checkout', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-embudo', 'sec-conducta',
     'sec-convierte', 'sec-negocio', 'sec-pedidos', 'sec-resenas', 'sec-chat', 'sec-ventas', 'sec-sorteo'];
   const posiciones = orden.map(pos);
   assert.deepStrictEqual(posiciones, posiciones.slice().sort((a, b) => a - b), 'orden de las secciones');
@@ -57,10 +58,10 @@ test('el fondo de dragones existe, es liviano y va detrás del vidrio', () => {
   assert.match(tema, /backdrop-filter:blur\(22px\)/);
 });
 
-test('el checkout va arriba de todo, antes de los gráficos', () => {
-  const ids = [...HTML.matchAll(/<section id="(sec-[a-z]+)"/g)].map(m => m[1]);
-  assert.strictEqual(ids[0], 'sec-checkout');
-  assert.ok(pos('sec-checkout') < HTML.indexOf('id="sec-graficos"'));
+test('el checkout ya no va arriba de todo: queda después de los gráficos, en el grupo de la plata', () => {
+  assert.ok(pos('sec-checkout') > HTML.indexOf('id="sec-graficos"'));
+  assert.ok(pos('sec-checkout') > HTML.indexOf('<div class="grupo-h">💰 Plata'));
+  assert.ok(pos('sec-checkout') < HTML.indexOf('<div class="grupo-h">🫗 Conversión'));
 });
 
 test('el checkout tiene su filtro propio: hoy, ayer, semana, mes y todo', () => {
