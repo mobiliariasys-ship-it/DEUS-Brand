@@ -29,8 +29,10 @@ test('cada foto del carrusel lleva su capa de bandas, y la foto principal sigue 
     assert.match(HTML, new RegExp('<div class="slide-w"><img class="slide" [^\\n]*data-color="' + c + '"[^\\n]*><div class="sl-arte" data-color="' + c + '" aria-hidden="true"></div></div>'));
   }
   assert.match(HTML, /<img class="slide" loading="eager" fetchpriority="high"[^\n]*src="img\/portada\/negra-800\.webp(\?v=\d+)?"/, 'la foto principal se sigue pidiendo primero');
-  // La capa se arma recién con la página cargada.
-  assert.match(HTML, /window\.addEventListener\('load', function \(\) \{ setTimeout\(function \(\) \{ bandasHero\.armar\(colorOrder\[currentSlide\]\); \}, 700\); \}\);/);
+  // La capa se arma apenas baja la foto principal (no compite con ella), y
+  // al abrir o actualizar la página hacen el vaivén de bienvenida enseguida.
+  assert.match(HTML, /function armarYa\(\) \{ bandasHero\.armar\(colorOrder\[currentSlide\]\); \}\s*if \(principal && !\(principal\.complete && principal\.naturalWidth\)\) principal\.addEventListener\('load', armarYa, \{ once: true \}\);/);
+  assert.match(HTML, /introHecha = true; setTimeout\(function \(\) \{ empujar\(c, -0\.16\); \}, 250\);/, 'el vaivén al abrir se nota como el de cambiar de color');
   assert.match(HTML, /if \(!bandasHero\.tocar\(e\.target, e\.changedTouches\[0\]\.clientX\)\) abrirZoom\(\);/, 'tocar una banda la mece; el resto abre el zoom');
   assert.match(HTML, /bandasHero\.empujar\(colorOrder\[currentSlide\], haciaAdelante \? -0\.16 : 0\.16\);/, 'cambiar de color las mece');
 });
@@ -69,7 +71,7 @@ function motor(reducir, ventana) {
     document: {
       readyState: 'loading', createElement: elem, getElementById: id => (id === 'galSlider' ? marco : null),
       querySelector: q => {
-        const c = q.match(/data-color="(\w+)"/)[1];
+        const m = q.match(/data-color="(\w+)"/), c = m ? m[1] : 'negra';   // sin color: la foto principal
         if (q.includes('img.slide')) return foto(c);
         return capas[c] || (capas[c] = Object.assign(elem(), { classList: { add() { this.lista = true; }, remove() {} } }));
       }

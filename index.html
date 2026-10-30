@@ -5504,9 +5504,10 @@ var bandasHero = (function () {
       if (a.roto || --faltan) return;
       capa.classList.add('lista'); a.lista = true;
       if (a.pendiente) { var f = a.pendiente; a.pendiente = 0; empujar(c, f); }
-      // La primera vez que se arma la foto que se está viendo, un vaivén suave
-      // avisa que se mueven, sin texto.
-      if (!introHecha && c === colorOrder[currentSlide]) { introHecha = true; setTimeout(function () { empujar(c, -0.1); }, 900); }
+      // La primera vez que se arma la foto que se está viendo (al abrir o al
+      // actualizar la página), un vaivén como el de cambiar de color avisa
+      // que se mueven, sin texto. Antes era más suave y tardaba: no se notaba.
+      if (!introHecha && c === colorOrder[currentSlide]) { introHecha = true; setTimeout(function () { empujar(c, -0.16); }, 250); }
     }
     // Si algo no carga, la capa se va y queda la foto original, que es igual.
     function fallo() { a.roto = true; capa.classList.remove('lista'); capa.innerHTML = ''; }
@@ -5605,8 +5606,16 @@ var bandasHero = (function () {
   }
   return { armar: armar, empujar: empujar, tocar: tocar };
 })();
-if (document.readyState === 'complete') setTimeout(function () { bandasHero.armar(colorOrder[currentSlide]); }, 700);
-else window.addEventListener('load', function () { setTimeout(function () { bandasHero.armar(colorOrder[currentSlide]); }, 700); });
+// La capa de la foto que se ve se arma apenas bajó la foto principal (antes
+// esperaba al "load" de toda la página + 0,7 s: en 4G las bandas quedaban
+// quietas varios segundos después de aparecer la foto).
+(function () {
+  var principal = document.querySelector('#slides img.slide');
+  function armarYa() { bandasHero.armar(colorOrder[currentSlide]); }
+  if (principal && !(principal.complete && principal.naturalWidth)) principal.addEventListener('load', armarYa, { once: true });
+  else armarYa();
+  window.addEventListener('load', armarYa);   // por si la foto principal falló
+})();
 // Los otros dos colores, con la página ya tranquila.
 setTimeout(function () { colorOrder.forEach(function (c) { bandasHero.armar(c); }); }, 3500);
 
