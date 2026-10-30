@@ -28,7 +28,7 @@ test('cada foto del carrusel lleva su capa de bandas, y la foto principal sigue 
   for (const c of ['negra', 'gris', 'rosada']) {
     assert.match(HTML, new RegExp('<div class="slide-w"><img class="slide" [^\\n]*data-color="' + c + '"[^\\n]*><div class="sl-arte" data-color="' + c + '" aria-hidden="true"></div></div>'));
   }
-  assert.match(HTML, /<img class="slide" loading="eager" fetchpriority="high"[^\n]*src="img\/portada\/negra-800\.webp"/, 'la foto principal se sigue pidiendo primero');
+  assert.match(HTML, /<img class="slide" loading="eager" fetchpriority="high"[^\n]*src="img\/portada\/negra-800\.webp(\?v=\d+)?"/, 'la foto principal se sigue pidiendo primero');
   // La capa se arma recién con la página cargada.
   assert.match(HTML, /window\.addEventListener\('load', function \(\) \{ setTimeout\(function \(\) \{ bandasHero\.armar\(colorOrder\[currentSlide\]\); \}, 700\); \}\);/);
   assert.match(HTML, /if \(!bandasHero\.tocar\(e\.target, e\.changedTouches\[0\]\.clientX\)\) abrirZoom\(\);/, 'tocar una banda la mece; el resto abre el zoom');
@@ -167,8 +167,12 @@ test('fotos principales: fondo oscuro y textos en celeste hielo, con nombres nue
   // fondo nuevo de las bandas que se mecen.
   for (const c of ['negra', 'gris', 'rosada']) {
     for (const base of [800, 1200]) assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'portada', `${c}-${base}.webp`)), `falta portada/${c}-${base}`);
-    assert.match(HTML, new RegExp(`img/portada/${c}-800\\.webp 800w, img/portada/${c}-1200\\.webp`));
-    assert.match(HTML, new RegExp(`${c}: "img/portada/${c}-1200\\.webp"`), 'el zoom y el carrito usan la foto nueva');
+    // ?v=N: se sube cuando cambia la foto (para saltarse el caché).
+    assert.match(HTML, new RegExp(`img/portada/${c}-800\\.webp\\?v=\\d+ 800w, img/portada/${c}-1200\\.webp\\?v=\\d+`));
+    assert.match(HTML, new RegExp(`${c}: "img/portada/${c}-1200\\.webp\\?v=\\d+"`), 'el zoom y el carrito usan la foto nueva');
   }
   assert.ok(!/img\/hero-bandas\//.test(HTML) && !/slide-(negra|gris|rosada)-800/.test(HTML), 'nada apunta a los archivos viejos');
+  // Sobre la gris y la rosada (fondos claros) los puntitos del carrusel van oscuros.
+  assert.match(HTML, /gal\.classList\.toggle\('foto-clara', colorOrder\[currentSlide\] !== 'negra'\)/);
+  assert.match(HTML, /\.gal-slider\.foto-clara \.sdot\.active\{/);
 });
