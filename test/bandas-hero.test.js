@@ -245,20 +245,19 @@ function iphone(responde) {
 }
 const tick = () => new Promise(r => setImmediate(r));
 
-test('en iPhone aparece "Activar movimiento"; al tocarlo pide permiso, se va y las bandas responden', async () => {
+test('en iPhone no hay botón: tocar una banda pide el permiso y, al darlo, responden', async () => {
+  // El dueño encontró raro el botón "Activar movimiento": se quitó.
+  assert.ok(!/sl-mov|Activar movimiento/.test(HTML), 'sin botón');
   const m = iphone(() => Promise.resolve('granted'));
   m.ctx.bandasHero.armar('negra');
   m.timers.forEach(f => f());
-  const boton = m.marco.hijos.find(h => h.className === 'sl-mov');
-  assert.ok(boton, 'aparece el botón sobre la foto');
-  assert.match(boton.innerHTML, /Activar movimiento/);
-  assert.ok(boton.on.touchend && boton.on.mouseup, 'el toque no llega a la foto (no abre el zoom)');
+  assert.strictEqual(m.marco.hijos.length, 0, 'no se agrega nada sobre la foto');
   m.correr('negra'); // quietas
-  boton.on.click[0]({ stopPropagation() {} });
+  m.ctx.bandasHero.tocar(m.bandas('negra')[0], 1);
   assert.strictEqual(m.pedidos.length, 1);
+  m.correr('negra');
   await tick();
-  assert.ok(boton.quitado, 'con el permiso dado, el botón se va');
-  assert.ok(m.cola.length > 0, 'y las bandas se mecen como respuesta');
+  assert.ok(m.cola.length > 0, 'con el permiso dado, se mecen como respuesta');
 });
 
 test('si Apple rechaza el pedido sin preguntar (toque que no cuenta), se reintenta en el próximo', async () => {
@@ -270,18 +269,4 @@ test('si Apple rechaza el pedido sin preguntar (toque que no cuenta), se reinten
   await tick();
   m.ctx.bandasHero.pedirMovimiento();
   assert.strictEqual(m.pedidos.length, 2, 'reintenta una vez y, con el permiso dado, no vuelve a pedir');
-});
-
-test('sin botón si el movimiento ya llega (permiso guardado) o si ya dijeron que no', () => {
-  const ya = iphone(() => Promise.resolve('granted'));
-  ya.ctx.bandasHero.armar('negra');
-  ya.mover(inclinado(0), 1);
-  ya.timers.forEach(f => f());
-  assert.ok(!ya.marco.hijos.some(h => h.className === 'sl-mov'));
-
-  const no = iphone(() => Promise.resolve('denied'));
-  no.ctx.localStorage = { getItem: () => 'no', setItem() {} };
-  no.ctx.bandasHero.armar('negra');
-  no.timers.forEach(f => f());
-  assert.ok(!no.marco.hijos.some(h => h.className === 'sl-mov'));
 });
