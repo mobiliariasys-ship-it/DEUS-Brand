@@ -162,14 +162,79 @@ def _media(v, k):
     return np.convolve(e, np.ones(k) / k, mode='valid')
 
 
-def bordes_rectos(alfa):
+def _recta(y, v, vueltas=5, tol=1.2):
+    """Recta robusta: mínimos cuadrados, sacando lo que se aparta (muescas)."""
+    usar = np.ones(len(v), bool)
+    for _ in range(vueltas):
+        a, b = np.polyfit(y[usar], v[usar], 1)
+        res = np.abs(v - (a * y + b))
+        usar = res < max(tol, 2.5 * np.median(res[usar]))
+    return a * y + b, res[usar].max() if usar.any() else 0
+
+
+def _por_tramos(v, salto=3.0):
+    """Tramos rectos entre escalones de verdad (marco, presillas).
+
+    Un escalón es donde la mediana cambia más de `salto` px en 12 filas; ahí
+    el borde sigue a los datos (nítido, sin rampa). Cada tramo de 30 filas o
+    más entre escalones va como una recta; si no es recto (la punta redonda),
+    sigue a la mediana.
+    """
+    n = len(v); ys = np.arange(n, dtype=float)
+    m = _mediana(v, 41)
+    d = np.zeros(n); d[6:-6] = np.abs(m[12:] - m[:-12])
+    esc = np.convolve((d > salto).astype(float), np.ones(7), mode='same') > 0
+    out = _media(m, 3)
+    i = 0
+    while i < n:
+        if esc[i]:
+            i += 1; continue
+        j = i
+        while j < n and not esc[j]:
+            j += 1
+        if j - i >= 30:
+            ajuste, desvio = _recta(ys[i:j], v[i:j])
+            if desvio < 2.0:
+                out[i:j] = ajuste
+        i = j
+    return out
+
+
+def _sin_lengueta(l, r):
+    """Nylon: una recta por lado hasta donde empieza la punta.
+
+    La foto trae una lengüeta que sobresale a media correa; se ve como un
+    defecto, así que queda fuera de la recta (y del recorte). La punta (donde
+    la correa se angosta) sigue a los datos y se une a la recta sin salto.
+    """
+    n = len(l); ys = np.arange(n, dtype=float)
+    ancho = r - l
+    lleno = np.where(ancho >= 0.95 * np.median(ancho))[0]
+    k = lleno[-1] + 1 if len(lleno) else n
+    ml, mr = _mediana(l, 41), _mediana(r, 41)
+    L, R = _media(ml, 5), _media(mr, 5)
+    if k >= 60:
+        rl, _ = _recta(ys[:k], l[:k]); rr, _ = _recta(ys[:k], r[:k])
+        L[:k], R[:k] = rl, rr
+        # Unión suave con la punta: 12 filas de transición.
+        for t in range(12):
+            y = k + t
+            if y >= n:
+                break
+            p = (t + 1) / 13
+            L[y] = (1 - p) * (rl[-1] + (rl[-1] - rl[-2]) * (t + 1)) + p * L[y]
+            R[y] = (1 - p) * (rr[-1] + (rr[-1] - rr[-2]) * (t + 1)) + p * R[y]
+    return L, R
+
+
+def bordes_rectos(alfa, nylon=False):
     """Endereza el contorno de una correa: un tramo continuo por fila.
 
     Se mide el borde izquierdo y derecho de cada fila con precisión de
-    subpíxel (donde el alfa cruza 0,5), se le sacan las muescas con una
-    mediana (que respeta los escalones reales, como el marco o la punta) y se
-    suaviza un poco; después se vuelve a dibujar cada fila con borde
-    antialiasado. Queda liso como un vector.
+    subpíxel (donde el alfa cruza 0,5) y se reemplaza por líneas rectas: la
+    silicona por tramos (entre el marco y las presillas, que sobresalen), el
+    nylon como una sola recta por lado (sin la lengüeta). Después se vuelve a
+    dibujar cada fila con borde antialiasado. Queda liso como un vector.
     """
     h, w = alfa.shape
     xl = np.full(h, np.nan); xr = np.full(h, np.nan)
@@ -188,15 +253,10 @@ def bordes_rectos(alfa):
     y0, y1 = filas[0], filas[-1] + 1
     seg = slice(y0, y1)
     l = np.interp(np.arange(y0, y1), filas, xl[filas]); r = np.interp(np.arange(y0, y1), filas, xr[filas])
-    # Ventana larga: las muescas medían hasta ~40 filas. La mediana igual
-    # respeta lo que dura más de media ventana (marco ~200 filas, presillas
-    # ~70) y lo que cambia parejo (la punta redonda). Lo que se aparta menos de
-    # 2,5 px de una mediana aún más larga es un escalón falso (las partes de
-    # verdad, marco y presillas, sobresalen 5 a 10 px): ahí manda la larga.
-    def recto(v):
-        m81, m151 = _mediana(v, 81), _mediana(v, 151)
-        return _media(np.where(np.abs(m151 - m81) < 2.5, m151, m81), 9)
-    l = recto(l); r = recto(r)
+    if nylon:
+        l, r = _sin_lengueta(l, r)
+    else:
+        l, r = _por_tramos(l), _por_tramos(r)
     xs = np.arange(w)[None, :]
     nuevo = np.zeros_like(alfa)
     nuevo[seg] = np.clip(xs - l[:, None] + 0.5, 0, 1) * np.clip(r[:, None] - xs + 0.5, 0, 1)
@@ -206,7 +266,7 @@ def bordes_rectos(alfa):
     return nuevo
 
 
-def recorte_limpio(C, B, escala=4):
+def recorte_limpio(C, B, escala=4, nylon=False):
     """Banda sin sombra, con borde suave y sin el color del fondo viejo.
 
     C: la zona de la foto original (H×W×3); B: el degradé de fondo en esa zona.
@@ -233,7 +293,7 @@ def recorte_limpio(C, B, escala=4):
     g = g.point(lambda v: 255 if v >= 128 else 0)
     alfa = _arr(g.filter(ImageFilter.GaussianBlur(escala * 0.35)).resize((w, h), Image.BOX))
     # Las correas son rectas: el contorno se endereza (sin muescas ni dientes).
-    alfa = bordes_rectos(alfa)
+    alfa = bordes_rectos(alfa, nylon)
     # Color del borde. La foto trae ahí un brillo o un ribete (en el nylon,
     # con una costura punteada) cortado y disparejo, que sobre un fondo oscuro
     # se veía carcomido. Se suaviza a lo largo de la correa (vertical): de 2 a
@@ -292,7 +352,7 @@ def procesar(color, ruta, recortes, variante, salida):
         # cambia), alargado arriba en espejo igual que allá.
         bx0 = int(round(p['x'] * W)); bx1 = bx0 + int(round(p['w'] * W))
         by1 = int(round((p['y'] + p['h']) * H)); extra = int(round(-p['y'] * H))
-        rgba = recorte_limpio(A[:by1, bx0:bx1], Bf[:by1, bx0:bx1])
+        rgba = recorte_limpio(A[:by1, bx0:bx1], Bf[:by1, bx0:bx1], nylon=pieza == 'nylon')
         im = Image.fromarray(np.concatenate([rgba[:extra][::-1], rgba], axis=0), 'RGBA')
         im.save(f'{salida}/hero-bandas2/{color}-{pieza}-1200.webp', 'WEBP', quality=86, method=6)
         im.resize((max(1, round(im.width * 800 / W)), max(1, round(im.height * 800 / W))), Image.LANCZOS).save(

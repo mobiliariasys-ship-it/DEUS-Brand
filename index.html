@@ -2117,9 +2117,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              igual que la foto; las bandas se mecen como péndulos al cambiar
              de color o al tocarlas (ver bandasHero). Se arma al terminar la
              página: no compite con la foto principal. -->
-        <div class="slide-w"><img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/portada/negra-800.webp?v=5 800w, img/portada/negra-1200.webp?v=5 1200w" src="img/portada/negra-800.webp?v=5" data-color="negra" alt="DEUS Band negra — smartband de salud color negro"><div class="sl-arte" data-color="negra" aria-hidden="true"></div></div>
-        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/gris-800.webp?v=5 800w, img/portada/gris-1200.webp?v=5 1200w" data-src="img/portada/gris-800.webp?v=5" data-color="gris" alt="DEUS Band gris"><div class="sl-arte" data-color="gris" aria-hidden="true"></div></div>
-        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/rosada-800.webp?v=5 800w, img/portada/rosada-1200.webp?v=5 1178w" data-src="img/portada/rosada-800.webp?v=5" data-color="rosada" alt="DEUS Band rosada"><div class="sl-arte" data-color="rosada" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/portada/negra-800.webp?v=6 800w, img/portada/negra-1200.webp?v=6 1200w" src="img/portada/negra-800.webp?v=6" data-color="negra" alt="DEUS Band negra — smartband de salud color negro"><div class="sl-arte" data-color="negra" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/gris-800.webp?v=6 800w, img/portada/gris-1200.webp?v=6 1200w" data-src="img/portada/gris-800.webp?v=6" data-color="gris" alt="DEUS Band gris"><div class="sl-arte" data-color="gris" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/rosada-800.webp?v=6 800w, img/portada/rosada-1200.webp?v=6 1178w" data-src="img/portada/rosada-800.webp?v=6" data-color="rosada" alt="DEUS Band rosada"><div class="sl-arte" data-color="rosada" aria-hidden="true"></div></div>
       </div>
       <div class="slider-dots">
         <span class="sdot active" onclick="goSlide(0,true)"></span>
@@ -5021,9 +5021,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 // mate con los textos en celeste hielo; gris en uno más claro y rosada en
 // rosado pastel, las dos con los textos en gris mate.
 const bandImages = {
-  negra: "img/portada/negra-1200.webp?v=5",
-  gris: "img/portada/gris-1200.webp?v=5",
-  rosada: "img/portada/rosada-1200.webp?v=5",
+  negra: "img/portada/negra-1200.webp?v=6",
+  gris: "img/portada/gris-1200.webp?v=6",
+  rosada: "img/portada/rosada-1200.webp?v=6",
 };
 // Miniaturas para el recuadro de 64x64 del checkout. Antes ahí se usaba la
 // imagen grande (1200x1306, 95 KB) encogida por CSS: se descargaba entera en
@@ -5475,9 +5475,9 @@ var bandasHero = (function () {
   // El clavo, a cuánto alto de foto por encima del borde de arriba.
   var CLAVO = 0.8;
   var armadas = {}, corriendo = false, tPrev = 0, introHecha = false;
-  // ?v=5: recortes limpios, bordes enderezados (las imágenes se cachean 7
-  // días: al cambiarlas se sube el número).
-  function srcset(c, pieza) { var b = 'img/hero-bandas2/' + c + '-' + pieza + '-'; return b + '800.webp?v=5 800w, ' + b + '1200.webp?v=5 1200w'; }
+  // ?v=6: recortes limpios, bordes rectos (las imágenes se cachean 7 días:
+  // al cambiarlas se sube el número).
+  function srcset(c, pieza) { var b = 'img/hero-bandas2/' + c + '-' + pieza + '-'; return b + '800.webp?v=6 800w, ' + b + '1200.webp?v=6 1200w'; }
   function pct(n) { return (n * 100).toFixed(3) + '%'; }
   function armar(c) {
     if (quieto || armadas[c] || !BANDAS_HERO[c]) return armadas[c];
