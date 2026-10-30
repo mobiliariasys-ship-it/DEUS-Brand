@@ -417,6 +417,10 @@
   .ctr-tip{background:rgba(7,12,20,.96);border-color:var(--border);}
   .util-tabla th{color:var(--muted);text-transform:uppercase;font-size:.6rem;letter-spacing:.8px;}
   .util-tabla tr.hoy td{background:rgba(30,200,240,.07);}
+  /* Checkout arriba de todo: los pasos con su nombre completo (con 120px se
+     cortaban en "Abrió el check…"). */
+  #co-funnel .cb-lbl{width:185px;}
+  @media(max-width:560px){ #co-funnel .cb-lbl{width:128px;font-size:.74rem;} }
   /* Celular: las tarjetas de arriba de a dos (de a una el resumen ocupaba
      varias pantallas antes de llegar a la utilidad). */
   @media(max-width:560px){
@@ -444,6 +448,7 @@
     <aside class="sidebar">
       <div class="side-logo"><span class="side-mark"></span>DEUS</div>
       <button class="nav-i active" onclick="irA('top',this)"><span class="ico">📊</span> Dashboard</button>
+      <button class="nav-i" onclick="irA('sec-checkout',this)"><span class="ico">🧾</span> Checkout</button>
       <button class="nav-i" onclick="irA('sec-graficos',this)"><span class="ico">📈</span> Gráficos</button>
       <!-- Mismo orden que el panel: Plata, Conversión, Operación y Registros. -->
       <button class="nav-i" onclick="irA('sec-utilidad',this)"><span class="ico">💰</span> Utilidad</button>
@@ -494,7 +499,7 @@
       <div class="stat"><div class="k">Stock restante</div><div class="v" id="s-stock">—</div></div>
     </div>
 
-    <!-- Filtro de periodo: aplica al embudo del checkout y a la conducta.
+    <!-- Filtro de periodo: aplica a la conducta y las ventas del periodo (el checkout tiene el suyo).
          Sirve para medir si un cambio funcionó, comparando con el acumulado. -->
     <div class="rango-bar">
       <span class="rango-lbl">Periodo</span>
@@ -509,6 +514,25 @@
       <button class="rango-btn active" data-rango="0" onclick="setRango(0)">Todo</button>
       <span class="rango-nota" id="rango-nota"></span>
     </div>
+
+    <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió.
+         Va arriba de todo (pedido del dueño): es lo primero que se mira. -->
+    <section id="sec-checkout">
+      <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
+      <!-- Filtro propio del checkout: no mueve el periodo del resto del panel. -->
+      <div class="rango-bar co-filtros">
+        <button class="rango-btn co-rango" data-co="1" onclick="setRangoCheckout(1)">Hoy</button>
+        <button class="rango-btn co-rango" data-co="ayer" onclick="setRangoCheckout('ayer')">Ayer</button>
+        <button class="rango-btn co-rango" data-co="semana" onclick="setRangoCheckout('semana')">Esta semana</button>
+        <button class="rango-btn co-rango" data-co="mes" onclick="setRangoCheckout('mes')">Este mes</button>
+        <button class="rango-btn co-rango" data-co="0" onclick="setRangoCheckout(0)">Todo</button>
+        <span class="rango-nota" id="co-nota"></span>
+      </div>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
+      <div id="co-funnel"></div>
+      <div id="co-extra"></div>
+      <div class="empty" id="co-empty" style="display:none">Nadie abrió el checkout en este periodo.</div>
+    </section>
 
     <div class="two-col" id="sec-graficos">
     <section>
@@ -680,7 +704,7 @@
       <div class="empty" id="canal-empty" style="display:none">Aún sin compras rastreadas por canal.</div>
     </section>
 
-    <!-- Conversión: embudo, checkout, conducta y qué lleva a comprar. -->
+    <!-- Conversión: embudo, conducta y qué lleva a comprar (el checkout va arriba de todo). -->
     <div class="grupo-h">🫗 Conversión · dónde se cae la venta</div>
     <section id="sec-embudo">
       <div class="sec-h"><h2>🫗 Embudo · dónde se caen</h2><span class="pill" id="funnel-conv"></span></div>
@@ -689,15 +713,6 @@
         <div class="fn-row"><div class="fn-lbl">🛒 Abrieron checkout</div><div class="fn-track"><div class="fn-bar" id="fn-co"></div></div><div class="fn-val" id="fn-co-v">0</div></div>
         <div class="fn-row"><div class="fn-lbl">✅ Pagaron</div><div class="fn-track"><div class="fn-bar" id="fn-pay"></div></div><div class="fn-val" id="fn-pay-v">0</div></div>
       </div>
-    </section>
-
-    <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió -->
-    <section id="sec-checkout">
-      <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
-      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
-      <div id="co-funnel"></div>
-      <div id="co-extra"></div>
-      <div class="empty" id="co-empty" style="display:none">Aún sin datos del checkout. Se llena con las próximas visitas al checkout.</div>
     </section>
 
     <section id="sec-conducta">
@@ -1400,7 +1415,7 @@
   // ¿Hay algún periodo elegido? (0 = "Todo"). Se usa en vez de RANGO_DIAS>0
   // porque ahora el rango también puede ser 'semana' o 'mes'.
   function hayFiltro(){ return RANGO_DIAS !== 0 && RANGO_DIAS !== '0'; }
-  var RANGO_LBL = { 1:'hoy', 7:'últimos 7 días', 30:'últimos 30 días',
+  var RANGO_LBL = { 1:'hoy', ayer:'ayer', 7:'últimos 7 días', 30:'últimos 30 días',
                     semana:'esta semana (desde el lunes)', mes:'este mes' };
 
   // n = cantidad de días, o 'semana' / 'mes'.
@@ -1408,6 +1423,7 @@
   // ventanas móviles: es lo que sirve para saber "cómo voy este mes".
   function diasChile(n){
     var hoy=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Santiago'}));
+    if(n==='ayer'){ var a=new Date(hoy); a.setDate(hoy.getDate()-1); return [a.toLocaleDateString('en-CA')]; }
     var cant;
     if(n==='semana'){ cant=((hoy.getDay()+6)%7)+1; }   // lunes = primer día
     else if(n==='mes'){ cant=hoy.getDate(); }
@@ -1520,9 +1536,38 @@
     if(monto) monto.textContent=money(m);
   }
 
+  // Filtro propio del embudo del checkout (pedido del dueño): hoy, ayer, esta
+  // semana, este mes o todo, sin mover el periodo del resto del panel. Se
+  // recuerda en este navegador; arranca en "esta semana".
+  var CO_RANGO = (function(){
+    try { var v=localStorage.getItem('deus-co-rango'); if(v===null) return 'semana'; return (v==='0'||v==='1') ? Number(v) : v; }
+    catch(e){ return 'semana'; }
+  })();
+  function setRangoCheckout(n){
+    CO_RANGO=n;
+    try { localStorage.setItem('deus-co-rango', String(n)); } catch(e){}
+    if(ULT_DATA) pintarCheckoutRango(ULT_DATA);
+  }
+  window.setRangoCheckout = setRangoCheckout;
+  function pintarCheckoutRango(d){
+    [].forEach.call(document.querySelectorAll('.co-rango'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-co')===String(CO_RANGO));
+    });
+    var conducta=d.conducta||{}, nota='acumulado histórico';
+    if(CO_RANGO!==0 && CO_RANGO!=='0'){
+      var r=conductaRango(d, CO_RANGO);
+      if(r){ conducta=r; nota=RANGO_LBL[CO_RANGO]||String(CO_RANGO); }
+      else nota='sin datos por día todavía — mostrando el acumulado';
+    }
+    pintarCheckout(conducta);
+    var abrio=conducta['co:1abrio']||0, pago=conducta['co:5pago']||0;
+    var nt=document.getElementById('co-nota');
+    if(nt) nt.textContent=nota+' · '+abrio+(abrio===1?' abrió':' abrieron')+' · '+pago+(pago===1?' pagó':' pagaron');
+  }
+
   function setRango(n){
     RANGO_DIAS=n;
-    [].forEach.call(document.querySelectorAll('.rango-btn'), function(b){
+    [].forEach.call(document.querySelectorAll('.rango-btn[data-rango]'), function(b){
       b.classList.toggle('active', b.getAttribute('data-rango')===String(n));
     });
     if(ULT_DATA) pintar(ULT_DATA);
@@ -1698,8 +1743,9 @@
     // textContent que habría borrado el detalle "n de N" de cada tarjeta.
     pintarConversiones(d);
     pintarEmbudo(d.embudo||{visitas:0,checkouts:0,ventas:0},d.conversion||0);
-    // Estas tres respetan el periodo elegido arriba.
-    pintarCheckout(conducta);
+    // El checkout tiene su propio filtro (hoy/ayer/semana/mes/todo); la
+    // conducta respeta el periodo elegido arriba.
+    pintarCheckoutRango(d);
     pintarConducta(conducta, visitasBase);
     // "Qué lleva a comprar" cruza con conversionAccion, que es acumulado: se
     // deja siempre en histórico para no comparar ventanas distintas.

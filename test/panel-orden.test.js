@@ -17,7 +17,7 @@ test('el gasto por hora va justo debajo de la utilidad diaria', () => {
 });
 
 test('las secciones van agrupadas y los registros plegados al final', () => {
-  const orden = ['sec-utilidad', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-embudo', 'sec-checkout', 'sec-conducta',
+  const orden = ['sec-checkout', 'sec-utilidad', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-embudo', 'sec-conducta',
     'sec-convierte', 'sec-negocio', 'sec-pedidos', 'sec-resenas', 'sec-chat', 'sec-ventas', 'sec-sorteo'];
   const posiciones = orden.map(pos);
   assert.deepStrictEqual(posiciones, posiciones.slice().sort((a, b) => a - b), 'orden de las secciones');
@@ -55,4 +55,57 @@ test('el fondo de dragones existe, es liviano y va detrás del vidrio', () => {
   // En un ::before fijo: background-attachment:fixed no anda en el iPhone.
   assert.match(tema, /body::before\{content:'';position:fixed;inset:0;z-index:-1;[^}]*url\(img\/panel-dragones\.webp\)/);
   assert.match(tema, /backdrop-filter:blur\(22px\)/);
+});
+
+test('el checkout va arriba de todo, antes de los gráficos', () => {
+  const ids = [...HTML.matchAll(/<section id="(sec-[a-z]+)"/g)].map(m => m[1]);
+  assert.strictEqual(ids[0], 'sec-checkout');
+  assert.ok(pos('sec-checkout') < HTML.indexOf('id="sec-graficos"'));
+});
+
+test('el checkout tiene su filtro propio: hoy, ayer, semana, mes y todo', () => {
+  const vm = require('vm');
+  const extraer = nombre => {
+    const i = HTML.search(new RegExp('function\\s+' + nombre + '\\s*\\('));
+    assert.ok(i >= 0, 'falta ' + nombre);
+    let prof = 0;
+    for (let k = HTML.indexOf('{', i); k < HTML.length; k++) {
+      if (HTML[k] === '{') prof++;
+      else if (HTML[k] === '}' && --prof === 0) return HTML.slice(i, k + 1);
+    }
+  };
+  for (const [n, txt] of [['1', 'Hoy'], ['ayer', 'Ayer'], ['semana', 'Esta semana'], ['mes', 'Este mes'], ['0', 'Todo']]) {
+    assert.ok(HTML.includes('data-co="' + n + '" onclick="setRangoCheckout(') && HTML.includes('>' + txt + '</button>'), 'falta ' + txt);
+  }
+  // Los días de Chile: hoy y ayer, para armar los datos de prueba.
+  const hoyCl = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+  const dia = n => { const d = new Date(hoyCl); d.setDate(hoyCl.getDate() - n); return d.toLocaleDateString('en-CA'); };
+  const data = {
+    conducta: { 'co:1abrio': 100, 'co:5pago': 9 },             // histórico
+    conductaPorDia: { [dia(0)]: { 'co:1abrio': 4, 'co:5pago': 1 }, [dia(1)]: { 'co:1abrio': 6, 'co:5pago': 2 } }
+  };
+  const botones = ['1', 'ayer', 'semana', 'mes', '0'].map(n => ({ n, on: false, getAttribute: () => n,
+    classList: { toggle(c, v) { this.d.on = !!v; } } }));
+  botones.forEach(b => { b.classList.d = b; });
+  const nota = { textContent: '' };
+  let pintado = null;
+  const ctx = { Date, Number, String, Object, localStorage: { getItem: () => null, setItem() {} },
+    document: { querySelectorAll: q => (q === '.co-rango' ? botones : []), getElementById: id => (id === 'co-nota' ? nota : null) },
+    pintarCheckout: c => { pintado = c; } };
+  vm.createContext(ctx);
+  const rangoLbl = HTML.match(/var RANGO_LBL = \{[^}]*\};/)[0];
+  vm.runInContext(rangoLbl + '\nvar ULT_DATA = null;\n' + ['diasChile', 'conductaRango', 'pintarCheckoutRango', 'setRangoCheckout'].map(extraer).join('\n') +
+    '\n' + HTML.match(/var CO_RANGO = \(function\(\)\{[\s\S]*?\}\)\(\);/)[0], ctx);
+  ctx.ULT_DATA = data;
+  // JSON: los objetos armados dentro del vm traen otro Object.prototype.
+  const ver = n => { vm.runInContext('setRangoCheckout(' + JSON.stringify(n) + ')', ctx); return JSON.parse(JSON.stringify(pintado)); };
+  assert.strictEqual(vm.runInContext('CO_RANGO', ctx), 'semana', 'arranca en esta semana');
+  assert.deepStrictEqual(ver(1), { 'co:1abrio': 4, 'co:5pago': 1 }, 'hoy');
+  assert.match(nota.textContent, /^hoy · 4 abrieron · 1 pagó$/);
+  assert.deepStrictEqual(ver('ayer'), { 'co:1abrio': 6, 'co:5pago': 2 }, 'ayer');
+  assert.deepStrictEqual(ver(0), data.conducta, 'todo = histórico');
+  assert.match(nota.textContent, /^acumulado histórico/);
+  assert.deepStrictEqual(botones.filter(b => b.on).map(b => b.n), ['0'], 'se marca el botón elegido');
+  // El periodo general no apaga los botones del checkout.
+  assert.match(HTML, /document\.querySelectorAll\('\.rango-btn\[data-rango\]'\)/);
 });
