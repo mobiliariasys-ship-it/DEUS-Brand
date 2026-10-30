@@ -446,6 +446,16 @@
       <div class="empty" id="util-off" style="display:none">No se pudo cargar la utilidad.</div>
     </section>
 
+    <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió.
+         Va justo debajo de la utilidad diaria (pedido del dueño, 30-oct-2026). -->
+    <section id="sec-checkout">
+      <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
+      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
+      <div id="co-funnel"></div>
+      <div id="co-extra"></div>
+      <div class="empty" id="co-empty" style="display:none">Aún sin datos del checkout. Se llena con las próximas visitas al checkout.</div>
+    </section>
+
     <div class="vm-fondo" id="vm-fondo" onclick="if(event.target===this)cerrarAltaVenta()">
       <div class="vm-caja">
         <h3>Agregar venta</h3>
@@ -480,15 +490,6 @@
         <div class="fn-row"><div class="fn-lbl">🛒 Abrieron checkout</div><div class="fn-track"><div class="fn-bar" id="fn-co"></div></div><div class="fn-val" id="fn-co-v">0</div></div>
         <div class="fn-row"><div class="fn-lbl">✅ Pagaron</div><div class="fn-track"><div class="fn-bar" id="fn-pay"></div></div><div class="fn-val" id="fn-pay-v">0</div></div>
       </div>
-    </section>
-
-    <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió -->
-    <section id="sec-checkout">
-      <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
-      <p style="color:#777;font-size:.78rem;margin:0 0 14px">De los que abren el checkout, en qué paso se van. El escalón con la caída más grande es lo que hay que arreglar. (%=sobre los que abrieron)</p>
-      <div id="co-funnel"></div>
-      <div id="co-extra"></div>
-      <div class="empty" id="co-empty" style="display:none">Aún sin datos del checkout. Se llena con las próximas visitas al checkout.</div>
     </section>
 
     <section id="sec-conducta">
