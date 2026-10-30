@@ -152,3 +152,10 @@ test('no usan el movimiento del celular ni piden permiso', () => {
   // pida permiso (iPhone) y que no se muevan al mover el teléfono.
   assert.ok(!/devicemotion|deviceorientation|requestPermission/i.test(HTML));
 });
+
+test('mantener presionada una banda no la saca como foto (menú de imagen del iPhone)', () => {
+  // El toque cae en el contenedor .sl-banda y no en la imagen recortada.
+  assert.match(HTML, /\.sl-banda img\{[^}]*pointer-events:none/);
+  assert.match(HTML, /\.sl-banda\{[^}]*-webkit-touch-callout:none/);
+  assert.match(HTML, /\.sl-arte img\{[^}]*-webkit-touch-callout:none/);
+});

@@ -1389,14 +1389,18 @@ body.sb-on .wa-float{bottom:82px;}
 .slide-w{position:relative;min-width:100%;width:100%;height:100%;overflow:hidden;}
 .sl-arte{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;}
 .sl-arte.lista{opacity:1;}
-.sl-arte img{position:absolute;display:block;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;}
+.sl-arte img{position:absolute;display:block;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
 .sl-placa{top:0;height:100%;}
 /* El clavo de cada banda queda MUY arriba (fuera de la foto): así se mece de
    lado, como colgada de lejos, y no gira sobre sí misma. La banda arranca un
    poco por encima de la foto (top y transform-origin los pone bandasHero):
    al ladearse, su borde de arriba no se ve. */
-.sl-banda{position:absolute;top:0;transform-origin:50% -80%;will-change:transform;pointer-events:auto;cursor:grab;}
-.sl-banda img{position:static;width:100%;height:auto;filter:drop-shadow(6px 5px 7px rgba(30,40,50,.16));}
+.sl-banda{position:absolute;top:0;transform-origin:50% -80%;will-change:transform;pointer-events:auto;cursor:grab;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;}
+/* El toque cae en el contenedor, no en la imagen: si no, en iPhone mantener
+   presionada una banda la "levanta" como foto suelta (Guardar en Fotos,
+   Copiar sujeto). Tocarla para mecerla sigue igual (bandasHero.tocar busca
+   .sl-banda). */
+.sl-banda img{position:static;width:100%;height:auto;pointer-events:none;filter:drop-shadow(6px 5px 7px rgba(30,40,50,.16));}
 .slider-dots{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:8px;}
 .sdot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.25);cursor:pointer;transition:all 0.2s;}
 .sdot.active{background:#111;width:22px;border-radius:4px;}
