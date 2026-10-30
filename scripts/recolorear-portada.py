@@ -638,13 +638,21 @@ def recorte_limpio(C, B, escala=4, nylon=False):
         piso = 0.9 * lum(ref)
         F = np.where((clara & (lum(F) < piso))[..., None], F * (piso / np.maximum(lum(F), 1))[..., None], F)
         # Los brillos de la rosada reflejaban el fondo celeste viejo (una
-        # mancha lila en la punta): lo bien más azul que la banda vuelve a su
-        # tono. Lo neutro (el perno, el marco) no se toca.
+        # mancha lila en la punta): lo bien más azul que la banda toma el color
+        # de la banda de alrededor. Lo neutro (el perno, el marco) no se toca.
         cuerpo = (alfa > 0.5) & (lum(F) > 110)
         if cuerpo.sum() > 0.5 * (alfa > 0.5).sum():
             bg_ = np.median((F[..., 2] - F[..., 1])[cuerpo])
             lila = (alfa > 0) & (lum(F) > 110) & (F[..., 2] - F[..., 1] > bg_ + 8)
-            F[..., 2] = np.where(lila, F[..., 1] + bg_, F[..., 2])
+            peso = (alfa > 0.5) & ~lila
+            for _ in range(15):
+                num = np.stack([sm(F[..., k2] / 255 * peso, 2) for k2 in range(3)], -1) * 255
+                den = sm(peso.astype(float), 2)[..., None]
+                nuevo = lila & ~peso & (den[..., 0] > 0.02)
+                if not nuevo.any():
+                    break
+                F[nuevo] = (num / np.maximum(den, 1e-6))[nuevo]
+                peso = peso | nuevo
     return np.dstack([F, alfa * 255]).clip(0, 255).astype(np.uint8)
 
 
