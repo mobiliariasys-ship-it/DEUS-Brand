@@ -45,3 +45,14 @@ test('el tema respeta los colores: sin verde ni violeta de adorno', () => {
   assert.ok(!/9b8cff|var\(--green\)|#8fce4a/.test(tema), 'el tema no usa verde ni violeta');
   assert.ok(!/#9b8cff|#cfc6ff/.test(HTML), 'los gráficos no usan violeta');
 });
+
+test('el fondo de dragones existe, es liviano y va detrás del vidrio', () => {
+  const img = path.join(__dirname, '..', 'img', 'panel-dragones.webp');
+  assert.ok(fs.existsSync(img), 'falta img/panel-dragones.webp');
+  const kb = fs.statSync(img).size / 1024;
+  assert.ok(kb < 300, 'el fondo pesa ' + Math.round(kb) + ' KB: tiene que cargar rápido en el celular');
+  const tema = HTML.slice(HTML.indexOf('/* ══ Tema vidrio'), HTML.indexOf('</style>'));
+  // En un ::before fijo: background-attachment:fixed no anda en el iPhone.
+  assert.match(tema, /body::before\{content:'';position:fixed;inset:0;z-index:-1;[^}]*url\(img\/panel-dragones\.webp\)/);
+  assert.match(tema, /backdrop-filter:blur\(22px\)/);
+});
