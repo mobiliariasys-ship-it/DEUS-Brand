@@ -33,6 +33,7 @@ test('cada foto del carrusel lleva su capa de bandas, y la foto principal sigue 
   assert.match(HTML, /window\.addEventListener\('load', function \(\) \{ setTimeout\(function \(\) \{ bandasHero\.armar\(colorOrder\[currentSlide\]\); \}, 700\); \}\);/);
   assert.match(HTML, /if \(!bandasHero\.tocar\(e\.target, e\.changedTouches\[0\]\.clientX\)\) abrirZoom\(\);/, 'tocar una banda la mece; el resto abre el zoom');
   assert.match(HTML, /bandasHero\.empujar\(colorOrder\[currentSlide\], haciaAdelante \? -0\.16 : 0\.16\);/, 'cambiar de color las mece');
+  assert.match(HTML, /if \(horizontal && Math\.abs\(dx\) > 40\) bandasHero\.pedirMovimiento\(\);/, 'deslizar la foto pide el permiso del movimiento (iPhone)');
 });
 
 function motor(reducir, ventana) {
@@ -43,7 +44,9 @@ function motor(reducir, ventana) {
   const cola = [];
   let t = 0;
   const elem = () => {
-    const e = { style: {}, className: '', hijos: [], addEventListener() {}, appendChild(h) { this.hijos.push(h); },
+    const e = { style: {}, className: '', hijos: [], on: {},
+      addEventListener(ev, f) { (this.on[ev] = this.on[ev] || []).push(f); },
+      appendChild(h) { this.hijos.push(h); }, remove() { this.quitado = true; },
       getBoundingClientRect: () => ({ left: 0, width: 10 }) };
     e.closest = () => e;
     return e;
@@ -51,13 +54,15 @@ function motor(reducir, ventana) {
   function Img() { this.style = {}; }
   Object.defineProperty(Img.prototype, 'srcset', { set(v) { this._s = v; if (this.onload) this.onload(); }, get() { return this._s; } });
   const capas = {};
+  const timers = [];
+  const marco = elem();
   const ctx = {
-    Math, Object, Image: Img, performance: { now: () => t }, setTimeout() {},
+    Math, Object, Image: Img, performance: { now: () => t }, setTimeout: f => timers.push(f),
     requestAnimationFrame: f => cola.push(f),
     colorOrder: ['negra', 'gris', 'rosada'], currentSlide: 0,
     window: Object.assign({ matchMedia: () => ({ matches: reducir }), addEventListener() {} }, ventana),
     document: {
-      readyState: 'loading', createElement: elem,
+      readyState: 'loading', createElement: elem, getElementById: id => (id === 'galSlider' ? marco : null),
       querySelector: q => { const c = q.match(/data-color="(\w+)"/)[1]; return capas[c] || (capas[c] = Object.assign(elem(), { classList: { add() { this.lista = true; }, remove() {} } })); }
     }
   };
@@ -67,7 +72,7 @@ function motor(reducir, ventana) {
   const bandas = c => capas[c].hijos.filter(h => h.className === 'sl-banda');
   const correr = (c, cadaCuadro) => { let n = 0; while (cola.length && n < 4000) { t += 16; cola.shift()(t); n++; if (cadaCuadro) cadaCuadro(bandas(c).map(ang)); } return n; };
   const cuadro = () => { if (cola.length) { t += 16; cola.shift()(t); } };
-  return { ctx, cola, capas, bandas, ang, correr, cuadro };
+  return { ctx, cola, capas, bandas, ang, correr, cuadro, timers, marco };
 }
 
 test('al cambiar de color se mecen de lado, poco, y se quedan quietas solas', () => {
@@ -226,4 +231,57 @@ test('en iPhone pide permiso para el movimiento al tocar una banda, una sola vez
   no.ctx.bandasHero.armar('rosada');
   no.ctx.bandasHero.tocar(no.bandas('rosada')[0], 1);
   assert.strictEqual(otra, 0);
+});
+
+// iPhone: DeviceMotionEvent.requestPermission y pantalla táctil.
+function iphone(responde) {
+  const pedidos = [];
+  const m = conSensor({
+    DeviceMotionEvent: { requestPermission: () => { pedidos.push(1); return responde(pedidos.length); } },
+    matchMedia: q => ({ matches: /coarse/.test(q) })
+  });
+  m.pedidos = pedidos;
+  return m;
+}
+const tick = () => new Promise(r => setImmediate(r));
+
+test('en iPhone aparece "Activar movimiento"; al tocarlo pide permiso, se va y las bandas responden', async () => {
+  const m = iphone(() => Promise.resolve('granted'));
+  m.ctx.bandasHero.armar('negra');
+  m.timers.forEach(f => f());
+  const boton = m.marco.hijos.find(h => h.className === 'sl-mov');
+  assert.ok(boton, 'aparece el botón sobre la foto');
+  assert.match(boton.innerHTML, /Activar movimiento/);
+  assert.ok(boton.on.touchend && boton.on.mouseup, 'el toque no llega a la foto (no abre el zoom)');
+  m.correr('negra'); // quietas
+  boton.on.click[0]({ stopPropagation() {} });
+  assert.strictEqual(m.pedidos.length, 1);
+  await tick();
+  assert.ok(boton.quitado, 'con el permiso dado, el botón se va');
+  assert.ok(m.cola.length > 0, 'y las bandas se mecen como respuesta');
+});
+
+test('si Apple rechaza el pedido sin preguntar (toque que no cuenta), se reintenta en el próximo', async () => {
+  const m = iphone(n => (n === 1 ? Promise.reject(new Error('requiere un gesto')) : Promise.resolve('granted')));
+  m.ctx.bandasHero.armar('gris');
+  m.ctx.bandasHero.pedirMovimiento();
+  await tick();
+  m.ctx.bandasHero.pedirMovimiento();
+  await tick();
+  m.ctx.bandasHero.pedirMovimiento();
+  assert.strictEqual(m.pedidos.length, 2, 'reintenta una vez y, con el permiso dado, no vuelve a pedir');
+});
+
+test('sin botón si el movimiento ya llega (permiso guardado) o si ya dijeron que no', () => {
+  const ya = iphone(() => Promise.resolve('granted'));
+  ya.ctx.bandasHero.armar('negra');
+  ya.mover(inclinado(0), 1);
+  ya.timers.forEach(f => f());
+  assert.ok(!ya.marco.hijos.some(h => h.className === 'sl-mov'));
+
+  const no = iphone(() => Promise.resolve('denied'));
+  no.ctx.localStorage = { getItem: () => 'no', setItem() {} };
+  no.ctx.bandasHero.armar('negra');
+  no.timers.forEach(f => f());
+  assert.ok(!no.marco.hijos.some(h => h.className === 'sl-mov'));
 });

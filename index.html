@@ -1397,6 +1397,10 @@ body.sb-on .wa-float{bottom:82px;}
    al ladearse, su borde de arriba no se ve. */
 .sl-banda{position:absolute;top:0;transform-origin:50% -80%;will-change:transform;pointer-events:auto;cursor:grab;}
 .sl-banda img{position:static;width:100%;height:auto;filter:drop-shadow(6px 5px 7px rgba(30,40,50,.16));}
+/* "Activar movimiento": solo en iPhone, hasta que den permiso (ver bandasHero). */
+.sl-mov{position:absolute;left:8px;top:5px;z-index:3;display:flex;align-items:center;gap:5px;padding:5px 10px 5px 8px;border:1px solid rgba(255,255,255,.6);border-radius:999px;background:rgba(255,255,255,.66);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#26302f;font-family:inherit;font-size:10.5px;font-weight:600;line-height:1;letter-spacing:.2px;box-shadow:0 4px 14px rgba(20,30,35,.18);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.sl-mov svg{flex:none;animation:sl-mov-giro 2.4s ease-in-out infinite;}
+@keyframes sl-mov-giro{0%,64%,100%{transform:rotate(0)}74%{transform:rotate(-16deg)}86%{transform:rotate(16deg)}}
 .slider-dots{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:8px;}
 .sdot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.25);cursor:pointer;transition:all 0.2s;}
 .sdot.active{background:#111;width:22px;border-radius:4px;}
@@ -5472,7 +5476,7 @@ var bandasHero = (function () {
       if (a.pendiente) { var f = a.pendiente; a.pendiente = 0; empujar(c, f); }
       // La primera vez que se arma la foto que se está viendo, un vaivén suave
       // avisa que se mueven, sin texto.
-      if (!introHecha && c === colorOrder[currentSlide]) { introHecha = true; setTimeout(function () { empujar(c, -0.1); }, 900); }
+      if (!introHecha && c === colorOrder[currentSlide]) { introHecha = true; setTimeout(function () { empujar(c, -0.1); }, 900); setTimeout(ponerBoton, 900); }
     }
     // Si algo no carga, la capa se va y queda la foto original, que es igual.
     function fallo() { a.roto = true; capa.classList.remove('lista'); capa.innerHTML = ''; }
@@ -5551,12 +5555,12 @@ var bandasHero = (function () {
   // lado). Lo lento es inclinación: las deja apenas ladeadas hacia el lado que
   // baja (una fracción, con tope, para que no se salgan de la foto). Lo rápido
   // es un envión: las empuja como a un péndulo de verdad, que se queda atrás.
-  var LADO_MAX = 0.05, GANANCIA = 0.2, ENVION = 0.35;
+  var LADO_MAX = 0.06, GANANCIA = 0.35, ENVION = 0.6;
   var ladoLento = null, signo = 0, enVista = true, recibe = false, pedido = false;
   function alMover(e) {
     var g = e.accelerationIncludingGravity;
     if (!g || g.x == null) return;
-    recibe = true;
+    if (!recibe) { recibe = true; quitarBoton(); }
     // Solo con la pantalla vertical (de lado, el eje x del teléfono ya no es
     // el ancho de la foto) y con la foto a la vista.
     var so = window.screen && window.screen.orientation;
@@ -5586,25 +5590,44 @@ var bandasHero = (function () {
   }
   var pidePermiso = !!(window.DeviceMotionEvent && typeof window.DeviceMotionEvent.requestPermission === 'function' &&
     window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  var marco = document.getElementById('galSlider'), boton = null;
   if (!quieto && window.DeviceMotionEvent) window.addEventListener('devicemotion', alMover);
-  if (!quieto && window.IntersectionObserver) {
-    var marco = document.getElementById('galSlider');
-    if (marco) new IntersectionObserver(function (es) { enVista = es[0].isIntersecting; }).observe(marco);
+  if (!quieto && marco && window.IntersectionObserver) {
+    new IntersectionObserver(function (es) { enVista = es[0].isIntersecting; }).observe(marco);
   }
-  // En iPhone, Apple pide permiso para leer el movimiento y solo deja pedirlo
-  // al tocar algo: se pide la primera vez que tocan una banda (están jugando
-  // con ellas, la pregunta se entiende). Si dicen que no, no se vuelve a pedir.
+  function negado() { try { return localStorage.getItem('deus-mov') === 'no'; } catch (e) { return false; } }
+  // En iPhone, Apple no entrega el movimiento hasta que la persona da permiso,
+  // y solo deja pedirlo al tocar algo. Se pide con el botón "Activar
+  // movimiento", al tocar una banda o al deslizar la foto. Si dicen que no, no
+  // se vuelve a pedir. Si el toque no le sirve a Apple (falla sin preguntar),
+  // se reintenta en el próximo.
   function pedirMovimiento() {
-    if (quieto || pedido || recibe || !pidePermiso) return;
+    if (quieto || pedido || recibe || !pidePermiso || negado()) return;
     pedido = true;
-    try { if (localStorage.getItem('deus-mov') === 'no') return; } catch (e) {}
     window.DeviceMotionEvent.requestPermission().then(function (r) {
+      quitarBoton();
       if (r === 'granted') {
         window.removeEventListener('devicemotion', alMover);
         window.addEventListener('devicemotion', alMover);
+        empujar(colorOrder[currentSlide], -0.12); // responden: ya se mueven
       } else try { localStorage.setItem('deus-mov', 'no'); } catch (e) {}
-    }).catch(function () {});
+    }).catch(function () { pedido = false; });
   }
+  // Sin el botón nadie adivina que hay que tocar algo para que el celular las
+  // mueva. Aparece con las bandas listas y se va al dar (o negar) el permiso.
+  function ponerBoton() {
+    if (quieto || boton || recibe || !pidePermiso || !marco || negado()) return;
+    boton = document.createElement('button');
+    boton.type = 'button'; boton.className = 'sl-mov';
+    boton.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3.5 8.5c-1 2-1 5 0 7M20.5 8.5c1 2 1 5 0 7"/></svg>Activar movimiento';
+    // Que el toque no llegue a la foto (abriría el zoom o cambiaría de color).
+    ['touchstart', 'touchend', 'mousedown', 'mouseup'].forEach(function (ev) {
+      boton.addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true });
+    });
+    boton.addEventListener('click', function (e) { e.stopPropagation(); pedirMovimiento(); });
+    marco.appendChild(boton);
+  }
+  function quitarBoton() { if (boton) { boton.remove(); boton = null; } }
   // Tocar una banda la empuja hacia el lado contrario del toque. Devuelve
   // true si el toque fue en una banda (entonces no abre el zoom).
   function tocar(objetivo, x) {
@@ -5621,7 +5644,7 @@ var bandasHero = (function () {
     andar();
     return true;
   }
-  return { armar: armar, empujar: empujar, tocar: tocar };
+  return { armar: armar, empujar: empujar, tocar: tocar, pedirMovimiento: pedirMovimiento };
 })();
 if (document.readyState === 'complete') setTimeout(function () { bandasHero.armar(colorOrder[currentSlide]); }, 700);
 else window.addEventListener('load', function () { setTimeout(function () { bandasHero.armar(colorOrder[currentSlide]); }, 700); });
@@ -5644,6 +5667,7 @@ setTimeout(function () { colorOrder.forEach(function (c) { bandasHero.armar(c); 
     // cualquier desvío lateral de 40px cambiaba de banda — y como deslizar
     // ahora también elige el color, eso sería comprar el color equivocado.
     const horizontal = Math.abs(dx) > Math.abs(dy) * 1.5;
+    if (horizontal && Math.abs(dx) > 40) bandasHero.pedirMovimiento();
     if (horizontal && dx < -40) goSlide(currentSlide + 1, true);
     else if (horizontal && dx > 40) goSlide(currentSlide - 1, true);
     // Solo abre el zoom si fue un TOQUE real (poco movimiento en X y en Y),
