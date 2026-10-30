@@ -53,6 +53,12 @@ function motor(reducir, ventana) {
   function Img() { this.style = {}; }
   Object.defineProperty(Img.prototype, 'srcset', { set(v) { this._s = v; if (this.onload) this.onload(); }, get() { return this._s; } });
   const capas = {};
+  // Las fotos del carrusel: listas salvo que el test diga lo contrario.
+  const fotos = {};
+  const foto = c => fotos[c] || (fotos[c] = { complete: true, naturalWidth: 800, on: [],
+    addEventListener(ev, f) { if (ev === 'load') this.on.push(f); },
+    removeEventListener(ev, f) { this.on = this.on.filter(g => g !== f); },
+    cargar(ancho) { this.complete = true; this.naturalWidth = ancho; this.on.slice().forEach(f => f()); } });
   const timers = [];
   const marco = elem();
   const ctx = {
@@ -62,7 +68,11 @@ function motor(reducir, ventana) {
     window: Object.assign({ matchMedia: () => ({ matches: reducir }), addEventListener() {} }, ventana),
     document: {
       readyState: 'loading', createElement: elem, getElementById: id => (id === 'galSlider' ? marco : null),
-      querySelector: q => { const c = q.match(/data-color="(\w+)"/)[1]; return capas[c] || (capas[c] = Object.assign(elem(), { classList: { add() { this.lista = true; }, remove() {} } })); }
+      querySelector: q => {
+        const c = q.match(/data-color="(\w+)"/)[1];
+        if (q.includes('img.slide')) return foto(c);
+        return capas[c] || (capas[c] = Object.assign(elem(), { classList: { add() { this.lista = true; }, remove() {} } }));
+      }
     }
   };
   vm.createContext(ctx);
@@ -71,14 +81,14 @@ function motor(reducir, ventana) {
   const bandas = c => capas[c].hijos.filter(h => h.className === 'sl-banda');
   const correr = (c, cadaCuadro) => { let n = 0; while (cola.length && n < 4000) { t += 16; cola.shift()(t); n++; if (cadaCuadro) cadaCuadro(bandas(c).map(ang)); } return n; };
   const cuadro = () => { if (cola.length) { t += 16; cola.shift()(t); } };
-  return { ctx, cola, capas, bandas, ang, correr, cuadro, timers, marco };
+  return { ctx, cola, capas, bandas, ang, correr, cuadro, timers, marco, foto };
 }
 
 test('al cambiar de color se mecen de lado, poco, y se quedan quietas solas', () => {
   const m = motor(false);
   const tope = Number(HTML.match(/TOPE = ([\d.]+);/)[1]);
   m.ctx.bandasHero.armar('negra');
-  assert.ok(m.capas.negra.classList.lista, 'la capa se muestra cuando cargaron las 3 piezas');
+  assert.ok(m.capas.negra.classList.lista, 'la capa se muestra cuando cargaron las 3 piezas y su foto');
   m.ctx.bandasHero.empujar('negra', -0.16);
   const sil = [];
   const n = m.correr('negra', a => sil.push(a[0]));
@@ -87,6 +97,30 @@ test('al cambiar de color se mecen de lado, poco, y se quedan quietas solas', ()
   assert.ok(Math.max(...sil.map(Math.abs)) <= tope + 1e-9, 'no pasa del tope');
   assert.ok(n < 2500, 'se queda quieta sola: ' + n + ' cuadros');
   assert.deepStrictEqual(m.bandas('negra').map(m.ang), [0, 0], 'terminan colgando derechas');
+});
+
+test('la capa espera a su foto: nunca bandas solas sobre el vacío mientras baja', () => {
+  const m = motor(false);
+  const f = m.foto('gris');
+  f.complete = true; f.naturalWidth = 1;   // todavía el gif vacío de espera
+  m.ctx.bandasHero.armar('gris');
+  assert.ok(!m.capas.gris.classList.lista, 'con la foto bajando, la capa no se muestra');
+  f.cargar(1);
+  assert.ok(!m.capas.gris.classList.lista, 'el "load" del gif vacío no cuenta');
+  f.cargar(800);
+  assert.ok(m.capas.gris.classList.lista, 'llegó la foto: se muestran juntas');
+  assert.strictEqual(f.on.length, 0, 'deja de escuchar');
+});
+
+test('la gris y la rosada se piden apenas baja la foto principal, sin "lazy"', () => {
+  const ini = HTML.indexOf('function cargarFotosCarrusel()');
+  const bloque = HTML.slice(ini, HTML.indexOf('})();', ini));
+  assert.match(bloque, /im\.loading = 'eager';\s*im\.srcset = im\.dataset\.srcset;/, 'sin lazy antes de pedirla');
+  assert.match(bloque, /principal\.addEventListener\('load', pedir, \{ once: true \}\);/);
+  assert.ok(!/addEventListener\('load', function \(\) \{ setTimeout\(cargarFotosCarrusel/.test(HTML), 'ya no espera a toda la página');
+  for (const c of ['negra', 'gris', 'rosada']) {
+    assert.match(HTML, new RegExp('\\.slide\\[data-color="' + c + '"\\]\\{background:linear-gradient\\(90deg,'), c + ': mientras baja se ve su fondo');
+  }
 });
 
 test('si una banda va contra la otra, chocan y se pasan el impulso en vez de atravesarse', () => {

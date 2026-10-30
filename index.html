@@ -1391,6 +1391,11 @@ body.sb-on .wa-float{bottom:82px;}
 .slide{min-width:100%;width:100%;height:100%;object-fit:cover;background:#1e1e1e;display:block;user-select:none;-webkit-user-drag:none;}
 /* Cada foto con su capa de bandas que se mecen (bandasHero). */
 .slide-w{position:relative;min-width:100%;width:100%;height:100%;overflow:hidden;}
+/* Mientras baja cada foto se ve su mismo fondo (medido en la foto), no el gris
+   oscuro: en 4G la gris y la rosada tardan un poco al cambiar de color. */
+.slide[data-color="negra"]{background:linear-gradient(90deg,#65747a,#748389 50%,#829195);}
+.slide[data-color="gris"]{background:linear-gradient(90deg,#a5b2b7,#b3bec2 50%,#bec9cc);}
+.slide[data-color="rosada"]{background:linear-gradient(90deg,#e1c1c5,#e8cccf 50%,#f0d6da);}
 .sl-arte{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;}
 .sl-arte.lista{opacity:1;}
 .sl-arte img{position:absolute;display:block;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
@@ -5377,20 +5382,30 @@ pintarContadorSorteo();
 // desde varios lados.
 function initSlides() { /* nada que hacer: el HTML ya trae src + srcset */ }
 
-// Fotos gris y rosada del carrusel: se cargan al terminar la página o apenas
-// alguien cambia de foto. Antes Chrome las bajaba al abrir (por estar al lado
-// de la negra, "lazy" no las frenaba) y en 4G competían con la foto principal:
-// la gris sola pesa 117 KB en un iPhone. El carrusel no avanza solo, así que
-// nadie las alcanza a ver antes.
+// Fotos gris y rosada del carrusel: se piden apenas terminó de bajar la foto
+// principal (o al cambiar de foto, si alguien es más rápido). Antes Chrome las
+// bajaba al abrir (por estar al lado de la negra, "lazy" no las frenaba) y en
+// 4G competían con la foto principal: la gris sola pesa 117 KB en un iPhone.
+// Esperar al "load" de toda la página llegaba tarde en 4G, y en el iPhone,
+// con "lazy", una foto al costado del carrusel no baja hasta que se ve: al
+// cambiar de color aparecían las bandas solas y la foto después. Por eso se
+// les saca el "lazy" al pedirlas.
 function cargarFotosCarrusel() {
   document.querySelectorAll('#slides img[data-srcset]').forEach(function (im) {
+    im.loading = 'eager';
     im.srcset = im.dataset.srcset;   // primero srcset: así no baja dos veces
     im.src = im.dataset.src;
     im.removeAttribute('data-srcset'); im.removeAttribute('data-src');
   });
 }
-if (document.readyState === 'complete') setTimeout(cargarFotosCarrusel, 300);
-else window.addEventListener('load', function () { setTimeout(cargarFotosCarrusel, 300); });
+(function () {
+  var principal = document.querySelector('#slides img.slide');
+  function pedir() { setTimeout(cargarFotosCarrusel, 200); }
+  if (principal && !(principal.complete && principal.naturalWidth)) {
+    principal.addEventListener('load', pedir, { once: true });
+    principal.addEventListener('error', pedir, { once: true });
+  } else pedir();
+})();
 
 // elegir=true → además de mover la galería, deja ELEGIDO ese color.
 // Lo mandan los gestos deliberados: deslizar, las flechas y los puntitos. Así
@@ -5483,7 +5498,7 @@ var bandasHero = (function () {
     if (quieto || armadas[c] || !BANDAS_HERO[c]) return armadas[c];
     var capa = document.querySelector('.sl-arte[data-color="' + c + '"]');
     if (!capa) return null;
-    var conf = BANDAS_HERO[c], a = { lista: false, roto: false, pend: [], pendiente: 0 }, faltan = 3;
+    var conf = BANDAS_HERO[c], a = { lista: false, roto: false, pend: [], pendiente: 0 }, faltan = 4;
     armadas[c] = a;
     function cargo() {
       if (a.roto || --faltan) return;
@@ -5495,6 +5510,15 @@ var bandasHero = (function () {
     }
     // Si algo no carga, la capa se va y queda la foto original, que es igual.
     function fallo() { a.roto = true; capa.classList.remove('lista'); capa.innerHTML = ''; }
+    // La capa espera también a su foto (la cuarta pieza): si no, con la gris
+    // o la rosada todavía bajando se veían las bandas solas sobre el vacío.
+    var foto = document.querySelector('#slides img.slide[data-color="' + c + '"]');
+    function fotoLista() { return !foto || (foto.complete && foto.naturalWidth > 1); }
+    if (fotoLista()) cargo();
+    else foto.addEventListener('load', function esperar() {
+      if (!fotoLista()) return;   // el gif vacío de espera también avisa "load"
+      foto.removeEventListener('load', esperar); cargo();
+    });
     var pl = new Image(); pl.className = 'sl-placa'; pl.alt = ''; pl.decoding = 'async';
     pl.style.left = pct(conf.placa.x); pl.style.width = pct(conf.placa.w);
     pl.sizes = '(max-width:900px) 39vw, 233px'; pl.onload = cargo; pl.onerror = fallo; pl.srcset = srcset(c, 'fondo');
