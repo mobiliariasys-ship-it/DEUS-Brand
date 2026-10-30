@@ -172,7 +172,7 @@ def _recta(y, v, vueltas=5, tol=1.2):
     return a * y + b, res[usar].max() if usar.any() else 0
 
 
-def _por_tramos(v, salto=3.0, lado=-1, cambios=None):
+def _por_tramos(v, salto=3.0, lado=-1, cambios=None, fila_marco=None):
     """Tramos rectos entre escalones de verdad (marco, presillas).
 
     Un escalón es donde la mediana cambia más de `salto` px en 12 filas; ahí
@@ -188,7 +188,9 @@ def _por_tramos(v, salto=3.0, lado=-1, cambios=None):
     `cambios`: cuánto cambia el centro de la correa fila a fila; el salto más
     grande cerca de un escalón de arriba (donde empieza la parte ancha) es la
     barra del marco o de la presilla, y ahí va el escalón (la esquina va en la
-    misma fila que su barra, como en la foto).
+    misma fila que su barra, como en la foto). `fila_marco`: la fila donde
+    empieza la barra de arriba del marco (ver `barra_del_marco`); el primer
+    escalón de arriba va ahí, igual a los dos lados.
     """
     n = len(v); ys = np.arange(n, dtype=float)
     m = _mediana(v, 41)
@@ -242,6 +244,8 @@ def _por_tramos(v, salto=3.0, lado=-1, cambios=None):
             barra = fila_barra(j1 - 14, i2 + 4)
             if barra is not None:
                 yt = barra
+            if fila_marco is not None and j1 - 30 <= fila_marco <= i2 + 10:
+                yt, fila_marco = int(fila_marco), None
             # La barra puede caer fuera de la zona: todo lo de arriba de `yt`
             # va con la correa y todo lo de abajo con el marco (si no, quedan
             # filas anchas sueltas encima de la esquina: una rayita que sale).
@@ -386,7 +390,7 @@ def _dibujar_punta(nuevo, punta, sub=8):
     return nuevo
 
 
-def bordes_rectos(alfa, nylon=False, cambios=None):
+def bordes_rectos(alfa, nylon=False, cambios=None, fila_marco=None):
     """Endereza el contorno de una correa: un tramo continuo por fila.
 
     Se mide el borde izquierdo y derecho de cada fila con precisión de
@@ -418,9 +422,10 @@ def bordes_rectos(alfa, nylon=False, cambios=None):
         l, r = _sin_lengueta(l, r)
     else:
         cam = cambios[y0:y1] if cambios is not None else None
-        l = _por_tramos(l, lado=-1, cambios=cam)
+        fm = fila_marco - y0 if fila_marco is not None else None
+        l = _por_tramos(l, lado=-1, cambios=cam, fila_marco=fm)
         esquinas += [(-1, a + y0, b + y0, c + y0, R) for a, b, c, R in _por_tramos.esquinas]
-        r = _por_tramos(r, lado=1, cambios=cam)
+        r = _por_tramos(r, lado=1, cambios=cam, fila_marco=fm)
         esquinas += [(1, a + y0, b + y0, c + y0, R) for a, b, c, R in _por_tramos.esquinas]
     bordes_rectos.esquinas = esquinas
     xs = np.arange(w)[None, :]
@@ -535,6 +540,90 @@ def punta_pareja(F, alfa, desde, borde=7):
     return F
 
 
+def barra_del_marco(centro, cambios, datos):
+    """Las filas de la barra de arriba del marco: (arriba, línea, fin de línea).
+
+    En la foto, la barra que cruza la correa arriba del marco es una cara gris
+    (iluminada) de unas 14 filas, con una línea clara abajo. El salto más
+    grande es esa línea, pero la barra (y las esquinas del marco) empiezan
+    arriba de la cara: el primer salto fuerte antes de la línea que deja un
+    tramo parejo y distinto de la correa. `centro`: brillo del centro de la
+    correa por fila; `cambios`: cuánto cambia en 2 filas.
+    """
+    ancho = datos.sum(1); hay = ancho > 0
+    if hay.sum() < 30:
+        return None
+    anchas = np.where(ancho > np.median(ancho[hay]) + 12)[0]
+    if not len(anchas):
+        return None
+    v0, v1 = max(2, anchas[0] - 30), min(len(cambios), anchas[0] + 12)
+    if v1 <= v0:
+        return None
+    kb = v0 + int(np.argmax(cambios[v0:v1]))
+    arriba = kb - 1
+    for k in range(max(6, kb - 22), kb - 5):
+        cara = centro[k:k + 6]
+        if cambios[k] >= 25 and np.ptp(cara) < 20 and abs(np.median(cara) - centro[k - 4]) > 15:
+            arriba = k
+            break
+    nivel = np.median(centro[arriba + 1:arriba + 8])
+    linea = [y for y in range(arriba + 5, min(len(centro), arriba + 30)) if centro[y] > nivel + 35]
+    if not linea:
+        return None
+    l0 = l1 = linea[0]
+    while l1 + 1 < len(centro) and centro[l1 + 1] > nivel + 35:
+        l1 += 1
+    return arriba, l0, l1
+
+
+def barra_negra(F, alfa, marco, cols):
+    """La barra de arriba del marco, negra de lado a lado.
+
+    La cara de la barra (gris por la luz de la foto) toma el negro del marco,
+    un poco más claro, con un filo apenas más claro arriba; la línea clara de
+    abajo sigue de un costado al otro (el último píxel de cada lado queda
+    negro, como el canto). Así la barra se ve como una pieza: el marco
+    entero con sus dos esquinas redondas, y la correa entrando por arriba.
+    """
+    arriba, l0, l1 = marco
+    h, w = alfa.shape
+    F = F.copy()
+    # El negro del marco: los costados, debajo de la línea.
+    muestras = []
+    for y in range(l1 + 4, min(h, l1 + 20)):
+        xs = np.where(alfa[y] > 0.99)[0]
+        if len(xs) > 20:
+            muestras += [F[y, xs[0] + 3:xs[0] + 9], F[y, xs[-1] - 8:xs[-1] - 2]]
+    if not muestras:
+        return F
+    negro = np.median(np.concatenate(muestras), 0) + 8
+    for y in range(arriba, l0):
+        xs = np.where(alfa[y] > 0)[0]
+        F[y, xs] = negro + (12 if y == arriba else 0)
+    for y in range(l0, l1 + 1):
+        xs = np.where(alfa[y] > 0)[0]
+        if len(xs) < 3:
+            continue
+        F[y, xs] = np.median(F[y, cols], 0)
+        F[y, [xs[0], xs[-1]]] = negro
+    # Justo encima de la barra, en la correa clara (rosada), el canto traía la
+    # sombra de la barra (un bloquecito gris a cada costado): en los 10 px de
+    # cada lado, lo más gris o más oscuro que el centro de la fila toma su
+    # tono (las perforaciones quedan más adentro y no se tocan).
+    tinte = lambda X: (X[..., 0] - 0.5 * (X[..., 1] + X[..., 2])) / np.maximum(lum(X), 1)
+    for y in range(max(0, arriba - 5), arriba):
+        cen = np.median(F[y, cols], 0)
+        xs = np.where(alfa[y] > 0)[0]
+        if lum(cen) <= 110 or not len(xs):
+            continue
+        xs = xs[(xs < xs[0] + 10) | (xs > xs[-1] - 10)]
+        X = F[y, xs]
+        gris = (tinte(X) < tinte(cen) - 0.03) | (lum(X) < 0.95 * lum(cen))
+        k = np.clip(lum(X[gris]) / lum(cen), 0.97, 1.03)[:, None]
+        F[y, xs[gris]] = cen * k
+    return F
+
+
 def recorte_limpio(C, B, escala=4, nylon=False):
     """Banda sin sombra, con borde suave y sin el color del fondo viejo.
 
@@ -570,7 +659,8 @@ def recorte_limpio(C, B, escala=4, nylon=False):
     cl, cr = np.median(li), np.median(ri)
     centro = lum(C)[:, int(cl + 0.35 * (cr - cl)):int(cl + 0.65 * (cr - cl)) + 1].mean(1)
     cambios = np.zeros(len(centro)); cambios[2:] = np.abs(centro[2:] - centro[:-2])
-    alfa = bordes_rectos(alfa, nylon, cambios)
+    marco = None if nylon else barra_del_marco(centro, cambios, datos)
+    alfa = bordes_rectos(alfa, nylon, cambios, marco[0] if marco else None)
     # Color del borde. La foto trae ahí un brillo o un ribete (en el nylon,
     # con una costura punteada) cortado y disparejo, que sobre un fondo oscuro
     # se veía carcomido. Se suaviza a lo largo de la correa (vertical): de 2 a
@@ -653,6 +743,9 @@ def recorte_limpio(C, B, escala=4, nylon=False):
                     break
                 F[nuevo] = (num / np.maximum(den, 1e-6))[nuevo]
                 peso = peso | nuevo
+    if marco is not None:
+        cols = slice(int(cl + 0.35 * (cr - cl)), int(cl + 0.65 * (cr - cl)) + 1)
+        F = barra_negra(F, alfa, marco, cols)
     return np.dstack([F, alfa * 255]).clip(0, 255).astype(np.uint8)
 
 
