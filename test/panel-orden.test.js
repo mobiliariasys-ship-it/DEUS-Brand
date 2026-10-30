@@ -147,16 +147,33 @@ test('el checkout tiene su filtro propio: hoy, ayer, semana, mes y todo', () => 
 test('la tinta del fondo se mueve en la PC, y queda quieta en el celular o con "reducir movimiento"', () => {
   assert.ok(HTML.includes('<canvas id="fondo-vivo" aria-hidden="true"></canvas>'));
   const i = HTML.indexOf('// ── Fondo vivo');
-  assert.ok(i >= 0, 'falta el script del fondo vivo');
+  assert.ok(i >= 0, 'falta el arranque del fondo vivo');
   const js = HTML.slice(i, HTML.indexOf('</script>', i));
   assert.match(js, /prefers-reduced-motion: reduce/);
   assert.match(js, /\(max-width:820px\)/);
-  assert.match(js, /if \(ahora - ultimo < 33\) return;/, 'tope de 30 cuadros por segundo');
   assert.match(js, /3840\*2160/, 'el canvas con tope en 4K');
-  assert.match(js, /webglcontextlost/);
   assert.match(js, /img\/panel-fondo-4k\.webp/);
   // Solo con la tinta andando se saca la foto quieta del ::before.
   assert.match(tramoTema(), /html\.fondo-vivo body::before\{background:linear-gradient\([^)]*\)[^;]*\);\}/);
+});
+
+test('la tinta se dibuja en un hilo aparte, así los refrescos del panel no la traban', () => {
+  const i = HTML.indexOf('// ── Fondo vivo');
+  const js = HTML.slice(i, HTML.indexOf('</script>', i));
+  assert.match(js, /new Worker\('fondo-vivo\.js'\)/);
+  assert.match(js, /transferControlToOffscreen\(\)/);
+  assert.match(js, /visibilitychange/, 'se pausa con la pestaña oculta');
+  assert.ok(!/getContext\('webgl'/.test(HTML), 'el hilo principal no dibuja la tinta');
+  const hilo = fs.readFileSync(path.join(__dirname, '..', 'fondo-vivo.js'), 'utf8');
+  // Ritmo parejo hasta 60 cuadros por segundo (con 30 y un umbral justo de 33 ms
+  // se salteaba cuadros de más y el movimiento se quedaba pegado).
+  assert.match(hilo, /var MIN_ENTRE_CUADROS = 1000 \/ 60 - 3;/);
+  assert.match(hilo, /if \(ahora - ultimo < MIN_ENTRE_CUADROS\) return;/);
+  assert.match(hilo, /t0 \+= performance\.now\(\) - pausaDesde/, 'al volver a la pestaña no salta');
+  assert.match(hilo, /webglcontextlost/);
+  // Ni Netlify ni el servidor bloquean el archivo.
+  const toml = fs.readFileSync(path.join(__dirname, '..', 'netlify.toml'), 'utf8');
+  assert.ok(!/from = "\/(\*\.js|fondo-vivo\.js)"/.test(toml), 'netlify.toml bloquea fondo-vivo.js');
 });
 
 test('las métricas usan todo el ancho de la pantalla', () => {
