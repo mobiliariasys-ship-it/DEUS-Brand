@@ -1620,11 +1620,44 @@ body.sb-on .wa-float{bottom:82px;}
 .upsell-btn:hover{border-color:#7fc9a0;color:#7fc9a0;}
 .upsell-card.added .upsell-btn{background:#7fc9a0;border-color:#7fc9a0;color:#0a0a0a;}
 .upsell-correas{flex-wrap:wrap;row-gap:10px;}
-.correas-color{flex-basis:100%;display:flex;align-items:center;gap:6px;padding-left:68px;}
+.correas-color{flex-basis:100%;display:flex;align-items:center;gap:6px;padding-left:78px;}
 .cc-k{font-size:.64rem;color:#888;margin-right:2px;}
 .cc-op{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid var(--border);border-radius:999px;background:transparent;color:#bdbdbd;font-size:.66rem;font-weight:600;cursor:pointer;font-family:inherit;}
 .cc-op i{display:block;width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,.35);}
 .cc-op.on{border-color:#7fc9a0;color:#fff;}
+/* ── Correas en un cuadro ────────────────────────────────────────────────
+   Una obra minimalista: las dos correas cuelgan de un hilo, cada una de su
+   clavo, sobre un paspartú claro dentro de un marco negro mate. Se mecen
+   como péndulos (cuadroCorreas) al cambiar el color o al agarrarlas. */
+.cq{position:relative;display:block;overflow:hidden;border-radius:2px;perspective:520px;
+  background:radial-gradient(120% 90% at 28% 12%,#f4f2ed 0%,#e5e2dc 55%,#d2cfc8 100%);
+  box-shadow:0 0 0 3px #111,0 0 0 4px #2b2b2b,0 6px 16px rgba(0,0,0,.55),inset 0 2px 6px rgba(0,0,0,.18);}
+.cq-mini{width:58px;height:86px;margin:4px;}
+.cq-col{position:absolute;top:0;display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;will-change:transform;}
+/* el clavo */
+.cq-col::before{content:'';width:4px;height:4px;border-radius:50%;margin-top:1px;
+  background:radial-gradient(circle at 35% 35%,#bdbdbd,#555);box-shadow:0 1px 1px rgba(0,0,0,.4);}
+.cq-hilo{display:block;width:1px;background:rgba(35,35,35,.5);}
+.cq-col img{display:block;height:auto;filter:drop-shadow(3px 5px 4px rgba(0,0,0,.32));
+  -webkit-user-drag:none;user-select:none;-webkit-user-select:none;pointer-events:none;}
+.cq-mini .cq-hilo{height:5px;}
+.cq-mini .cq-col img{width:10px;}
+.cq-mini .cq-sil{left:13px;} .cq-mini .cq-nyl{left:34px;}
+.cq-grande{flex-basis:100%;margin-top:2px;cursor:default;}
+.cq-grande[hidden]{display:none;}
+.cq-big{height:300px;margin:8px 7px 0;
+  box-shadow:0 0 0 6px #111,0 0 0 7px #2c2c2c,0 14px 30px rgba(0,0,0,.6),inset 0 3px 10px rgba(0,0,0,.2);}
+.cq-big .cq-hilo{height:24px;}
+.cq-big .cq-col img{width:28px;}
+.cq-big .cq-nyl img{width:27px;}
+/* Cerca del centro y con tope de ±0,4 rad: al tope rebotan sin salirse del marco. */
+.cq-big .cq-sil{left:calc(42% - 14px);} .cq-big .cq-nyl{left:calc(58% - 13px);}
+.cq-big .cq-col{touch-action:none;cursor:grab;}
+.cq-big .cq-col.agarrada{cursor:grabbing;}
+.cq-placa{position:absolute;left:50%;bottom:13px;transform:translateX(-50%);font-size:.54rem;letter-spacing:3px;
+  text-transform:uppercase;color:#77736c;white-space:nowrap;pointer-events:none;}
+.cq-pie{display:flex;justify-content:space-between;align-items:center;margin:14px 4px 0;font-size:.62rem;color:#888;}
+.cq-fotos{background:none;border:none;color:#e8b464;font-size:.64rem;font-weight:700;cursor:pointer;padding:4px;font-family:inherit;}
 .carrier-eta{font-size:.62rem;color:#7fc9a0;margin-top:3px;}
 .rescue-bar{display:none;margin:16px 28px 0;background:#101711;border:1px solid #2a4a32;border-radius:9px;padding:14px 16px;text-align:center;animation:slideUp .2s ease;}
 .rescue-bar.show{display:block;}
@@ -2289,8 +2322,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                  en el checkout de "solo tapones". Lo que se cobra lo decide el
                  backend (services/precio.js) con la clave del color. -->
             <div class="upsell-card upsell-correas" id="upsell-correas" onclick="toggleCorreas()" style="cursor:pointer;">
-              <button type="button" class="upsell-zoom" onclick="verFotosCorreas(event)" aria-label="Ver en grande las correas extra">
-                <img id="correas-img" src="img/correas-negras-mini.webp" alt="Correas extra negras: silicona y nylon" class="upsell-img" width="56" height="56" loading="lazy" decoding="async">
+              <!-- Las correas como una obra en un cuadro: cuelgan de un hilo y se
+                   mecen como péndulos (ver cuadroCorreas). Tocar el cuadro abre
+                   uno grande donde se pueden agarrar y soltar. -->
+              <button type="button" class="upsell-zoom cq-abrir" onclick="abrirCuadroCorreas(event)" aria-label="Ver las correas extra en grande" aria-expanded="false">
+                <span class="cq cq-mini" role="img" aria-label="Correas extra negras: silicona y nylon">
+                  <span class="cq-col cq-sil"><i class="cq-hilo"></i><img src="img/correa-silicona.webp" alt="" width="10" height="72" loading="lazy" decoding="async"></span>
+                  <span class="cq-col cq-nyl"><i class="cq-hilo"></i><img class="cq-nylon" src="img/correa-nylon-negra.webp" alt="" width="10" height="72" loading="lazy" decoding="async"></span>
+                </span>
                 <span class="upsell-lupa" aria-hidden="true">⤢</span>
               </button>
               <div class="upsell-info">
@@ -2305,6 +2344,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <span class="cc-k">Color</span>
                 <button type="button" class="cc-op on" data-color="negras" role="radio" aria-checked="true" onclick="elegirColorCorreas(event,'negras')"><i style="background:#1b1b1b"></i>Negro</button>
                 <button type="button" class="cc-op" data-color="grises" role="radio" aria-checked="false" onclick="elegirColorCorreas(event,'grises')"><i style="background:#8d8d8d"></i>Gris</button>
+              </div>
+              <!-- El cuadro grande: se abre desde la miniatura, dentro del mismo
+                   recuadro (sin otra capa encima del checkout). Los toques acá
+                   no agregan ni quitan las correas. -->
+              <div class="cq-grande" id="cq-grande" onclick="event.stopPropagation()" hidden>
+                <div class="cq cq-big" role="img" aria-label="Correas extra negras: silicona y nylon">
+                  <span class="cq-col cq-sil"><i class="cq-hilo"></i><img src="img/correa-silicona.webp" alt="" width="28" height="198" loading="lazy" decoding="async"></span>
+                  <span class="cq-col cq-nyl"><i class="cq-hilo"></i><img class="cq-nylon" src="img/correa-nylon-negra.webp" alt="" width="27" height="198" loading="lazy" decoding="async"></span>
+                  <span class="cq-placa">DEUS · Silicona + Nylon</span>
+                </div>
+                <div class="cq-pie">
+                  <span>Arrastrá una correa y soltala</span>
+                  <button type="button" class="cq-fotos" onclick="verFotosCorreas(event)">Ver fotos ⤢</button>
+                </div>
               </div>
             </div>
 
@@ -2863,6 +2916,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           correaColor = 'negras';
           correaAgregada = false;
           pintarCorreas();
+          // El cuadro grande parte cerrado, y la miniatura se mece una vez
+          // cuando el checkout termina de aparecer: llama la atención sin texto.
+          const cqGrande = document.getElementById('cq-grande');
+          if (cqGrande) cqGrande.hidden = true;
+          if (!soloTapones) setTimeout(() => cuadroCorreas.empujar(1.5), 650);
           const upsellCorreas = document.getElementById('upsell-correas');
           // Las correas son extras de la banda: no van en un checkout de tapones.
           if (upsellCorreas) upsellCorreas.style.display = soloTapones ? 'none' : '';
@@ -3084,25 +3142,132 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             op.classList.toggle('on', on);
             op.setAttribute('aria-checked', on ? 'true' : 'false');
           });
-          const img = document.getElementById('correas-img');
-          if (img) {
-            img.src = 'img/correas-' + correaColor + '-mini.webp';
-            img.alt = correaColor === 'grises' ? 'Correas extra grises: silicona negra y nylon gris' : 'Correas extra negras: silicona y nylon';
-          }
+          // En los dos cuadros (miniatura y grande) cambia la correa de nylon.
+          const nylon = 'img/correa-nylon-' + (correaColor === 'grises' ? 'gris' : 'negra') + '.webp';
+          const desc = correaColor === 'grises' ? 'Correas extra grises: silicona negra y nylon gris' : 'Correas extra negras: silicona y nylon';
+          card.querySelectorAll('.cq-nylon').forEach(img => { if (img.getAttribute('src') !== nylon) img.src = nylon; });
+          card.querySelectorAll('.cq[role="img"]').forEach(c => c.setAttribute('aria-label', desc));
         }
         function toggleCorreas() {
           correaAgregada = !correaAgregada;
           pintarCorreas();
           actualizarTotalCheckout();
+          if (correaAgregada) cuadroCorreas.empujar(1.6);
         }
         // Elegir el color no agrega ni quita: si ya estaban agregadas, cambia
         // el color que se compra. stopPropagation: el toque no llega al recuadro.
         function elegirColorCorreas(ev, color) {
           if (ev) ev.stopPropagation();
+          const cambio = color !== correaColor;
           correaColor = color;
           pintarCorreas();
           actualizarTotalCheckout();
+          // El nylon cambia de color y las dos se mecen, como si las hubieran
+          // movido de la percha: invita a tocarlas.
+          if (cambio) cuadroCorreas.empujar(color === 'grises' ? 2.6 : -2.6);
         }
+        // La miniatura abre (o cierra) el cuadro grande dentro del recuadro.
+        function abrirCuadroCorreas(ev) {
+          if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+          const g = document.getElementById('cq-grande');
+          const btn = document.querySelector('.cq-abrir');
+          if (!g) return;
+          g.hidden = !g.hidden;
+          if (btn) btn.setAttribute('aria-expanded', g.hidden ? 'false' : 'true');
+          if (!g.hidden) cuadroCorreas.empujar(1.8);
+        }
+
+        // ── Las correas como péndulos ────────────────────────────────────────
+        // Cada correa cuelga de su clavo: ángulo th (rad) y velocidad w (rad/s),
+        // con gravedad (k = (2π/periodo)²) y roce (c). Se dibuja solo mientras
+        // algo se mueve; quieto no gasta nada. En el cuadro grande se agarran:
+        // mientras se arrastra, la correa apunta al dedo, y al soltarla sigue con
+        // la velocidad que traía. Un tope (lim) hace que reboten contra el marco
+        // en vez de salirse. Con "reducir movimiento" no se mecen.
+        const cuadroCorreas = (function () {
+          const quieto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+          let pend = null, corriendo = false, tPrev = 0;
+          function armar() {
+            if (pend) return pend;
+            pend = [];
+            document.querySelectorAll('.cq').forEach(cq => {
+              const grande = cq.classList.contains('cq-big');
+              cq.querySelectorAll('.cq-col').forEach(el => {
+                const p = { el, th: 0, w: 0, agarrada: false, grande,
+                            k: Math.pow(2 * Math.PI / (grande ? 1.75 : 1.15), 2),
+                            c: grande ? 0.85 : 1.25, lim: grande ? 0.4 : 0.42,
+                            sil: el.classList.contains('cq-sil') };
+                pend.push(p);
+                if (grande) agarrable(p);
+              });
+            });
+            return pend;
+          }
+          function dibujar(p) {
+            // rotateY según la velocidad: al mecerse, la correa gira un poco
+            // sobre su eje y se nota el volumen (el marco tiene perspective).
+            const giro = Math.max(-30, Math.min(30, p.w * 10));
+            p.el.style.transform = 'rotate(' + p.th.toFixed(4) + 'rad) rotateY(' + giro.toFixed(1) + 'deg)';
+          }
+          function paso(t) {
+            const dt = Math.min(0.033, Math.max(0.001, (t - tPrev) / 1000)); tPrev = t;
+            let sigue = false;
+            pend.forEach(p => {
+              if (!p.agarrada) {
+                p.w += (-p.k * Math.sin(p.th) - p.c * p.w) * dt;
+                p.th += p.w * dt;
+                if (p.th > p.lim) { p.th = p.lim; p.w = -Math.abs(p.w) * 0.45; }
+                if (p.th < -p.lim) { p.th = -p.lim; p.w = Math.abs(p.w) * 0.45; }
+              }
+              if (p.agarrada || Math.abs(p.th) > 0.0015 || Math.abs(p.w) > 0.003) sigue = true;
+              dibujar(p);
+            });
+            if (sigue) requestAnimationFrame(paso);
+            else { corriendo = false; pend.forEach(p => { p.th = 0; p.w = 0; dibujar(p); }); }
+          }
+          function andar() {
+            if (corriendo || quieto) return;
+            corriendo = true; tPrev = performance.now(); requestAnimationFrame(paso);
+          }
+          // Empujón: el nylon primero y la silicona un instante después, con
+          // menos fuerza, para que no se muevan como una sola pieza.
+          function empujar(fuerza) {
+            if (quieto) return;
+            armar().forEach(p => {
+              const f = (p.sil ? 0.55 : 1) * fuerza * (p.grande ? 0.8 : 1);
+              if (p.sil) setTimeout(() => { p.w += f; andar(); }, 110);
+              else p.w += f;
+            });
+            andar();
+          }
+          function agarrable(p) {
+            let ax = 0, ay = 0, ultimo = 0, thPrev = 0;
+            p.el.addEventListener('pointerdown', e => {
+              e.preventDefault(); e.stopPropagation();
+              const r = p.el.parentNode.getBoundingClientRect();
+              // El clavo: arriba al centro de la correa, sin la rotación actual.
+              ax = r.left + p.el.offsetLeft + p.el.offsetWidth / 2; ay = r.top + p.el.offsetTop;
+              p.agarrada = true; p.el.classList.add('agarrada'); thPrev = p.th; ultimo = performance.now();
+              try { p.el.setPointerCapture(e.pointerId); } catch (er) {}
+              andar();
+            });
+            p.el.addEventListener('pointermove', e => {
+              if (!p.agarrada) return;
+              const th = Math.max(-p.lim, Math.min(p.lim, Math.atan2(-(e.clientX - ax), Math.max(20, e.clientY - ay))));
+              const ahora = performance.now(), dt = Math.max(0.008, (ahora - ultimo) / 1000);
+              p.w = p.w * 0.4 + ((th - thPrev) / dt) * 0.6; p.th = th; thPrev = th; ultimo = ahora;
+            });
+            const soltar = () => {
+              if (!p.agarrada) return;
+              p.agarrada = false; p.el.classList.remove('agarrada');
+              p.w = Math.max(-7, Math.min(7, p.w)); andar();
+            };
+            p.el.addEventListener('pointerup', soltar);
+            p.el.addEventListener('pointercancel', soltar);
+            p.el.addEventListener('lostpointercapture', soltar);
+          }
+          return { empujar };
+        })();
         function subtotalCheckout() {
           if (checkoutTapones) return TAPONES_PRICE * checkoutQty;
           return precioBanda() * checkoutQty + CORREAS_PRICE * listaCorreas().length;
