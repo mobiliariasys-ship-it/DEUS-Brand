@@ -43,10 +43,11 @@ const UPSELL_TAPONES = 18990;   // agregados a la compra de una banda
 // Correas extra: desde el 27-oct-2026 son el upsell del checkout en vez de los
 // tapones (decisión del dueño). Cada PAR es una correa de silicona negra + una
 // de nylon con velcro; hay dos pares, que cambian solo en el color del nylon.
-// $18.990 el par, y se puede llevar uno, el otro o los dos. El navegador manda
+// $14.990 el par (bajó de $18.990 el 31-oct-2026, decisión del dueño), y se
+// puede llevar uno, el otro o los dos. El navegador manda
 // las claves ('negras', 'grises'); lo que se cobra y lo que va al correo de
 // despacho sale de acá, nunca de un texto que arme el navegador.
-const CORREAS_PRICE = 18990;   // por par
+const CORREAS_PRICE = 14990;   // por par
 const CORREAS = {
   negras: { nombre: 'Correas extra negras', detalle: 'Correa de silicona negra + correa de nylon negra' },
   grises: { nombre: 'Correas extra grises', detalle: 'Correa de silicona negra + correa de nylon gris' },

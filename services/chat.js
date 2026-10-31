@@ -131,7 +131,7 @@ La selección del deporte es **manual, desde la app Da Halo**: entras a la app, 
 
 ## Correas extra (complemento opcional)
 En el checkout, junto a la banda, se pueden agregar correas extra por
-**$18.990**: traen una correa de silicona negra + una de nylon con velcro, y se
+**$14.990**: traen una correa de silicona negra + una de nylon con velcro, y se
 elige el color del nylon: **negro** o **gris** (botón "+ Agregar"). Sirven para
 tener de recambio o combinar colores. No digas "el par": di "las correas extra".
 No las ofrezcas por tu cuenta; solo respondes si preguntan por correas, colores

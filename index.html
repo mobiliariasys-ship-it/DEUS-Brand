@@ -2350,7 +2350,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <!-- Upsell: correas extra (desde el 27-oct-2026, en vez de los
                  tapones). UN recuadro con el color a elegir: negras (silicona
-                 + nylon negro) o grises (silicona negra + nylon gris), $18.990.
+                 + nylon negro) o grises (silicona negra + nylon gris), $14.990.
                  Elegir el color no agrega: agrega el botón (o tocar el
                  recuadro), y si ya estaba agregada, cambia el color. Se oculta
                  en el checkout de "solo tapones". Lo que se cobra lo decide el
@@ -2369,7 +2369,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div class="upsell-info">
                 <div class="upsell-name">Correas extra</div>
                 <div class="upsell-desc">Silicona + nylon</div>
-                <div class="upsell-price">+ $18.990</div>
+                <div class="upsell-price">+ $14.990</div>
               </div>
               <button type="button" class="upsell-btn">+ Agregar</button>
               <!-- Los colores van en su propia fila: al lado del texto no caben
@@ -3159,7 +3159,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         })();
         // Precio por PAR de correas extra. Tiene que ser el CORREAS_PRICE de
         // services/precio.js (un test los compara): el backend es el que cobra.
-        const CORREAS_PRICE = 18990;
+        const CORREAS_PRICE = 14990;
         const TAPONES_PRICE = 18990;
         // Lo que viaja al pago: la clave del color, si están agregadas.
         function listaCorreas() {
@@ -3698,7 +3698,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             colores: checkoutTapones ? [] : checkoutColores.slice(0, checkoutQty),
             cantidad: checkoutQty,
             // Pares de correas extra ('negras', 'grises'). El backend cobra
-            // $18.990 por cada uno y los anota en el correo de despacho.
+            // $14.990 por cada uno y los anota en el correo de despacho.
             correas: checkoutTapones ? [] : listaCorreas(),
             soloTapones: checkoutTapones,
             shippingCarrier: selectedShipping?.carrier || null,

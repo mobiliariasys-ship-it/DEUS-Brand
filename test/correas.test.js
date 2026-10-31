@@ -1,7 +1,8 @@
 'use strict';
 // Correas extra: desde el 27-oct-2026 son el upsell del checkout en vez de los
-// tapones (decisión del dueño). Dos pares de $18.990 cada uno — silicona negra
-// + nylon negro, o silicona negra + nylon gris — y se puede llevar uno o los
+// tapones (decisión del dueño). Dos pares de $14.990 cada uno (bajaron de
+// $18.990 el 31-oct-2026) — silicona negra + nylon negro, o silicona negra +
+// nylon gris — y se puede llevar uno o los
 // dos. El navegador solo manda las claves; lo que se cobra lo calcula
 // services/precio.js y las tres pasarelas lo usan igual. El correo de despacho
 // tiene que decir qué par incluir en el paquete.
@@ -16,15 +17,15 @@ const { calcularMonto, nombreProducto, normalizarCorreas, CORREAS_PRICE, precioB
 const leer = (...p) => fs.readFileSync(path.join(__dirname, '..', ...p), 'utf8');
 const HTML = leer('index.html');
 
-test('cada par de correas suma $18.990 y solo se cobran pares conocidos', () => {
+test('cada par de correas suma $14.990 y solo se cobran pares conocidos', () => {
   const banda = precioBanda();
-  assert.strictEqual(CORREAS_PRICE, 18990);
+  assert.strictEqual(CORREAS_PRICE, 14990);
   assert.strictEqual(calcularMonto({ cantidad: 1 }).total, banda);
-  assert.strictEqual(calcularMonto({ cantidad: 1, correas: ['negras'] }).total, banda + 18990);
-  assert.strictEqual(calcularMonto({ cantidad: 1, correas: ['grises', 'negras'] }).total, banda + 2 * 18990);
+  assert.strictEqual(calcularMonto({ cantidad: 1, correas: ['negras'] }).total, banda + 14990);
+  assert.strictEqual(calcularMonto({ cantidad: 1, correas: ['grises', 'negras'] }).total, banda + 2 * 14990);
   // Repetidos y claves inventadas no suman: no se puede cobrar (ni regalar) de más.
   assert.deepStrictEqual(calcularMonto({ cantidad: 2, correas: ['negras', 'negras', 'rosadas'] }).correas, ['negras']);
-  assert.strictEqual(calcularMonto({ cantidad: 2, correas: ['negras', 'negras', 'rosadas'] }).total, 2 * banda + 18990);
+  assert.strictEqual(calcularMonto({ cantidad: 2, correas: ['negras', 'negras', 'rosadas'] }).total, 2 * banda + 14990);
   // Las correas son de la banda: en una compra de solo tapones no van.
   assert.deepStrictEqual(calcularMonto({ cantidad: 1, correas: ['negras'], soloTapones: true }).correas, []);
   // La metadata de Mercado Pago las devuelve como texto.
@@ -61,7 +62,7 @@ test('el checkout ofrece las correas en un solo recuadro con el color a elegir',
     assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', `correas-${color}.webp`)), 'falta la foto grande de las correas ' + color);
     assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', `correas-${color}-mini.webp`)), 'falta la miniatura de las correas ' + color);
   }
-  assert.ok(HTML.includes('<div class="upsell-price">+ $18.990</div>'));
+  assert.ok(HTML.includes('<div class="upsell-price">+ $14.990</div>'));
   // Las negras primero (pedido del dueño): en el selector, como color de
   // entrada y en la galería de fotos.
   assert.ok(HTML.indexOf(`data-color="negras"`) < HTML.indexOf(`data-color="grises"`), 'el selector tiene que mostrar Negro primero');
