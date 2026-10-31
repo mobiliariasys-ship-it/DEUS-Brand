@@ -29,9 +29,12 @@ test('cada foto del carrusel lleva su capa de bandas, y la foto principal sigue 
     assert.match(HTML, new RegExp('<div class="slide-w"><img class="slide" [^\\n]*data-color="' + c + '"[^\\n]*><div class="sl-arte" data-color="' + c + '" aria-hidden="true"></div></div>'));
   }
   assert.match(HTML, /<img class="slide" loading="eager" fetchpriority="high"[^\n]*src="img\/portada\/negra-800\.webp(\?v=\d+)?"/, 'la foto principal se sigue pidiendo primero');
-  // La capa se arma apenas baja la foto principal (no compite con ella), y
-  // al abrir o actualizar la página hacen el vaivén de bienvenida enseguida.
-  assert.match(HTML, /function armarYa\(\) \{ bandasHero\.armar\(colorOrder\[currentSlide\]\); \}\s*if \(principal && !\(principal\.complete && principal\.naturalWidth\)\) principal\.addEventListener\('load', armarYa, \{ once: true \}\);/);
+  // La capa de la foto que se ve se arma enseguida: sus piezas bajan mientras
+  // termina la foto principal (que se pide desde el <head>), y la capa espera
+  // a su foto para mostrarse, así que nunca se ven bandas solas. Al abrir o
+  // actualizar la página hacen el vaivén de bienvenida enseguida.
+  assert.match(HTML, /function armarYa\(\) \{ bandasHero\.armar\(colorOrder\[currentSlide\]\); \}\s*armarYa\(\);/);
+  assert.match(HTML, /if \(fotoLista\(\)\) cargo\(\);/, 'la capa espera a su foto');
   assert.match(HTML, /introHecha = true; setTimeout\(function \(\) \{ empujar\(c, -0\.16\); \}, 250\);/, 'el vaivén al abrir se nota como el de cambiar de color');
   assert.match(HTML, /if \(!bandasHero\.tocar\(e\.target, e\.changedTouches\[0\]\.clientX\)\) abrirZoom\(\);/, 'tocar una banda la mece; el resto abre el zoom');
   assert.match(HTML, /bandasHero\.empujar\(colorOrder\[currentSlide\], haciaAdelante \? -0\.16 : 0\.16\);/, 'cambiar de color las mece');
@@ -211,4 +214,21 @@ test('fotos principales: fondo oscuro y textos en celeste hielo, con nombres nue
   // Sobre la gris y la rosada (fondos claros) los puntitos del carrusel van oscuros.
   assert.match(HTML, /gal\.classList\.toggle\('foto-clara', colorOrder\[currentSlide\] !== 'negra'\)/);
   assert.match(HTML, /\.gal-slider\.foto-clara \.sdot\.active\{/);
+});
+
+test('en 4G la portada baja liviana: 800 px en el celular, la foto pedida desde el <head> y las bandas junto con sus fotos', () => {
+  // Tope de densidad 2×: un iPhone (pantalla 3×) pedía la de 1200 px (136 KB
+  // en vez de 77 KB) para una foto de 390 px. La estira el CSS, no sizes.
+  assert.strictEqual((HTML.match(/<img class="slide" [^>]* sizes="\(max-width:900px\) 60vw, 600px"/g) || []).length, 3);
+  assert.ok(!HTML.includes('sizes="(max-width:900px) 100vw, 600px"'));
+  // Preload con el mismo srcset y sizes que la <img>: si no, baja dos veces.
+  const img = HTML.match(/<img class="slide" loading="eager"[^>]* srcset="([^"]+)"/)[1];
+  const pre = HTML.match(/<link rel="preload" as="image" fetchpriority="high" imagesrcset="([^"]+)" imagesizes="([^"]+)">/);
+  assert.ok(pre, 'falta el preload de la foto principal');
+  assert.strictEqual(pre[1], img);
+  assert.strictEqual(pre[2], '(max-width:900px) 60vw, 600px');
+  assert.ok(HTML.indexOf(pre[0]) < HTML.indexOf('</head>'), 'el preload va en el <head>');
+  // Gris y rosada: sus bandas se piden junto con sus fotos (antes esperaban
+  // un temporizador de 3,5 s y en 4G aparecían a los 4,5 a 6 s).
+  assert.match(HTML, /function cargarFotosCarrusel\(\) \{[\s\S]*?colorOrder\.forEach\(function \(c\) \{ bandasHero\.armar\(c\); \}\);\n\}/);
 });

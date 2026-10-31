@@ -116,6 +116,12 @@ src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
      precio no bailen al terminar de cargar. -->
 <link rel="preload" href="/fonts/bebas-neue-400-lat.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/dm-sans-400-lat.woff2" as="font" type="font/woff2" crossorigin>
+<!-- Foto principal de la portada (la negra): se pide desde acá, apenas llega el
+     comienzo del HTML. Antes la pedía el navegador recién al llegar al
+     carrusel, y en 4G eso era 1,2 s después. Mismo srcset y sizes que la
+     <img>, así baja una sola vez; sin href, un navegador que no entienda
+     imagesrcset no baja nada de más. -->
+<link rel="preload" as="image" fetchpriority="high" imagesrcset="img/portada/negra-800.webp?v=10 800w, img/portada/negra-1200.webp?v=10 1200w" imagesizes="(max-width:900px) 60vw, 600px">
 <style>
 /* Fuentes propias: antes venían de fonts.googleapis.com, que en el navegador
    interno de Instagram (sin caché) cuesta DOS conexiones nuevas (DNS+TLS)
@@ -2111,7 +2117,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="gal-slider" id="galSlider">
       <div class="slides" id="slides">
         <!-- srcset: el celular (galería ~390px) baja la versión de 800px y solo
-             el escritorio pide la de 1200px. Antes el HTML traía una foto y
+             el escritorio pide la de 1200px. sizes dice 60vw en el celular
+             (la foto igual ocupa todo el ancho: la estira el CSS) para que un
+             iPhone, con pantalla 3×, no pida la de 1200: 390 × 3 = 1170 px
+             y bajaba 136 KB en vez de 77 KB, sin diferencia visible en una
+             pantalla de celular. Es un tope de densidad 2×. Antes el HTML traía una foto y
              initSlides() la reemplazaba por otra más pesada: se descargaban
              las DOS, ~130 KB tirados en cada visita. Ahora el src ya es el
              definitivo y initSlides quedó sin nada que corregir.
@@ -2122,9 +2132,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              igual que la foto; las bandas se mecen como péndulos al cambiar
              de color o al tocarlas (ver bandasHero). Se arma al terminar la
              página: no compite con la foto principal. -->
-        <div class="slide-w"><img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/portada/negra-800.webp?v=10 800w, img/portada/negra-1200.webp?v=10 1200w" src="img/portada/negra-800.webp?v=10" data-color="negra" alt="DEUS Band negra — smartband de salud color negro"><div class="sl-arte" data-color="negra" aria-hidden="true"></div></div>
-        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/gris-800.webp?v=10 800w, img/portada/gris-1200.webp?v=10 1200w" data-src="img/portada/gris-800.webp?v=10" data-color="gris" alt="DEUS Band gris"><div class="sl-arte" data-color="gris" aria-hidden="true"></div></div>
-        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/rosada-800.webp?v=10 800w, img/portada/rosada-1200.webp?v=10 1178w" data-src="img/portada/rosada-800.webp?v=10" data-color="rosada" alt="DEUS Band rosada"><div class="sl-arte" data-color="rosada" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 60vw, 600px" srcset="img/portada/negra-800.webp?v=10 800w, img/portada/negra-1200.webp?v=10 1200w" src="img/portada/negra-800.webp?v=10" data-color="negra" alt="DEUS Band negra — smartband de salud color negro"><div class="sl-arte" data-color="negra" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 60vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/gris-800.webp?v=10 800w, img/portada/gris-1200.webp?v=10 1200w" data-src="img/portada/gris-800.webp?v=10" data-color="gris" alt="DEUS Band gris"><div class="sl-arte" data-color="gris" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 60vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/rosada-800.webp?v=10 800w, img/portada/rosada-1200.webp?v=10 1178w" data-src="img/portada/rosada-800.webp?v=10" data-color="rosada" alt="DEUS Band rosada"><div class="sl-arte" data-color="rosada" aria-hidden="true"></div></div>
       </div>
       <div class="slider-dots">
         <span class="sdot active" onclick="goSlide(0,true)"></span>
@@ -5397,6 +5407,10 @@ function cargarFotosCarrusel() {
     im.src = im.dataset.src;
     im.removeAttribute('data-srcset'); im.removeAttribute('data-src');
   });
+  // Las bandas de esas fotos se piden junto con ellas (antes esperaban un
+  // temporizador fijo de 3,5 s y en 4G aparecían a los 4,5 a 6 s). Cada capa
+  // espera a su foto para mostrarse, así que nunca se ven bandas solas.
+  if (typeof bandasHero !== 'undefined') colorOrder.forEach(function (c) { bandasHero.armar(c); });
 }
 (function () {
   var principal = document.querySelector('#slides img.slide');
@@ -5606,17 +5620,18 @@ var bandasHero = (function () {
   }
   return { armar: armar, empujar: empujar, tocar: tocar };
 })();
-// La capa de la foto que se ve se arma apenas bajó la foto principal (antes
-// esperaba al "load" de toda la página + 0,7 s: en 4G las bandas quedaban
-// quietas varios segundos después de aparecer la foto).
+// La capa de la foto que se ve se arma enseguida: sus tres piezas (43 KB)
+// bajan mientras termina la foto principal, que ya venía pedida desde el
+// <head>. La capa igual espera a la foto para mostrarse (ver armar), así que
+// nunca se ven bandas solas. Antes recién se pedían cuando la foto terminaba,
+// y en 4G eso sumaba medio segundo más hasta ver las bandas.
 (function () {
-  var principal = document.querySelector('#slides img.slide');
   function armarYa() { bandasHero.armar(colorOrder[currentSlide]); }
-  if (principal && !(principal.complete && principal.naturalWidth)) principal.addEventListener('load', armarYa, { once: true });
-  else armarYa();
-  window.addEventListener('load', armarYa);   // por si la foto principal falló
+  armarYa();
+  window.addEventListener('load', armarYa);   // por si algo no estaba listo
 })();
-// Los otros dos colores, con la página ya tranquila.
+// Por si las fotos del carrusel no se llegaron a pedir: los otros dos colores
+// igual se arman a los 3,5 s (armar no repite lo ya armado).
 setTimeout(function () { colorOrder.forEach(function (c) { bandasHero.armar(c); }); }, 3500);
 
 // Swipe con el dedo
