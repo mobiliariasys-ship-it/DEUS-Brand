@@ -23,8 +23,37 @@ const TASA_PASARELA = 0.035; // sobre el monto cobrado
 const CARGOS_ML = {
   vendido: 1172830,
   cargos: 356257,
-  partes: { publicidad: 0.424, comision: 0.395, envio: 0.163, devolucion: 0.018 }
+  partes: { publicidad: 0.424, comision: 0.395, envio: 0.163, devolucion: 0.018 },
+  // Cargo por venta desde el 1-nov-2026 (el dueño: "ahora me cobran 11.200 por
+  // venta, antes era 8.000", sin contar la publicidad): $11.200 en una banda de
+  // $68.990, en vez de la parte del resumen ($8.278, el 12%). Va como
+  // proporción del precio, así una venta de 2 bandas lleva el doble.
+  // Publicidad, envío y devoluciones siguen con su parte del resumen. precio
+  // es el de la publicación en ML: el formulario del panel lo pone solo.
+  cargoVenta: { desde: '2026-11-01', monto: 11200, precio: 68990 }
 };
+
+// Lo que se queda Mercado Libre de lo vendido con precio completo un día.
+// Antes del cargo por venta fijo: el total con la proporción exacta del
+// resumen (así lo vendido en esos 30 días da los mismos $356.257 de ML, sin
+// los pesos de más que deja redondear cada parte), y después el desglose;
+// devoluciones se lleva el resto para que las cuatro partes sumen justo el
+// total. Desde el cargo fijo, cada parte por separado.
+function cargosDeML(bruto, fecha) {
+  const c = CARGOS_ML, cv = c.cargoVenta, base = c.cargos / c.vendido;
+  if (!(fecha && fecha >= cv.desde)) {
+    const total = Math.round(bruto * base);
+    const publicidad = Math.round(total * c.partes.publicidad);
+    const comision = Math.round(total * c.partes.comision);
+    const envio = Math.round(total * c.partes.envio);
+    return { total, publicidad, comision, envio, devolucion: total - publicidad - comision - envio };
+  }
+  const publicidad = Math.round(bruto * base * c.partes.publicidad);
+  const comision = Math.round(bruto * cv.monto / cv.precio);
+  const envio = Math.round(bruto * base * c.partes.envio);
+  const devolucion = Math.round(bruto * base * c.partes.devolucion);
+  return { total: publicidad + comision + envio + devolucion, publicidad, comision, envio, devolucion };
+}
 
 // Meta REPORTA el gasto sin IVA pero COBRA con IVA. Verificado contra el
 // recibo de agosto: las lineas por campana sumaban $88.898 y el cargo fue
@@ -73,15 +102,9 @@ function calcularDia(d, ads, comprasMeta) {
   // la web, y la publicidad de ML sumada a la de Meta falsearía el costo por
   // venta de los anuncios.
   const brutoML = Number(d.brutoML) || 0;
-  // Primero el total, con la proporción exacta del resumen (así lo vendido en
-  // esos 30 días da los mismos $356.257 de ML, sin los pesos de más que deja
-  // redondear cada parte), y después el desglose; devoluciones se lleva el
-  // resto para que las cuatro partes sumen justo el total.
-  const cargosML = Math.round(brutoML * CARGOS_ML.cargos / CARGOS_ML.vendido);
-  const mlPublicidad = Math.round(cargosML * CARGOS_ML.partes.publicidad);
-  const mlComision = Math.round(cargosML * CARGOS_ML.partes.comision);
-  const mlEnvio = Math.round(cargosML * CARGOS_ML.partes.envio);
-  const mlDevolucion = cargosML - mlPublicidad - mlComision - mlEnvio;
+  const ml = cargosDeML(brutoML, d.fecha);
+  const cargosML = ml.total, mlPublicidad = ml.publicidad, mlComision = ml.comision;
+  const mlEnvio = ml.envio, mlDevolucion = ml.devolucion;
   return {
     fecha: d.fecha,
     pedidos, unidades, ingresos,
@@ -129,4 +152,4 @@ function totalizar(filas) {
   }), { pedidos: 0, unidades: 0, conTapones: 0, conCorreas: 0, devoluciones: 0, pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, cargosML: 0, mlPublicidad: 0, mlComision: 0, mlEnvio: 0, mlDevolucion: 0, adsNeto: 0, ivaAds: 0, ads: 0, comprasMeta: 0, utilidad: 0 });
 }
 
-module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, CARGOS_ML, IVA, IVA_DESDE, diasDesdeIva, calcularDia, totalizar };
+module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, CARGOS_ML, cargosDeML, IVA, IVA_DESDE, diasDesdeIva, calcularDia, totalizar };

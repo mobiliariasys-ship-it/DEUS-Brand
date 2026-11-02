@@ -125,7 +125,7 @@ test('la columna "Cargos ML" aparece solo si en el rango hay ventas de ML con pr
   const [cab, cuerpo] = html.split('</thead>');
   const primeraFila = cuerpo.split('</tr>')[0];
   assert.strictEqual(celdas(primeraFila), celdas(cab));
-  assert.match(h.els['util-nota'].textContent, /Cargos ML: .*30,4% \(publicidad 12,88%, comisión 12%, envío 4,95% y devoluciones 0,55%\)/);
+  assert.match(h.els['util-nota'].textContent, /Cargos ML: .*publicidad 12,88%, cargo por venta \$11\.200 por banda de \$68\.990 desde el 1-nov \(antes 12%\), envío 4,95% y devoluciones 0,55%/);
 });
 
 test('al elegir días, Utilidad diaria muestra solo esos y no consulta Meta en cada toque', async () => {

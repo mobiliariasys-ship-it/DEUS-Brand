@@ -165,7 +165,7 @@ test('el formulario muestra cuánto se queda ML con la misma cuenta del servidor
   const els = { 'vm-metodo': { value: 'Mercado Libre' }, 'vm-monto': { value: '68990' }, 'vm-unidades': { value: '1' },
                 'vm-tapones': { checked: false }, 'vm-ml-calc': { textContent: '' } };
   const ctx = { document: { getElementById: id => els[id] }, Math, Number, parseInt,
-                COSTOS_UTIL: { banda: u.COSTO_BANDA, ml: u.CARGOS_ML } };
+                COSTOS_UTIL: { banda: u.COSTO_BANDA, ml: u.CARGOS_ML }, vmFecha: '2026-10-31' };
   vm.createContext(ctx);
   vm.runInContext(['cargosDeML', 'vmCalcML', 'money0'].map(extraer).join('\n'), ctx);
   const calc = () => { vm.runInContext('vmCalcML()', ctx); return els['vm-ml-calc'].textContent; };
@@ -176,4 +176,72 @@ test('el formulario muestra cuánto se queda ML con la misma cuenta del servidor
   assert.strictEqual(calc(), 'Mercado Libre se queda $41.913 · te deposita $96.067', 'sin banda si son solo tapones');
   els['vm-metodo'].value = 'Webpay';
   assert.strictEqual(calc(), '', 'fuera de ML no hay cuenta');
+  // Una venta desde el 1-nov-2026 lleva el cargo por venta de $11.200.
+  els['vm-metodo'].value = 'Mercado Libre'; els['vm-unidades'].value = '1'; els['vm-monto'].value = '68990';
+  els['vm-tapones'].checked = false; ctx.vmFecha = '2026-11-02';
+  assert.strictEqual(calc(), 'Mercado Libre se queda $23.878 · te deposita $45.112 · menos la banda: $28.112');
+});
+
+// ── Cargo por venta de $11.200 (desde el 1-nov-2026) ──────────────────────
+test('desde el 1-nov ML cobra $11.200 de cargo por venta; las ventas anteriores no cambian', () => {
+  // El dueño: "ahora me cobran 11.200 por venta, antes era 8.000", sin contar
+  // la publicidad. Publicidad, envío y devoluciones siguen igual.
+  const antes = u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-10-31' }, 0);
+  assert.strictEqual(antes.mlComision, 8278);
+  assert.strictEqual(antes.cargosML, 20956, 'los días pasados no se recalculan');
+  const r = u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-11-01' }, 0);
+  assert.strictEqual(r.mlComision, 11200);
+  assert.strictEqual(r.mlPublicidad, antes.mlPublicidad);
+  assert.strictEqual(r.mlEnvio, antes.mlEnvio);
+  assert.strictEqual(r.mlDevolucion, antes.mlDevolucion);
+  assert.strictEqual(r.cargosML, 8885 + 11200 + 3416 + 377);
+  assert.strictEqual(r.utilidad, 68990 - 23878 - u.COSTO_BANDA);
+  // Dos bandas en una venta: el doble de cargo.
+  const dos = u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-11-02', pedidos: 1, unidades: 2, ingresos: 137980,
+                              unidadesExternas: 2, ingresosExternos: 137980, brutoML: 137980 }, 0);
+  assert.strictEqual(dos.mlComision, 22400);
+  assert.deepStrictEqual(u.CARGOS_ML.cargoVenta, { desde: '2026-11-01', monto: 11200, precio: 68990 });
+});
+
+test('para cargar una venta de ML alcanza con tocar "Venta de Mercado Libre" y "Agregar"', () => {
+  const vm = require('vm');
+  const SRC = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
+  const extraer = nombre => {
+    const i = SRC.search(new RegExp('function\\s+' + nombre + '\\s*\\('));
+    assert.ok(i >= 0, 'no encontré function ' + nombre + '() en admin.html');
+    let prof = 0;
+    for (let k = SRC.indexOf('{', i); k < SRC.length; k++) {
+      if (SRC[k] === '{') prof++;
+      else if (SRC[k] === '}' && --prof === 0) return SRC.slice(i, k + 1);
+    }
+    throw new Error('llaves sin cerrar en ' + nombre);
+  };
+  let foco = null;
+  const campo = (extra) => Object.assign({ value: '', attrs: {}, style: {}, textContent: '', checked: false,
+    setAttribute(k, v) { this.attrs[k] = v; }, removeAttribute(k) { delete this.attrs[k]; }, hasAttribute(k) { return k in this.attrs; },
+    focus() { foco = this.id; }, classList: { toggle() {} } }, extra);
+  const els = {};
+  for (const id of ['vm-metodo', 'vm-monto', 'vm-unidades', 'vm-tapones', 'vm-ml-calc', 'vm-ml-btn', 'vm-monto-lbl', 'vm-ml-nota', 'vm-ok'])
+    els[id] = campo({ id });
+  els['vm-metodo'].value = 'MercadoPago'; els['vm-unidades'].value = '1';
+  const ctx = { document: { getElementById: id => els[id] }, Math, Number, parseInt, vmFecha: '2026-11-02',
+                COSTOS_UTIL: { banda: u.COSTO_BANDA, ml: u.CARGOS_ML } };
+  vm.createContext(ctx);
+  vm.runInContext(['cargosDeML', 'vmCalcML', 'money0', 'precioML', 'vmMetodo', 'vmToggleML', 'vmUnidades'].map(extraer).join('\n'), ctx);
+  vm.runInContext('vmToggleML()', ctx);
+  assert.strictEqual(els['vm-metodo'].value, 'Mercado Libre');
+  assert.strictEqual(String(els['vm-monto'].value), '68990', 'el precio de ML se pone solo');
+  assert.strictEqual(foco, 'vm-ok', 'queda listo para tocar "Agregar"');
+  assert.strictEqual(els['vm-ml-calc'].textContent, 'Mercado Libre se queda $23.878 · te deposita $45.112 · menos la banda: $28.112');
+  els['vm-unidades'].value = '2'; vm.runInContext('vmUnidades()', ctx);
+  assert.strictEqual(String(els['vm-monto'].value), '137980', 'dos bandas: el doble');
+  vm.runInContext('vmToggleML()', ctx);
+  assert.strictEqual(els['vm-monto'].value, '', 'si deja de ser de ML, se borra el precio puesto solo');
+  // Si escribió el monto a mano, no se pisa.
+  els['vm-monto'].value = '60000'; els['vm-unidades'].value = '1';
+  vm.runInContext('vmToggleML()', ctx);
+  assert.strictEqual(els['vm-monto'].value, '60000');
+  // El formulario arranca sin la marca y el campo la pierde al escribir.
+  assert.match(SRC, /getElementById\('vm-monto'\)\.removeAttribute\('data-auto'\);/);
+  assert.ok(SRC.includes(`oninput="this.removeAttribute('data-auto');vmCalcML()"`));
 });
