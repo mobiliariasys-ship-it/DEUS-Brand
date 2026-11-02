@@ -68,7 +68,13 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('X-Robots-Tag', 'noindex, nofollow'); // el backend no se indexa en Google
+  // Google SÍ debe indexar la tienda pública (deusbrand.cl). Solo se bloquea la
+  // dirección interna de Render y los paneles/API de administración. Antes iba
+  // a todo y dejó a deusbrand.cl fuera de Google desde agosto de 2026.
+  const host = (req.headers.host || '').toLowerCase().split(':')[0];
+  const esTiendaPublica = host === 'deusbrand.cl' || host === 'www.deusbrand.cl';
+  const esPrivado = /^\/(admin|pedidos|stock|api)(\/|\.|$)/i.test(req.path);
+  if (!esTiendaPublica || esPrivado) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   if (IS_PROD) res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
   res.removeHeader('X-Powered-By'); // no anunciar que corre Express
   next();
