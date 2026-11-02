@@ -562,7 +562,7 @@ function resumenVentas() {
 function ventasPorDia(dias = 14) {
   const precio = require('./precio').precioBanda();
   const vacio = d => ({ fecha: d, pedidos: 0, unidades: 0, ingresos: 0, conTapones: 0, conCorreas: 0, estimado: false,
-                        pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, brutoML: 0,
+                        pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, brutoML: 0, pedidosBrutoML: 0,
                         devoluciones: 0, mlEstimado: false, manuales: 0 });
   const mapa = {};
   for (const v of ventas.concat(ventasExternas)) {
@@ -584,7 +584,8 @@ function ventasPorDia(dias = 14) {
     if (v.externo) {
       mapa[d].pedidosExternos += 1;
       mapa[d].ingresosExternos += v.monto;
-      if (v.bruto) mapa[d].brutoML += v.monto;
+      // pedidosBrutoML: cuántas son, para el envío de ML, que va por venta.
+      if (v.bruto) { mapa[d].brutoML += v.monto; mapa[d].pedidosBrutoML += 1; }
       if (!v.soloTapones) mapa[d].unidadesExternas += v.unidades || 1;
     }
     if (v.tapones) mapa[d].conTapones += 1;

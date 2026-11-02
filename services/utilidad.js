@@ -24,22 +24,23 @@ const CARGOS_ML = {
   vendido: 1172830,
   cargos: 356257,
   partes: { publicidad: 0.424, comision: 0.395, envio: 0.163, devolucion: 0.018 },
-  // Cargo por venta desde el 1-nov-2026 (el dueño: "ahora me cobran 11.200 por
-  // venta, antes era 8.000", sin contar la publicidad): $11.200 en una banda de
-  // $68.990, en vez de la parte del resumen ($8.278, el 12%). Va como
-  // proporción del precio, así una venta de 2 bandas lleva el doble.
-  // Publicidad, envío y devoluciones siguen con su parte del resumen. precio
-  // es el de la publicación en ML: el formulario del panel lo pone solo.
-  cargoVenta: { desde: '2026-11-01', monto: 11200, precio: 68990 }
+  // Desde el 1-nov-2026, lo que dice el detalle de una venta real que mandó el
+  // dueño: precio $68.990, cargos por venta −$11.038, envíos −$3.150, total
+  // $54.802 sin contar la publicidad (antes el cargo era la parte del resumen,
+  // $8.278, el 12%). El cargo va como proporción del precio (2 bandas, el
+  // doble); el envío, por VENTA (va un paquete); sin promedio de devoluciones,
+  // que la venta real no trae. La publicidad sigue con su parte del resumen.
+  // precio es el de la publicación en ML: el formulario del panel lo pone solo.
+  cargoVenta: { desde: '2026-11-01', monto: 11038, precio: 68990, envio: 3150 }
 };
 
-// Lo que se queda Mercado Libre de lo vendido con precio completo un día.
-// Antes del cargo por venta fijo: el total con la proporción exacta del
-// resumen (así lo vendido en esos 30 días da los mismos $356.257 de ML, sin
-// los pesos de más que deja redondear cada parte), y después el desglose;
-// devoluciones se lleva el resto para que las cuatro partes sumen justo el
-// total. Desde el cargo fijo, cada parte por separado.
-function cargosDeML(bruto, fecha) {
+// Lo que se queda Mercado Libre de lo vendido con precio completo un día
+// (`ventas`: cuántas ventas fueron, para el envío). Antes del 1-nov: el total
+// con la proporción exacta del resumen (así lo vendido en esos 30 días da los
+// mismos $356.257 de ML, sin los pesos de más que deja redondear cada parte),
+// y después el desglose; devoluciones se lleva el resto para que las cuatro
+// partes sumen justo el total. Desde el 1-nov, cada parte por separado.
+function cargosDeML(bruto, fecha, ventas) {
   const c = CARGOS_ML, cv = c.cargoVenta, base = c.cargos / c.vendido;
   if (!(fecha && fecha >= cv.desde)) {
     const total = Math.round(bruto * base);
@@ -48,11 +49,13 @@ function cargosDeML(bruto, fecha) {
     const envio = Math.round(total * c.partes.envio);
     return { total, publicidad, comision, envio, devolucion: total - publicidad - comision - envio };
   }
+  if (!bruto) return { total: 0, publicidad: 0, comision: 0, envio: 0, devolucion: 0 };
+  // Sin el conteo (días guardados antes), una venta por cada precio completo.
+  const n = Number(ventas) > 0 ? Number(ventas) : Math.max(1, Math.round(bruto / cv.precio));
   const publicidad = Math.round(bruto * base * c.partes.publicidad);
   const comision = Math.round(bruto * cv.monto / cv.precio);
-  const envio = Math.round(bruto * base * c.partes.envio);
-  const devolucion = Math.round(bruto * base * c.partes.devolucion);
-  return { total: publicidad + comision + envio + devolucion, publicidad, comision, envio, devolucion };
+  const envio = n * cv.envio;
+  return { total: publicidad + comision + envio, publicidad, comision, envio, devolucion: 0 };
 }
 
 // Meta REPORTA el gasto sin IVA pero COBRA con IVA. Verificado contra el
@@ -102,7 +105,7 @@ function calcularDia(d, ads, comprasMeta) {
   // la web, y la publicidad de ML sumada a la de Meta falsearía el costo por
   // venta de los anuncios.
   const brutoML = Number(d.brutoML) || 0;
-  const ml = cargosDeML(brutoML, d.fecha);
+  const ml = cargosDeML(brutoML, d.fecha, d.pedidosBrutoML);
   const cargosML = ml.total, mlPublicidad = ml.publicidad, mlComision = ml.comision;
   const mlEnvio = ml.envio, mlDevolucion = ml.devolucion;
   return {

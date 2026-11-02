@@ -130,6 +130,7 @@ test('cargada con precio completo, el día la suma en brutoML; con lo depositado
   assert.strictEqual(conBruta.brutoML, antes.brutoML + 68990);
   assert.strictEqual(conBruta.ingresos, antes.ingresos + 68990, '"Vendido" muestra el precio completo');
   assert.strictEqual(conBruta.pedidosExternos, antes.pedidosExternos + 1);
+  assert.strictEqual(conBruta.pedidosBrutoML, (antes.pedidosBrutoML || 0) + 1, 'se cuenta para el envío de ML, que va por venta');
   // Como se cargaban antes: lo depositado ya viene sin los cargos de ML.
   metrics.registrarVenta({ monto: 57461, metodo: 'Mercado Libre', orden: ORD + '-neto', fecha: fecha + 'T12:00:00-03:00', unidades: 1 });
   assert.strictEqual(dia().brutoML, conBruta.brutoML);
@@ -167,40 +168,47 @@ test('el formulario muestra cuánto se queda ML con la misma cuenta del servidor
   const ctx = { document: { getElementById: id => els[id] }, Math, Number, parseInt,
                 COSTOS_UTIL: { banda: u.COSTO_BANDA, ml: u.CARGOS_ML }, vmFecha: '2026-10-31' };
   vm.createContext(ctx);
-  vm.runInContext(['cargosDeML', 'vmCalcML', 'money0'].map(extraer).join('\n'), ctx);
+  vm.runInContext(['partesML', 'vmCalcML', 'money0'].map(extraer).join('\n'), ctx);
   const calc = () => { vm.runInContext('vmCalcML()', ctx); return els['vm-ml-calc'].textContent; };
-  assert.strictEqual(calc(), 'Mercado Libre se queda $20.956 · te deposita $48.034 · menos la banda: $31.034');
+  assert.strictEqual(calc(), 'Por esta venta ML te paga $56.919 · menos su publicidad ($8.885) y la banda: $31.034');
   els['vm-unidades'].value = '2'; els['vm-monto'].value = '137980';
-  assert.strictEqual(calc(), 'Mercado Libre se queda $41.913 · te deposita $96.067 · menos la banda: $62.067');
+  assert.strictEqual(calc(), 'Por esta venta ML te paga $113.838 · menos su publicidad ($17.771) y la banda: $62.067');
   els['vm-tapones'].checked = true;
-  assert.strictEqual(calc(), 'Mercado Libre se queda $41.913 · te deposita $96.067', 'sin banda si son solo tapones');
+  assert.strictEqual(calc(), 'Por esta venta ML te paga $113.838 · menos su publicidad ($17.771): $96.067', 'sin banda si son solo tapones');
   els['vm-metodo'].value = 'Webpay';
   assert.strictEqual(calc(), '', 'fuera de ML no hay cuenta');
-  // Una venta desde el 1-nov-2026 lleva el cargo por venta de $11.200.
+  // Desde el 1-nov-2026, lo mismo que el detalle de una venta real en ML:
+  // $68.990 − $11.038 de cargo − $3.150 de envío = $54.802 sin la publicidad.
   els['vm-metodo'].value = 'Mercado Libre'; els['vm-unidades'].value = '1'; els['vm-monto'].value = '68990';
   els['vm-tapones'].checked = false; ctx.vmFecha = '2026-11-02';
-  assert.strictEqual(calc(), 'Mercado Libre se queda $23.878 · te deposita $45.112 · menos la banda: $28.112');
+  assert.strictEqual(calc(), 'Por esta venta ML te paga $54.802 · menos su publicidad ($8.885) y la banda: $28.917');
 });
 
-// ── Cargo por venta de $11.200 (desde el 1-nov-2026) ──────────────────────
-test('desde el 1-nov ML cobra $11.200 de cargo por venta; las ventas anteriores no cambian', () => {
-  // El dueño: "ahora me cobran 11.200 por venta, antes era 8.000", sin contar
-  // la publicidad. Publicidad, envío y devoluciones siguen igual.
+// ── Cargos de una venta real de ML (desde el 1-nov-2026) ──────────────────
+test('desde el 1-nov una venta de ML da lo mismo que su detalle en ML; las anteriores no cambian', () => {
+  // Detalle de una venta real que mandó el dueño: precio $68.990, cargos por
+  // venta −$11.038, envíos −$3.150, total $54.802 sin contar la publicidad.
   const antes = u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-10-31' }, 0);
   assert.strictEqual(antes.mlComision, 8278);
   assert.strictEqual(antes.cargosML, 20956, 'los días pasados no se recalculan');
-  const r = u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-11-01' }, 0);
-  assert.strictEqual(r.mlComision, 11200);
-  assert.strictEqual(r.mlPublicidad, antes.mlPublicidad);
-  assert.strictEqual(r.mlEnvio, antes.mlEnvio);
-  assert.strictEqual(r.mlDevolucion, antes.mlDevolucion);
-  assert.strictEqual(r.cargosML, 8885 + 11200 + 3416 + 377);
-  assert.strictEqual(r.utilidad, 68990 - 23878 - u.COSTO_BANDA);
-  // Dos bandas en una venta: el doble de cargo.
-  const dos = u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-11-02', pedidos: 1, unidades: 2, ingresos: 137980,
-                              unidadesExternas: 2, ingresosExternos: 137980, brutoML: 137980 }, 0);
-  assert.strictEqual(dos.mlComision, 22400);
-  assert.deepStrictEqual(u.CARGOS_ML.cargoVenta, { desde: '2026-11-01', monto: 11200, precio: 68990 });
+  const r = u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-11-01', pedidosBrutoML: 1 }, 0);
+  assert.strictEqual(r.mlComision, 11038);
+  assert.strictEqual(r.mlEnvio, 3150);
+  assert.strictEqual(r.mlDevolucion, 0, 'la venta real no trae devoluciones');
+  assert.strictEqual(68990 - r.mlComision - r.mlEnvio - r.mlDevolucion, 54802, 'el "Total" del detalle de ML');
+  assert.strictEqual(r.mlPublicidad, antes.mlPublicidad, 'la publicidad de ML sigue aparte');
+  assert.strictEqual(r.utilidad, 54802 - 8885 - u.COSTO_BANDA);
+  // El cargo va por banda; el envío, por venta (un paquete).
+  const dosBandas = u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-11-02', unidades: 2, ingresos: 137980,
+                                    unidadesExternas: 2, ingresosExternos: 137980, brutoML: 137980, pedidosBrutoML: 1 }, 0);
+  assert.strictEqual(dosBandas.mlComision, 2 * 11038);
+  assert.strictEqual(dosBandas.mlEnvio, 3150);
+  const dosVentas = u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-11-02', pedidos: 2, unidades: 2, ingresos: 137980, pedidosExternos: 2,
+                                    unidadesExternas: 2, ingresosExternos: 137980, brutoML: 137980, pedidosBrutoML: 2 }, 0);
+  assert.strictEqual(dosVentas.mlEnvio, 2 * 3150);
+  // Un día guardado sin el conteo: una venta por cada precio completo.
+  assert.strictEqual(u.calcularDia({ ...VENTA_ML_BRUTA, fecha: '2026-11-02' }, 0).mlEnvio, 3150);
+  assert.deepStrictEqual(u.CARGOS_ML.cargoVenta, { desde: '2026-11-01', monto: 11038, precio: 68990, envio: 3150 });
 });
 
 test('para cargar una venta de ML alcanza con tocar "Venta de Mercado Libre" y "Agregar"', () => {
@@ -227,12 +235,12 @@ test('para cargar una venta de ML alcanza con tocar "Venta de Mercado Libre" y "
   const ctx = { document: { getElementById: id => els[id] }, Math, Number, parseInt, vmFecha: '2026-11-02',
                 COSTOS_UTIL: { banda: u.COSTO_BANDA, ml: u.CARGOS_ML } };
   vm.createContext(ctx);
-  vm.runInContext(['cargosDeML', 'vmCalcML', 'money0', 'precioML', 'vmMetodo', 'vmToggleML', 'vmUnidades'].map(extraer).join('\n'), ctx);
+  vm.runInContext(['partesML', 'vmCalcML', 'money0', 'precioML', 'vmMetodo', 'vmToggleML', 'vmUnidades'].map(extraer).join('\n'), ctx);
   vm.runInContext('vmToggleML()', ctx);
   assert.strictEqual(els['vm-metodo'].value, 'Mercado Libre');
   assert.strictEqual(String(els['vm-monto'].value), '68990', 'el precio de ML se pone solo');
   assert.strictEqual(foco, 'vm-ok', 'queda listo para tocar "Agregar"');
-  assert.strictEqual(els['vm-ml-calc'].textContent, 'Mercado Libre se queda $23.878 · te deposita $45.112 · menos la banda: $28.112');
+  assert.strictEqual(els['vm-ml-calc'].textContent, 'Por esta venta ML te paga $54.802 · menos su publicidad ($8.885) y la banda: $28.917');
   els['vm-unidades'].value = '2'; vm.runInContext('vmUnidades()', ctx);
   assert.strictEqual(String(els['vm-monto'].value), '137980', 'dos bandas: el doble');
   vm.runInContext('vmToggleML()', ctx);

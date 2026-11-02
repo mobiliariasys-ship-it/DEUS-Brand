@@ -689,7 +689,7 @@
               <option>Mercado Libre</option>
               <option>Presencial</option><option>Transferencia</option><option>Otro</option>
             </select></div>
-          <div class="vm-campo ancho" id="vm-ml-nota" style="display:none;font-size:.72rem;color:#e7cf9c;line-height:1.45;">Ya viene puesto el precio de la publicación: si fue una banda a ese precio, tocá "Agregar". Si fue a otro precio, cambialo (el precio completo, no lo que te deposita ML). El panel le descuenta lo que se queda Mercado Libre (publicidad, cargo por venta de $11.200 por banda, envío y devoluciones) y el costo de la banda. La venta no entra en la conversión de la web ni en el sorteo.<div id="vm-ml-calc" style="margin-top:6px;color:#cfcfcf;"></div></div>
+          <div class="vm-campo ancho" id="vm-ml-nota" style="display:none;font-size:.72rem;color:#e7cf9c;line-height:1.45;">Ya viene puesto el precio de la publicación: si fue una banda a ese precio, tocá "Agregar". Si fue a otro precio, cambialo (el precio completo, no lo que te deposita ML). El panel le descuenta lo que se queda Mercado Libre (cargo por venta de $11.038 por banda, envío de $3.150 y su publicidad) y el costo de la banda. La venta no entra en la conversión de la web ni en el sorteo.<div id="vm-ml-calc" style="margin-top:6px;color:#cfcfcf;"></div></div>
           <div class="vm-campo"><label>Nombre (opcional)</label><input id="vm-nombre" placeholder="Cliente"></div>
           <div class="vm-campo ancho"><label>ID de pago (opcional)</label><input id="vm-orden" placeholder="se genera solo si lo dejás vacío"></div>
           <label class="vm-chk"><input type="checkbox" id="vm-tapones" onchange="vmCalcML()"> Es una compra de solo tapones</label>
@@ -2726,29 +2726,37 @@
   // formulario de "Agregar venta" los usa para mostrar cuánto deja una venta
   // de ML; solo se abre desde la tabla, así que ya están cargados.
   var COSTOS_UTIL = null;
-  // Lo que se queda Mercado Libre (utilidad.CARGOS_ML del servidor: lo vendido
-  // y los cargos de su resumen, cómo se reparten y el cargo por venta fijo
-  // desde el 1-nov-2026). Misma cuenta que utilidad.cargosDeML del servidor.
-  function cargosDeML(bruto, c, fecha){
-    if (!c) return 0;
-    var base = c.cargos / c.vendido, cv = c.cargoVenta, p = c.partes;
-    if (!(cv && fecha && fecha >= cv.desde)) return Math.round(bruto * base);
-    return Math.round(bruto * base * p.publicidad) + Math.round(bruto * cv.monto / cv.precio) +
-           Math.round(bruto * base * p.envio) + Math.round(bruto * base * p.devolucion);
+  // Lo que se queda Mercado Libre de UNA venta (utilidad.CARGOS_ML del
+  // servidor: lo vendido y los cargos de su resumen, cómo se reparten, y desde
+  // el 1-nov-2026 el cargo y el envío de una venta real). Misma cuenta que
+  // utilidad.cargosDeML del servidor.
+  function partesML(bruto, c, fecha){
+    var cero = { publicidad: 0, comision: 0, envio: 0, devolucion: 0, total: 0 };
+    if (!c || !bruto) return cero;
+    var base = c.cargos / c.vendido, cv = c.cargoVenta, p = c.partes, r;
+    if (cv && fecha && fecha >= cv.desde) {
+      r = { publicidad: Math.round(bruto * base * p.publicidad), comision: Math.round(bruto * cv.monto / cv.precio),
+            envio: cv.envio || 0, devolucion: 0 };
+    } else {
+      var total = Math.round(bruto * base);
+      r = { publicidad: Math.round(total * p.publicidad), comision: Math.round(total * p.comision), envio: Math.round(total * p.envio) };
+      r.devolucion = total - r.publicidad - r.comision - r.envio;
+    }
+    r.total = r.publicidad + r.comision + r.envio + r.devolucion;
+    return r;
   }
   function textoCargosML(c){
     if (!c) return '';
     var total = c.cargos / c.vendido, p = c.partes, cv = c.cargoVenta;
     var pct = function(x){ return (x * 100).toFixed(2).replace(/\.?0+$/, '').replace('.', ','); };
     var plata = function(n){ return '$' + Math.round(n).toLocaleString('es-CL'); };
-    var cargo = 'cargo por venta ' + pct(total * p.comision) + '%';
-    if (cv) {
-      var f = cv.desde.split('-');
-      cargo = 'cargo por venta ' + plata(cv.monto) + ' por banda de ' + plata(cv.precio) + ' desde el ' + parseInt(f[2], 10) + '-' +
-        ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][parseInt(f[1], 10) - 1] + ' (antes ' + pct(total * p.comision) + '%)';
-    }
-    return 'publicidad ' + pct(total * p.publicidad) + '%, ' + cargo + ', envío ' + pct(total * p.envio) +
-           '% y devoluciones ' + pct(total * p.devolucion) + '%';
+    if (!cv) return 'publicidad ' + pct(total * p.publicidad) + '%, cargo por venta ' + pct(total * p.comision) + '%, envío ' +
+      pct(total * p.envio) + '% y devoluciones ' + pct(total * p.devolucion) + '%';
+    var f = cv.desde.split('-');
+    var dia = parseInt(f[2], 10) + '-' + ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][parseInt(f[1], 10) - 1];
+    return 'desde el ' + dia + ', cargo por venta ' + plata(cv.monto) + ' por banda de ' + plata(cv.precio) + ', envío ' + plata(cv.envio) +
+      ' por venta y publicidad ' + pct(total * p.publicidad) + '% (antes: cargo por venta ' + pct(total * p.comision) + '%, envío ' +
+      pct(total * p.envio) + '% y devoluciones ' + pct(total * p.devolucion) + '%)';
   }
 
   // ── Alta manual de ventas ────────────────────────────────────────────────
@@ -2803,19 +2811,21 @@
     vmCalcML();
   }
 
-  // "ML se queda $X · te deposita $Y · menos la banda $Z", con la misma cuenta
-  // que hace el servidor.
+  // "Por esta venta ML te paga $X · menos su publicidad ($Y) y la banda: $Z",
+  // con la misma cuenta que hace el servidor. Lo que paga ML es el "Total" del
+  // detalle de la venta en Mercado Libre (sin la publicidad).
   function vmCalcML(){
     var out = document.getElementById('vm-ml-calc');
     var ml = document.getElementById('vm-metodo').value === 'Mercado Libre';
     var bruto = parseInt(document.getElementById('vm-monto').value, 10);
     var c = COSTOS_UTIL && COSTOS_UTIL.ml;
     if (!ml || !c || !bruto || bruto <= 0) { out.textContent = ''; return; }
-    var cargos = cargosDeML(bruto, c, vmFecha);
+    var m = partesML(bruto, c, vmFecha);
     var unidades = parseInt(document.getElementById('vm-unidades').value, 10) || 1;
     var banda = document.getElementById('vm-tapones').checked ? 0 : unidades * (COSTOS_UTIL.banda || 0);
-    out.textContent = 'Mercado Libre se queda ' + money0(cargos) + ' · te deposita ' + money0(bruto - cargos) +
-      (banda ? ' · menos la banda: ' + money0(bruto - cargos - banda) : '');
+    var paga = bruto - m.comision - m.envio - m.devolucion;
+    out.textContent = 'Por esta venta ML te paga ' + money0(paga) + ' · menos su publicidad (' + money0(m.publicidad) + ')' +
+      (banda ? ' y la banda: ' : ': ') + money0(paga - m.publicidad - banda);
   }
 
   // El botón de arriba del formulario: un toque y la venta queda como de
