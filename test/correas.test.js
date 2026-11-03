@@ -5,6 +5,10 @@
 // dos. El navegador solo manda las claves; lo que se cobra lo calcula
 // services/precio.js y las tres pasarelas lo usan igual. El correo de despacho
 // tiene que decir qué par incluir en el paquete.
+//
+// 3-nov-2026: el recuadro de correas extra se sacó del checkout (pedido del
+// dueño: confundía). El backend las sigue sabiendo cobrar, y el JS del
+// checkout queda inerte: sin recuadro, el pago siempre va sin correas.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -52,32 +56,24 @@ test('las tres pasarelas cobran con las correas que mandó el checkout', () => {
   assert.match(leer('server.js'), /correas: m\.correas\.join\(','\)/);
 });
 
-test('el checkout ofrece las correas en un solo recuadro con el color a elegir', () => {
+test('el checkout ya no ofrece correas extra y el pago va sin ellas', () => {
+  // Sin recuadro: ni la tarjeta, ni el selector de color, ni algo que llame a
+  // toggleCorreas / elegirColorCorreas desde el HTML.
+  assert.ok(!HTML.includes('id="upsell-correas"'), 'volvió el recuadro de correas extra al checkout');
+  assert.strictEqual((HTML.match(/class="upsell-card\b/g) || []).length, 0, 'quedó un recuadro de upsell en el checkout');
+  assert.ok(!/onclick="(toggleCorreas|elegirColorCorreas|abrirCuadroCorreas|verFotosCorreas)\(/.test(HTML), 'quedó un botón que agrega o muestra correas extra');
+  assert.ok(!HTML.includes('<div class="upsell-price">+ $18.990</div>'), 'quedó el precio de las correas extra a la vista');
+  // Lo que sigue garantiza que se cobre $0 en correas: arrancan sin agregar al
+  // abrir el checkout, solo toggleCorreas (que ya nadie llama) las agrega, y al
+  // pago va la lista vacía.
+  assert.match(HTML, /correaColor = 'negras';\s*correaAgregada = false;/, 'al abrir el checkout las correas tienen que partir sin agregar');
+  assert.strictEqual((HTML.match(/correaAgregada = (?!false)/g) || []).length, 1, 'solo toggleCorreas puede agregar correas');
+  assert.match(HTML, /return correaAgregada \? \[correaColor\] : \[\];/);
+  assert.match(HTML, /correas: checkoutTapones \? \[\] : listaCorreas\(\),/);
+  // El subtotal del sitio sigue sumando lo mismo que el backend si algún día
+  // vuelven: el precio tiene que calzar.
   assert.match(HTML, new RegExp('const CORREAS_PRICE = ' + CORREAS_PRICE + ';'), 'el checkout tiene que sumar lo mismo que cobra el backend');
-  assert.strictEqual((HTML.match(/class="upsell-card\b/g) || []).length, 1, 'las correas van en UN recuadro');
-  assert.ok(HTML.includes('id="upsell-correas" onclick="toggleCorreas()"'));
-  for (const color of ['negras', 'grises']) {
-    assert.ok(HTML.includes(`data-color="${color}"`) && HTML.includes(`onclick="elegirColorCorreas(event,'${color}')"`), 'falta el color ' + color);
-    assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', `correas-${color}.webp`)), 'falta la foto grande de las correas ' + color);
-    assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', `correas-${color}-mini.webp`)), 'falta la miniatura de las correas ' + color);
-  }
-  assert.ok(HTML.includes('<div class="upsell-price">+ $18.990</div>'));
-  // Las negras primero (pedido del dueño): en el selector, como color de
-  // entrada y en la galería de fotos.
-  assert.ok(HTML.indexOf(`data-color="negras"`) < HTML.indexOf(`data-color="grises"`), 'el selector tiene que mostrar Negro primero');
-  assert.match(HTML, /class="cc-op on" data-color="negras"/, 'Negro viene elegido de entrada');
-  assert.match(HTML, /correaColor = 'negras';\s*correaAgregada = false;/, 'al reabrir el checkout vuelve a Negro');
-  assert.ok(HTML.includes("abrirVisorFotos(['img/correas-negras.webp', 'img/correas-grises.webp']"), 'en la galería, las negras primero');
-  // Pedido del dueño: "el par" suena informal, no va en la página.
-  assert.doesNotMatch(HTML.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\/[^\n]*/g, ''), /el par\b/i);
-  assert.match(HTML, /return correaAgregada \? \[correaColor\] : \[\];/, 'al pago va solo el color elegido, y solo si están agregadas');
-  // El recuadro cierra todos sus <div>: uno de más cerraba antes de tiempo el
-  // cuerpo del checkout y la tarjeta del total quedaba más ancha que el resto.
-  const ini = HTML.indexOf('<div class="upsell-card upsell-correas" id="upsell-correas"');
-  const bloque = HTML.slice(ini, HTML.indexOf('<!-- El total se ve desde que abre el checkout.', ini)).replace(/<!--[\s\S]*?-->/g, '');
-  assert.strictEqual((bloque.match(/<div\b/g) || []).length, (bloque.match(/<\/div>/g) || []).length, 'el recuadro de correas tiene que cerrar exactamente sus <div>');
-  assert.match(HTML, /correas: checkoutTapones \? \[\] : listaCorreas\(\),/, 'el pago no manda las correas elegidas');
-  // El upsell de tapones ya no está en el checkout de la banda.
+  // El upsell de tapones tampoco está en el checkout de la banda.
   assert.ok(!HTML.includes('id="upsell-card"'), 'quedó la tarjeta de tapones en el checkout');
   assert.ok(!/toggleUpsell|upsellTapones|UPSELL_PRICE/.test(HTML), 'quedó código del upsell de tapones');
 });

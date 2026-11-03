@@ -2348,52 +2348,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <div id="shipping-results"></div>
 
-            <!-- Upsell: correas extra (desde el 27-oct-2026, en vez de los
-                 tapones). UN recuadro con el color a elegir: negras (silicona
-                 + nylon negro) o grises (silicona negra + nylon gris), $18.990.
-                 Elegir el color no agrega: agrega el botón (o tocar el
-                 recuadro), y si ya estaba agregada, cambia el color. Se oculta
-                 en el checkout de "solo tapones". Lo que se cobra lo decide el
-                 backend (services/precio.js) con la clave del color. -->
-            <div class="upsell-card upsell-correas" id="upsell-correas" onclick="toggleCorreas()" style="cursor:pointer;">
-              <!-- Las correas como una obra en un cuadro: cuelgan de un hilo y se
-                   mecen como péndulos (ver cuadroCorreas). Tocar el cuadro abre
-                   uno grande donde se pueden agarrar y soltar. -->
-              <button type="button" class="upsell-zoom cq-abrir" onclick="abrirCuadroCorreas(event)" aria-label="Ver las correas extra en grande" aria-expanded="false">
-                <span class="cq cq-mini" role="img" aria-label="Correas extra negras: silicona y nylon">
-                  <span class="cq-col cq-sil"><i class="cq-hilo"></i><img src="img/correa-silicona.webp" alt="" width="10" height="72" loading="lazy" decoding="async"></span>
-                  <span class="cq-col cq-nyl"><i class="cq-hilo"></i><img class="cq-nylon" src="img/correa-nylon-negra.webp" alt="" width="10" height="72" loading="lazy" decoding="async"></span>
-                </span>
-                <span class="upsell-lupa" aria-hidden="true">⤢</span>
-              </button>
-              <div class="upsell-info">
-                <div class="upsell-name">Correas extra</div>
-                <div class="upsell-desc">Silicona + nylon</div>
-                <div class="upsell-price">+ $18.990</div>
-              </div>
-              <button type="button" class="upsell-btn">+ Agregar</button>
-              <!-- Los colores van en su propia fila: al lado del texto no caben
-                   en un celular y quedaban debajo del botón. -->
-              <div class="correas-color" role="radiogroup" aria-label="Color de las correas extra">
-                <span class="cc-k">Color</span>
-                <button type="button" class="cc-op on" data-color="negras" role="radio" aria-checked="true" onclick="elegirColorCorreas(event,'negras')"><i style="background:#1b1b1b"></i>Negro</button>
-                <button type="button" class="cc-op" data-color="grises" role="radio" aria-checked="false" onclick="elegirColorCorreas(event,'grises')"><i style="background:#8d8d8d"></i>Gris</button>
-              </div>
-              <!-- El cuadro grande: se abre desde la miniatura, dentro del mismo
-                   recuadro (sin otra capa encima del checkout). Los toques acá
-                   no agregan ni quitan las correas. -->
-              <div class="cq-grande" id="cq-grande" onclick="event.stopPropagation()" hidden>
-                <div class="cq cq-big" role="img" aria-label="Correas extra negras: silicona y nylon">
-                  <span class="cq-col cq-sil"><i class="cq-hilo"></i><img src="img/correa-silicona.webp" alt="" width="28" height="198" loading="lazy" decoding="async"></span>
-                  <span class="cq-col cq-nyl"><i class="cq-hilo"></i><img class="cq-nylon" src="img/correa-nylon-negra.webp" alt="" width="27" height="198" loading="lazy" decoding="async"></span>
-                  <span class="cq-placa">DEUS · Silicona + Nylon</span>
-                </div>
-                <div class="cq-pie">
-                  <span>Arrastrá una correa y soltala</span>
-                  <button type="button" class="cq-fotos" onclick="verFotosCorreas(event)">Ver fotos ⤢</button>
-                </div>
-              </div>
-            </div>
+            <!-- Upsell de correas extra retirado del checkout (3-nov-2026, a
+                 pedido: confundía). El JS de pintarCorreas/toggleCorreas/
+                 cuadroCorreas queda inerte (usa guardas if(card)) y
+                 listaCorreas() devuelve [] porque correaAgregada nunca pasa
+                 a true: el pago va sin correas extra. -->
 
             <!-- El total se ve desde que abre el checkout. Antes estaba en
                  display:none hasta elegir courier, y eso tenía sentido cuando el

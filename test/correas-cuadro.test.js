@@ -2,6 +2,8 @@
 // Las correas extra del checkout como una obra en un cuadro: cada una cuelga
 // de un hilo y se mece como un péndulo al cambiar el color o al agarrarla, para
 // dar ganas de tocarlas (el % de pedidos con correas se mide en el panel).
+// Desde el 3-nov-2026 el recuadro no está en el checkout (ver correas.test.js):
+// el motor queda, pero sin cuadros en la página no tiene nada que mover.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -21,15 +23,13 @@ test('las tres correas recortadas existen, con transparencia y livianas', () => 
   }
 });
 
-test('la miniatura y el cuadro grande cuelgan las dos correas, y el nylon sigue al color', () => {
-  assert.match(HTML, /class="upsell-zoom cq-abrir" onclick="abrirCuadroCorreas\(event\)"/);
-  assert.strictEqual((HTML.match(/<span class="cq-col cq-sil">/g) || []).length, 2, 'silicona en los dos cuadros');
-  assert.strictEqual((HTML.match(/class="cq-nylon" src="img\/correa-nylon-negra\.webp"/g) || []).length, 2, 'parten en negro');
-  assert.ok(HTML.includes("const nylon = 'img/correa-nylon-' + (correaColor === 'grises' ? 'gris' : 'negra') + '.webp';"));
-  assert.ok(HTML.includes('<div class="cq-grande" id="cq-grande" onclick="event.stopPropagation()" hidden>'),
-    'tocar o arrastrar en el cuadro grande no agrega ni quita las correas');
-  assert.ok(HTML.includes('onclick="verFotosCorreas(event)">Ver fotos'), 'las fotos reales siguen a un toque');
-  assert.match(HTML, /if \(cambio\) cuadroCorreas\.empujar\(/, 'cambiar el color las mece');
+test('sin el recuadro, los cuadros no están y el JS de las correas no falla', () => {
+  assert.ok(!/<span class="cq\b/.test(HTML), 'quedó un cuadro de correas en la página');
+  assert.ok(!HTML.includes('id="cq-grande"'), 'quedó el cuadro grande de correas');
+  // Las funciones que tocan el recuadro salen solas si no lo encuentran.
+  assert.match(HTML, /const card = document\.getElementById\('upsell-correas'\);\s*if \(!card\) return;/);
+  assert.match(HTML, /const g = document\.getElementById\('cq-grande'\);[\s\S]{0,120}if \(!g\) return;/);
+  assert.match(HTML, /const cqGrande = document\.getElementById\('cq-grande'\);\s*if \(cqGrande\)/);
 });
 
 function motor(reducir) {
