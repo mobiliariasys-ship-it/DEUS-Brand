@@ -886,19 +886,6 @@
       <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
     </section>
 
-    <section id="sec-ruleta">
-      <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
-      <div class="util-kpis" id="ru-kpis"></div>
-      <div class="ru-premios" id="ru-premios"></div>
-      <div class="ru-acc">
-        <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
-        <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
-        <button class="btn ghost" onclick="descargarRuleta()">Descargar CSV</button>
-      </div>
-      <div class="scroll"><table id="t-ruleta"><thead><tr><th>Fecha</th><th>Correo y premio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="ruleta-empty" style="display:none">Todavía nadie ha dejado su correo en la ruleta.</div>
-    </section>
-
     <section id="sec-resenas">
       <div class="sec-h"><h2>⭐ Reseñas · subir a la web</h2><span class="pill" id="rp-total"></span></div>
       <div class="rp-form">
@@ -953,6 +940,19 @@
       <div class="winner" id="winner"></div>
       <div class="scroll"><table id="t-tickets"><thead><tr><th>N° ticket</th><th>Nombre</th><th>Instagram</th><th>N° orden</th><th>Fecha</th></tr></thead><tbody></tbody></table></div>
       <div class="empty" id="tickets-empty" style="display:none">Aún no hay tickets canjeados.</div>
+    </section>
+
+    <section id="sec-ruleta">
+      <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
+      <div class="util-kpis" id="ru-kpis"></div>
+      <div class="ru-premios" id="ru-premios"></div>
+      <div class="ru-acc">
+        <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
+        <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
+        <button class="btn ghost" onclick="descargarRuleta()">Descargar CSV</button>
+      </div>
+      <div class="scroll"><table id="t-ruleta"><thead><tr><th>Fecha</th><th>Correo y premio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ruleta-empty" style="display:none">Todavía nadie ha dejado su correo en la ruleta.</div>
     </section>
 
     <p style="font-size:.66rem;color:#666;line-height:1.5;margin-top:18px">

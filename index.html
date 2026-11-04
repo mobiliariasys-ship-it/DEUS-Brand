@@ -2084,7 +2084,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // services/ruleta.js: el servidor devuelve uno y la ruleta se detiene ahí.
   var GAJOS = [
     { id: 'p5',      a: '5%',      b: 'OFF' },
-    { id: 'tapones', a: 'TAPONES', b: 'GRATIS' },
+    { id: 'tapones', a: 'TAPONES', a2: 'DE OÍDO', b: 'GRATIS' },
     { id: 'd3000',   a: '$3.000',  b: 'OFF' },
     { id: 'p10',     a: '10%',     b: 'OFF' },
     { id: 'p7',      a: '7%',      b: 'OFF' },
@@ -2126,9 +2126,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var abajo = enReposo > 90 && enReposo < 270;
       var yG = abajo ? cy + (largo ? 100 : 106) : cy - 84;
       var yC = abajo ? cy + (largo ? 76 : 74) : cy - (largo ? 66 : 62);
+      var medio = '';
+      // Premio de tres líneas ("TAPONES / DE OÍDO / GRATIS"): más apretado
+      // para que entre en el gajo, del borde hacia el centro.
+      if (p.a2) {
+        yG = abajo ? cy + 105 : cy - 92;
+        var yM = abajo ? cy + 86 : cy - 75;
+        yC = abajo ? cy + 68 : cy - 61;
+        // En DM Sans: la Bebas achica la "Í" con tilde y en chico parece una "í".
+        medio = '<text x="' + cx + '" y="' + yM + '" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="800" font-size="11" letter-spacing="1" fill="' + col + '">' + p.a2 + '</text>';
+      }
       textos += '<g transform="rotate(' + (abajo ? mid + 180 : mid) + ' ' + cx + ' ' + cy + ')">' +
-        '<text x="' + cx + '" y="' + yG + '" text-anchor="middle" font-family="Bebas Neue, sans-serif" font-size="' + (largo ? 19 : 27) + '" letter-spacing="1" fill="' + col + '">' + p.a + '</text>' +
-        '<text x="' + cx + '" y="' + yC + '" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="700" font-size="10" letter-spacing="2" fill="' + col + '" opacity=".85">' + p.b + '</text></g>';
+        '<text x="' + cx + '" y="' + yG + '" text-anchor="middle" font-family="Bebas Neue, sans-serif" font-size="' + (p.a2 ? 18 : (largo ? 19 : 27)) + '" letter-spacing="1" fill="' + col + '">' + p.a + '</text>' + medio +
+        '<text x="' + cx + '" y="' + yC + '" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="700" font-size="' + (p.a2 ? 9 : 10) + '" letter-spacing="2" fill="' + col + '" opacity=".85">' + p.b + '</text></g>';
     });
     return '<svg viewBox="0 0 262 262" aria-hidden="true"><defs>' + defs + '</defs>' + s + brillo + textos + '</svg>';
   }
@@ -2383,7 +2393,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var e = leer(); if (!e.premio) return pantallaInicio();
     var pr = e.premio, venceMs = Date.parse(e.vence);
     var giroFinal = rotFinal != null ? rotFinal : destino(pr.id);
-    var titulo = pr.tipo === 'correa' ? 'Correa extra' : pr.tipo === 'tapones' ? 'Tapones gratis' : pr.etiqueta;
+    var titulo = pr.tipo === 'correa' ? 'Correa extra' : pr.tipo === 'tapones' ? 'Tapones de oído' : pr.etiqueta;
     var tag = e.yaGiro ? 'Ya giraste con este correo' : '¡Ganaste!';
     var enviado = '<div class="rl-ok"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="2.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Te lo enviamos a ' + esc(e.email) + '</div>' +
       '<div class="rl-fino" style="margin:-6px 0 10px">Úsalo comprando con ese mismo correo. Un código por compra.</div>';
@@ -2409,7 +2419,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var vencido = venceMs && Date.now() > venceMs;
     var card = montar('<button class="rl-x" aria-label="Cerrar">✕</button>' + rueda(giroFinal, indiceDe(pr.id)) +
       '<span class="rl-tag">' + (vencido ? 'Tu premio venció' : tag) + '</span>' +
-      '<div class="rl-premio">' + esc(titulo) + '</div><div class="rl-envio">+ envío gratis</div>' +
+      '<div class="rl-premio">' + esc(titulo) + '</div><div class="rl-envio">' + (pr.tipo === 'tapones' ? 'de regalo + envío gratis' : '+ envío gratis') + '</div>' +
       medio +
       (vencido ? '<button type="button" class="rl-btn" id="rl-otra">Girar de nuevo</button>'
         : !e.codigo ? '<button type="button" class="rl-btn" id="rl-listo">Entendido</button>'

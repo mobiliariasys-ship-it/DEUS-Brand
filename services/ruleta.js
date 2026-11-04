@@ -32,7 +32,7 @@ const PREMIOS = [
   { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.03,  prefijo: 'DEUS7' },
   // Los tapones tienen que poder salir: un premio que se muestra en la ruleta
   // y nunca sale sería publicidad engañosa (SERNAC).
-  { id: 'tapones', etiqueta: 'Tapones gratis', tipo: 'tapones',                prob: 0.02,  prefijo: 'TAPONES' },
+  { id: 'tapones', etiqueta: 'Tapones de oído gratis', tipo: 'tapones',        prob: 0.02,  prefijo: 'TAPONES' },
   { id: 'p10',     etiqueta: '10% OFF',        tipo: 'descuento', pct: 10,     prob: 0.008, prefijo: 'DEUS10' },
 ];
 const VIGENCIA_MS = 48 * 60 * 60 * 1000;   // el premio dura 48 horas

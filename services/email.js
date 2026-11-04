@@ -459,7 +459,7 @@ async function enviarPremioRuleta(datos) {
   const codigo = String(datos.codigo || '');
   const link = (extra) => `${SITIO}/?premio=${encodeURIComponent(codigo)}${extra || ''}`;
   const titulo = premio.tipo === 'correa' ? 'Correa extra'
-    : premio.tipo === 'tapones' ? 'Tapones de regalo'
+    : premio.tipo === 'tapones' ? 'Tapones de oído'
     : premio.etiqueta;
   // "viernes 6 de noviembre a las 15:42" (hora de Chile).
   const fv = new Date(datos.vence);
