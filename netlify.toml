@@ -204,6 +204,13 @@
   status = 200
   force = true
 
+# Ruleta "Gira y gana": girar, color de la correa y validar el código.
+[[redirects]]
+  from = "/ruleta/*"
+  to = "https://deus-band.onrender.com/ruleta/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/sorteo/*"
   to = "https://deus-band.onrender.com/sorteo/:splat"

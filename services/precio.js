@@ -68,7 +68,7 @@ function normalizarCorreas(correas) {
 // transbank.js, mas TAPONES_PRICE declarado tres veces y el 12990 del upsell
 // escrito a mano en seis. Copias asi son las que terminan cobrando distinto
 // segun la pasarela por la que entro el cliente. Las tres llaman a esta.
-function calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost } = {}) {
+function calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost, premio } = {}) {
   const qty = Math.max(1, Math.min(10, parseInt(cantidad) || 1));
   const envio = Math.max(0, Number(shippingCost) || 0);
   // Las correas son extras de la banda: en una compra de solo tapones no van.
@@ -76,13 +76,36 @@ function calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost }
   const productos = soloTapones
     ? TAPONES_PRICE * qty
     : precioBanda() * qty + (tapones ? UPSELL_TAPONES : 0) + CORREAS_PRICE * pares.length;
+  // Premio de la ruleta (ya validado por services/ruleta.js): solo con banda.
+  const p = soloTapones ? null : (premio || null);
+  const descuento = Math.min(descuentoPremio(p, qty), precioBanda() * qty);
   return {
     qty,
     correas: pares,                            // pares de correas extra que se cobran
     productos,                                 // subtotal de productos, sin envío
     envio,
-    total: productos + envio,                  // lo que se cobra
+    descuento,                                 // premio de la ruleta en pesos (0 si no hay)
+    correaPremio: (p && p.tipo === 'correa') ? (CORREA_PREMIO[p.color] ? p.color : 'negra') : null,
+    regaloPremio: !!(p && p.tipo === 'tapones'),
+    total: productos - descuento + envio,      // lo que se cobra
   };
+}
+
+// Premios de la ruleta que cambian el paquete: 1 correa de TELA (no el par
+// silicona + tela de las correas extra) del color que eligió, a $0.
+const CORREA_PREMIO = {
+  negra: { nombre: 'Correa de tela negra (premio ruleta)', detalle: '1 correa de nylon negra' },
+  gris:  { nombre: 'Correa de tela gris (premio ruleta)',  detalle: '1 correa de nylon gris' },
+};
+// Cuánto descuenta un premio de la ruleta. El % es sobre las bandas de la
+// compra; el monto fijo ($3.000) va una vez por compra. El % se redondea
+// HACIA ARRIBA (a favor del cliente), como hacía el código DEUSKEZ: anunciar
+// 5% y descontar 4,99% no puede pasar.
+function descuentoPremio(premio, qty) {
+  if (!premio || premio.tipo !== 'descuento') return 0;
+  if (premio.monto) return Math.max(0, Math.round(premio.monto));
+  if (premio.pct) return Math.ceil(precioBanda() * (qty || 1) * premio.pct / 100);
+  return 0;
 }
 
 // Promoción de tapones: con PROMO_TAPONES en true, toda compra CON banda lleva
@@ -96,20 +119,24 @@ const PROMO_TAPONES = false;
 
 // Lo que dice el pedido ('DEUS Band x2 + Correas extra negras'), igual en las
 // tres pasarelas. Va al correo, al panel y al asunto de Flow.
-function nombreProducto({ qty, tapones, correas, soloTapones } = {}) {
+function nombreProducto({ qty, tapones, correas, soloTapones, correaPremio, regaloPremio } = {}) {
   const x = qty > 1 ? ` x${qty}` : '';
   if (soloTapones) return 'Tapones de oído DEUS' + x;
   return 'DEUS Band' + x + (tapones ? ' + Tapones de oído' : '')
-    + normalizarCorreas(correas).map(k => ' + ' + CORREAS[k].nombre).join('');
+    + normalizarCorreas(correas).map(k => ' + ' + CORREAS[k].nombre).join('')
+    + (CORREA_PREMIO[correaPremio] ? ' + ' + CORREA_PREMIO[correaPremio].nombre : '')
+    + (regaloPremio ? ' + Tapones de oído (premio ruleta)' : '');
 }
 
-function llevaRegaloTapones({ soloTapones } = {}) {
-  return PROMO_TAPONES && !soloTapones;
+// Tapones de regalo: por la promo (apagada) o porque los ganó en la ruleta.
+function llevaRegaloTapones({ soloTapones, premio } = {}) {
+  if (soloTapones) return false;
+  return PROMO_TAPONES || !!(premio && premio.tipo === 'tapones');
 }
 
 module.exports = {
   SUBIDA_MS, precios, precioBanda, ANTES, DESPUES,
-  TAPONES_PRICE, UPSELL_TAPONES, calcularMonto,
+  TAPONES_PRICE, UPSELL_TAPONES, calcularMonto, CORREA_PREMIO, descuentoPremio,
   CORREAS_PRICE, CORREAS, normalizarCorreas, nombreProducto,
   PROMO_TAPONES, llevaRegaloTapones,
 };

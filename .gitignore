@@ -28,6 +28,9 @@ banda_negra_sola.jpg
 chats.json
 # Reseñas cargadas desde el panel cuando no hay base de datos (modo archivo).
 resenas-panel.json
+# Códigos de la ruleta "Gira y gana" en modo archivo: llevan el correo de
+# cada persona que giró.
+ruleta.json
 resena-foto-*.json
 resenas-orden.json
 

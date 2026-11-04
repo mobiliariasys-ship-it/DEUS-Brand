@@ -48,8 +48,9 @@ test('las tres pasarelas cobran con las correas que mandó el checkout', () => {
     const src = leer(...archivo);
     const nombre = archivo.join('/');
     assert.match(src, /cantidad, tapones, correas, soloTapones, [^}]*\} = req\.body/, nombre + ': no lee las correas del pedido');
-    // El cobro y el aviso de pago fallido: los dos con las correas.
-    assert.strictEqual((src.match(/calcularMonto\(\{ cantidad, tapones, correas, soloTapones, shippingCost \}\)/g) || []).length, 2, nombre + ': algún calcularMonto quedó sin correas');
+    // El cobro y el aviso de pago fallido: los dos con las correas y con el
+    // premio de la ruleta (si no, el aviso de venta rescatable sale con otro monto).
+    assert.strictEqual((src.match(/calcularMonto\(\{ cantidad, tapones, correas, soloTapones, shippingCost, premio \}\)/g) || []).length, 2, nombre + ': algún calcularMonto quedó sin correas o sin el premio');
     assert.match(src, /correas: m\.correas/, nombre + ': el pedido guardado no anota las correas');
   }
   // Mercado Pago confirma por webhook: las correas tienen que viajar en la metadata.
@@ -82,7 +83,10 @@ test('el checkout muestra el precio completo, no "$22.990 x 3 cuotas"', () => {
   // Igual que la página (un precio grande y las cuotas en una línea aparte):
   // la cuota como número grande se leía como el precio de la banda.
   assert.ok(!HTML.includes('x 3 cuotas</small>'), 'la línea de la banda volvió a mostrar la cuota como precio');
-  assert.ok(HTML.includes('const precioTxt = `<span class="co-price-now">${clp(bandTotal)}</span>`;'));
+  // Sin premio, el precio completo de la banda; con un premio de descuento de
+  // la ruleta, el precio completo tachado y al lado el que se paga.
+  assert.ok(HTML.includes(': `<span class="co-price-now">${clp(bandTotal)}</span>`;'));
+  assert.ok(HTML.includes('? `<s class="rlc-tachado">${clp(bandTotal)}</s> <span class="co-price-now">${clp(bandaConPremio)}</span>`'));
   assert.ok(HTML.includes(`'<div class="pe-top"><div class="pe-k">Total a pagar</div><div class="pe-v">' + clp(total) + '</div></div>'`), 'el número grande de la tarjeta tiene que ser el total');
   assert.ok(HTML.includes(`o <span class="pe-cg">3 cuotas sin interés</span> de <b>' + clp(cuotaDe(total)) + '</b>`), 'las cuotas van como línea secundaria');
 });

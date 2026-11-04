@@ -9,9 +9,10 @@ const flowRoutes = require('./routes/flow');
 const equipoRoutes = require('./routes/equipo');
 const chatRoutes = require('./routes/chat');
 const atletas = require('./services/atletas');
-const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico } = require('./services/email');
+const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, enviarPremioRuleta, diagnostico } = require('./services/email');
 const colores_ = require('./services/colores');
 const correo_ = require('./services/correo');
+const ruleta_ = require('./services/ruleta');
 const utilidad_ = require('./services/utilidad');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
@@ -181,7 +182,7 @@ const pedidos = [];
 function guardarPedidos() { persist.save('pedidos.json', pedidos).catch(e => console.error('[pedidos] Error guardando:', e.message)); }
 
 app.post('/crear-preferencia', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, correas, soloTapones, acciones, colores } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, correas, soloTapones, acciones, colores, codigoPremio, colorPremio } = req.body;
   // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
   // MercadoPago tambien recibe el correo. Mismo corte que en Flow: si la
   // pasarela lo va a rechazar, mejor decirselo al cliente ahora y que lo
@@ -191,13 +192,18 @@ app.post('/crear-preferencia', async (req, res) => {
   }
   const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
   const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
+  // Premio de la ruleta: lo valida el servidor (vencido, usado o inventado →
+  // se le dice al cliente antes de mandarlo a pagar otro monto).
+  let premio = null;
+  try { premio = await ruleta_.servicio().premioParaCobro(codigoPremio, colorPremio, { cliente: customerEmail }); }
+  catch (e) { return res.status(400).json({ error: e.message, campo: 'codigo' }); }
 
   try {
     const preference = new Preference(client);
 
     // Una sola fuente para lo que se cobra: misma función que usan Flow y
     // Transbank, así las tres pasarelas no pueden cobrar distinto.
-    const m = calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost });
+    const m = calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost, premio });
     const qty = m.qty;
 
     // Compra de SOLO tapones (sin banda): el único ítem es el estuche de tapones.
@@ -242,6 +248,21 @@ app.post('/crear-preferencia', async (req, res) => {
       });
     }
 
+    // Con premio de descuento, los productos se colapsan en UNA línea al monto
+    // ya rebajado (igual que hacía el código DEUSKEZ): Mercado Pago no acepta
+    // un ítem de precio negativo, y repartir el descuento entre ítems podría
+    // no calzar con calcularMonto() por redondeo.
+    if (m.descuento > 0) {
+      items.length = 0;
+      items.push({
+        title: nombreProducto({ qty, tapones, correas: m.correas, soloTapones, correaPremio: m.correaPremio, regaloPremio: m.regaloPremio }),
+        description: `Premio de la ruleta ${premio.codigo}: -$${m.descuento.toLocaleString('es-CL')}`,
+        unit_price: m.productos - m.descuento,
+        quantity: 1,
+        currency_id: 'CLP'
+      });
+    }
+
     if (shippingCost && shippingCost > 0) {
       items.push({
         title: `Envío ${shippingCarrier || 'estándar'}`,
@@ -278,7 +299,12 @@ app.post('/crear-preferencia', async (req, res) => {
         soloTapones: !!soloTapones,
         // Regalo de la promo (tapones DEUS gratis). En snake_case porque así lo
         // devuelve MercadoPago en el webhook.
-        regalo_tapones: llevaRegaloTapones({ soloTapones }),
+        regalo_tapones: llevaRegaloTapones({ soloTapones, premio }),
+        // Premio de la ruleta: el webhook marca el código como usado y arma el
+        // correo de despacho con la correa del premio.
+        codigo_premio: premio ? premio.codigo : '',
+        correa_premio: m.correaPremio || '',
+        descuento: m.descuento,
         shipping_carrier: shippingCarrier,
         shipping_cost: shippingCost,
         shipping_address: shippingAddress,
@@ -314,13 +340,16 @@ app.post('/crear-preferencia', async (req, res) => {
     const pedido = {
       preference_id: result.id,
       created_at: new Date().toISOString(),
-      product: nombreProducto({ qty, tapones, correas: m.correas, soloTapones }),
+      product: nombreProducto({ qty, tapones, correas: m.correas, soloTapones, correaPremio: m.correaPremio, regaloPremio: m.regaloPremio }),
       product_price: m.productos,
       cantidad: qty,
       tapones: !!tapones,
       correas: m.correas,
       soloTapones: !!soloTapones,
-      regaloTapones: llevaRegaloTapones({ soloTapones }),
+      regaloTapones: llevaRegaloTapones({ soloTapones, premio }),
+      codigoPremio: premio ? premio.codigo : null,
+      correaPremio: m.correaPremio,
+      descuento: m.descuento,
       color: colorPedido,
       colores: coloresPedido,
       customer: {
@@ -371,12 +400,103 @@ app.post('/crear-preferencia', async (req, res) => {
       producto: nombreProducto({ qty: 1, tapones, correas, soloTapones }),
       // Los extras (tapones, correas) tambien van en el aviso: si no, el monto
       // de la venta rescatable sale menor al que el cliente iba a pagar.
-      monto: calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost }).total,
+      monto: calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost, premio }).total,
       color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
     res.status(500).json({ error: 'Error al crear la preferencia de pago' });
   }
+});
+
+// ── Ruleta "Gira y gana" ──
+// El premio lo decide services/ruleta.js; el navegador solo anima la ruleta
+// hasta el gajo que le devuelve esto. Contra el abuso, además de lo que hace
+// el servicio (un giro por persona, códigos imposibles de adivinar):
+//  - por IP: 5 giros nuevos por hora y 15 pedidos de giro en total;
+//  - freno general: si en 10 minutos se piden más de 120 giros nuevos (un
+//    programa inventando correos), se corta hasta que baje;
+//  - validar códigos: 30 consultas por IP cada 10 min y, si se equivoca 10
+//    veces seguidas, se bloquea (así no se pueden probar códigos al azar).
+// La IP: la que pone Netlify (x-nf-client-connection-ip) o la primera del
+// X-Forwarded-For. Se puede falsear yendo directo a Render, por eso existe
+// el freno general.
+function limitador(max, ventanaMs) {
+  const m = new Map();
+  const vivos = (clave, ahora) => (m.get(clave) || []).filter(t => ahora - t < ventanaMs);
+  return {
+    lleno(clave) { return vivos(clave, Date.now()).length >= max; },
+    anotar(clave) {
+      const ahora = Date.now();
+      const l = vivos(clave, ahora);
+      l.push(ahora);
+      m.set(clave, l);
+      if (m.size > 5000) for (const [k, v] of m) if (!v.some(t => ahora - t < ventanaMs)) m.delete(k);
+    },
+  };
+}
+function ipCliente(req) {
+  return String(req.headers['x-nf-client-connection-ip'] || '').trim()
+    || String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()
+    || req.ip || '';
+}
+const HORA = 60 * 60 * 1000, DIEZ_MIN = 10 * 60 * 1000;
+const giroNuevoIp = limitador(5, HORA);
+const giroPedidoIp = limitador(15, HORA);
+const giroNuevoTodos = limitador(120, DIEZ_MIN);
+const codigoConsultaIp = limitador(30, DIEZ_MIN);
+const codigoFalloIp = limitador(10, DIEZ_MIN);
+const colorIp = limitador(20, DIEZ_MIN);
+const MUCHOS = 'Hiciste muchos intentos seguidos. Espera unos minutos e intenta de nuevo.';
+
+app.post('/ruleta/girar', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const email = req.body && typeof req.body.email === 'string' ? req.body.email : '';
+  if (!correo_.esUsable(email)) {
+    return res.status(400).json({ error: 'Revisa tu correo: así no te podemos mandar el premio.', campo: 'email' });
+  }
+  const ip = ipCliente(req);
+  if (giroPedidoIp.lleno(ip)) return res.status(429).json({ error: MUCHOS });
+  giroPedidoIp.anotar(ip);
+  if (giroNuevoIp.lleno(ip)) return res.status(429).json({ error: 'Ya giraste varias veces. Intenta más tarde.' });
+  if (giroNuevoTodos.lleno('todos')) return res.status(429).json({ error: 'Mucha gente girando en este momento. Intenta en unos minutos.' });
+  try {
+    const r = await ruleta_.servicio().girar(correo_.normalizar(email));
+    if (!r.yaGiro) { giroNuevoIp.anotar(ip); giroNuevoTodos.anotar('todos'); }
+    // El código viaja SIEMPRE al correo del dueño; si ya había girado, en la
+    // pantalla no se muestra (r.publico no lo trae).
+    if (r.reenviar) enviarPremioRuleta(r.paraCorreo).catch(e => console.error('[ruleta] correo del premio:', e.message));
+    res.json(r.publico);
+  } catch (e) {
+    if (e.codigoError) return res.status(400).json({ error: e.message, campo: 'email' });
+    console.error('[ruleta/girar]', e.message);
+    res.status(500).json({ error: 'No pudimos girar la ruleta. Intenta de nuevo.' });
+  }
+});
+// Color de la correa del premio (lo elige en la ruleta o en el correo).
+app.post('/ruleta/color', async (req, res) => {
+  const ip = ipCliente(req);
+  if (colorIp.lleno(ip)) return res.status(429).json({ ok: false, error: MUCHOS });
+  colorIp.anotar(ip);
+  const ok = await ruleta_.servicio().elegirColor(req.body && req.body.codigo, req.body && req.body.color);
+  res.json({ ok });
+});
+// El checkout valida el código antes de mostrar el descuento. Igual se vuelve
+// a validar al pagar: lo que se cobra lo decide calcularMonto() del servidor.
+app.get('/ruleta/codigo/:codigo', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ip = ipCliente(req);
+  if (codigoConsultaIp.lleno(ip) || codigoFalloIp.lleno(ip)) return res.status(429).json({ ok: false, error: 'muchos', mensaje: MUCHOS });
+  codigoConsultaIp.anotar(ip);
+  const v = await ruleta_.servicio().validar(req.params.codigo);
+  if (!v.ok && v.error === 'no-existe') codigoFalloIp.anotar(ip);
+  res.json(v);
+});
+// Cuántos giraron y cuántos usaron cada premio (misma clave que /pedidos).
+app.get('/admin/ruleta', async (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+  res.json(await ruleta_.servicio().resumen());
 });
 
 app.post('/notificaciones', async (req, res) => {
@@ -412,6 +532,9 @@ app.post('/notificaciones', async (req, res) => {
         const correasPago = meta.correas !== undefined ? normalizarCorreas(String(meta.correas)) : normalizarCorreas(enMemoria.correas);
         const regaloPago = meta.regalo_tapones !== undefined ? (meta.regalo_tapones === true || meta.regalo_tapones === 'true') : !!enMemoria.regaloTapones;
         const costoPago = (meta.shipping_cost !== undefined && meta.shipping_cost !== null && meta.shipping_cost !== '') ? Number(meta.shipping_cost) : enMemoria.shipping?.cost;
+        const codigoPremioPago = meta.codigo_premio || enMemoria.codigoPremio || '';
+        const correaPremioPago = meta.correa_premio || enMemoria.correaPremio || null;
+        const descuentoPago = Number(meta.descuento) || enMemoria.descuento || 0;
         const pedido = {
           product: enMemoria.product || 'DEUS Band',
           color: meta.selected_color || enMemoria.color,
@@ -420,6 +543,9 @@ app.post('/notificaciones', async (req, res) => {
           tapones: taponesPago,
           correas: correasPago,
           regaloTapones: regaloPago,
+          codigoPremio: codigoPremioPago || null,
+          correaPremio: correaPremioPago,
+          descuento: descuentoPago,
           method: enMemoria.method || 'MercadoPago',
           customer: {
             name: meta.customer_name || enMemoria.customer?.name,
@@ -444,6 +570,8 @@ app.post('/notificaciones', async (req, res) => {
         if (reaviso) console.log('[webhook] Pago', info.id, 'ya procesado — no se reenvían correos');
 
         if (!reaviso) await enviarPagoConfirmado(info, pedido);
+        // El código de la ruleta ya no sirve para otra compra (idempotente).
+        if (codigoPremioPago) ruleta_.servicio().marcarUsado(codigoPremioPago, info.id).catch(e => console.error('[ruleta] marcar usado:', e.message));
         // Purchase a Meta desde el SERVIDOR (Conversions API): captura el 100%
         // de las ventas aunque el cliente no vuelva a success.html. Mismo
         // event_id que el píxel del navegador → Meta deduplica si llegan ambos.
@@ -476,7 +604,10 @@ app.post('/notificaciones', async (req, res) => {
           address: pedido.shipping.address,
           ticket: ticketMP && ticketMP.numero,
           correas: pedido.correas,
-          regaloTapones: pedido.regaloTapones
+          regaloTapones: pedido.regaloTapones,
+          correaPremio: pedido.correaPremio,
+          descuento: pedido.descuento,
+          codigoPremio: pedido.codigoPremio
         }).catch(err => console.error('[email] Confirmación cliente:', err.message));
       }
     } catch (err) {

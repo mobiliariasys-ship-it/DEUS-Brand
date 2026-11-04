@@ -11,6 +11,7 @@ const metaCapi = require('../services/meta-capi');
 // Precio único $54.990, con stock y en modo reserva (igual que server.js y
 // flow.js, y que lo que muestra el sitio).
 const { precioBanda, TAPONES_PRICE, calcularMonto, nombreProducto, llevaRegaloTapones } = require('../services/precio');
+const ruleta_ = require('../services/ruleta');
 const pedidosWebpay = new Map(); // buyOrder -> pedido
 
 // Producción si hay credenciales reales; si no, integración (pruebas)
@@ -34,14 +35,19 @@ function getBaseUrl(req) {
 
 // Inicia el pago con Webpay
 router.post('/webpay/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, correas, soloTapones, colores } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, correas, soloTapones, colores, codigoPremio, colorPremio } = req.body;
   // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
   const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
   const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
+  // Premio de la ruleta: lo valida el servidor (vencido, usado o inventado →
+  // se le dice al cliente antes de mandarlo a pagar otro monto).
+  let premio = null;
+  try { premio = await ruleta_.servicio().premioParaCobro(codigoPremio, colorPremio, { cliente: customerEmail }); }
+  catch (e) { return res.status(400).json({ error: e.message, campo: 'codigo' }); }
   try {
     // Una sola fuente para lo que se cobra: misma función que usan Flow y
     // Mercado Pago, así las tres pasarelas no pueden cobrar distinto.
-    const m = calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost });
+    const m = calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost, premio });
     const qty = m.qty;
     const amount = m.total;
     const buyOrder = 'deus-' + Date.now();
@@ -54,13 +60,14 @@ router.post('/webpay/crear', async (req, res) => {
     const pedido = {
       preference_id: buyOrder,
       created_at: new Date().toISOString(),
-      product: nombreProducto({ qty, tapones, correas: m.correas, soloTapones }),
+      product: nombreProducto({ qty, tapones, correas: m.correas, soloTapones, correaPremio: m.correaPremio, regaloPremio: m.regaloPremio }),
       product_price: m.productos,
       cantidad: qty,
       tapones: !!tapones,
       correas: m.correas,
       soloTapones: !!soloTapones,
-      regaloTapones: llevaRegaloTapones({ soloTapones }), // promo: tapones DEUS gratis
+      regaloTapones: llevaRegaloTapones({ soloTapones, premio }), // promo o premio de la ruleta
+      codigoPremio: premio ? premio.codigo : null, correaPremio: m.correaPremio, descuento: m.descuento,
       color: colorPedido,
       colores: coloresPedido,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
@@ -105,7 +112,7 @@ router.post('/webpay/crear', async (req, res) => {
       producto: nombreProducto({ qty: 1, tapones, correas, soloTapones }),
       // Los extras (tapones, correas) tambien van en el aviso: si no, el monto
       // de la venta rescatable sale menor al que el cliente iba a pagar.
-      monto: calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost }).total,
+      monto: calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost, premio }).total,
       color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
@@ -163,6 +170,8 @@ async function handleRetorno(req, res) {
         transaction_amount: result.amount,
         id: result.buy_order
       }, pedido).catch(e => console.error('[email]', e.message));
+      // El código de la ruleta ya no sirve para otra compra (idempotente).
+      if (pedido && pedido.codigoPremio) ruleta_.servicio().marcarUsado(pedido.codigoPremio, result.buy_order).catch(e => console.error('[ruleta] marcar usado:', e.message));
       // Confirmación al cliente (el correo lo tomamos del pedido guardado)
       if (!reaviso) enviarConfirmacionCliente({
         email: pedido && pedido.customer && pedido.customer.email,
@@ -174,7 +183,10 @@ async function handleRetorno(req, res) {
         address: pedido && pedido.shipping && pedido.shipping.address,
         ticket: ticketWP && ticketWP.numero,
         correas: (pedido && pedido.correas) || [],
-        regaloTapones: !!(pedido && pedido.regaloTapones)
+        regaloTapones: !!(pedido && pedido.regaloTapones),
+        correaPremio: pedido && pedido.correaPremio,
+        descuento: pedido && pedido.descuento,
+        codigoPremio: pedido && pedido.codigoPremio
       }).catch(e => console.error('[email] Confirmación cliente:', e.message));
       return res.redirect(`/success.html?monto=${Number(result.amount) || ''}&orden=${encodeURIComponent(result.buy_order || '')}`);
     }

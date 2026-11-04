@@ -1954,10 +1954,536 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 })();
 </script>
 
-<!-- Pestaña lateral: Sorteo mensual -->
-<div class="rifa-tab" onclick="abrirRifa()" role="button" tabindex="0" aria-label="Ver sorteo mensual">
-  <span class="rifa-emoji-tab">🎁</span> Sorteo mensual
+<!-- Ruleta "Gira y gana" (desde el 4-nov-2026, en lugar de la pestaña del
+     sorteo mensual; el sorteo de noviembre se hace igual con quienes ya
+     participan y su ventana sigue en la página). Aparece a los 11 segundos de
+     estar en la web, una sola vez; después se abre desde la pestaña. Diseño
+     "Colores DEUS": gajos negro, gris y rosado, como las bandas. El premio lo
+     decide el servidor (services/ruleta.js): acá solo se anima la ruleta hasta
+     el gajo que él devuelve. El giro dura 3 segundos como máximo, con rayos
+     rosados que caen sobre la ruleta (y que siguen el dedo o el mouse). -->
+<style id="ruleta-estilos">
+.rl-capa{position:fixed;inset:0;z-index:99990;background:rgba(6,6,8,.72);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px;font-family:'DM Sans',sans-serif;opacity:0;transition:opacity .25s ease;}
+.rl-capa.abierta{opacity:1;}
+.rl-card{position:relative;width:100%;max-width:370px;max-height:calc(100dvh - 24px);overflow:hidden auto;background:linear-gradient(180deg,#1c1c21 0%,#141417 100%);border:1px solid #33333b;border-radius:20px;padding:22px 20px 18px;color:#f2f2f2;box-shadow:0 24px 60px rgba(0,0,0,.55);text-align:center;transform:translateY(14px) scale(.98);transition:transform .3s cubic-bezier(.2,.8,.2,1);}
+.rl-capa.abierta .rl-card{transform:none;}
+.rl-card::before{content:"";position:absolute;inset:-40% -20% auto;height:260px;background:radial-gradient(closest-side,rgba(240,195,202,.13),transparent);pointer-events:none;}
+.rl-rayos{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;}
+.rl-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid #33333b;background:#1a1a1f;color:#9a9aa2;font-size:15px;line-height:30px;cursor:pointer;z-index:6;}
+.rl-tag{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#f0c3ca;border:1px solid rgba(240,195,202,.35);background:rgba(240,195,202,.08);border-radius:999px;padding:5px 11px;}
+.rl-tit{font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:1.5px;line-height:1;margin:12px 0 6px;}
+.rl-tit b{color:#f0c3ca;font-weight:400;}
+.rl-sub{font-size:13px;color:#a9a9b0;line-height:1.45;margin:0 auto 14px;max-width:290px;}
+.rl-rueda{position:relative;width:262px;height:262px;margin:4px auto 16px;touch-action:none;}
+.rl-aro{position:absolute;inset:-9px;border-radius:50%;background:conic-gradient(from 0deg,#2a2a31,#3a3a43,#2a2a31,#3a3a43,#2a2a31);box-shadow:0 0 0 1px #45454f inset,0 10px 30px rgba(0,0,0,.5);}
+.rl-luces{position:absolute;inset:-9px;}
+.rl-luces i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;box-shadow:0 0 6px 1px rgba(255,255,255,.7);}
+.rl-luces i.off{background:#55555c;box-shadow:none;}
+.rl-giro{position:absolute;inset:0;will-change:transform;}
+.rl-giro svg{width:100%;height:100%;display:block;}
+.rl-puntero{position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:34px;height:40px;z-index:3;filter:drop-shadow(0 3px 4px rgba(0,0,0,.6));}
+.rl-hub{position:absolute;left:50%;top:50%;width:66px;height:66px;margin:-33px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#2b2b31,#111114);border:2px solid #f2f2f2;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:1.5px;color:#f2f2f2;z-index:2;box-shadow:0 4px 14px rgba(0,0,0,.6);}
+.rl-rueda.golpe .rl-giro{animation:rlGolpe .55s ease-out;}
+@keyframes rlGolpe{0%{filter:brightness(1)}18%{filter:brightness(1.9) drop-shadow(0 0 18px #ff6fae)}100%{filter:brightness(1)}}
+.rl-form{display:flex;flex-direction:column;gap:9px;}
+.rl-in{height:48px;border-radius:12px;border:1px solid #3a3a43;background:#111114;color:#f2f2f2;font:inherit;font-size:16px;padding:0 14px;text-align:left;}
+.rl-in::placeholder{color:#6f6f78;}
+.rl-in:focus{outline:none;border-color:#f0c3ca;}
+.rl-btn{height:50px;border-radius:12px;border:0;background:#f2f2f2;color:#111;font:inherit;font-weight:800;font-size:14.5px;letter-spacing:1.4px;text-transform:uppercase;box-shadow:0 8px 22px rgba(255,255,255,.12);cursor:pointer;width:100%;}
+.rl-btn[disabled]{opacity:.7;cursor:default;}
+.rl-err{min-height:0;font-size:12.5px;color:#ff8a8a;text-align:left;}
+.rl-err:empty{display:none;}
+.rl-no{display:inline-block;margin:8px auto 0;font-size:12px;color:#8a8a93;text-decoration:underline;text-underline-offset:3px;background:none;border:0;font-family:inherit;cursor:pointer;}
+.rl-fino{font-size:10.5px;color:#73737c;margin-top:8px;line-height:1.45;}
+/* resultado */
+.rl-card.gano .rl-rueda{transform:scale(.58);margin:-42px auto -44px;}
+.rl-premio{font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:.95;letter-spacing:1px;color:#f0c3ca;margin:8px 0 2px;}
+.rl-envio{font-size:13px;color:#a9a9b0;}
+.rl-texto{font-size:13px;color:#a9a9b0;line-height:1.45;margin:4px auto 12px;max-width:300px;}
+.rl-texto b{color:#f2f2f2;}
+.rl-cod{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px dashed rgba(240,195,202,.6);background:rgba(240,195,202,.07);border-radius:12px;padding:10px 12px 10px 16px;margin:12px 0 10px;}
+.rl-cod .k{font-size:10px;letter-spacing:1.4px;color:#a9a9b0;text-transform:uppercase;text-align:left;}
+.rl-cod .v{font-family:'Bebas Neue',sans-serif;font-size:27px;letter-spacing:3px;color:#f2f2f2;line-height:1.1;text-align:left;}
+.rl-copiar{border:1px solid #45454f;background:#1e1e22;color:#f2f2f2;font:inherit;font-size:12px;font-weight:700;border-radius:9px;padding:8px 12px;cursor:pointer;}
+.rl-ok{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12.5px;color:#7fc9a0;margin-bottom:12px;word-break:break-all;}
+.rl-precio{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:0 0 12px;}
+.rl-precio s{color:#7a7a83;font-size:15px;}
+.rl-precio b{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;color:#f2f2f2;font-weight:400;}
+.rl-reloj{font-size:11.5px;color:#a9a9b0;margin-top:10px;}
+.rl-reloj b{color:#f2f2f2;font-variant-numeric:tabular-nums;}
+.rl-colk{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#a9a9b0;margin:0 0 8px;}
+.rl-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.rl-col{display:flex;align-items:center;gap:10px;border:1px solid #3a3a43;background:#111114;border-radius:12px;padding:8px 12px;color:#f2f2f2;font:inherit;font-size:14px;font-weight:700;text-align:left;cursor:pointer;}
+.rl-col img{height:58px;width:auto;}
+.rl-col small{display:block;font-weight:400;font-size:11px;color:#8a8a93;margin-top:2px;}
+.rl-col.on{border-color:#f0c3ca;background:rgba(240,195,202,.08);box-shadow:0 0 0 1px #f0c3ca inset;}
+.rl-col .ck{margin-left:auto;width:18px;height:18px;border-radius:50%;border:1.5px solid #4a4a53;flex:none;}
+.rl-col.on .ck{background:#f0c3ca url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%233a1820' stroke-width='3'/%3E%3C/svg%3E") center/12px no-repeat;border-color:#f0c3ca;}
+/* campo de código del checkout */
+.rlc{margin:14px 0 2px;text-align:left;}
+.rlc-k{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:#9a9aa2;font-weight:700;margin-bottom:8px;}
+.rlc-fila{display:flex;gap:8px;}
+.rlc-in{flex:1;min-width:0;height:46px;background:transparent;border:1px solid #3b414d;color:#f2f2f2;font:inherit;font-size:16px;letter-spacing:1.5px;text-transform:uppercase;padding:0 14px;border-radius:2px;}
+.rlc-in::placeholder{color:#6f7480;letter-spacing:.5px;text-transform:none;}
+.rlc-btn{height:46px;padding:0 16px;border:1px solid #e8b464;background:transparent;color:#e8b464;font:inherit;font-weight:800;font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;border-radius:2px;cursor:pointer;}
+.rlc.ok .rlc-in{border-color:#7fc9a0;}
+.rlc.ok .rlc-btn{border-color:#4a505c;color:#b5b9c2;}
+.rlc-msg{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#8a8a93;margin-top:8px;}
+.rlc-msg:empty{display:none;}
+.rlc-msg.bien{color:#7fc9a0;}
+.rlc-msg.mal{color:#ff8a8a;}
+.rlc-msg b{color:#f2f2f2;font-weight:700;}
+.rlc-tachado{color:#7a7f8a;font-size:.9em;margin-right:6px;}
+.rlc-card{display:flex;align-items:center;gap:12px;margin:12px 0 2px;background:#101710;border:1px solid #7fc9a0;border-radius:12px;padding:12px;}
+.rlc-card img{height:64px;width:auto;flex:none;margin:0 4px;}
+.rlc-emoji{font-size:30px;flex:none;margin:0 6px;}
+.rlc-info{flex:1;min-width:0;text-align:left;}
+.rlc-tag{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:#e8b464;font-weight:700;}
+.rlc-name{font-size:14px;font-weight:700;color:#f2f2f2;margin:3px 0 7px;}
+.rlc-name b{color:#7fc9a0;}
+.rlc-sub{font-size:12px;color:#a9a9b0;}
+.rlc-cols{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.rlc-cols em{font-style:normal;font-size:11px;color:#8a8a93;margin-right:2px;}
+.rlc-cols button{display:inline-flex;align-items:center;gap:5px;border:1px solid #3a3a43;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;color:#cfcfd4;background:transparent;cursor:pointer;}
+.rlc-cols button i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1px #6a6a73;}
+.rlc-cols button.on{border-color:#7fc9a0;color:#f2f2f2;background:rgba(127,201,160,.12);}
+.rlc-precio{text-align:right;flex:none;}
+.rlc-precio b{display:block;font-size:17px;color:#7fc9a0;}
+.rlc-precio small{font-size:11px;color:#8a8a93;}
+/* Final fuerte: el rayo le pega al gajo ganador, destello rosado y temblor */
+.rl-card.temblor{animation:rlTemblor .42s cubic-bezier(.36,.07,.19,.97);}
+@keyframes rlTemblor{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-6px)}40%,60%{transform:translateX(6px)}}
+.rl-flash{position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(circle at 50% 42%,rgba(255,230,241,.9),rgba(255,95,162,.38) 38%,transparent 72%);animation:rlFlash .65s ease-out forwards;}
+@keyframes rlFlash{0%{opacity:0}10%{opacity:1}100%{opacity:0}}
+.rl-ganador{animation:rlGanador 1.3s ease-out both;}
+@keyframes rlGanador{0%{opacity:0}12%{opacity:1}30%{opacity:.5}50%{opacity:1}100%{opacity:.9}}
+@media (prefers-reduced-motion: reduce){.rl-capa,.rl-card{transition:none;}.rl-rueda.golpe .rl-giro,.rl-card.temblor,.rl-ganador{animation:none;}.rl-flash{display:none;}}
+</style>
+
+<!-- Pestaña lateral: Gira y gana (antes, "Sorteo mensual") -->
+<div class="rifa-tab" id="ruleta-tab" onclick="abrirRuleta()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirRuleta();}" role="button" tabindex="0" aria-label="Abrir la ruleta Gira y gana">
+  <span class="rifa-emoji-tab">🎡</span> Gira y gana
 </div>
+
+<script>
+(function () {
+  'use strict';
+  // Gajos en el sentido del reloj desde arriba. Los ids son los de
+  // services/ruleta.js: el servidor devuelve uno y la ruleta se detiene ahí.
+  var GAJOS = [
+    { id: 'p5',      a: '5%',      b: 'OFF' },
+    { id: 'tapones', a: 'TAPONES', b: 'GRATIS' },
+    { id: 'd3000',   a: '$3.000',  b: 'OFF' },
+    { id: 'p10',     a: '10%',     b: 'OFF' },
+    { id: 'p7',      a: '7%',      b: 'OFF' },
+    { id: 'correa',  a: 'CORREA',  b: 'EXTRA' }
+  ];
+  // Negro, gris y rosado: los colores de las bandas.
+  var PALETA = [['#2a2a2f', '#141416', '#f2f2f2'], ['#a3a3a3', '#7d7d7d', '#141416'], ['#f0c3ca', '#d99aa5', '#3a1820']];
+  var CLAVE = 'deus-ruleta';
+  var SEGUNDOS = 11;
+  var GIRO_MAX_MS = 3000;
+  var quieto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var base = (window.DEUS_API_BASE || '').replace(/\/$/, '');
+
+  function leer() { try { return JSON.parse(localStorage.getItem(CLAVE) || 'null') || {}; } catch (e) { return {}; } }
+  function guardar(o) { try { localStorage.setItem(CLAVE, JSON.stringify(o)); } catch (e) {} }
+  function evento(n) { try { if (window.deusEvento) window.deusEvento('accion:' + n); } catch (e) {} }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function clp(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+  function precio() { try { return precioBanda(); } catch (e) { return 68990; } }
+
+  // ── La ruleta en SVG ──
+  function disco(giro, ganador) {
+    var R = 131, cx = 131, cy = 131, n = GAJOS.length, paso = 360 / n, defs = '', s = '', textos = '', brillo = '';
+    function rad(d) { return (d - 90) * Math.PI / 180; }
+    PALETA.forEach(function (g, k) {
+      defs += '<linearGradient id="rlG' + k + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + g[0] + '"/><stop offset="1" stop-color="' + g[1] + '"/></linearGradient>';
+    });
+    defs += '<filter id="rlGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+    GAJOS.forEach(function (p, i) {
+      var k = i % PALETA.length, col = PALETA[k][2];
+      var a0 = rad(i * paso), a1 = rad((i + 1) * paso);
+      var d = 'M' + cx + ',' + cy + ' L' + (cx + R * Math.cos(a0)).toFixed(2) + ',' + (cy + R * Math.sin(a0)).toFixed(2) +
+        ' A' + R + ',' + R + ' 0 0,1 ' + (cx + R * Math.cos(a1)).toFixed(2) + ',' + (cy + R * Math.sin(a1)).toFixed(2) + ' Z';
+      s += '<path d="' + d + '" fill="url(#rlG' + k + ')" stroke="rgba(0,0,0,.45)" stroke-width="1.2"/>';
+      if (ganador === i) brillo = '<path class="rl-ganador" d="' + d + '" fill="rgba(255,120,180,.32)" stroke="#ffd1e3" stroke-width="4" stroke-linejoin="round" filter="url(#rlGlow)"/>';
+      // Los gajos que quedan en la mitad de abajo se dan vuelta para leerse derechos.
+      var mid = i * paso + paso / 2, largo = p.a.length > 4;
+      var enReposo = (((mid + giro) % 360) + 360) % 360;
+      var abajo = enReposo > 90 && enReposo < 270;
+      var yG = abajo ? cy + (largo ? 100 : 106) : cy - 84;
+      var yC = abajo ? cy + (largo ? 76 : 74) : cy - (largo ? 66 : 62);
+      textos += '<g transform="rotate(' + (abajo ? mid + 180 : mid) + ' ' + cx + ' ' + cy + ')">' +
+        '<text x="' + cx + '" y="' + yG + '" text-anchor="middle" font-family="Bebas Neue, sans-serif" font-size="' + (largo ? 19 : 27) + '" letter-spacing="1" fill="' + col + '">' + p.a + '</text>' +
+        '<text x="' + cx + '" y="' + yC + '" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="700" font-size="10" letter-spacing="2" fill="' + col + '" opacity=".85">' + p.b + '</text></g>';
+    });
+    return '<svg viewBox="0 0 262 262" aria-hidden="true"><defs>' + defs + '</defs>' + s + brillo + textos + '</svg>';
+  }
+  function luces() {
+    var h = '';
+    for (var i = 0; i < 18; i++) {
+      var a = (i * 20 - 90) * Math.PI / 180;
+      h += '<i class="' + (i % 2 ? 'off' : '') + '" style="transform:translate(' + (Math.cos(a) * 140).toFixed(1) + 'px,' + (Math.sin(a) * 140).toFixed(1) + 'px)"></i>';
+    }
+    return h;
+  }
+  var PUNTERO = '<svg class="rl-puntero" viewBox="0 0 34 40" aria-hidden="true"><defs><linearGradient id="rlP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3cf8c"/><stop offset="1" stop-color="#c88e3a"/></linearGradient></defs><path d="M17 39 L3 12 A14 14 0 1 1 31 12 Z" fill="url(#rlP)" stroke="#20160a" stroke-width="1.5"/><circle cx="17" cy="13" r="5" fill="#20160a"/></svg>';
+  function rueda(giro, ganador) {
+    return '<div class="rl-rueda" id="rl-rueda"><div class="rl-aro"></div><div class="rl-luces" id="rl-luces">' + luces() + '</div>' +
+      '<div class="rl-giro" id="rl-giro" style="transform:rotate(' + giro + 'deg)">' + disco(giro, ganador) + '</div>' + PUNTERO + '<div class="rl-hub">DEUS</div></div>';
+  }
+  function indiceDe(id) { return GAJOS.map(function (g) { return g.id; }).indexOf(id); }
+
+  // ── Rayos rosados (canvas sobre la tarjeta) ──
+  var lienzo = null, ctx = null, rayos = [], dibujando = false, ultimoRayo = 0;
+  function prepararLienzo(card) {
+    lienzo = document.createElement('canvas');
+    lienzo.className = 'rl-rayos';
+    card.appendChild(lienzo);
+    ctx = lienzo.getContext('2d');
+    ajustarLienzo();
+  }
+  function ajustarLienzo() {
+    if (!lienzo) return;
+    var r = lienzo.parentNode.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    lienzo.width = Math.round(r.width * d); lienzo.height = Math.round(r.height * d);
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+  }
+  function centroRueda() {
+    var rr = document.getElementById('rl-rueda');
+    if (!rr || !lienzo) return null;
+    var a = rr.getBoundingClientRect(), b = lienzo.getBoundingClientRect();
+    return { x: a.left - b.left + a.width / 2, y: a.top - b.top + a.height / 2, r: a.width / 2 };
+  }
+  // Zigzag por desplazamiento del punto medio, con alguna rama.
+  function zigzag(x1, y1, x2, y2, salto, prof, salida) {
+    if (prof === 0) { salida.push([x2, y2]); return; }
+    var mx = (x1 + x2) / 2 + (Math.random() - .5) * salto, my = (y1 + y2) / 2 + (Math.random() - .5) * salto;
+    zigzag(x1, y1, mx, my, salto / 2, prof - 1, salida);
+    zigzag(mx, my, x2, y2, salto / 2, prof - 1, salida);
+  }
+  // fuerte: true (rayos del final) o 'final' (el que le pega al premio).
+  function rayo(x1, y1, x2, y2, fuerte) {
+    var pts = [[x1, y1]], dist = Math.hypot(x2 - x1, y2 - y1), final = fuerte === 'final';
+    zigzag(x1, y1, x2, y2, Math.max(18, dist * (final ? .22 : .32)), 6, pts);
+    var ramas = [], nRamas = final ? 4 : (Math.random() < .7 ? 1 : 0);
+    for (var j = 0; j < nRamas; j++) {
+      var o = pts[Math.floor(pts.length * (.2 + Math.random() * .6))], rp = [[o[0], o[1]]];
+      zigzag(o[0], o[1], o[0] + (Math.random() - .5) * (final ? 150 : 90), o[1] + (Math.random() - .1) * (final ? 110 : 70), 26, 4, rp);
+      ramas.push(rp);
+    }
+    rayos.push({ pts: pts, ramas: ramas, t: performance.now(), vida: final ? 900 : (fuerte ? 450 : 300), fuerte: !!fuerte, final: final, x: x2, y: y2 });
+    if (!dibujando) { dibujando = true; requestAnimationFrame(pintarRayos); }
+  }
+  function trazo(pts) { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke(); }
+  function pintarRayos(ahora) {
+    if (!ctx) { dibujando = false; return; }
+    var r = lienzo.parentNode.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
+    rayos = rayos.filter(function (b) { return ahora - b.t < b.vida; });
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    rayos.forEach(function (b) {
+      var vida = 1 - (ahora - b.t) / b.vida, parpadeo = Math.random() < .18 ? .35 : 1, al = vida * parpadeo;
+      if (b.final) al = Math.min(1, vida * 1.6) * parpadeo;
+      var radio = b.final ? 58 : (b.fuerte ? 34 : 20);
+      ctx.shadowColor = '#ff5fa2'; ctx.shadowBlur = b.final ? 40 : (b.fuerte ? 26 : 16);
+      ctx.strokeStyle = 'rgba(255,95,162,' + (.45 * al) + ')'; ctx.lineWidth = b.final ? 16 : (b.fuerte ? 9 : 6); trazo(b.pts);
+      ctx.strokeStyle = 'rgba(255,214,231,' + al + ')'; ctx.lineWidth = b.final ? 4.5 : (b.fuerte ? 2.6 : 1.7); trazo(b.pts);
+      b.ramas.forEach(function (rp) { ctx.strokeStyle = 'rgba(255,170,205,' + (.7 * al) + ')'; ctx.lineWidth = b.final ? 2 : 1.1; trazo(rp); });
+      var g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, radio);
+      g.addColorStop(0, 'rgba(255,235,244,' + (.95 * al) + ')'); g.addColorStop(1, 'rgba(255,95,162,0)');
+      ctx.shadowBlur = 0; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, radio, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+    if (rayos.length || girando) requestAnimationFrame(pintarRayos);
+    else { dibujando = false; ctx.clearRect(0, 0, r.width, r.height); }
+  }
+  // Un rayo desde el borde de la tarjeta hasta un punto del aro de la ruleta.
+  function rayoAlAro(fuerte, anguloFijo) {
+    var c = centroRueda(); if (!c) return;
+    var r = lienzo.parentNode.getBoundingClientRect();
+    var ang = anguloFijo != null ? anguloFijo : Math.random() * Math.PI * 2;
+    var tx = c.x + Math.cos(ang) * c.r * .98, ty = c.y + Math.sin(ang) * c.r * .98;
+    var lado = Math.random(), sx, sy;
+    if (anguloFijo != null) { sx = c.x + (Math.random() - .5) * 140; sy = -10; }
+    else if (lado < .5) { sx = Math.random() * r.width; sy = -10; }
+    else if (lado < .75) { sx = -10; sy = Math.random() * c.y; }
+    else { sx = r.width + 10; sy = Math.random() * c.y; }
+    rayo(sx, sy, tx, ty, fuerte);
+  }
+  // Interactivo: el rayo cae donde toca el dedo o pasa el mouse sobre la ruleta.
+  function rayoAlPuntero(e) {
+    if (quieto || !lienzo || !girando) return;
+    var ahora = performance.now();
+    if (ahora - ultimoRayo < (girando ? 60 : 80)) return;
+    var c = centroRueda(); if (!c) return;
+    var b = lienzo.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+    var dx = x - c.x, dy = y - c.y, d = Math.hypot(dx, dy);
+    if (d > c.r * 1.25) return;
+    ultimoRayo = ahora;
+    var ang = Math.atan2(dy, dx), sx = c.x + Math.cos(ang) * (c.r + 70) + (Math.random() - .5) * 40, sy = c.y + Math.sin(ang) * (c.r + 70) + (Math.random() - .5) * 40;
+    rayo(sx, sy, x, y, false);
+  }
+
+  // ── Giro: máximo 3 segundos, se detiene en el gajo que dice el servidor ──
+  var girando = false, rot = -8, rotFinal = null, lucesTimer = null;
+  function pintarRot(r) { var g = document.getElementById('rl-giro'); if (g) g.style.transform = 'rotate(' + r + 'deg)'; }
+  function destino(id) {
+    var i = GAJOS.map(function (g) { return g.id; }).indexOf(id);
+    var paso = 360 / GAJOS.length, jitter = (Math.random() - .5) * paso * .6;
+    return -(i * paso + paso / 2) + jitter;   // centro del gajo bajo el puntero
+  }
+  function girar(pedido, alTerminar, alFallar) {
+    girando = true;
+    var t0 = performance.now(), w0 = quieto ? 540 : 1080, resp = null, plan = null, ultimo = t0, proxRayo = t0;
+    var lucesEl = document.getElementById('rl-luces'), alt = 0;
+    lucesTimer = setInterval(function () {
+      alt++; if (!lucesEl) return;
+      Array.prototype.forEach.call(lucesEl.children, function (el, i) { el.className = (i + alt) % 2 ? 'off' : ''; });
+    }, 110);
+    pedido.then(function (r) { resp = r; }, function (e) { resp = { error: e }; });
+    function cuadro(ahora) {
+      var dt = (ahora - ultimo) / 1000; ultimo = ahora;
+      if (!plan) {
+        rot += w0 * dt;
+        if (resp && resp.error) { terminar(); alFallar(resp.error); return; }
+        if (resp) {
+          var tr = (ahora - t0) / 1000;
+          var D = Math.max(quieto ? .6 : 1.4, (quieto ? 1.2 : GIRO_MAX_MS / 1000 - .3) - tr);
+          var d0 = w0 * D / 3, meta = destino(resp.premio.id);
+          var ajuste = ((((meta - (rot + d0)) % 360) + 540) % 360) - 180;
+          plan = { desde: rot, delta: d0 + ajuste, t: ahora, D: D * 1000 };
+        } else if (ahora - t0 > 8000) { terminar(); alFallar(new Error('tiempo')); return; }
+      }
+      if (plan) {
+        var u = Math.min(1, (ahora - plan.t) / plan.D);
+        rot = plan.desde + plan.delta * (1 - Math.pow(1 - u, 3));
+        if (u >= 1) { pintarRot(rot); rotFinal = rot; terminar(); alTerminar(resp); return; }
+      }
+      pintarRot(rot);
+      if (!quieto && ahora > proxRayo) { rayoAlAro(false); proxRayo = ahora + 70 + Math.random() * 110; }
+      requestAnimationFrame(cuadro);
+    }
+    requestAnimationFrame(cuadro);
+  }
+  function terminar() {
+    girando = false;
+    clearInterval(lucesTimer);
+  }
+  // Al detenerse: un rayo grande cae sobre el gajo ganador (justo bajo el
+  // puntero), el gajo queda iluminado, destello rosado y un temblor corto.
+  function finalFuerte(idx) {
+    var giroEl = document.getElementById('rl-giro');
+    if (giroEl) giroEl.innerHTML = disco(rot, idx);
+    if (quieto) return;
+    var c = centroRueda(), card = document.getElementById('rl-card'), rr = document.getElementById('rl-rueda');
+    if (c) {
+      var gx = c.x, gy = c.y - c.r * .6;
+      rayo(gx + (Math.random() - .5) * 24, -20, gx, gy, 'final');
+      setTimeout(function () { rayo(gx - 80, -20, gx - 10, gy + 8, true); }, 90);
+      setTimeout(function () { rayo(gx + 85, -20, gx + 12, gy - 6, true); }, 180);
+    }
+    if (rr) rr.classList.add('golpe');
+    if (card) {
+      card.classList.add('temblor');
+      var fl = document.createElement('div');
+      fl.className = 'rl-flash';
+      card.appendChild(fl);
+      setTimeout(function () { if (fl.parentNode) fl.parentNode.removeChild(fl); }, 800);
+    }
+  }
+
+  // ── Ventana ──
+  var capa = null, correoUsado = '', relojTimer = null;
+  function cerrarRuleta() {
+    if (!capa || girando) return;
+    var e = leer(); if (!e.estado) { e.estado = 'visto'; guardar(e); }
+    clearInterval(relojTimer);
+    capa.classList.remove('abierta');
+    var c = capa; capa = null; lienzo = null; ctx = null; rayos = [];
+    setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 260);
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', teclaEsc);
+  }
+  function teclaEsc(e) { if (e.key === 'Escape') cerrarRuleta(); }
+  function montar(html) {
+    if (!capa) {
+      capa = document.createElement('div');
+      capa.className = 'rl-capa';
+      capa.setAttribute('role', 'dialog');
+      capa.setAttribute('aria-modal', 'true');
+      capa.setAttribute('aria-label', 'Ruleta Gira y gana');
+      capa.addEventListener('click', function (e) { if (e.target === capa) cerrarRuleta(); });
+      document.body.appendChild(capa);
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', teclaEsc);
+      requestAnimationFrame(function () { if (capa) capa.classList.add('abierta'); });
+    }
+    capa.innerHTML = '<div class="rl-card" id="rl-card">' + html + '</div>';
+    var card = capa.firstChild;
+    card.querySelector('.rl-x').addEventListener('click', cerrarRuleta);
+    prepararLienzo(card);
+    card.addEventListener('pointermove', rayoAlPuntero);
+    card.addEventListener('pointerdown', rayoAlPuntero);
+    return card;
+  }
+  function pantallaInicio() {
+    var card = montar('<button class="rl-x" aria-label="Cerrar">✕</button>' +
+      '<span class="rl-tag">🎁 Un regalo por visitarnos</span>' +
+      '<div class="rl-tit">Gira y <b>gana</b></div>' +
+      '<p class="rl-sub">Déjanos tu correo y gira la ruleta. Te mandamos tu premio al instante.</p>' +
+      rueda(rot) +
+      '<form class="rl-form" id="rl-form" novalidate><input class="rl-in" id="rl-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo electrónico" aria-label="Tu correo electrónico">' +
+      '<div class="rl-err" id="rl-err" role="alert"></div>' +
+      '<button class="rl-btn" id="rl-btn" type="submit">Girar la ruleta</button></form>' +
+      '<button type="button" class="rl-no" id="rl-no">No, gracias</button>' +
+      '<div class="rl-fino">Un giro por persona · El premio dura 48 horas.</div>');
+    card.querySelector('#rl-no').addEventListener('click', cerrarRuleta);
+    // Despierta el servidor mientras la persona escribe su correo: si estaba
+    // dormido, el giro igual termina en 3 segundos.
+    try { fetch(base + '/ruleta/codigo/HOLA', { cache: 'no-store' }).catch(function () {}); } catch (e) {}
+    card.querySelector('#rl-form').addEventListener('submit', function (e) { e.preventDefault(); intentarGiro(); });
+  }
+  function intentarGiro() {
+    if (girando) return;
+    var inp = document.getElementById('rl-email'), err = document.getElementById('rl-err'), btn = document.getElementById('rl-btn');
+    var correo = String(inp.value || '').trim().toLowerCase().replace(/\s+/g, '');
+    err.textContent = '';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(correo)) { err.textContent = 'Escribe tu correo para mandarte el premio.'; inp.focus(); return; }
+    correoUsado = correo;
+    btn.disabled = true; btn.textContent = 'Girando…'; inp.readOnly = true;
+    evento('ruleta-giro');
+    var pedido = fetch(base + '/ruleta/girar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: correo }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok || !d.premio) { var e = new Error(d.error || 'error'); e.campo = d.campo; throw e; } return d; }); });
+    girar(pedido, function (d) {
+      var e = leer(); e.estado = 'giro'; e.email = correo; e.codigo = d.codigo; e.premio = d.premio; e.color = d.color; e.vence = d.vence; e.yaGiro = !!d.yaGiro; guardar(e);
+      finalFuerte(indiceDe(d.premio.id));
+      setTimeout(function () { pantallaPremio(); }, quieto ? 300 : 1300);
+    }, function (e) {
+      btn.disabled = false; btn.textContent = 'Girar la ruleta'; inp.readOnly = false;
+      err.textContent = (e && e.message && e.message !== 'error' && e.message !== 'tiempo') ? e.message : 'No pudimos girar la ruleta. Revisa tu conexión e intenta de nuevo.';
+    });
+  }
+  function pantallaPremio() {
+    var e = leer(); if (!e.premio) return pantallaInicio();
+    var pr = e.premio, venceMs = Date.parse(e.vence);
+    var giroFinal = rotFinal != null ? rotFinal : destino(pr.id);
+    var titulo = pr.tipo === 'correa' ? 'Correa extra' : pr.tipo === 'tapones' ? 'Tapones gratis' : pr.etiqueta;
+    var tag = e.yaGiro ? 'Ya giraste con este correo' : '¡Ganaste!';
+    var enviado = '<div class="rl-ok"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="2.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Te lo enviamos a ' + esc(e.email) + '</div>';
+    var cod = '<div class="rl-cod"><div><div class="k">Tu código</div><div class="v">' + esc(e.codigo) + '</div></div><button type="button" class="rl-copiar" id="rl-copiar">Copiar</button></div>';
+    var medio = '';
+    if (!e.codigo) {
+      // Ya había girado con este correo: por seguridad el código solo llega a
+      // ese correo (si no, cualquiera vería el premio de otro escribiendo su correo).
+      medio = '<p class="rl-texto">Ya giraste con este correo. Por seguridad, tu código <b>solo llega a ese correo</b>: búscalo en tu bandeja de entrada (o en spam). Ahí está el botón para usarlo.</p>';
+    } else if (pr.tipo === 'descuento') {
+      var p = precio(), d = pr.monto ? pr.monto : Math.ceil(p * pr.pct / 100);
+      medio = cod + enviado + '<div class="rl-precio"><s>' + clp(p) + '</s><b>' + clp(p - d) + '</b></div>';
+    } else if (pr.tipo === 'correa') {
+      var col = e.color === 'gris' ? 'gris' : 'negra';
+      medio = '<p class="rl-texto">Tu DEUS Band llega con <b>3 correas</b>: las 2 de siempre + <b>1 de tela extra</b>, del color que elijas.</p>' +
+        '<div class="rl-colk">Elige el color de tu correa de tela</div><div class="rl-cols">' +
+        '<button type="button" class="rl-col' + (col === 'negra' ? ' on' : '') + '" data-color="negra"><img src="img/correa-nylon-negra.webp" alt=""><span>Negra<small>Tela high tech</small></span><i class="ck"></i></button>' +
+        '<button type="button" class="rl-col' + (col === 'gris' ? ' on' : '') + '" data-color="gris"><img src="img/correa-nylon-gris.webp" alt=""><span>Gris<small>Tela high tech</small></span><i class="ck"></i></button></div>' +
+        cod + enviado;
+    } else {
+      medio = '<p class="rl-texto">Tus <b>tapones de oído DEUS</b> van de regalo en el mismo paquete que tu banda.</p>' + cod + enviado;
+    }
+    var vencido = venceMs && Date.now() > venceMs;
+    var card = montar('<button class="rl-x" aria-label="Cerrar">✕</button>' + rueda(giroFinal, indiceDe(pr.id)) +
+      '<span class="rl-tag">' + (vencido ? 'Tu premio venció' : tag) + '</span>' +
+      '<div class="rl-premio">' + esc(titulo) + '</div><div class="rl-envio">+ envío gratis</div>' +
+      medio +
+      (vencido ? '<button type="button" class="rl-btn" id="rl-otra">Girar de nuevo</button>'
+        : !e.codigo ? '<button type="button" class="rl-btn" id="rl-listo">Entendido</button>'
+        : '<button type="button" class="rl-btn" id="rl-usar">' + (pr.tipo === 'descuento' ? 'Usar mi descuento' : 'Usar mi premio') + '</button>' +
+          '<div class="rl-reloj">Tu premio vence en <b id="rl-reloj">--:--:--</b></div>'));
+    card.classList.add('gano');
+    ajustarLienzo();
+    var copiar = card.querySelector('#rl-copiar');
+    if (copiar) copiar.addEventListener('click', function () {
+      var hecho = function () { copiar.textContent = '¡Copiado!'; setTimeout(function () { copiar.textContent = 'Copiar'; }, 1600); };
+      try { navigator.clipboard.writeText(e.codigo).then(hecho, hecho); } catch (x) { hecho(); }
+    });
+    Array.prototype.forEach.call(card.querySelectorAll('.rl-col'), function (b) {
+      b.addEventListener('click', function () {
+        var c = b.getAttribute('data-color'), est = leer(); est.color = c; guardar(est);
+        Array.prototype.forEach.call(card.querySelectorAll('.rl-col'), function (o) { o.classList.toggle('on', o === b); });
+        fetch(base + '/ruleta/color', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigo: est.codigo, color: c }) }).catch(function () {});
+      });
+    });
+    var usar = card.querySelector('#rl-usar');
+    if (usar) usar.addEventListener('click', usarPremio);
+    var listo = card.querySelector('#rl-listo');
+    if (listo) listo.addEventListener('click', cerrarRuleta);
+    var otra = card.querySelector('#rl-otra');
+    if (otra) otra.addEventListener('click', function () { guardar({ estado: 'visto' }); pantallaInicio(); });
+    clearInterval(relojTimer);
+    var reloj = card.querySelector('#rl-reloj');
+    function tic() {
+      if (!reloj) return;
+      var s = Math.max(0, Math.floor((venceMs - Date.now()) / 1000));
+      reloj.textContent = [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(function (n) { return String(n).padStart(2, '0'); }).join(':');
+    }
+    tic(); relojTimer = setInterval(tic, 1000);
+  }
+  function usarPremio() {
+    var e = leer();
+    evento('ruleta-usar');
+    cerrarRuleta();
+    setTimeout(function () {
+      if (typeof aplicarCodigoRuleta === 'function') aplicarCodigoRuleta(e.codigo, { color: e.color, silencioso: true });
+      if (typeof abrirCheckout === 'function') abrirCheckout();
+    }, 280);
+  }
+  window.abrirRuleta = function () {
+    var e = leer();
+    if (e.estado === 'giro' && e.premio) pantallaPremio(); else pantallaInicio();
+    evento('ruleta-vista');
+  };
+  window.addEventListener('resize', ajustarLienzo);
+
+  // ── A los 11 segundos (de pestaña visible), una sola vez ──
+  function otraVentanaAbierta() {
+    var ids = ['checkout-overlay', 'chat-panel', 'reviews-modal', 'rifaOverlay', 'fn-modal', 'resenaOverlay', 'cart-drawer'];
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      if (el && (el.classList.contains('show') || el.classList.contains('open'))) return true;
+    }
+    return false;
+  }
+  // Llega desde el correo del premio (?premio=CODIGO&color=gris): se aplica
+  // el código y se abre el checkout; la ruleta no vuelve a aparecer.
+  var qs = new URLSearchParams(location.search), codigoUrl = qs.get('premio'), colorUrl = qs.get('color');
+  if (codigoUrl) {
+    var est = leer(); if (!est.estado) { est.estado = 'visto'; guardar(est); }
+    // Se limpia la URL para que recargar la página no vuelva a abrir el checkout.
+    try { qs.delete('premio'); qs.delete('color'); history.replaceState(null, '', location.pathname + (qs.toString() ? '?' + qs : '') + location.hash); } catch (e) {}
+    var aplicar = function () {
+      setTimeout(function () {
+        var c = (/^(negra|gris)$/.test(colorUrl || '') ? colorUrl : null);
+        Promise.resolve(typeof aplicarCodigoRuleta === 'function' ? aplicarCodigoRuleta(codigoUrl, { color: c }) : false)
+          .then(function () { if (typeof abrirCheckout === 'function') abrirCheckout(); });
+      }, 700);
+    };
+    if (document.readyState === 'complete') aplicar(); else window.addEventListener('load', aplicar);
+  } else if (!leer().estado) {
+    var vistos = 0;
+    var t = setInterval(function () {
+      if (document.visibilityState !== 'visible') return;
+      if (++vistos < SEGUNDOS) return;
+      if (leer().estado) { clearInterval(t); return; }
+      if (capa || otraVentanaAbierta()) return; // espera a que cierre la otra ventana
+      clearInterval(t);
+      window.abrirRuleta();
+    }, 1000);
+  }
+})();
+</script>
 
 <!-- Modal: Sorteo mensual -->
 <div class="rifa-overlay" id="rifaOverlay" onclick="if(event.target===this)cerrarRifa()">
@@ -2283,6 +2809,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="co-colores" id="co-colores" style="display:none;">
               <div class="co-colores-t">Elige el color de cada banda</div>
               <div id="co-colores-lista"></div>
+            </div>
+            <!-- Código de la ruleta "Gira y gana" (o el que llega en el correo
+                 del premio). Lo valida el servidor; acá solo se muestra. -->
+            <div class="rlc" id="rl-codigo">
+              <div class="rlc-k" id="rlc-k">¿Tienes un código?</div>
+              <div class="rlc-fila">
+                <input class="rlc-in" id="rlc-in" placeholder="Escribe tu código" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();aplicarCodigoRuleta(this.value);}">
+                <button type="button" class="rlc-btn" id="rlc-btn" onclick="botonCodigoRuleta()">Aplicar</button>
+              </div>
+              <div class="rlc-msg" id="rlc-msg"></div>
+              <div id="rlc-premio"></div>
             </div>
           </div>
 
@@ -2909,6 +3447,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           correaColor = 'negras';
           correaAgregada = false;
           pintarCorreas();
+          // El código de la ruleta SÍ se mantiene al reabrir (lo trae del
+          // correo o de la ruleta); solo se esconde en "solo tapones".
+          if (typeof pintarCodigoRuleta === 'function') { pintarCodigoRuleta(); revalidarCodigoRuleta(); }
           // El cuadro grande parte cerrado, y la miniatura se mece una vez
           // cuando el checkout termina de aparecer: llama la atención sin texto.
           const cqGrande = document.getElementById('cq-grande');
@@ -3263,7 +3804,155 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         })();
         function subtotalCheckout() {
           if (checkoutTapones) return TAPONES_PRICE * checkoutQty;
-          return precioBanda() * checkoutQty + CORREAS_PRICE * listaCorreas().length;
+          return precioBanda() * checkoutQty + CORREAS_PRICE * listaCorreas().length - descuentoRuleta();
+        }
+
+        // ── CÓDIGO DE LA RULETA ──
+        // premioRuleta: { codigo, premio: { id, tipo, etiqueta, monto?, pct? }, color }.
+        // Lo valida el servidor (/ruleta/codigo); acá solo se guarda para mostrar
+        // el precio y mandarlo con el pedido. Quien decide lo que se cobra es
+        // calcularMonto() en services/precio.js: si algún día las dos cuentas
+        // no coincidieran, el cliente paga lo que dice la pasarela.
+        var premioRuleta = null;
+        try { premioRuleta = JSON.parse(localStorage.getItem('deus-ruleta-aplicado') || 'null'); } catch (e) {}
+        // Lo guardado en el navegador puede venir roto o tocado a mano: si no
+        // tiene la forma esperada, se descarta (el servidor valida igual al pagar).
+        if (!premioRuleta || typeof premioRuleta.codigo !== 'string' || !premioRuleta.premio || typeof premioRuleta.premio !== 'object') premioRuleta = null;
+        // MISMA regla que descuentoPremio() en services/precio.js: el % va sobre
+        // las bandas y se redondea hacia arriba; el monto fijo, una vez.
+        function descuentoRuleta() {
+          if (!premioRuleta || checkoutTapones) return 0;
+          const pr = premioRuleta.premio || {};
+          if (pr.tipo !== 'descuento') return 0;
+          const bandas = precioBanda() * checkoutQty;
+          const d = pr.monto ? pr.monto : Math.ceil(bandas * (pr.pct || 0) / 100);
+          return Math.min(d, bandas);
+        }
+        function guardarPremioAplicado() {
+          try {
+            if (premioRuleta) localStorage.setItem('deus-ruleta-aplicado', JSON.stringify(premioRuleta));
+            else localStorage.removeItem('deus-ruleta-aplicado');
+          } catch (e) {}
+        }
+        function botonCodigoRuleta() {
+          if (premioRuleta) quitarCodigoRuleta();
+          else aplicarCodigoRuleta(document.getElementById('rlc-in').value);
+        }
+        async function aplicarCodigoRuleta(codigo, opciones) {
+          opciones = opciones || {};
+          const msg = document.getElementById('rlc-msg');
+          const c = String(codigo || '').trim().toUpperCase().replace(/\s+/g, '');
+          if (!c) { const i = document.getElementById('rlc-in'); if (i) i.focus(); return false; }
+          if (msg && !opciones.silencioso) { msg.className = 'rlc-msg'; msg.textContent = 'Revisando…'; }
+          try {
+            const base = (window.DEUS_API_BASE || '').replace(/\/$/, '');
+            const r = await fetch(base + '/ruleta/codigo/' + encodeURIComponent(c), { cache: 'no-store' });
+            const d = await r.json();
+            if (!d.ok) {
+              if (msg) { msg.className = 'rlc-msg mal'; msg.textContent = d.mensaje || 'Ese código no sirve.'; }
+              return false;
+            }
+            premioRuleta = { codigo: d.codigo, premio: d.premio, color: d.premio.tipo === 'correa' ? (opciones.color || d.color || 'negra') : null };
+            guardarPremioAplicado();
+            if (opciones.color && d.premio.tipo === 'correa') elegirColorPremio(opciones.color);
+            pintarCodigoRuleta();
+            actualizarTotalCheckout();
+            return true;
+          } catch (e) {
+            if (msg) { msg.className = 'rlc-msg mal'; msg.textContent = 'No pudimos revisar el código. Intenta de nuevo.'; }
+            return false;
+          }
+        }
+        // Al abrir el checkout se vuelve a preguntar si el código guardado
+        // sigue sirviendo (pudo vencer o usarse en otra compra): mejor
+        // enterarse acá que en la pasarela.
+        async function revalidarCodigoRuleta() {
+          if (!premioRuleta || checkoutTapones) return;
+          const cod = premioRuleta.codigo;
+          try {
+            const base = (window.DEUS_API_BASE || '').replace(/\/$/, '');
+            const r = await fetch(base + '/ruleta/codigo/' + encodeURIComponent(cod), { cache: 'no-store' });
+            if (r.status === 429) return;
+            const d = await r.json();
+            if (!d.ok && premioRuleta && premioRuleta.codigo === cod) {
+              quitarCodigoRuleta();
+              const m = document.getElementById('rlc-msg');
+              if (m) { m.className = 'rlc-msg mal'; m.textContent = d.mensaje || 'Tu código ya no sirve.'; }
+            }
+          } catch (e) {}
+        }
+        function quitarCodigoRuleta() {
+          premioRuleta = null;
+          guardarPremioAplicado();
+          const i = document.getElementById('rlc-in');
+          if (i) i.value = '';
+          pintarCodigoRuleta();
+          actualizarTotalCheckout();
+        }
+        // La correa del premio: el color queda marcado de base (el que eligió
+        // en la ruleta o en el correo; si nunca eligió, negra) y se puede cambiar.
+        function elegirColorPremio(color) {
+          if (!premioRuleta || !['negra', 'gris'].includes(color)) return;
+          premioRuleta.color = color;
+          guardarPremioAplicado();
+          pintarCodigoRuleta();
+          try {
+            const base = (window.DEUS_API_BASE || '').replace(/\/$/, '');
+            fetch(base + '/ruleta/color', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ codigo: premioRuleta.codigo, color }) }).catch(function () {});
+          } catch (e) {}
+        }
+        function pintarCodigoRuleta() {
+          const caja = document.getElementById('rl-codigo');
+          if (!caja) return;
+          caja.style.display = checkoutTapones ? 'none' : '';
+          const inp = document.getElementById('rlc-in');
+          const btn = document.getElementById('rlc-btn');
+          const msg = document.getElementById('rlc-msg');
+          const k = document.getElementById('rlc-k');
+          const extra = document.getElementById('rlc-premio');
+          const ok = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="2.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+          if (!premioRuleta) {
+            caja.classList.remove('ok');
+            k.textContent = '¿Tienes un código?';
+            inp.readOnly = false;
+            btn.textContent = 'Aplicar';
+            if (msg && msg.classList.contains('bien')) { msg.className = 'rlc-msg'; msg.textContent = ''; }
+            extra.innerHTML = '';
+            return;
+          }
+          const pr = premioRuleta.premio || {};
+          // Solo letras, números y guion: nada de lo que se pinta abajo puede
+          // traer HTML (aunque alguien edite lo guardado en su navegador).
+          const cod = String(premioRuleta.codigo).toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
+          caja.classList.add('ok');
+          k.textContent = 'Código';
+          inp.value = cod;
+          inp.readOnly = true;
+          btn.textContent = 'Quitar';
+          const nombre = pr.tipo === 'correa' ? 'correa de tela extra' : pr.tipo === 'tapones' ? 'tapones de oído de regalo' : String(pr.etiqueta || 'premio');
+          msg.className = 'rlc-msg bien';
+          msg.innerHTML = ok + '<span>Premio de la ruleta aplicado: <b></b></span>';
+          msg.querySelector('b').textContent = nombre;
+          if (pr.tipo === 'correa') {
+            const col = premioRuleta.color === 'gris' ? 'gris' : 'negra';
+            extra.innerHTML =
+              '<div class="rlc-card"><img src="img/correa-nylon-' + (col === 'gris' ? 'gris' : 'negra') + '.webp" alt="">' +
+              '<div class="rlc-info"><div class="rlc-tag">🎁 Premio ruleta · ' + cod + '</div>' +
+              '<div class="rlc-name">Correa de tela <b>' + col + '</b></div>' +
+              '<div class="rlc-cols"><em>Color</em>' +
+              '<button type="button" class="' + (col === 'negra' ? 'on' : '') + '" onclick="elegirColorPremio(\'negra\')"><i style="background:#1b1b1b"></i>Negra' + (col === 'negra' ? ' ✓' : '') + '</button>' +
+              '<button type="button" class="' + (col === 'gris' ? 'on' : '') + '" onclick="elegirColorPremio(\'gris\')"><i style="background:#8d8d8d"></i>Gris' + (col === 'gris' ? ' ✓' : '') + '</button>' +
+              '</div></div><div class="rlc-precio"><b>$0</b><small>regalo</small></div></div>';
+          } else if (pr.tipo === 'tapones') {
+            extra.innerHTML =
+              '<div class="rlc-card"><span class="rlc-emoji">🎧</span>' +
+              '<div class="rlc-info"><div class="rlc-tag">🎁 Premio ruleta · ' + cod + '</div>' +
+              '<div class="rlc-name">Tapones de oído DEUS</div><div class="rlc-sub">Van en el mismo paquete que tu banda.</div></div>' +
+              '<div class="rlc-precio"><b>$0</b><small>regalo</small></div></div>';
+          } else {
+            extra.innerHTML = '';
+          }
         }
         function cambiarCantidadCheckout(delta) {
           const color = (typeof checkoutColor !== 'undefined' && checkoutColor) ? checkoutColor : 'negra';
@@ -3322,7 +4011,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (nota) nota.style.display = checkoutTapones ? '' : 'none';
           }
           // Bajo el precio de la banda, sus cuotas: la misma frase de la página.
-          if (coCuotas) coCuotas.innerHTML = 'o <span class="pe-cg">3 cuotas sin interés</span> de <b>' + clp(cuotaDe(bandTotal)) + '</b>';
+          const bandaConPremio = bandTotal - descuentoRuleta();
+          if (coCuotas) coCuotas.innerHTML = 'o <span class="pe-cg">3 cuotas sin interés</span> de <b>' + clp(cuotaDe(bandaConPremio)) + '</b>';
           if (checkoutTapones) {
             document.getElementById('co-prod-price').innerHTML =
               `<span class="co-price-now">$${(TAPONES_PRICE * checkoutQty).toLocaleString('es-CL')}</span>`;
@@ -3332,7 +4022,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // cuotas van en la línea de abajo (co-cuotas). Antes acá iba
           // "$22.990 x 3 cuotas" y se leía como el precio. Sin tachado (ver
           // services/precio.js). Con la oferta de envío gratis, un badge verde.
-          const precioTxt = `<span class="co-price-now">${clp(bandTotal)}</span>`;
+          const precioTxt = descuentoRuleta()
+            ? `<s class="rlc-tachado">${clp(bandTotal)}</s> <span class="co-price-now">${clp(bandaConPremio)}</span>`
+            : `<span class="co-price-now">${clp(bandTotal)}</span>`;
           document.getElementById('co-prod-price').innerHTML = ofertaActiva()
             ? `${precioTxt} <span class="pb-off" style="background:rgba(105,196,109,.12);border-color:rgba(105,196,109,.5);color:#7fd589;">ENVÍO GRATIS</span>`
             : precioTxt;
@@ -3659,6 +4351,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // Pares de correas extra ('negras', 'grises'). El backend cobra
             // $18.990 por cada uno y los anota en el correo de despacho.
             correas: checkoutTapones ? [] : listaCorreas(),
+            // Código de la ruleta: el backend lo vuelve a validar y calcula el
+            // premio (descuento, correa de tela del color elegido o tapones).
+            codigoPremio: (!checkoutTapones && premioRuleta) ? premioRuleta.codigo : '',
+            colorPremio: (!checkoutTapones && premioRuleta && premioRuleta.color) || '',
             soloTapones: checkoutTapones,
             shippingCarrier: selectedShipping?.carrier || null,
             shippingCost: selectedShipping?.price || 0,
@@ -3799,6 +4495,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // "no pudimos conectar" genérico, que lo manda a reintentar el mismo
         // error hasta que se aburre. Devuelve true si se hizo cargo.
         function errorDeCorreo(data, msg) {
+          if (data && data.campo === 'codigo') {
+            // El código venció o se usó mientras tanto: se saca, el cliente ve
+            // el precio real y decide si paga igual. Nunca se cobra a ciegas.
+            quitarCodigoRuleta();
+            const m2 = document.getElementById('rlc-msg');
+            if (m2) { m2.className = 'rlc-msg mal'; m2.textContent = data.error || 'Tu código ya no sirve.'; }
+            msg.style.display = 'block';
+            msg.style.color = '#c0392b';
+            msg.textContent = (data.error || 'Tu código ya no sirve.') + ' Revisa el total antes de pagar.';
+            const caja = document.getElementById('rl-codigo');
+            if (caja) caja.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            return true;
+          }
           if (!data || data.campo !== 'email') return false;
           msg.style.display = 'block';
           msg.style.color = '#c0392b';

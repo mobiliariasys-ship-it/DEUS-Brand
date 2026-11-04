@@ -13,6 +13,7 @@ const metaCapi = require('../services/meta-capi');
 // Precio único $54.990, con stock y en modo reserva (igual que server.js y
 // transbank.js, y que lo que muestra el sitio).
 const { precioBanda, TAPONES_PRICE, calcularMonto, nombreProducto, llevaRegaloTapones } = require('../services/precio');
+const ruleta_ = require('../services/ruleta');
 const pedidosFlow = new Map();
 
 // Producción por defecto; sandbox si FLOW_ENV=sandbox
@@ -63,7 +64,7 @@ function flowReq(method, path, params) {
 
 // Iniciar pago con Flow
 router.post('/flow/crear', async (req, res) => {
-  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, correas, soloTapones, colores } = req.body;
+  const { customerName, customerRut, customerEmail, customerPhone, selectedColor, shippingCarrier, shippingCost, shippingAddress, cantidad, tapones, correas, soloTapones, colores, codigoPremio, colorPremio } = req.body;
   // Un color por unidad. El resumen legible se arma acá, nunca en el navegador.
   const coloresPedido = soloTapones ? [] : colores_.normalizar(colores, cantidad, selectedColor);
   const colorPedido = soloTapones ? null : colores_.resumen(coloresPedido);
@@ -75,10 +76,15 @@ router.post('/flow/crear', async (req, res) => {
   if (!correo_.esUsable(customerEmail)) {
     return res.status(400).json({ error: correo_.MENSAJE, campo: 'email' });
   }
+  // Premio de la ruleta: lo valida el servidor (vencido, usado o inventado →
+  // se le dice al cliente antes de mandarlo a pagar otro monto).
+  let premio = null;
+  try { premio = await ruleta_.servicio().premioParaCobro(codigoPremio, colorPremio, { cliente: customerEmail }); }
+  catch (e) { return res.status(400).json({ error: e.message, campo: 'codigo' }); }
   try {
     // Una sola fuente para lo que se cobra: misma función que usan Mercado
     // Pago y Transbank, así las tres pasarelas no pueden cobrar distinto.
-    const m = calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost });
+    const m = calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost, premio });
     const qty = m.qty;
     const amount = m.total;
     const commerceOrder = 'deus-' + Date.now();
@@ -87,7 +93,7 @@ router.post('/flow/crear', async (req, res) => {
     const params = {
       apiKey: (process.env.FLOW_API_KEY || "").trim(),
       commerceOrder: commerceOrder,
-      subject: nombreProducto({ qty, tapones, correas: m.correas, soloTapones }),
+      subject: nombreProducto({ qty, tapones, correas: m.correas, soloTapones, correaPremio: m.correaPremio, regaloPremio: m.regaloPremio }),
       currency: 'CLP',
       amount: String(amount),
       email: correo_.normalizar(customerEmail),
@@ -103,10 +109,11 @@ router.post('/flow/crear', async (req, res) => {
     const pedido = {
       preference_id: commerceOrder,
       created_at: new Date().toISOString(),
-      product: nombreProducto({ qty, tapones, correas: m.correas, soloTapones }),
+      product: nombreProducto({ qty, tapones, correas: m.correas, soloTapones, correaPremio: m.correaPremio, regaloPremio: m.regaloPremio }),
       product_price: m.productos,
       cantidad: qty, tapones: !!tapones, correas: m.correas, soloTapones: !!soloTapones,
-      regaloTapones: llevaRegaloTapones({ soloTapones }), // promo: tapones DEUS gratis
+      regaloTapones: llevaRegaloTapones({ soloTapones, premio }), // promo o premio de la ruleta
+      codigoPremio: premio ? premio.codigo : null, correaPremio: m.correaPremio, descuento: m.descuento,
       color: colorPedido,
       colores: coloresPedido,
       customer: { name: customerName, rut: customerRut, email: customerEmail, phone: customerPhone },
@@ -155,7 +162,7 @@ router.post('/flow/crear', async (req, res) => {
       producto: nombreProducto({ qty: 1, tapones, correas, soloTapones }),
       // Los extras (tapones, correas) tambien van en el aviso: si no, el monto
       // de la venta rescatable sale menor al que el cliente iba a pagar.
-      monto: calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost }).total,
+      monto: calcularMonto({ cantidad, tapones, correas, soloTapones, shippingCost, premio }).total,
       color: colorPedido,
       direccion: shippingAddress
     }).catch(err => console.error('[email] aviso pago fallido:', err.message));
@@ -205,6 +212,8 @@ router.post('/flow/confirmacion', async (req, res) => {
         transaction_amount: st.amount,
         id: st.commerceOrder
       }, pedido).catch(e => console.error('[email]', e.message));
+      // El código de la ruleta ya no sirve para otra compra (idempotente).
+      if (pedido && pedido.codigoPremio) ruleta_.servicio().marcarUsado(pedido.codigoPremio, st.commerceOrder).catch(e => console.error('[ruleta] marcar usado:', e.message));
       // Confirmación al cliente
       if (!reaviso) enviarConfirmacionCliente({
         email: (pedido && pedido.customer && pedido.customer.email) || st.payer,
@@ -216,7 +225,10 @@ router.post('/flow/confirmacion', async (req, res) => {
         address: pedido && pedido.shipping && pedido.shipping.address,
         ticket: ticketFlow && ticketFlow.numero,
         correas: (pedido && pedido.correas) || [],
-        regaloTapones: !!(pedido && pedido.regaloTapones)
+        regaloTapones: !!(pedido && pedido.regaloTapones),
+        correaPremio: pedido && pedido.correaPremio,
+        descuento: pedido && pedido.descuento,
+        codigoPremio: pedido && pedido.codigoPremio
       }).catch(e => console.error('[email] Confirmación cliente:', e.message));
     } else if (pedido) pedido.status = 'rejected';
   } catch (e) { console.error('[flow/confirmacion] Error:', e.message); }

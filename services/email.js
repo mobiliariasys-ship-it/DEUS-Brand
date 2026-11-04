@@ -1,6 +1,6 @@
 const https = require('https');
 const nodemailer = require('nodemailer');
-const { CORREAS, normalizarCorreas } = require('./precio');
+const { CORREAS, normalizarCorreas, CORREA_PREMIO } = require('./precio');
 
 const money = n => '$' + (n || 0).toLocaleString('es-CL');
 
@@ -169,6 +169,8 @@ async function enviarPedidoNuevo(pedido) {
         <p>${pedido.product || 'DEUS Band'} — ${money(pedido.product_price)}</p>
         <p style="margin-top:6px"><b>Color elegido: ${(pedido.color || '—').toUpperCase()}</b></p>
         ${pedido.regaloTapones ? '<p style="margin-top:6px;color:#0a7d2c"><b>🎁 + Tapones de oído DEUS GRATIS (regalo)</b></p>' : ''}
+        ${CORREA_PREMIO[pedido.correaPremio] ? `<p style="margin-top:6px;color:#183a73"><b>🎡 + ${CORREA_PREMIO[pedido.correaPremio].nombre}</b></p>` : ''}
+        ${pedido.descuento ? `<p style="margin-top:6px;color:#0a7d2c"><b>🎡 Premio ruleta ${pedido.codigoPremio || ''}: −${money(pedido.descuento)}</b></p>` : ''}
         <h3 style="margin:20px 0 12px">Envío</h3>
         <table style="width:100%;border-collapse:collapse;font-size:14px">
           <tr><td style="padding:6px 0;color:#888">Empresa</td><td style="text-align:right"><b>${pedido.shipping.carrier || '—'}</b></td></tr>
@@ -190,7 +192,7 @@ async function enviarPedidoNuevo(pedido) {
     </div>`;
   // Asunto único por pedido: si se repite el asunto, Gmail agrupa los correos en un solo hilo
   const refPedido = String(pedido.preference_id || Date.now()).slice(-6);
-  await enviarCorreo(`🛒 Nuevo pedido DEUS Band${normalizarCorreas(pedido.correas).length ? ' + correas' : ''}${pedido.regaloTapones ? ' + 🎁 tapones' : ''} — ${pedido.customer?.name || dir.commune || 'sin nombre'} (${money(pedido.total)}) #${refPedido}`, html);
+  await enviarCorreo(`🛒 Nuevo pedido DEUS Band${(normalizarCorreas(pedido.correas).length || pedido.correaPremio) ? ' + correas' : ''}${pedido.regaloTapones ? ' + 🎁 tapones' : ''} — ${pedido.customer?.name || dir.commune || 'sin nombre'} (${money(pedido.total)}) #${refPedido}`, html);
 }
 
 // ── Correo: pago confirmado ──
@@ -204,6 +206,10 @@ async function enviarPagoConfirmado(payment, pedido) {
     : '';
   const envioCosto = pedido?.shipping?.cost;
   const correas = normalizarCorreas(pedido?.correas);
+  // Lo que hay que meter en el paquete además de la banda: las correas extra
+  // pagadas y la correa de tela del premio de la ruleta.
+  const correaPremio = CORREA_PREMIO[pedido?.correaPremio] || null;
+  const incluir = correas.map(k => CORREAS[k].nombre).concat(correaPremio ? [correaPremio.nombre] : []);
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee">
       ${filaColor(pedido)}
@@ -211,7 +217,7 @@ async function enviarPagoConfirmado(payment, pedido) {
         <h2 style="margin:0">✅ PAGO CONFIRMADO — DESPACHAR</h2>
       </div>
       ${pedido?.regaloTapones ? '<div style="background:#fff4d6;border-bottom:2px solid #e0a800;color:#5c4400;padding:12px 24px;font-size:15px;font-weight:bold">🎁 REGALO: + TAPONES DE OÍDO GRATIS — INCLUIR EN EL PAQUETE</div>' : ''}
-      ${correas.length ? `<div style="background:#e8f1ff;border-bottom:2px solid #2f6fd6;color:#183a73;padding:12px 24px;font-size:15px;font-weight:bold">➕ INCLUIR EN EL PAQUETE: ${correas.map(k => CORREAS[k].nombre.toUpperCase()).join(' + ')}</div>` : ''}
+      ${incluir.length ? `<div style="background:#e8f1ff;border-bottom:2px solid #2f6fd6;color:#183a73;padding:12px 24px;font-size:15px;font-weight:bold">➕ INCLUIR EN EL PAQUETE: ${incluir.map(n => n.toUpperCase()).join(' + ')}</div>` : ''}
       <div style="padding:24px;font-size:14px">
         <h3 style="margin:0 0 12px">Quien recibe</h3>
         <table style="width:100%;border-collapse:collapse">
@@ -228,7 +234,9 @@ async function enviarPagoConfirmado(payment, pedido) {
           ${pedido?.cantidad ? fila('Cantidad', pedido.cantidad) : ''}
           ${pedido?.tapones ? fila('Extra', 'Tapones de oído DEUS') : ''}
           ${correas.map(k => fila('Extra', CORREAS[k].nombre + ' (' + CORREAS[k].detalle.toLowerCase() + ')')).join('')}
+          ${correaPremio ? fila('🎡 Premio', correaPremio.nombre + ' (' + correaPremio.detalle + ')') : ''}
           ${pedido?.regaloTapones ? fila('🎁 Regalo', '+ Tapones de oído DEUS GRATIS — INCLUIR EN EL PAQUETE') : ''}
+          ${pedido?.descuento ? fila('🎡 Descuento', 'Premio ruleta ' + (pedido.codigoPremio || '') + ': −' + money(pedido.descuento)) : ''}
         </table>
 
         <h3 style="margin:20px 0 12px">Dirección de envío</h3>
@@ -251,7 +259,7 @@ async function enviarPagoConfirmado(payment, pedido) {
   // Asunto único por pago para que Gmail no junte pagos distintos en un mismo hilo
   const refPago = String(payment.id || Date.now()).slice(-8);
   const nombre = c.name ? ` — ${c.name}` : '';
-  await enviarCorreo(`✅ Pago confirmado DEUS Band${correas.length ? ' + ➕ CORREAS' : ''}${pedido?.regaloTapones ? ' + 🎁 TAPONES GRATIS' : ''}${nombre} (${money(payment.transaction_amount)}) #${refPago}`, html);
+  await enviarCorreo(`✅ Pago confirmado DEUS Band${incluir.length ? ' + ➕ CORREAS' : ''}${pedido?.regaloTapones ? ' + 🎁 TAPONES GRATIS' : ''}${nombre} (${money(payment.transaction_amount)}) #${refPago}`, html);
 }
 
 // ── Correo AL CLIENTE: su compra fue recibida ──
@@ -267,6 +275,7 @@ async function enviarConfirmacionCliente(datos) {
   const dir = datos.address || {};
   const lugar = [dir.address, dir.commune, dir.region].filter(Boolean).join(', ');
   const correas = normalizarCorreas(datos.correas);
+  const correaPremio = CORREA_PREMIO[datos.correaPremio] || null;
   const html = `
     <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee">
       <div style="background:#080808;color:#fff;padding:28px 24px;text-align:center">
@@ -286,6 +295,8 @@ async function enviarConfirmacionCliente(datos) {
           <table style="width:100%;border-collapse:collapse;font-size:14px">
             <tr><td style="padding:5px 0;color:#888">Producto</td><td style="text-align:right"><b>DEUS Band${datos.color ? ' — ' + String(datos.color).toUpperCase() : ''}</b></td></tr>
             ${correas.map(k => `<tr><td style="padding:5px 0;color:#888">Extra</td><td style="text-align:right"><b>${CORREAS[k].nombre}</b></td></tr>`).join('')}
+            ${correaPremio ? `<tr><td style="padding:5px 0;color:#888">🎡 Premio</td><td style="text-align:right"><b>${correaPremio.nombre.replace(' (premio ruleta)', '')}</b> <span style="display:inline-block;background:#0a7d2c;color:#ffffff;font-size:11px;font-weight:bold;border-radius:4px;padding:2px 6px">GRATIS</span></td></tr>` : ''}
+            ${datos.descuento ? `<tr><td style="padding:5px 0;color:#888">🎡 Premio ruleta</td><td style="text-align:right;color:#0a7d2c"><b>−${money(datos.descuento)}</b></td></tr>` : ''}
             ${datos.regaloTapones ? `<tr><td style="padding:5px 0;color:#888">🎁 Regalo</td><td style="text-align:right"><b>+ Tapones de oído DEUS</b> <span style="display:inline-block;background:#0a7d2c;color:#ffffff;font-size:11px;font-weight:bold;letter-spacing:1px;border-radius:10px;padding:2px 8px;margin-left:4px">GRATIS</span></td></tr>` : ''}
             ${datos.carrier ? `<tr><td style="padding:5px 0;color:#888">Envío</td><td style="text-align:right">${datos.carrier}</td></tr>` : ''}
             ${lugar ? `<tr><td style="padding:5px 0;color:#888">Dirección</td><td style="text-align:right">${lugar}</td></tr>` : ''}
@@ -435,4 +446,79 @@ async function enviarPagoFallido(datos) {
   await enviarCorreo(`⚠️ Pago fallido (${datos.metodo}) — ${c.name || 'cliente'} · ${money(datos.monto)}`, html);
 }
 
-module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, diagnostico };
+// ── Correo AL CLIENTE: su premio de la ruleta "Gira y gana" ──
+// datos: { email, codigo, premio: { id, etiqueta, tipo, monto?, pct? }, vence (ISO) }
+// Los botones abren deusbrand.cl con el código ya puesto (?premio=CODIGO), así
+// no tiene que copiarlo; con la correa, cada color tiene su botón.
+const SITIO = 'https://deusbrand.cl';
+async function enviarPremioRuleta(datos) {
+  const email = (datos && datos.email || '').trim();
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return false;
+  const { precioBanda } = require('./precio');
+  const premio = datos.premio || {};
+  const codigo = String(datos.codigo || '');
+  const link = (extra) => `${SITIO}/?premio=${encodeURIComponent(codigo)}${extra || ''}`;
+  const titulo = premio.tipo === 'correa' ? 'Correa extra'
+    : premio.tipo === 'tapones' ? 'Tapones de regalo'
+    : premio.etiqueta;
+  // "viernes 6 de noviembre a las 15:42" (hora de Chile).
+  const fv = new Date(datos.vence);
+  const vence = fv.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', weekday: 'long', day: 'numeric', month: 'long' }).replace(',', '')
+    + ' a las ' + fv.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false });
+  const precio = precioBanda();
+  const descuento = premio.monto ? premio.monto : (premio.pct ? Math.ceil(precio * premio.pct / 100) : 0);
+  const check = (texto) => `<tr><td style="padding:9px 0;width:30px;vertical-align:middle"><span style="display:inline-block;width:22px;height:22px;border-radius:11px;background:#0a7d2c;color:#ffffff;font-weight:bold;font-size:13px;line-height:22px;text-align:center">✓</span></td><td style="padding:9px 0;font-size:14px;color:#222;text-align:left">${texto}</td></tr>`;
+  const beneficios = (premio.tipo === 'correa'
+    ? check('<b>Correa de tela extra</b> de regalo, negra o gris')
+    : premio.tipo === 'tapones'
+      ? check('<b>Tapones de oído DEUS</b> de regalo con tu banda')
+      : check(`<b>${premio.monto ? money(premio.monto) + ' de descuento' : premio.pct + '% de descuento'}</b> en tu DEUS Band`))
+    + check('<b>Envío gratis</b> a todo Chile, llega en 1 a 2 días');
+  const lead = premio.tipo === 'correa'
+    ? 'Tu DEUS Band llega con <b>3 correas</b>: las 2 de siempre más 1 de tela extra, del color que elijas.'
+    : premio.tipo === 'tapones'
+      ? 'Tus tapones de oído DEUS van de regalo en el mismo paquete que tu banda.'
+      : 'Este es tu premio. El botón de abajo abre la tienda con tu código ya aplicado.';
+  const medio = premio.tipo === 'correa'
+    ? `<div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin:0 0 8px">Elige el color de tu correa de tela</div>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px"><tr>
+         <td width="50%" style="padding-right:5px"><a href="${link('&color=negra')}" style="display:block;border:1px solid #e6e6e6;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;color:#111"><img src="${SITIO}/img/correa-nylon-negra.webp" alt="" height="80" style="height:80px;display:block;margin:0 auto 6px;border:0"><b style="font-size:14px">Negra</b><br><span style="display:inline-block;margin-top:6px;font-size:12px;font-weight:bold;border:1px solid #111;border-radius:6px;padding:5px 10px">Elegir negra</span></a></td>
+         <td width="50%" style="padding-left:5px"><a href="${link('&color=gris')}" style="display:block;border:1px solid #e6e6e6;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;color:#111"><img src="${SITIO}/img/correa-nylon-gris.webp" alt="" height="80" style="height:80px;display:block;margin:0 auto 6px;border:0"><b style="font-size:14px">Gris</b><br><span style="display:inline-block;margin-top:6px;font-size:12px;font-weight:bold;border:1px solid #111;border-radius:6px;padding:5px 10px">Elegir gris</span></a></td>
+       </tr></table>`
+    : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eeeeee;border-radius:10px;margin:0 0 18px"><tr>
+         <td style="padding:10px;width:88px"><img src="${SITIO}/img/thumb-negra.webp" alt="DEUS Band" width="78" height="78" style="width:78px;height:78px;border-radius:8px;display:block;border:0"></td>
+         <td style="padding:10px 10px 10px 4px;text-align:left"><b style="font-size:15px;color:#111">DEUS Band</b><br>
+           ${descuento ? `<s style="color:#999;font-size:13px">${money(precio)}</s> <b style="font-size:20px;color:#111">${money(precio - descuento)}</b>` : `<b style="font-size:20px;color:#111">${money(precio)}</b>`}<br>
+           <span style="font-size:12px;color:#0a7d2c;font-weight:bold">Envío gratis · 3 cuotas sin interés</span></td>
+       </tr></table>`;
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee">
+      <div style="background:#080808;padding:24px;text-align:center">
+        <img src="${SITIO}/img/logo-email.png" alt="DEUS BRAND" width="190" style="width:190px;max-width:72%;height:auto;display:inline-block;border:0;outline:none;text-decoration:none;">
+      </div>
+      <div style="padding:28px 24px 24px;text-align:center;color:#222">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b0812f;font-weight:bold">Ganaste en la ruleta</div>
+        <h1 style="font-size:25px;line-height:1.2;margin:8px 0 6px;color:#111">${titulo} + envío gratis</h1>
+        <p style="font-size:14.5px;color:#555;line-height:1.5;margin:0 0 16px">${lead}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f7;border-radius:10px;margin:0 0 16px"><tr><td style="padding:4px 14px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${beneficios}</table>
+        </td></tr></table>
+        <div style="border:2px dashed #d9b46c;background:#fbf6ec;border-radius:10px;padding:12px;margin:0 0 16px">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#888">Tu código</div>
+          <div style="font-size:27px;font-weight:bold;letter-spacing:4px;color:#111;margin-top:4px">${codigo}</div>
+        </div>
+        ${medio}
+        <a href="${link()}" style="display:block;background:#111111;color:#e7cf9c;text-decoration:none;font-weight:bold;letter-spacing:1.5px;font-size:14px;text-transform:uppercase;border-radius:10px;padding:16px">${premio.tipo === 'descuento' ? 'Usar mi descuento' : 'Usar mi premio'}</a>
+        <p style="font-size:12.5px;color:#888;margin:14px 0 0;line-height:1.5">Tu código vence el <b>${vence}</b>. Un solo uso, para una compra en deusbrand.cl.</p>
+      </div>
+      <div style="border-top:1px solid #eee;padding:14px 20px 18px;font-size:11.5px;color:#999;text-align:center;line-height:1.6">
+        Recibiste este correo porque giraste la ruleta en deusbrand.cl.<br>DEUS Brand · Santiago, Chile
+      </div>
+    </div>`;
+  const asunto = `🎁 Ganaste en la ruleta DEUS: ${premio.tipo === 'descuento' ? titulo : titulo.toLowerCase()} + envío gratis`;
+  const ok = await enviarCorreo(asunto, html, null, email);
+  console.log(ok ? '[email] Premio de la ruleta enviado: ' + email : '[email] No se pudo enviar el premio de la ruleta: ' + email);
+  return ok;
+}
+
+module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, enviarPremioRuleta, diagnostico };
