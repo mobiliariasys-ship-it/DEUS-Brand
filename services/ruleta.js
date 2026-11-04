@@ -278,7 +278,30 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     return { giros, usados, porPremio: por };
   }
 
-  return { girar, validar, elegirColor, premioParaCobro, marcarUsado, resumen };
+  // Para el panel (con clave): cada persona que dejó su correo, del más
+  // nuevo al más viejo, con su premio y si ya compró, sigue vigente o venció.
+  async function lista() {
+    await cargar();
+    const t = ahora();
+    return Object.values(estado.codigos)
+      .map(reg => {
+        const p = premioPorId(reg.premio);
+        return {
+          fecha: new Date(reg.creado).toISOString(),
+          email: reg.emailEnvio || reg.email,
+          premio: p ? p.etiqueta : reg.premio,
+          premioId: reg.premio,
+          codigo: reg.codigo,
+          color: reg.color || null,
+          estado: reg.usado ? 'usado' : (t > reg.vence ? 'vencido' : 'vigente'),
+          orden: reg.usado ? reg.usado.orden : null,
+          vence: new Date(reg.vence).toISOString(),
+        };
+      })
+      .sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
+  }
+
+  return { girar, validar, elegirColor, premioParaCobro, marcarUsado, resumen, lista };
 }
 
 // Una sola instancia para server.js, Flow y Transbank (comparten los códigos).

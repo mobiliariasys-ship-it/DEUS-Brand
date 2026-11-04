@@ -268,6 +268,33 @@ test('el servidor limita los intentos (girar, consultar códigos y elegir color)
   assert.ok(!src.includes('res.json(r.paraCorreo'));
 });
 
+test('el panel ve cuánta gente dejó su correo, los correos y qué pasó con cada premio', async () => {
+  const { s, avanzar } = servicio();
+  const a = (await s.girar('Primera.Persona@gmail.com')).publico;
+  avanzar(60 * 1000);
+  const b = (await s.girar('segunda@hotmail.com')).publico;
+  await s.girar('segunda+repetida@hotmail.com'); // mismo correo: no suma otra fila
+  let l = await s.lista();
+  assert.strictEqual(l.length, 2);
+  assert.deepStrictEqual(l.map(x => x.email), ['segunda@hotmail.com', 'primera.persona@gmail.com'], 'del más nuevo al más viejo, como lo escribió');
+  assert.ok(l.every(x => x.estado === 'vigente' && x.codigo && x.premio && x.fecha && x.vence));
+  await s.marcarUsado(a.codigo, 'orden-77');
+  avanzar(49 * 3600 * 1000);
+  l = await s.lista();
+  assert.strictEqual(l.find(x => x.codigo === a.codigo).estado, 'usado');
+  assert.strictEqual(l.find(x => x.codigo === a.codigo).orden, 'orden-77');
+  assert.strictEqual(l.find(x => x.codigo === b.codigo).estado, 'vencido');
+  const src = leer('server.js');
+  assert.ok(src.includes("res.json({ ...(await s.resumen()), personas: await s.lista() });"));
+  // Los correos son datos personales: el endpoint pide la clave del panel.
+  const ep = src.slice(src.indexOf("app.get('/admin/ruleta'"), src.indexOf("app.get('/admin/ruleta'") + 500);
+  assert.ok(ep.includes("if ((req.query.clave || '') !== clave) return res.status(403)"));
+  const admin = leer('admin.html');
+  assert.ok(admin.includes('<section id="sec-ruleta">'));
+  assert.ok(admin.includes('cargarResenasPanel(); cargarRuleta();'), 'se carga al entrar al panel');
+  assert.ok(admin.includes("if(/^[=+\\-@]/.test(v)) v = \"'\" + v;"), 'el CSV no deja colar fórmulas en Excel');
+});
+
 test('Netlify pasa /ruleta/* al servidor y los códigos no van al repositorio', () => {
   assert.match(leer('netlify.toml'), /from = "\/ruleta\/\*"\s+to = "https:\/\/deus-band\.onrender\.com\/ruleta\/:splat"/);
   assert.match(leer('.gitignore'), /^ruleta\.json$/m);

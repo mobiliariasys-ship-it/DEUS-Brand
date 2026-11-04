@@ -491,12 +491,15 @@ app.get('/ruleta/codigo/:codigo', async (req, res) => {
   if (!v.ok && v.error === 'no-existe') codigoFalloIp.anotar(ip);
   res.json(v);
 });
-// Cuántos giraron y cuántos usaron cada premio (misma clave que /pedidos).
+// Panel: cuánta gente dejó su correo en la ruleta, los correos y qué pasó
+// con cada premio. Trae datos personales (correos): misma clave que /pedidos.
 app.get('/admin/ruleta', async (req, res) => {
   const clave = (process.env.STOCK_KEY || '').trim();
   if (!clave) return res.status(404).json({ error: 'No disponible' });
   if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
-  res.json(await ruleta_.servicio().resumen());
+  res.set('Cache-Control', 'no-store');
+  const s = ruleta_.servicio();
+  res.json({ ...(await s.resumen()), personas: await s.lista() });
 });
 
 app.post('/notificaciones', async (req, res) => {

@@ -182,6 +182,18 @@
   .util-kpi .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;color:#e8e8ee;}
   .util-kpi .s{font-size:.62rem;color:#8a8a92;margin-top:5px;line-height:1.35;}
   .util-kpi.bien .v{color:#69c46d;} .util-kpi.mal .v{color:#e07a6a;}
+  /* Ruleta "Gira y gana": correos que dejó la gente */
+  .ru-premios{font-size:.66rem;color:#8a8a92;margin:-4px 0 12px;line-height:1.7;}
+  .ru-premios b{color:#d0d0d0;}
+  .ru-acc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
+  .ru-acc input{flex:1;min-width:170px;background:var(--card,#141418);border:1px solid var(--border);color:#e8e8ee;border-radius:8px;padding:9px 11px;font:inherit;font-size:.78rem;}
+  .ru-estado{display:inline-block;font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap;}
+  .ru-usado{background:rgba(105,196,109,.14);color:#69c46d;}
+  .ru-vigente{background:rgba(232,180,100,.14);color:#e8b464;}
+  .ru-vencido{background:rgba(255,255,255,.06);color:#8a8a92;}
+  .ru-cod{display:block;font-size:.62rem;color:#8a8a92;margin-top:3px;letter-spacing:.3px;}
+  .ru-mail{word-break:break-all;color:#e8e8ee;}
+  .ru-f{white-space:nowrap;font-size:.7rem;color:#9a9a9a;}
   .util-tabla{overflow-x:auto;}
   /* Días elegidos en el gráfico de Conversión: mismo violeta que esa selección,
      para que se lea que una manda sobre la otra. */
@@ -872,6 +884,19 @@
       <div class="sec-h"><h2>📦 Pedidos recientes</h2></div>
       <div class="scroll"><table id="t-pedidos"><thead><tr><th>Fecha</th><th>Cliente</th><th>Comuna</th><th>Color</th><th>Total</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
       <div class="empty" id="pedidos-empty" style="display:none">Sin pedidos recientes.</div>
+    </section>
+
+    <section id="sec-ruleta">
+      <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
+      <div class="util-kpis" id="ru-kpis"></div>
+      <div class="ru-premios" id="ru-premios"></div>
+      <div class="ru-acc">
+        <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
+        <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
+        <button class="btn ghost" onclick="descargarRuleta()">Descargar CSV</button>
+      </div>
+      <div class="scroll"><table id="t-ruleta"><thead><tr><th>Fecha</th><th>Correo y premio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ruleta-empty" style="display:none">Todavía nadie ha dejado su correo en la ruleta.</div>
     </section>
 
     <section id="sec-resenas">
@@ -2136,12 +2161,79 @@
   }
   function esc(s){ return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
 
+  // ── Ruleta "Gira y gana": cuánta gente dejó su correo y cuáles ──
+  // /admin/ruleta trae los correos (datos personales): pide la misma clave.
+  var ruleta = null;
+  function cargarRuleta(){
+    fetch(BASE+'/admin/ruleta?clave='+encodeURIComponent(clave), { cache:'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(!d || d.error) return; ruleta = d; pintarRuleta(); })
+      .catch(function(){});
+  }
+  function fechaRuleta(iso){
+    try { return new Date(iso).toLocaleString('es-CL', { timeZone:'America/Santiago', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }); }
+    catch(e){ return iso; }
+  }
+  function pintarRuleta(){
+    if(!ruleta) return;
+    var pers = ruleta.personas || [];
+    var contar = function(est){ return pers.filter(function(p){ return p.estado===est; }).length; };
+    var usados = contar('usado'), vigentes = contar('vigente'), vencidos = contar('vencido');
+    document.getElementById('ru-total').textContent = pers.length + (pers.length===1 ? ' correo' : ' correos');
+    document.getElementById('ru-kpis').innerHTML =
+      kpi('Dejaron su correo', pers.length) +
+      kpi('Compraron con su código', usados, usados ? 'bien' : '', (pers.length ? Math.round(usados*100/pers.length) : 0) + '% de los que giraron') +
+      kpi('Premios vigentes', vigentes, '', 'todavía pueden comprar') +
+      kpi('Vencieron sin usar', vencidos);
+    var por = ruleta.porPremio || {};
+    document.getElementById('ru-premios').innerHTML = Object.keys(por).filter(function(k){ return por[k].giros; }).map(function(k){
+      var x = por[k]; return esc(x.etiqueta) + ': <b>' + x.giros + '</b>' + (x.usados ? ' (' + x.usados + (x.usados===1 ? ' compró)' : ' compraron)') : '');
+    }).join(' · ');
+    var q = (document.getElementById('ru-buscar').value || '').trim().toLowerCase();
+    var vistas = q ? pers.filter(function(p){ return String(p.email||'').toLowerCase().indexOf(q) >= 0 || String(p.codigo||'').toLowerCase().indexOf(q) >= 0; }) : pers;
+    rows('#t-ruleta', vistas, function(p){
+      var est = p.estado==='usado' ? '<span class="ru-estado ru-usado">✅ Compró</span>'
+        : p.estado==='vigente' ? '<span class="ru-estado ru-vigente">⏳ Vigente</span><span class="ru-cod">vence ' + fechaRuleta(p.vence) + '</span>'
+        : '<span class="ru-estado ru-vencido">Venció</span><span class="ru-cod">sin usar</span>';
+      return '<td class="ru-f">' + fechaRuleta(p.fecha) + '</td>' +
+        '<td><span class="ru-mail">' + esc(p.email) + '</span><span class="ru-cod">' + esc(p.premio) +
+        (p.premioId==='correa' && p.color ? ' (' + esc(p.color) + ')' : '') + ' · ' + esc(p.codigo) + '</span></td>' +
+        '<td>' + est + '</td>';
+    }, 'ruleta-empty');
+  }
+  function copiarCorreosRuleta(btn){
+    var t = ((ruleta && ruleta.personas) || []).map(function(p){ return p.email; }).join(', ');
+    if(!t) return;
+    var hecho = function(){ btn.textContent = '¡Copiados!'; setTimeout(function(){ btn.textContent = 'Copiar correos'; }, 1600); };
+    try { navigator.clipboard.writeText(t).then(hecho, function(){ prompt('Copia los correos:', t); }); }
+    catch(e){ prompt('Copia los correos:', t); }
+  }
+  function descargarRuleta(){
+    var pers = (ruleta && ruleta.personas) || [];
+    if(!pers.length) return;
+    // Celdas seguras para Excel: comillas escapadas y nada que empiece con
+    // = + - @ (Excel lo tomaría como fórmula).
+    var celda = function(v){
+      v = String(v==null ? '' : v);
+      if(/^[=+\-@]/.test(v)) v = "'" + v;
+      return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+    };
+    var csv = ['fecha,correo,premio,codigo,estado,orden'].concat(pers.map(function(p){
+      return [fechaRuleta(p.fecha), p.email, p.premio, p.codigo, p.estado, p.orden || ''].map(celda).join(',');
+    })).join('\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type:'text/csv;charset=utf-8' }));
+    a.download = 'ruleta-correos.csv';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
   function cargar(primera){
     fetch(BASE+'/admin/stats?clave='+encodeURIComponent(clave)).then(function(r){
       if(r.status===403||r.status===404){ throw new Error('clave'); }
       return r.json();
     }).then(function(d){
-      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); pintarAvisoBtn(); activarPush(); }
+      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); cargarRuleta(); pintarAvisoBtn(); activarPush(); }
       pintar(d);
       avisarVentas(d);
       cargarChats();
@@ -3666,6 +3758,8 @@
   var HORA_MS = 3600000;
   function panelAbierto(){ return clave && document.getElementById('panel').style.display!=='none'; }
   setInterval(function(){ if(panelAbierto()) cargarAds(); }, HORA_MS);
+  // La ruleta: cada 2 minutos, para ver entrar los correos casi en vivo.
+  setInterval(function(){ if(panelAbierto()) cargarRuleta(); }, 2 * 60 * 1000);
   // El gasto en vivo va más rápido: cada minuto el gasto por hora y cada 5 la
   // utilidad y las tarjetas de campañas, solo con el panel a la vista. El servidor
   // guarda la lectura de Meta 55 s, así que esto no multiplica las llamadas.
