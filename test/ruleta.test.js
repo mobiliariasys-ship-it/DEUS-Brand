@@ -294,8 +294,10 @@ test('el correo del premio lleva el código, el envío gratis y el botón que lo
     email: 'camila@gmail.com', codigo: 'CORREA-K7Q2', vence: '2026-11-06T18:42:00Z',
     premio: { id: 'correa', etiqueta: 'Correa extra', tipo: 'correa' }
   }));
-  assert.ok(correa.html.includes('?premio=CORREA-K7Q2&color=negra'));
-  assert.ok(correa.html.includes('?premio=CORREA-K7Q2&color=gris'));
+  // El color se elige en la web al usar el código, no en el correo.
+  assert.ok(correa.html.includes('https://deusbrand.cl/?premio=CORREA-K7Q2"'));
+  assert.ok(!correa.html.includes('&color='), 'el correo no debe hacer elegir el color');
+  assert.ok(correa.html.includes('el color lo eliges en la web cuando uses tu código'));
 });
 
 test('el correo de despacho dice qué correa del premio meter en el paquete', async () => {

@@ -479,11 +479,12 @@ async function enviarPremioRuleta(datos) {
     : premio.tipo === 'tapones'
       ? 'Tus tapones de oído DEUS van de regalo en el mismo paquete que tu banda.'
       : 'Este es tu premio. El botón de abajo abre la tienda con tu código ya aplicado.';
+  // La correa: el color (negra o gris) se elige en la web al usar el código,
+  // no acá (pedido del dueño: elegir en dos lugares confundía).
   const medio = premio.tipo === 'correa'
-    ? `<div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin:0 0 8px">Elige el color de tu correa de tela</div>
-       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px"><tr>
-         <td width="50%" style="padding-right:5px"><a href="${link('&color=negra')}" style="display:block;border:1px solid #e6e6e6;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;color:#111"><img src="${SITIO}/img/correa-nylon-negra.webp" alt="" height="80" style="height:80px;display:block;margin:0 auto 6px;border:0"><b style="font-size:14px">Negra</b><br><span style="display:inline-block;margin-top:6px;font-size:12px;font-weight:bold;border:1px solid #111;border-radius:6px;padding:5px 10px">Elegir negra</span></a></td>
-         <td width="50%" style="padding-left:5px"><a href="${link('&color=gris')}" style="display:block;border:1px solid #e6e6e6;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;color:#111"><img src="${SITIO}/img/correa-nylon-gris.webp" alt="" height="80" style="height:80px;display:block;margin:0 auto 6px;border:0"><b style="font-size:14px">Gris</b><br><span style="display:inline-block;margin-top:6px;font-size:12px;font-weight:bold;border:1px solid #111;border-radius:6px;padding:5px 10px">Elegir gris</span></a></td>
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eeeeee;border-radius:10px;margin:0 0 18px"><tr>
+         <td style="padding:10px 6px 10px 12px;width:84px;text-align:center"><img src="${SITIO}/img/correa-nylon-negra.webp" alt="" height="64" style="height:64px;border:0"> <img src="${SITIO}/img/correa-nylon-gris.webp" alt="" height="64" style="height:64px;border:0"></td>
+         <td style="padding:10px 12px 10px 4px;text-align:left;font-size:13.5px;color:#444;line-height:1.45"><b style="color:#111">Negra o gris:</b> el color lo eliges en la web cuando uses tu código.</td>
        </tr></table>`
     : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eeeeee;border-radius:10px;margin:0 0 18px"><tr>
          <td style="padding:10px;width:88px"><img src="${SITIO}/img/thumb-negra.webp" alt="DEUS Band" width="78" height="78" style="width:78px;height:78px;border-radius:8px;display:block;border:0"></td>
