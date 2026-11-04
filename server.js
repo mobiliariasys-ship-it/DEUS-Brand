@@ -196,7 +196,7 @@ app.post('/crear-preferencia', async (req, res) => {
   // se le dice al cliente antes de mandarlo a pagar otro monto).
   let premio = null;
   try { premio = await ruleta_.servicio().premioParaCobro(codigoPremio, colorPremio, { cliente: customerEmail }); }
-  catch (e) { return res.status(400).json({ error: e.message, campo: 'codigo' }); }
+  catch (e) { return res.status(400).json({ error: e.message, campo: e.campo || 'codigo' }); }
 
   try {
     const preference = new Preference(client);

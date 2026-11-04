@@ -2373,7 +2373,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var giroFinal = rotFinal != null ? rotFinal : destino(pr.id);
     var titulo = pr.tipo === 'correa' ? 'Correa extra' : pr.tipo === 'tapones' ? 'Tapones gratis' : pr.etiqueta;
     var tag = e.yaGiro ? 'Ya giraste con este correo' : '¡Ganaste!';
-    var enviado = '<div class="rl-ok"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="2.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Te lo enviamos a ' + esc(e.email) + '</div>';
+    var enviado = '<div class="rl-ok"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7fc9a0" stroke-width="2.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Te lo enviamos a ' + esc(e.email) + '</div>' +
+      '<div class="rl-fino" style="margin:-6px 0 10px">Úsalo comprando con ese mismo correo. Un código por compra.</div>';
     var cod = '<div class="rl-cod"><div><div class="k">Tu código</div><div class="v">' + esc(e.codigo) + '</div></div><button type="button" class="rl-copiar" id="rl-copiar">Copiar</button></div>';
     var medio = '';
     if (!e.codigo) {
@@ -2438,6 +2439,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     setTimeout(function () {
       if (typeof aplicarCodigoRuleta === 'function') aplicarCodigoRuleta(e.codigo, { color: e.color, silencioso: true });
       if (typeof abrirCheckout === 'function') abrirCheckout();
+      // El código solo sirve con el correo que lo ganó: se deja escrito para
+      // que nadie lo cambie sin querer y el pago lo rechace.
+      var em = document.getElementById('co-email');
+      if (em && !em.value && e.email) {
+        em.value = e.email;
+        try { em.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {}
+      }
     }, 280);
   }
   window.abrirRuleta = function () {
@@ -3841,6 +3849,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function aplicarCodigoRuleta(codigo, opciones) {
           opciones = opciones || {};
           const msg = document.getElementById('rlc-msg');
+          // Un código por compra: si pegó dos, se le dice (no se aplica ninguno).
+          if (String(codigo || '').split(/[\s,;]+/).filter(x => x.includes('-')).length > 1) {
+            if (msg) { msg.className = 'rlc-msg mal'; msg.textContent = 'Solo se puede usar un código por compra.'; }
+            return false;
+          }
           const c = String(codigo || '').trim().toUpperCase().replace(/\s+/g, '');
           if (!c) { const i = document.getElementById('rlc-in'); if (i) i.focus(); return false; }
           if (msg && !opciones.silencioso) { msg.className = 'rlc-msg'; msg.textContent = 'Revisando…'; }
@@ -3926,7 +3939,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // traer HTML (aunque alguien edite lo guardado en su navegador).
           const cod = String(premioRuleta.codigo).toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
           caja.classList.add('ok');
-          k.textContent = 'Código';
+          k.textContent = 'Código · uno por compra';
           inp.value = cod;
           inp.readOnly = true;
           btn.textContent = 'Quitar';

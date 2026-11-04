@@ -510,7 +510,7 @@ async function enviarPremioRuleta(datos) {
         </div>
         ${medio}
         <a href="${link()}" style="display:block;background:#111111;color:#e7cf9c;text-decoration:none;font-weight:bold;letter-spacing:1.5px;font-size:14px;text-transform:uppercase;border-radius:10px;padding:16px">${premio.tipo === 'descuento' ? 'Usar mi descuento' : 'Usar mi premio'}</a>
-        <p style="font-size:12.5px;color:#888;margin:14px 0 0;line-height:1.5">Tu código vence el <b>${vence}</b>. Un solo uso, para una compra en deusbrand.cl.</p>
+        <p style="font-size:12.5px;color:#888;margin:14px 0 0;line-height:1.5">Tu código vence el <b>${vence}</b>. Un solo uso, en una compra hecha con <b>este mismo correo</b>.</p>
       </div>
       <div style="border-top:1px solid #eee;padding:14px 20px 18px;font-size:11.5px;color:#999;text-align:center;line-height:1.6">
         Recibiste este correo porque giraste la ruleta en deusbrand.cl.<br>DEUS Brand · Santiago, Chile

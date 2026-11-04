@@ -145,16 +145,40 @@ test('el código dura 48 horas y sirve una sola vez', async () => {
   assert.strictEqual((await s2.validar(otro.codigo)).error, 'vencido');
 });
 
-test('dos compras al mismo tiempo no pueden usar el mismo código', async () => {
-  const { s, avanzar } = servicio();
-  const { codigo } = (await s.girar('dueno@gmail.com')).publico;
-  assert.ok(await s.premioParaCobro(codigo, '', { cliente: 'dueno@gmail.com' }));
-  await assert.rejects(() => s.premioParaCobro(codigo, '', { cliente: 'otro@gmail.com' }), e => e.codigoError === 'reservado');
-  assert.ok(await s.premioParaCobro(codigo, '', { cliente: 'dueno@gmail.com' }), 'el mismo cliente puede reintentar el pago');
-  avanzar(31 * 60 * 1000);
-  assert.ok(await s.premioParaCobro(codigo, '', { cliente: 'otro@gmail.com' }), 'si el primero no pagó, a los 30 min se libera');
+test('un solo código por correo: solo lo usa el correo que lo ganó, una vez', async () => {
+  const { s } = servicio();
+  const { codigo } = (await s.girar('dueno.real@gmail.com')).publico;
+  // Otro correo (aunque tenga el código) no lo puede usar: se le dice qué correo usar, enmascarado.
+  await assert.rejects(() => s.premioParaCobro(codigo, '', { cliente: 'otro@gmail.com' }),
+    e => e.codigoError === 'otro-correo' && e.campo === 'email' && e.message.includes('du•••@gmail.com') && !e.message.includes('dueno.real'));
+  await assert.rejects(() => s.premioParaCobro(codigo, '', {}), e => e.codigoError === 'otro-correo', 'sin correo tampoco');
+  // El dueño sí, escriba su correo como lo escriba (Gmail ignora puntos, +etiqueta y mayúsculas).
+  assert.ok(await s.premioParaCobro(codigo, '', { cliente: 'dueno.real@gmail.com' }));
+  assert.ok(await s.premioParaCobro(codigo, '', { cliente: 'D.U.E.N.O.Real+tienda@Gmail.com' }), 'el mismo correo escrito distinto');
   await s.marcarUsado(codigo, 'orden-9');
-  await assert.rejects(() => s.premioParaCobro(codigo, '', { cliente: 'otro@gmail.com' }), e => e.codigoError === 'usado');
+  await assert.rejects(() => s.premioParaCobro(codigo, '', { cliente: 'dueno.real@gmail.com' }), e => e.codigoError === 'usado');
+});
+
+test('una compra lleva UN solo código: dos juntos no pasan', async () => {
+  const { s } = servicio();
+  const a = (await s.girar('uno@gmail.com')).publico.codigo;
+  const otra = await s.girar('uno+dos@gmail.com');
+  assert.strictEqual(otra.yaGiro, true);
+  assert.strictEqual(otra.paraCorreo.codigo, a, 'el mismo correo no tiene un segundo código');
+  const c = (await s.girar('otra.persona@gmail.com')).publico.codigo;
+  for (const varios of [[a, c], a + ',' + c, a + ' ' + c, a + ';' + c, { codigo: a }, 12345]) {
+    await assert.rejects(() => s.premioParaCobro(varios, '', { cliente: 'uno@gmail.com' }),
+      e => e.codigoError === 'uno-solo' && e.message === 'Solo se puede usar un código por compra.', JSON.stringify(varios));
+  }
+  assert.ok(HTML.includes("msg.textContent = 'Solo se puede usar un código por compra.';"), 'el checkout tampoco deja pegar dos');
+  // El checkout manda un solo código (un string), nunca una lista.
+  assert.ok(HTML.includes("codigoPremio: (!checkoutTapones && premioRuleta) ? premioRuleta.codigo : ''"));
+  assert.ok(HTML.includes("k.textContent = 'Código · uno por compra';"));
+});
+
+test('desde la ruleta, el checkout trae escrito el correo con el que giró', () => {
+  assert.ok(HTML.includes('if (em && !em.value && e.email) {'));
+  assert.ok(HTML.includes('em.value = e.email;'));
 });
 
 test('premioParaCobro: sin código nada; con uno malo, un mensaje para el cliente', async () => {
@@ -168,12 +192,13 @@ test('la correa: color elegido de base, negra si nunca eligió, y se puede cambi
   // azar 0.80 → correa (0.792 a 0.942)
   const { s } = servicio({ azar: () => 0.80 });
   const { codigo, premio } = (await s.girar('c@gmail.com')).publico;
+  const yo = { cliente: 'c@gmail.com' };
   assert.strictEqual(premio.id, 'correa');
-  assert.strictEqual((await s.premioParaCobro(codigo)).color, 'negra');
+  assert.strictEqual((await s.premioParaCobro(codigo, '', yo)).color, 'negra');
   assert.strictEqual(await s.elegirColor(codigo, 'gris'), true);
   assert.strictEqual(await s.elegirColor(codigo, 'rosada'), false, 'no hay correa de tela rosada');
-  assert.strictEqual((await s.premioParaCobro(codigo)).color, 'gris');
-  assert.strictEqual((await s.premioParaCobro(codigo, 'negra')).color, 'negra', 'el checkout manda el color final');
+  assert.strictEqual((await s.premioParaCobro(codigo, '', yo)).color, 'gris');
+  assert.strictEqual((await s.premioParaCobro(codigo, 'negra', yo)).color, 'negra', 'el checkout manda el color final');
   await s.marcarUsado(codigo, 'orden-1');
   assert.strictEqual(await s.elegirColor(codigo, 'negra'), false, 'después de comprar ya no se cambia');
 });
@@ -223,7 +248,7 @@ test('las tres pasarelas validan el código antes de cobrar y lo marcan usado al
     const src = leer(...archivo);
     const n = archivo.join('/');
     assert.ok(src.includes('premioParaCobro(codigoPremio, colorPremio, { cliente: customerEmail })'), n + ': no valida (ni reserva) el código');
-    assert.ok(src.includes("return res.status(400).json({ error: e.message, campo: 'codigo' })"), n + ': un código malo no se le avisa al cliente');
+    assert.ok(src.includes("return res.status(400).json({ error: e.message, campo: e.campo || 'codigo' })"), n + ': un código malo no se le avisa al cliente');
     assert.ok(src.includes('.marcarUsado('), n + ': el código quedaría reutilizable');
   }
   // Mercado Pago no acepta ítems negativos: con descuento, una sola línea al monto rebajado.
@@ -290,6 +315,7 @@ test('el correo del premio lleva el código, el envío gratis y el botón que lo
   assert.ok(desc.html.includes('DEUS3K-K7Q2'));
   assert.ok(desc.html.includes('https://deusbrand.cl/?premio=DEUS3K-K7Q2'));
   assert.ok(desc.html.includes('$65.990'), 'muestra el precio con el descuento');
+  assert.ok(desc.html.includes('este mismo correo'), 'avisa que se usa con el mismo correo');
   const [correa] = await conCorreos(() => email.enviarPremioRuleta({
     email: 'camila@gmail.com', codigo: 'CORREA-K7Q2', vence: '2026-11-06T18:42:00Z',
     premio: { id: 'correa', etiqueta: 'Correa extra', tipo: 'correa' }

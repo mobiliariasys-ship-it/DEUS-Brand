@@ -43,7 +43,7 @@ router.post('/webpay/crear', async (req, res) => {
   // se le dice al cliente antes de mandarlo a pagar otro monto).
   let premio = null;
   try { premio = await ruleta_.servicio().premioParaCobro(codigoPremio, colorPremio, { cliente: customerEmail }); }
-  catch (e) { return res.status(400).json({ error: e.message, campo: 'codigo' }); }
+  catch (e) { return res.status(400).json({ error: e.message, campo: e.campo || 'codigo' }); }
   try {
     // Una sola fuente para lo que se cobra: misma función que usan Flow y
     // Mercado Pago, así las tres pasarelas no pueden cobrar distinto.

@@ -17,9 +17,11 @@
 //    premio de otra persona escribiendo su correo.
 //  - Códigos de 6 caracteres al azar (887 millones de combinaciones por
 //    premio) y el servidor limita los intentos: adivinar uno no es viable.
-//  - Un código sirve UNA vez, por 48 horas. Al empezar a pagar queda
-//    reservado 30 minutos para ese cliente, así dos compras simultáneas no
-//    pueden usar el mismo código.
+//  - Un código sirve UNA vez, por 48 horas, y SOLO con el correo que lo
+//    ganó (pedido del dueño: "un solo código por correo"). Así no sirve
+//    juntar códigos girando con otros correos: cada correo tiene un código y
+//    solo ese correo lo puede usar. Una compra lleva un solo código.
+//  - Al empezar a pagar queda reservado 30 minutos para esa compra.
 //
 // Probabilidades (decisión del dueño, 4-nov-2026). Suman exactamente 1.
 // Costo promedio por venta con código ≈ $2.900 (simulado en 10.000 días).
@@ -61,6 +63,8 @@ const MENSAJES = {
   'usado': 'Este código ya se usó en otra compra.',
   'reservado': 'Este código se está usando en otra compra en este momento. Si fuiste tú, espera 30 minutos e intenta de nuevo.',
   'formato': 'Revisa tu correo: así no te podemos mandar el premio.',
+  'uno-solo': 'Solo se puede usar un código por compra.',
+  'otro-correo': 'Este código es de otro correo. Para usarlo, compra con el mismo correo con el que giraste la ruleta',
   'desechable': 'Usa tu correo de siempre: a los correos temporales no les podemos mandar premios.',
 };
 
@@ -102,10 +106,20 @@ function premioPublico(p) {
   return o;
 }
 
-function error(tipo) {
-  const e = new Error(MENSAJES[tipo]);
+function error(tipo, extra) {
+  const e = new Error(MENSAJES[tipo] + (extra || ''));
   e.codigoError = tipo;
+  // El correo equivocado se corrige en el campo del correo, no en el del código.
+  e.campo = tipo === 'otro-correo' ? 'email' : 'codigo';
   return e;
+}
+
+// "camila.rojas@gmail.com" → "ca•••@gmail.com": le dice a la persona qué
+// correo usar sin mostrárselo entero a quien no es su dueño.
+function enmascarar(email) {
+  const [local, dominio] = String(email || '').split('@');
+  if (!local || !dominio) return '';
+  return local.slice(0, 2) + '•••@' + dominio;
 }
 
 function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
@@ -213,11 +227,19 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
   // correo de la compra): otra compra con el mismo código no puede entrar
   // mientras esta se paga. El mismo cliente sí puede reintentar el pago.
   async function premioParaCobro(codigo, color, opciones = {}) {
+    if (codigo == null || codigo === '') return null;
+    // UN código por compra: una lista, o dos códigos en el mismo texto, no pasan.
+    if (typeof codigo !== 'string') throw error('uno-solo');
+    if (codigo.split(/[\s,;]+/).filter(x => x.includes('-')).length > 1) throw error('uno-solo');
     if (!normalizarCodigo(codigo)) return null;
     const v = await validar(codigo);
     if (!v.ok) throw error(v.error);
     const reg = buscar(codigo);
-    const cliente = String(opciones.cliente || '').trim().toLowerCase();
+    // Solo el correo que ganó el código lo puede usar (con la misma
+    // normalización del giro: mayúsculas, puntos y +etiqueta de Gmail no importan).
+    const c = validarCorreo(opciones.cliente);
+    if (!c.ok || c.clave !== reg.email) throw error('otro-correo', ' (' + enmascarar(reg.emailEnvio || reg.email) + ').');
+    const cliente = c.clave;
     const t = ahora();
     if (reg.reserva && reg.reserva.hasta > t && reg.reserva.cliente !== cliente) throw error('reservado');
     reg.reserva = { cliente, hasta: t + RESERVA_MS };
@@ -273,5 +295,5 @@ function servicio() {
 
 module.exports = {
   PREMIOS, VIGENCIA_MS, RESERVA_MS, COLORES_CORREA, MENSAJES, DESECHABLES, LARGO_CODIGO,
-  sortear, premioPorId, normalizarCodigo, validarCorreo, crearServicio, servicio,
+  sortear, premioPorId, normalizarCodigo, validarCorreo, enmascarar, crearServicio, servicio,
 };
