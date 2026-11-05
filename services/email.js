@@ -304,12 +304,6 @@ async function enviarConfirmacionCliente(datos) {
           </table>
         </div>
         <p style="margin:22px 0 6px">El envío llega en <b>1 a 3 días hábiles</b>.</p>
-        <div style="margin:22px 0 6px;background:#fbf6ec;border:1px solid #e6d6b3;border-radius:10px;padding:16px 18px;text-align:center">
-          <div style="font-size:26px;line-height:1;margin-bottom:6px">🎁</div>
-          <b style="color:#8a6d2f">¡Ya estás participando en el sorteo mensual!</b>
-          ${datos.ticket ? `<div style="margin:10px auto 4px;display:inline-block;background:#20160a;color:#e7cf9c;border-radius:8px;padding:8px 18px;font-size:18px;font-weight:bold;letter-spacing:1px">Tu ticket N° ${String(datos.ticket).padStart(4, '0')}</div>` : ''}
-          <div style="font-size:13px;color:#7a6a4a;margin-top:6px">Con tu compra ganaste tu ticket para el sorteo de <b>una DEUS Band + Tapones de oído</b>. Sorteamos 1 vez al mes. Para avisarte si ganas, deja tu Instagram en la web (pestaña del sorteo, con tu n° de orden).</div>
-        </div>
         <p style="margin-top:26px;color:#555">Gracias por confiar en DEUS. ✨</p>
       </div>
       <div style="background:#f0f0f0;padding:16px 24px;text-align:center;color:#999;font-size:12px">
