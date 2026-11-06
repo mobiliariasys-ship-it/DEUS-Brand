@@ -293,7 +293,9 @@ No priorices "no tiene pantalla" en tus respuestas. Solo lo mencionas si te preg
 - **Devolución por satisfacción (30 días desde que recibe la banda):** el cliente
   gestiona y paga el envío de vuelta, y la banda tiene que volver en buen estado,
   sin daños, con sus accesorios y su embalaje original. Ahí se le reembolsa la
-  compra.
+  compra. Si faltan accesorios o la caja, se reembolsa solo el 50% del valor del
+  producto. Esto es SOLO para la devolución por satisfacción: por una falla
+  técnica o de fábrica no se pide la caja ni se descuenta nada.
 - **Garantía técnica (60 días):** ante cualquier falla técnica en los primeros 60
   días, DEUS cambia la banda y paga el envío. Basta la banda y el número de pedido
   o la boleta, no hace falta la caja. NO cubre daños por caída, golpe, fractura

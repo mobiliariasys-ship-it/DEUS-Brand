@@ -36,6 +36,14 @@ test('las fallas técnicas tienen 60 días y la garantía legal de 6 meses sigue
   assert.match(item, /6 meses de garantía legal/);
   assert.match(item, /embalaje original/, 'condiciones de la devolución por satisfacción');
   assert.match(item, /sin necesidad de la caja/, 'por falla técnica no se exige la caja');
+  // Decisión del dueño (6-nov-2026): en la devolución por satisfacción, si
+  // faltan accesorios o la caja se reembolsa el 50%. Solo ahí: por falla
+  // técnica o de fábrica no se pide la caja (la garantía legal no se condiciona).
+  assert.match(item, /Si faltan accesorios o la caja, se reembolsará solo el 50% del valor del producto\./);
+  assert.ok(item.indexOf('50% del valor') < item.indexOf('Por una falla técnica basta la banda'),
+    'el 50% va con la devolución por satisfacción, antes de la regla de las fallas');
+  assert.match(chat, /Si faltan accesorios o la caja, se reembolsa solo el 50% del valor del\s+producto/);
+  assert.match(chat, /por una falla\s+técnica o de fábrica no se pide la caja ni se descuenta nada/);
   assert.ok(!/Wellband/i.test(item), 'quedó el nombre de otra marca en el texto');
   assert.match(chat, /Garantía técnica \(60 días\)/);
   assert.match(chat, /garantía legal de 6 meses/);
