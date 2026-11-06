@@ -996,14 +996,25 @@ app.get('/admin/ads/gasto-horario', async (req, res) => {
     const c = gastoHoraCache, ahora = Date.now();
     const hoy = diaChileStr(0), desde = diaChileStr(7), ayer = diaChileStr(1);
     // Campañas para el camino campaña por campaña: la lista se renueva cada
-    // 10 min. Las archivadas y borradas ya no gastan.
+    // 10 min. Para HOY bastan las vigentes (una archivada o borrada ya no
+    // gasta); para los 7 días anteriores van también las archivadas en esa
+    // ventana, que gastaron mientras corrían (ver metaAds.listCampaignsConGasto).
     if (!c.campanas || ahora - c.tCamp > 10 * 60000) {
       try {
-        c.campanas = (await metaAds.listCampaigns()).filter(x => x.status !== 'ARCHIVED' && x.status !== 'DELETED');
+        const todas = await metaAds.listCampaignsConGasto(desde);
+        c.campanas = todas.filter(x => !['ARCHIVED', 'DELETED'].includes(x.effective_status || x.status));
+        c.campanasHist = todas;
         c.tCamp = ahora;
-      } catch (e) { c.campanas = null; }
+      } catch (e) {
+        try {
+          c.campanas = (await metaAds.listCampaigns()).filter(x => x.status !== 'ARCHIVED' && x.status !== 'DELETED');
+          c.campanasHist = c.campanas;
+          c.tCamp = ahora;
+        } catch (e2) { c.campanas = null; c.campanasHist = null; }
+      }
     }
     const opts = c.campanas ? { campanas: c.campanas } : {};
+    const optsHist = c.campanasHist ? { campanas: c.campanasHist } : {};
     const vence = req.query.forzar === '1' ? 15000 : 55000;
     if (!c.hoy || c.hoyClave !== hoy || ahora - c.tHoy > vence) {
       c.hoy = await metaAds.getGastoHorario(hoy, hoy, opts);
@@ -1012,7 +1023,7 @@ app.get('/admin/ads/gasto-horario', async (req, res) => {
     let histError = '';
     if (!c.hist || c.histClave !== ayer || ahora - c.tHist > 15 * 60000) {
       try {
-        c.hist = await metaAds.getGastoHorario(desde, ayer, opts);
+        c.hist = await metaAds.getGastoHorario(desde, ayer, optsHist);
         c.histClave = ayer; c.tHist = ahora;
       } catch (e) { histError = e.message || 'Meta no respondió'; }
     }
@@ -1064,10 +1075,12 @@ async function utilidadDiaria(diasParam) {
   const ventas = metrics.ventasPorDia(dias);
   // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
   // media verdad sirve más que un panel en blanco.
-  let gasto = {}, compras = {}, adsOk = true, adsError = '', via = '';
+  let gasto = {}, compras = {}, adsOk = true, adsError = '', via = '', sinArchivadas = false;
   try {
     const r = await metaAds.getGastoDiarioCuenta(dias);
     gasto = r.mapa; compras = r.compras || {}; via = r.via;
+    // Meta no dejó leer las campañas archivadas: su gasto puede faltar.
+    sinArchivadas = !!r.sinArchivadas;
   }
   catch (e) {
     adsOk = false;
@@ -1096,7 +1109,7 @@ async function utilidadDiaria(diasParam) {
 
   return {
     dias, desde: desdeIva ? utilidad_.IVA_DESDE : undefined, adsOk, adsError, filas, total: tot,
-    diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan, via },
+    diagnostico: { diasMeta: fechasMeta.length, diasQueCalzan: calzan, via, sinArchivadas },
     costos: { banda: utilidad_.COSTO_BANDA, envio: utilidad_.COSTO_ENVIO, pasarela: utilidad_.TASA_PASARELA, iva: utilidad_.IVA,
               ml: utilidad_.CARGOS_ML }
   };

@@ -103,7 +103,14 @@ test('el gasto en ads tiene respaldo cuando Meta bloquea el nodo de la cuenta', 
   const i = src.indexOf('async function getGastoDiarioCuenta');
   assert.ok(i >= 0);
   const fn = src.slice(i, src.indexOf('\n}', i));
-  assert.ok(/listCampaigns\(\)/.test(fn), 'debe poder sumar campaña por campaña');
+  // Suma campaña por campaña con la lista que incluye las ARCHIVADAS (si no,
+  // archivar una campaña borraba su gasto de los días en que corrió); si Meta
+  // no deja leerlas, cae a las vigentes. Ver test/meta-archivadas.test.js.
+  assert.ok(/campanasParaSumar\(/.test(fn), 'debe poder sumar campaña por campaña');
+  const j = src.indexOf('async function campanasParaSumar');
+  const respaldo = src.slice(j, src.indexOf('\n}', j));
+  assert.ok(/listCampaignsConGasto\(/.test(respaldo) && /listCampaigns\(\)/.test(respaldo),
+    'primero con las archivadas, las vigentes de respaldo');
   assert.ok(/getInsightsDiarios\(/.test(fn), 'el respaldo usa el endpoint que sí responde');
   // Las campañas PAUSADAS gastaron plata mientras corrían: filtrar por ACTIVE
   // acá subestimaría el gasto y sobrestimaría la utilidad.

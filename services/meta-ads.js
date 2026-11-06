@@ -109,6 +109,81 @@ async function listCampaigns() {
   return data.data || [];
 }
 
+// Campañas que pudieron GASTAR desde `desde` (YYYY-MM-DD), incluidas las
+// ARCHIVADAS y las BORRADAS. Es la lista para sumar gasto, no para el panel de
+// campañas (ahí siguen solo las vigentes, con listCampaigns).
+//
+// Lo que rompía: Meta no devuelve las campañas archivadas ni las borradas si
+// no se le piden con effective_status, y en esta cuenta el gasto se suma
+// campaña por campaña (el nodo de la cuenta está bloqueado). Al archivar una
+// campaña, su gasto desaparecía de los días en que corrió: esos días quedaban
+// con publicidad de menos y utilidad de más. Del 11-sep al 6-nov eran $1,6M
+// + IVA de campañas archivadas ("solid", "solid mas info"…) que la utilidad
+// histórica no restaba: marcaba $4,6M cuando eran ~$2,7M.
+//
+// Para no pedirle insights a cada campaña vieja, se descartan las archivadas o
+// borradas ANTES de la ventana: archivar cambia updated_time y una campaña
+// archivada ya no entrega, así que si su última modificación es anterior a
+// `desde` no pudo gastar en la ventana. Un día de margen por el huso horario
+// (updated_time viene en UTC). Verificado con la cuenta: las 11 archivadas
+// que gastaron entre el 11-sep y el 6-nov tienen updated_time del 15-sep en
+// adelante.
+const ESTADOS_CON_GASTO = ['ACTIVE', 'PAUSED', 'IN_PROCESS', 'WITH_ISSUES', 'ARCHIVED', 'DELETED'];
+const FUERA_DE_CIRCULACION = new Set(['ARCHIVED', 'DELETED']);
+
+function diaAntes(fecha) {
+  return new Date(Date.parse(fecha + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10);
+}
+
+async function listCampaignsConGasto(desde) {
+  const { adAccountId } = creds();
+  const pedir = estados => insightsCompletos(`/${adAccountId}/campaigns`, {
+    fields: 'id,name,status,effective_status,updated_time',
+    effective_status: JSON.stringify(estados)
+  });
+  let todas;
+  try {
+    todas = await pedir(ESTADOS_CON_GASTO);
+  } catch (e) {
+    // Si Meta no acepta DELETED en este edge, al menos las archivadas, que
+    // son las que se usan para ordenar la cuenta.
+    todas = await pedir(ESTADOS_CON_GASTO.filter(s => s !== 'DELETED'));
+  }
+  const corte = /^\d{4}-\d{2}-\d{2}$/.test(String(desde || '')) ? diaAntes(desde) : '';
+  return todas.filter(c => {
+    if (!FUERA_DE_CIRCULACION.has(c.effective_status || c.status)) return true;
+    const tocada = String(c.updated_time || '').slice(0, 10);
+    return !corte || !tocada || tocada >= corte;
+  });
+}
+
+// Corre `fn` sobre `items` de a `n` a la vez y devuelve los resultados en el
+// mismo orden. Con las archivadas la lista de campañas crece, y disparar
+// todas las consultas juntas acerca la cuenta al límite de uso de Meta.
+async function enTandas(items, n, fn) {
+  const salida = new Array(items.length);
+  let siguiente = 0;
+  const trabajar = async () => {
+    while (siguiente < items.length) {
+      const i = siguiente++;
+      salida[i] = await fn(items[i], i);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, trabajar));
+  return salida;
+}
+
+// Campañas para sumar gasto con la mejor lista posible: con las archivadas; si
+// Meta no deja leerlas, las vigentes (y se avisa que puede faltar gasto).
+async function campanasParaSumar(desde) {
+  try {
+    return { campanas: await listCampaignsConGasto(desde), sinArchivadas: false };
+  } catch (e) {
+    console.warn('[meta-ads] no se pudieron leer las campañas archivadas; el gasto puede quedar corto:', e.message || e);
+    return { campanas: await listCampaigns(), sinArchivadas: true };
+  }
+}
+
 // Campos extendidos para el panel: además de gasto/clics, trae impresiones,
 // alcance, frecuencia, CTR/CPC de clics en el enlace (no de "todos los clics",
 // que infla con likes/comentarios) y compras + costo por compra vía
@@ -344,12 +419,13 @@ async function getGastoDiarioCuenta(dias = 14) {
 
   // Camino 2: sumar campaña por campaña. Son más requests (una por campaña),
   // pero es EXACTAMENTE el mismo endpoint que usa el gráfico de CTR, que sí
-  // responde en esta cuenta. Se incluyen las PAUSADAS a propósito: una campaña
-  // apagada hoy igual gastó plata mientras corría, y esa plata salió del mismo
-  // bolsillo que la de las activas.
-  let campanas;
+  // responde en esta cuenta. Se incluyen las PAUSADAS, las ARCHIVADAS y las
+  // BORRADAS a propósito: una campaña apagada o archivada hoy igual gastó
+  // plata mientras corría, y esa plata salió del mismo bolsillo que la de las
+  // activas (ver listCampaignsConGasto).
+  let campanas, sinArchivadas;
   try {
-    campanas = await listCampaigns();
+    ({ campanas, sinArchivadas } = await campanasParaSumar(JSON.parse(rangoHastaHoy(dias, 14)).since));
   } catch (e) {
     // Los dos caminos caídos = el token no sirve para NADA de Meta, no es un
     // permiso puntual del nodo de la cuenta. El mensaje tiene que decirlo, o
@@ -361,9 +437,7 @@ async function getGastoDiarioCuenta(dias = 14) {
       '. El token de Meta no tiene acceso a nada — hay que regenerarlo en Render.'
     );
   }
-  const porCampana = await Promise.all(
-    campanas.map(c => getInsightsDiarios(c.id, dias).catch(() => []))
-  );
+  const porCampana = await enTandas(campanas, 5, c => getInsightsDiarios(c.id, dias).catch(() => []));
   const mapa = {}, compras = {};
   let filas = 0;
   for (const dias_ of porCampana) {
@@ -381,7 +455,7 @@ async function getGastoDiarioCuenta(dias = 14) {
       'Nivel cuenta: ' + (errorCuenta || 'sin datos') + '. Falta el permiso ads_read sobre los insights.'
     );
   }
-  return { mapa, compras, via: 'campañas', campanas: campanas.length, errorCuenta };
+  return { mapa, compras, via: 'campañas', campanas: campanas.length, sinArchivadas, errorCuenta };
 }
 
 // Gasto POR HORA de la cuenta, para la sección "en vivo" del panel. Mismo
@@ -416,8 +490,9 @@ async function getGastoHorario(desde, hasta, { campanas } = {}) {
   } catch (e) {
     errorCuenta = e.message || String(e);
   }
-  const lista = campanas || await listCampaigns();
-  const res = await Promise.all(lista.map(c => insightsCompletos(`/${c.id}/insights`, params).catch(() => null)));
+  // Sin lista dada, también las archivadas en la ventana: gastaron mientras corrían.
+  const lista = campanas || (await campanasParaSumar(desde)).campanas;
+  const res = await enTandas(lista, 5, c => insightsCompletos(`/${c.id}/insights`, params).catch(() => null));
   const mapa = {};
   let ok = 0;
   for (const filas of res) if (filas) { ok++; sumar(mapa, filas); }
@@ -427,4 +502,4 @@ async function getGastoHorario(desde, hasta, { campanas } = {}) {
   return { filas: Object.values(mapa), via: 'campañas', errorCuenta };
 }
 
-module.exports = { listCampaigns, listAds, getInsights, getInsightsDiarios, getCtrHorario, getGastoDiarioCuenta, getGastoHorario, setStatus, updateBudget, duplicateCampaign };
+module.exports = { listCampaigns, listCampaignsConGasto, listAds, getInsights, getInsightsDiarios, getCtrHorario, getGastoDiarioCuenta, getGastoHorario, setStatus, updateBudget, duplicateCampaign };

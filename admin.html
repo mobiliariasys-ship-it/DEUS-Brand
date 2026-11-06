@@ -2801,7 +2801,8 @@
     if (!d.adsOk) nota += ' ⚠️ El gasto en ads figura en 0 y la utilidad está inflada. Motivo: ' +
       (d.adsError || 'Meta no respondió') + '.';
     else if (d.diagnostico) nota += ' Meta reportó ' + d.diagnostico.diasQueCalzan + ' de ' + d.dias +
-      ' días con gasto' + (d.diagnostico.via === 'campañas' ? ', sumando campaña por campaña' : '') + '.';
+      ' días con gasto' + (d.diagnostico.via === 'campañas' ? ', sumando campaña por campaña, archivadas incluidas' : '') + '.' +
+      (d.diagnostico.sinArchivadas ? ' ⚠️ Meta no dejó leer las campañas archivadas: si archivaste alguna que gastó en estos días, su gasto falta y la utilidad está inflada.' : '');
     if (f.some(function(x){ return x.estimado; })) nota += ' Los días con * tienen ventas anteriores a que se guardara la cantidad: las unidades van estimadas desde el monto.';
     if (f.some(function(x){ return x.mlEstimado; })) nota += ' Algunos días con * tienen ventas de Mercado Libre que el reporte de ML trajo sin montos: van estimadas con el precio de ese día menos el 12% de ML y el envío.';
     if (f.some(function(x){ return x.devoluciones; })) nota += ' Las devoluciones de Mercado Libre van en su día de compra: no cuentan como pedido ni banda, y restan lo que cobró ML por los envíos (desde el 28-sep ese costo ya va dentro de los cargos de ML).';
