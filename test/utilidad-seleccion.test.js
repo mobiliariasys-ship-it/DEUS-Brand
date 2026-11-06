@@ -87,10 +87,12 @@ function montar() {
   assert.ok(estado, 'no encontré el estado de la utilidad (utilSt / UTIL30_VIGENCIA)');
   const estadoHist = SRC.match(/var utilHist = \{[^\n]*\};/);
   assert.ok(estadoHist, 'no encontré el estado de la tarjeta de utilidad (utilHist)');
+  const devolVars = SRC.match(/var DEVOL_MES_DEFECTO = \d+;\n\s*var utilUltima = null;/);
+  assert.ok(devolVars, 'no encontré las variables de las devoluciones del mes');
   vm.runInContext(
-    estado[0] + '\n' + estadoHist[0] + '\n' +
+    estado[0] + '\n' + estadoHist[0] + '\n' + devolVars[0] + '\n' +
     ['diasElegidosUtil', 'utilDeDias', 'utilidadSegunSel', 'pintarUtilSelResumen', 'marcarRangoUtil', 'cargarUtilidad',
-     'proyeccionMensual', 'pctGanancia', 'textoPct', 'pintarUtilidad', 'textoCargosML', 'kpi', 'money0', 'marcarAct',
+     'proyeccionMensual', 'devolucionesMes', 'cambiarDevolucionesMes', 'costoDevolucion', 'pctGanancia', 'textoPct', 'pintarUtilidad', 'textoCargosML', 'kpi', 'money0', 'marcarAct',
      'cargarUtilHist', 'utilTarjeta', 'pintarUtilTarjeta', 'verUtilHistorica'].map(extraer).join('\n') +
     // Como en el panel: refrescarSel termina llamando a utilidadSegunSel.
     '\nfunction refrescarSel(){ utilidadSegunSel(); }', ctx);
@@ -179,25 +181,34 @@ test('el refresco del panel no dispara consultas si la selección no cambió', a
     'refrescarSel avisa a la utilidad cuando cambian los días elegidos');
 });
 
-test('la proyección mensual lleva a 30 días el promedio de los días que se están mirando', async () => {
+test('la proyección mensual lleva a 30 días el promedio de los días que se están mirando, menos las devoluciones del mes', async () => {
   const h = montar();
   const f = h.filas30;
-  const plata = n => '$' + Math.round(n).toLocaleString('es-CL');
+  // Lo que cuesta cada devolución: lo que pagó el cliente por banda menos la banda que vuelve.
+  const costo = t => Math.round(t.ingresos / t.unidades - 17000);
+  const plata = n => run(h, 'money0(' + n + ')');
   run(h, 'cargarUtilidad()'); await esperar();                // sin selección: últimos 14 días
   const catorce = u.totalizar(f.slice(-14));
   assert.match(h.els['util-kpis'].innerHTML, /Proyección mensual/);
-  assert.ok(h.els['util-kpis'].innerHTML.includes(plata(catorce.utilidad / 14 * 30)), 'promedio de 14 días × 30');
+  assert.ok(h.els['util-kpis'].innerHTML.includes(plata(catorce.utilidad / 14 * 30 - 6 * costo(catorce))),
+    'promedio de 14 días × 30, menos 6 devoluciones (el valor por defecto)');
   assert.ok(h.els['util-kpis'].innerHTML.includes('promedio de 14 días × 30'));
+  assert.ok(h.els['util-kpis'].innerHTML.includes('value="6"'), 'el campo de devoluciones parte en 6');
+  assert.ok(h.els['util-kpis'].innerHTML.includes('devoluciones × ' + plata(costo(catorce))));
 
   // Con días elegidos en Conversión, la proyección sale solo de esos días
   h.ctx.CONV_SEL[f[3].fecha] = true; h.ctx.CONV_SEL[f[20].fecha] = true; h.ctx.CONV_SEL[f[21].fecha] = true;
   h.els['conv-sel-util'] = { innerHTML: '', textContent: '', style: {} };
   run(h, 'refrescarSel()'); await esperar();
   const tres = u.totalizar([f[3], f[20], f[21]]);
-  assert.ok(h.els['util-kpis'].innerHTML.includes(plata(tres.utilidad / 3 * 30)), 'promedio de los 3 días elegidos × 30');
+  assert.ok(h.els['util-kpis'].innerHTML.includes(plata(tres.utilidad / 3 * 30 - 6 * costo(tres))), 'promedio de los 3 días elegidos × 30, menos las devoluciones');
   assert.ok(h.els['util-kpis'].innerHTML.includes('promedio de 3 días × 30'));
   assert.ok(!h.els['util-kpis'].innerHTML.includes('incluye hoy'), 'estos días ya terminaron');
   assert.strictEqual(run(h, 'proyeccionMensual(1000, 0)'), 0, 'sin días no hay proyección');
+  assert.strictEqual(run(h, 'proyeccionMensual(1400, 14, 0, 50000)'), 3000, 'sin devoluciones es el promedio × 30 de siempre');
+  assert.strictEqual(run(h, 'proyeccionMensual(1400, 14, 2, 500)'), 2000, 'cada devolución resta su costo');
+  assert.strictEqual(run(h, 'costoDevolucion({ ingresos: 137980, unidades: 2 }, 17000)'), 51990, '$68.990 devueltos − $17.000 de la banda que vuelve');
+  assert.strictEqual(run(h, 'costoDevolucion({ ingresos: 0, unidades: 0 })'), 51990, 'sin ventas en los días mirados, al precio de lista');
 });
 
 test('la tarjeta de arriba muestra la utilidad desde el IVA, o la de los días elegidos en Conversión', async () => {

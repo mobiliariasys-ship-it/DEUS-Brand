@@ -182,6 +182,8 @@
   .util-kpi .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;color:#e8e8ee;}
   .util-kpi .s{font-size:.62rem;color:#8a8a92;margin-top:5px;line-height:1.35;}
   .util-kpi.bien .v{color:#69c46d;} .util-kpi.mal .v{color:#e07a6a;}
+  .devol-mes{display:block;margin-top:4px;}
+  .devol-mes input{width:3.2em;background:transparent;border:1px solid var(--border,#2a2a32);color:#e8e8ee;border-radius:6px;padding:2px 4px;font:inherit;font-size:.7rem;text-align:center;}
   /* Ruleta "Gira y gana": correos que dejó la gente */
   .ru-premios{font-size:.66rem;color:#8a8a92;margin:-4px 0 12px;line-height:1.7;}
   .ru-premios b{color:#d0d0d0;}
@@ -2735,7 +2737,33 @@
   // Proyección mensual: "si el mes entero fuera como estos días". Promedio por
   // día de lo que se está mirando (los días elegidos en Conversión, o los
   // últimos 7/14/30) llevado a 30 días. No es un pronóstico: solo escala.
-  function proyeccionMensual(utilidad, dias){ return dias ? utilidad / dias * 30 : 0; }
+  // Le resta las devoluciones que el dueño espera en el mes (pedido del dueño,
+  // 6-nov-2026: "este mes haré unas 6"): cada una devuelve lo que pagó el
+  // cliente (el promedio por banda de los días que se miran) y recupera la
+  // banda, que vuelve y se revende. Si el envío de vuelta lo paga el dueño y se
+  // lo descuenta al cliente, lo que sale en total es lo mismo.
+  function proyeccionMensual(utilidad, dias, devoluciones, costoDev){
+    return dias ? utilidad / dias * 30 - (devoluciones || 0) * (costoDev || 0) : 0;
+  }
+  var DEVOL_MES_DEFECTO = 6;
+  var utilUltima = null;
+  // Cuántas devoluciones se esperan en el mes: se cambia en la tarjeta de la
+  // proyección y queda guardado en este navegador.
+  function devolucionesMes(){
+    try { var v = parseInt(localStorage.getItem('deus-devol-mes'), 10); if(!isNaN(v)) return Math.max(0, Math.min(99, v)); } catch(e){}
+    return DEVOL_MES_DEFECTO;
+  }
+  function cambiarDevolucionesMes(v){
+    v = Math.max(0, Math.min(99, parseInt(v, 10) || 0));
+    try { localStorage.setItem('deus-devol-mes', String(v)); } catch(e){}
+    if(utilUltima) pintarUtilidad(utilUltima);
+  }
+  // Lo que le cuesta a la utilidad cada devolución: lo que pagó el cliente por
+  // banda (promedio de los días que se miran) menos la banda que vuelve.
+  function costoDevolucion(t, banda){
+    var precio = t && t.unidades ? t.ingresos / t.unidades : 68990;
+    return Math.max(0, Math.round(precio - (banda || 17000)));
+  }
 
   // % de ganancia sobre lo gastado: cuánto dejó cada peso que salió (bandas,
   // envíos, pasarela, cargos de ML y ads con IVA). 50% = por cada $100
@@ -2755,6 +2783,7 @@
     if(!sel.length && (utilSt.dias === 'iva' ? !d.desde : d.dias !== utilSt.dias)) return;
     marcarRangoUtil(sel.length > 0);
     marcarAct('util-act');
+    utilUltima = d;
     document.getElementById('util-off').style.display='none';
     var t = d.total, f = d.filas || [], titulo = 'Utilidad ' + d.dias + ' días';
     // Histórico: los días transcurridos desde que los ads van con IVA.
@@ -2781,13 +2810,18 @@
     var hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
     // Hoy todavía no termina: si entra en el promedio, la proyección queda corta.
     var conHoy = f.some(function(r){ return r.fecha === hoy; });
+    var devol = devolucionesMes(), costoDev = costoDevolucion(t, d.costos && d.costos.banda);
+    var proy = proyeccionMensual(t.utilidad, f.length, devol, costoDev);
 
     document.getElementById('util-kpis').innerHTML =
       kpi(titulo, money0(t.utilidad), t.utilidad >= 0 ? 'bien' : 'mal') +
       kpi('Promedio por día', money0(t.utilidad / dias), t.utilidad >= 0 ? 'bien' : 'mal') +
-      kpi('Proyección mensual', f.length ? money0(proyeccionMensual(t.utilidad, f.length)) : '—', t.utilidad >= 0 ? 'bien' : 'mal',
+      kpi('Proyección mensual', f.length ? money0(proy) : '—', proy >= 0 ? 'bien' : 'mal',
         f.length ? 'promedio de ' + (f.length === 1 ? '1 día' : f.length + ' días') + ' × 30' +
-                   (conHoy ? ' · incluye hoy (en curso)' : '') : '') +
+                   (conHoy ? ' · incluye hoy (en curso)' : '') +
+                   '<label class="devol-mes">− <input id="devol-mes" type="number" min="0" max="99" inputmode="numeric" value="' + devol +
+                   '" onchange="cambiarDevolucionesMes(this.value)" aria-label="Devoluciones que esperas este mes"> devoluciones × ' +
+                   money0(costoDev) + '</label>' : '') +
       kpi('Ganancia sobre gastos', textoPct(pctGanancia(t)), t.utilidad >= 0 ? 'bien' : 'mal', 'utilidad ÷ todo lo gastado') +
       kpi('Vendido', money0(t.ingresos), '') +
       kpi('Gastado en ads', money0(t.ads), '') +
