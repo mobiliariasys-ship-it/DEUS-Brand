@@ -363,3 +363,55 @@ test('el correo de despacho dice qué correa del premio meter en el paquete', as
   assert.ok(d.html.includes('Premio ruleta DEUS3K-K7Q2: −$3.000'));
   assert.match(d.subject, /\+ ➕ CORREAS/);
 });
+
+test('el dueño genera uno de cada premio desde el panel: 48 h, una vez y no son giros', async () => {
+  const { s, avanzar } = servicio();
+  const cods = await s.generarUnoDeCada();
+  assert.deepStrictEqual(cods.map(c => c.premio.id), ['d3000', 'p5', 'correa', 'p7', 'tapones', 'p10']);
+  for (const c of cods) {
+    assert.match(c.codigo, /^[A-Z0-9]{3,8}-[A-Z0-9]{6}$/);
+    assert.strictEqual(Date.parse(c.vence) - Date.parse('2026-11-04T12:00:00Z'), 48 * 3600 * 1000, 'duran 48 horas');
+    assert.strictEqual(c.email, null);
+  }
+  assert.strictEqual(new Set(cods.map(c => c.codigo)).size, 6, 'todos distintos');
+  // Sin correo: cualquiera lo puede usar, pero UNA sola vez.
+  const diez = cods.find(c => c.premio.id === 'p10');
+  const r = await s.premioParaCobro(diez.codigo, null, { cliente: 'cualquiera@gmail.com' });
+  assert.deepStrictEqual([r.id, r.pct], ['p10', 10]);
+  await s.marcarUsado(diez.codigo, 'orden-1');
+  await assert.rejects(s.premioParaCobro(diez.codigo, null, { cliente: 'otra@gmail.com' }), /ya se usó/);
+  // No son giros: no suman en el resumen ni le quitan el giro a nadie.
+  const res = await s.resumen();
+  assert.strictEqual(res.giros, 0);
+  assert.strictEqual(res.manuales, 6);
+  assert.strictEqual((await s.girar('cualquiera@gmail.com')).yaGiro, false, 'usar un código generado no le quita el giro');
+  assert.strictEqual((await s.lista()).filter(x => x.manual).length, 6);
+  // Vencen a las 48 horas, igual que los de la ruleta.
+  avanzar(49 * 3600 * 1000);
+  await assert.rejects(s.premioParaCobro(cods[0].codigo, null, { cliente: 'x@gmail.com' }), /venció/);
+});
+
+test('un código generado con correo solo lo puede usar ese correo', async () => {
+  const { s } = servicio();
+  const c = await s.generar('correa', { email: 'Cliente.Fiel@gmail.com' });
+  assert.strictEqual(c.email, 'cliente.fiel@gmail.com');
+  await assert.rejects(s.premioParaCobro(c.codigo, 'gris', { cliente: 'otro@gmail.com' }), e => e.codigoError === 'otro-correo');
+  const r = await s.premioParaCobro(c.codigo, 'gris', { cliente: 'clientefiel@gmail.com' });
+  assert.deepStrictEqual([r.id, r.color], ['correa', 'gris']);
+  await assert.rejects(s.generar('p50'), /Premio desconocido/);
+  await assert.rejects(s.generar('p5', { email: 'x@mailinator.com' }), e => e.codigoError === 'desechable');
+});
+
+test('el panel genera códigos con su clave y no los mezcla con los correos de la ruleta', () => {
+  const src = leer('server.js');
+  const i = src.indexOf("app.post('/admin/ruleta/generar'");
+  assert.ok(i > 0, 'falta el endpoint');
+  const ep = src.slice(i, i + 700);
+  assert.ok(ep.includes("if ((req.query.clave || '') !== clave) return res.status(403)"), 'pide la clave del panel');
+  assert.ok(ep.includes('generarUnoDeCada'));
+  const admin = leer('admin.html');
+  assert.ok(admin.includes("fetch(BASE+'/admin/ruleta/generar?clave='"));
+  assert.ok(admin.includes('<option value="todos">Uno de cada premio</option>'));
+  assert.ok(admin.includes('var pers = todos.filter(function(p){ return !p.manual; });'), 'los generados no cuentan como gente que giró');
+  assert.ok(admin.includes('return !p.manual && p.email;'), '"Copiar correos" no copia los generados');
+});

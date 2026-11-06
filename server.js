@@ -502,6 +502,27 @@ app.get('/admin/ruleta', async (req, res) => {
   res.json({ ...(await s.resumen()), personas: await s.lista() });
 });
 
+// Panel: el dueño genera códigos con el premio que ELIGE (para probar el
+// cobro o para regalar). Misma clave que /admin/ruleta (y el mismo freno de
+// reintentos de ?clave=). premio = un id de la ruleta o 'todos' (uno de cada);
+// email opcional: si va, solo ese correo lo puede usar. Ver ruleta.generar().
+app.post('/admin/ruleta/generar', async (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+  res.set('Cache-Control', 'no-store');
+  const { premio, email } = req.body || {};
+  try {
+    const s = ruleta_.servicio();
+    const codigos = premio === 'todos'
+      ? await s.generarUnoDeCada({ email })
+      : [await s.generar(String(premio || ''), { email })];
+    res.json({ codigos });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 app.post('/notificaciones', async (req, res) => {
   const { type, data } = req.body;
   console.log('Webhook — tipo:', type, '| id:', data?.id);

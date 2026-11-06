@@ -237,9 +237,10 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     const reg = buscar(codigo);
     // Solo el correo que ganó el código lo puede usar (con la misma
     // normalización del giro: mayúsculas, puntos y +etiqueta de Gmail no importan).
+    // Los que genera el dueño SIN correo sirven con cualquiera (ver generar()).
     const c = validarCorreo(opciones.cliente);
-    if (!c.ok || c.clave !== reg.email) throw error('otro-correo', ' (' + enmascarar(reg.emailEnvio || reg.email) + ').');
-    const cliente = c.clave;
+    if (reg.email && (!c.ok || c.clave !== reg.email)) throw error('otro-correo', ' (' + enmascarar(reg.emailEnvio || reg.email) + ').');
+    const cliente = c.ok ? c.clave : String(opciones.cliente || '').trim().toLowerCase();
     const t = ahora();
     if (reg.reserva && reg.reserva.hasta > t && reg.reserva.cliente !== cliente) throw error('reservado');
     reg.reserva = { cliente, hasta: t + RESERVA_MS };
@@ -263,19 +264,51 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     return true;
   }
 
+  // Códigos que genera el DUEÑO desde el panel, para probar el cobro o para
+  // regalar: el premio lo elige él, no la ruleta. Duran lo mismo (48 horas) y
+  // sirven UNA vez. Con correo, solo ese correo los puede usar (igual que los
+  // de la ruleta); sin correo, sirven con cualquier correo. No son giros: no
+  // cuentan en las estadísticas de la ruleta ni le quitan el giro a ese correo.
+  async function generar(premioId, opciones = {}) {
+    await cargar();
+    const p = premioPorId(premioId);
+    if (!p) throw new Error('Premio desconocido: ' + premioId);
+    let email = null, emailEnvio = null;
+    if (opciones.email) {
+      const v = validarCorreo(opciones.email);
+      if (!v.ok) throw error(v.tipo);
+      email = v.clave; emailEnvio = v.envio;
+    }
+    const t = ahora();
+    const codigo = nuevoCodigo(p.prefijo);
+    estado.codigos[codigo] = { codigo, premio: p.id, email, emailEnvio, creado: t, vence: t + VIGENCIA_MS, color: null, usado: null, reserva: null, manual: true };
+    await guardar();
+    return { ...datos(estado.codigos[codigo]), email: emailEnvio };
+  }
+
+  // Uno de cada premio, en el orden de la ruleta.
+  async function generarUnoDeCada(opciones = {}) {
+    const salida = [];
+    for (const p of PREMIOS) salida.push(await generar(p.id, opciones));
+    return salida;
+  }
+
   // Resumen para el panel: cuántos giraron y cuántos usaron cada premio.
+  // Los códigos que generó el dueño no son giros: van aparte.
   async function resumen() {
     await cargar();
     const por = {};
     for (const p of PREMIOS) por[p.id] = { etiqueta: p.etiqueta, giros: 0, usados: 0 };
+    let manuales = 0;
     for (const reg of Object.values(estado.codigos)) {
+      if (reg.manual) { manuales++; continue; }
       if (!por[reg.premio]) continue;
       por[reg.premio].giros++;
       if (reg.usado) por[reg.premio].usados++;
     }
     const giros = Object.values(por).reduce((s, x) => s + x.giros, 0);
     const usados = Object.values(por).reduce((s, x) => s + x.usados, 0);
-    return { giros, usados, porPremio: por };
+    return { giros, usados, porPremio: por, manuales };
   }
 
   // Para el panel (con clave): cada persona que dejó su correo, del más
@@ -288,7 +321,8 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
         const p = premioPorId(reg.premio);
         return {
           fecha: new Date(reg.creado).toISOString(),
-          email: reg.emailEnvio || reg.email,
+          email: reg.emailEnvio || reg.email || '',
+          manual: !!reg.manual,
           premio: p ? p.etiqueta : reg.premio,
           premioId: reg.premio,
           codigo: reg.codigo,
@@ -301,7 +335,7 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
       .sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
   }
 
-  return { girar, validar, elegirColor, premioParaCobro, marcarUsado, resumen, lista };
+  return { girar, validar, elegirColor, premioParaCobro, marcarUsado, resumen, lista, generar, generarUnoDeCada };
 }
 
 // Una sola instancia para server.js, Flow y Transbank (comparten los códigos).

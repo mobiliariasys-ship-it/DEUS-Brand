@@ -187,6 +187,17 @@
   .ru-premios b{color:#d0d0d0;}
   .ru-acc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
   .ru-acc input{flex:1;min-width:170px;background:var(--card,#141418);border:1px solid var(--border);color:#e8e8ee;border-radius:8px;padding:9px 11px;font:inherit;font-size:.78rem;}
+  .ru-gen{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px;}
+  .ru-gen-h{font-size:.74rem;font-weight:700;color:#e8e8ee;margin-bottom:8px;}
+  .ru-gen .ru-acc{margin-bottom:6px;}
+  .ru-gen select{background:var(--card,#141418);border:1px solid var(--border);color:#e8e8ee;border-radius:8px;padding:9px 11px;font:inherit;font-size:.78rem;}
+  .ru-gen-nota{font-size:.64rem;color:#8a8a92;line-height:1.5;}
+  .ru-gen-c{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--border);}
+  .ru-gen-c:first-child{margin-top:8px;}
+  .ru-gen-cod{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86rem;letter-spacing:.6px;color:#e8e8ee;user-select:all;}
+  .ru-gen-c span{flex:1;min-width:150px;font-size:.66rem;color:#8a8a92;}
+  .ru-gen-err{margin-top:8px;font-size:.7rem;color:#ff7a7a;}
+  .ru-manual{background:rgba(120,170,255,.14);color:#8fb4ff;}
   .ru-estado{display:inline-block;font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap;}
   .ru-usado{background:rgba(105,196,109,.14);color:#69c46d;}
   .ru-vigente{background:rgba(232,180,100,.14);color:#e8b464;}
@@ -946,6 +957,24 @@
       <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
       <div class="util-kpis" id="ru-kpis"></div>
       <div class="ru-premios" id="ru-premios"></div>
+      <div class="ru-gen">
+        <div class="ru-gen-h">🎟️ Generar códigos</div>
+        <div class="ru-acc">
+          <select id="ru-gen-premio" aria-label="Premio del código">
+            <option value="todos">Uno de cada premio</option>
+            <option value="d3000">$3.000 OFF</option>
+            <option value="p5">5% OFF</option>
+            <option value="correa">Correa extra</option>
+            <option value="p7">7% OFF</option>
+            <option value="tapones">Tapones de oído gratis</option>
+            <option value="p10">10% OFF</option>
+          </select>
+          <input id="ru-gen-email" type="email" placeholder="Solo para este correo (opcional)" aria-label="Correo que puede usar el código (opcional)">
+          <button class="btn" onclick="generarCodigosRuleta(this)">Generar</button>
+        </div>
+        <div class="ru-gen-nota">Duran 48 horas y sirven una sola vez. Sin correo, cualquiera puede usarlos; con correo, solo esa persona. No cuentan como giros de la ruleta.</div>
+        <div id="ru-gen-res"></div>
+      </div>
       <div class="ru-acc">
         <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
         <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
@@ -2176,7 +2205,10 @@
   }
   function pintarRuleta(){
     if(!ruleta) return;
-    var pers = ruleta.personas || [];
+    var todos = ruleta.personas || [];
+    // Los códigos que generó el dueño no son gente que giró: no entran en los
+    // números, pero sí se ven en la tabla (marcados 🎟️).
+    var pers = todos.filter(function(p){ return !p.manual; });
     var contar = function(est){ return pers.filter(function(p){ return p.estado===est; }).length; };
     var usados = contar('usado'), vigentes = contar('vigente'), vencidos = contar('vencido');
     document.getElementById('ru-total').textContent = pers.length + (pers.length===1 ? ' correo' : ' correos');
@@ -2190,26 +2222,26 @@
       var x = por[k]; return esc(x.etiqueta) + ': <b>' + x.giros + '</b>' + (x.usados ? ' (' + x.usados + (x.usados===1 ? ' compró)' : ' compraron)') : '');
     }).join(' · ');
     var q = (document.getElementById('ru-buscar').value || '').trim().toLowerCase();
-    var vistas = q ? pers.filter(function(p){ return String(p.email||'').toLowerCase().indexOf(q) >= 0 || String(p.codigo||'').toLowerCase().indexOf(q) >= 0; }) : pers;
+    var vistas = q ? todos.filter(function(p){ return String(p.email||'').toLowerCase().indexOf(q) >= 0 || String(p.codigo||'').toLowerCase().indexOf(q) >= 0; }) : todos;
     rows('#t-ruleta', vistas, function(p){
       var est = p.estado==='usado' ? '<span class="ru-estado ru-usado">✅ Compró</span>'
         : p.estado==='vigente' ? '<span class="ru-estado ru-vigente">⏳ Vigente</span><span class="ru-cod">vence ' + fechaRuleta(p.vence) + '</span>'
         : '<span class="ru-estado ru-vencido">Venció</span><span class="ru-cod">sin usar</span>';
       return '<td class="ru-f">' + fechaRuleta(p.fecha) + '</td>' +
-        '<td><span class="ru-mail">' + esc(p.email) + '</span><span class="ru-cod">' + esc(p.premio) +
+        '<td><span class="ru-mail">' + (p.manual ? '🎟️ ' + (p.email ? esc(p.email) : 'Generado · cualquier correo') : esc(p.email)) + '</span><span class="ru-cod">' + esc(p.premio) +
         (p.premioId==='correa' && p.color ? ' (' + esc(p.color) + ')' : '') + ' · ' + esc(p.codigo) + '</span></td>' +
         '<td>' + est + '</td>';
     }, 'ruleta-empty');
   }
   function copiarCorreosRuleta(btn){
-    var t = ((ruleta && ruleta.personas) || []).map(function(p){ return p.email; }).join(', ');
+    var t = ((ruleta && ruleta.personas) || []).filter(function(p){ return !p.manual && p.email; }).map(function(p){ return p.email; }).join(', ');
     if(!t) return;
     var hecho = function(){ btn.textContent = '¡Copiados!'; setTimeout(function(){ btn.textContent = 'Copiar correos'; }, 1600); };
     try { navigator.clipboard.writeText(t).then(hecho, function(){ prompt('Copia los correos:', t); }); }
     catch(e){ prompt('Copia los correos:', t); }
   }
   function descargarRuleta(){
-    var pers = (ruleta && ruleta.personas) || [];
+    var pers = ((ruleta && ruleta.personas) || []).filter(function(p){ return !p.manual; });
     if(!pers.length) return;
     // Celdas seguras para Excel: comillas escapadas y nada que empiece con
     // = + - @ (Excel lo tomaría como fórmula).
@@ -2226,6 +2258,41 @@
     a.download = 'ruleta-correos.csv';
     document.body.appendChild(a); a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  // Códigos que genera el dueño: uno de cada premio o uno solo, para probar el
+  // cobro o para regalar (ver ruleta.generar() en el servidor).
+  var codigosGenerados = [];
+  function generarCodigosRuleta(btn){
+    var premio = document.getElementById('ru-gen-premio').value;
+    var email = (document.getElementById('ru-gen-email').value || '').trim();
+    var out = document.getElementById('ru-gen-res');
+    var txt = btn.textContent; btn.disabled = true; btn.textContent = 'Generando…';
+    fetch(BASE+'/admin/ruleta/generar?clave='+encodeURIComponent(clave), {
+      method:'POST', cache:'no-store', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ premio: premio, email: email })
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if(!d || !d.codigos){ out.innerHTML = '<div class="ru-gen-err">' + esc((d && d.error) || 'No se pudieron generar los códigos.') + '</div>'; return; }
+      codigosGenerados = d.codigos;
+      out.innerHTML = d.codigos.map(function(c, i){
+        return '<div class="ru-gen-c"><b class="ru-gen-cod">' + esc(c.codigo) + '</b><span>' + esc(c.premio.etiqueta) +
+          (c.email ? ' · solo ' + esc(c.email) : ' · cualquier correo') + ' · vence ' + fechaRuleta(c.vence) + '</span>' +
+          '<button class="btn ghost" onclick="copiarCodigosRuleta(this,' + i + ')">Copiar</button></div>';
+      }).join('') + (d.codigos.length > 1 ? '<div class="ru-gen-c"><span></span><button class="btn ghost" onclick="copiarCodigosRuleta(this,-1)">Copiar todos</button></div>' : '');
+      cargarRuleta();
+    }).catch(function(){
+      out.innerHTML = '<div class="ru-gen-err">No hubo conexión con el servidor. Intenta de nuevo.</div>';
+    }).then(function(){ btn.disabled = false; btn.textContent = txt; });
+  }
+  function copiarCodigosRuleta(btn, i){
+    var t = i < 0
+      ? codigosGenerados.map(function(c){ return c.codigo + ' — ' + c.premio.etiqueta; }).join('\n')
+      : (codigosGenerados[i] ? codigosGenerados[i].codigo : '');
+    if(!t) return;
+    var txt = btn.textContent;
+    var hecho = function(){ btn.textContent = '¡Copiado!'; setTimeout(function(){ btn.textContent = txt; }, 1600); };
+    try { navigator.clipboard.writeText(t).then(hecho, function(){ prompt('Copia:', t); }); }
+    catch(e){ prompt('Copia:', t); }
   }
 
   function cargar(primera){
