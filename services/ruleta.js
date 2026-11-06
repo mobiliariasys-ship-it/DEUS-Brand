@@ -23,17 +23,18 @@
 //    solo ese correo lo puede usar. Una compra lleva un solo código.
 //  - Al empezar a pagar queda reservado 30 minutos para esa compra.
 //
-// Probabilidades (decisión del dueño, 4-nov-2026). Suman exactamente 1.
-// Costo promedio por venta con código ≈ $2.900 (simulado en 10.000 días).
+// Probabilidades (decisión del dueño, 4-nov-2026; el 6-nov bajó los tapones
+// a 0,2% y el 10% OFF a 0,5%, y lo que se liberó pasó al $3.000). Suman
+// exactamente 1. Costo promedio por venta con código ≈ $2.930.
 const PREMIOS = [
-  { id: 'd3000',   etiqueta: '$3.000 OFF',     tipo: 'descuento', monto: 3000, prob: 0.592, prefijo: 'DEUS3K' },
+  { id: 'd3000',   etiqueta: '$3.000 OFF',     tipo: 'descuento', monto: 3000, prob: 0.613, prefijo: 'DEUS3K' },
   { id: 'p5',      etiqueta: '5% OFF',         tipo: 'descuento', pct: 5,      prob: 0.20,  prefijo: 'DEUS5' },
   { id: 'correa',  etiqueta: 'Correa extra',   tipo: 'correa',                 prob: 0.15,  prefijo: 'CORREA' },
   { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.03,  prefijo: 'DEUS7' },
   // Los tapones tienen que poder salir: un premio que se muestra en la ruleta
   // y nunca sale sería publicidad engañosa (SERNAC).
-  { id: 'tapones', etiqueta: 'Tapones de oído gratis', tipo: 'tapones',        prob: 0.02,  prefijo: 'TAPONES' },
-  { id: 'p10',     etiqueta: '10% OFF',        tipo: 'descuento', pct: 10,     prob: 0.008, prefijo: 'DEUS10' },
+  { id: 'tapones', etiqueta: 'Tapones de oído gratis', tipo: 'tapones',        prob: 0.002, prefijo: 'TAPONES' },
+  { id: 'p10',     etiqueta: '10% OFF',        tipo: 'descuento', pct: 10,     prob: 0.005, prefijo: 'DEUS10' },
 ];
 const VIGENCIA_MS = 48 * 60 * 60 * 1000;   // el premio dura 48 horas
 const RESERVA_MS = 30 * 60 * 1000;         // al empezar a pagar, el código se aparta 30 min

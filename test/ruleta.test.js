@@ -34,7 +34,7 @@ function servicio(opciones = {}) {
 
 test('las probabilidades son las que eligió el dueño y suman 100%', () => {
   const p = Object.fromEntries(ruleta.PREMIOS.map(x => [x.id, x.prob]));
-  assert.deepStrictEqual(p, { d3000: 0.592, p5: 0.20, correa: 0.15, p7: 0.03, tapones: 0.02, p10: 0.008 });
+  assert.deepStrictEqual(p, { d3000: 0.613, p5: 0.20, correa: 0.15, p7: 0.03, tapones: 0.002, p10: 0.005 });
   const suma = ruleta.PREMIOS.reduce((s, x) => s + x.prob, 0);
   assert.ok(Math.abs(suma - 1) < 1e-9, 'suman ' + suma);
 });
@@ -189,8 +189,12 @@ test('premioParaCobro: sin código nada; con uno malo, un mensaje para el client
 });
 
 test('la correa: color elegido de base, negra si nunca eligió, y se puede cambiar al pagar', async () => {
-  // azar 0.80 → correa (0.792 a 0.942)
-  const { s } = servicio({ azar: () => 0.80 });
+  // azar en la mitad del tramo de la correa, calculado de las probabilidades
+  // para que el test no se rompa cuando el dueño las cambie.
+  let desde = 0;
+  for (const p of ruleta.PREMIOS) { if (p.id === 'correa') break; desde += p.prob; }
+  const enCorrea = desde + ruleta.premioPorId('correa').prob / 2;
+  const { s } = servicio({ azar: () => enCorrea });
   const { codigo, premio } = (await s.girar('c@gmail.com')).publico;
   const yo = { cliente: 'c@gmail.com' };
   assert.strictEqual(premio.id, 'correa');
