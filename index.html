@@ -3197,11 +3197,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // despacho") se leía como que el despacho venía metido dentro del
           // precio, o sea que igual lo estabas pagando. Cuando ya se cotizó
           // sí aparece, porque ahí hay un número concreto que mostrar.
-          const hayMonto = ahorro > 0;
-          sub.textContent = hayMonto
-            ? `Te ahorras $${ahorro.toLocaleString('es-CL')} en el despacho a tu comuna`
-            : '';
-          sub.style.display = hayMonto ? '' : 'none';
+          // Tampoco con monto (pedido del dueño, 8-nov-2026): "Te ahorras
+          // $3.990 en el despacho" hacía pensar en el costo del envío. El
+          // cliente ya sabe que es gratis; la línea sola basta.
+          sub.textContent = '';
+          sub.style.display = 'none';
         }
         // Cotización de envío en vuelo y turno de la última pedida.
         //
@@ -3235,17 +3235,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const commune = document.getElementById('sh-commune').value.trim();
           const address = document.getElementById('sh-address').value.trim();
           const results = document.getElementById('shipping-results');
+          // Con envío gratis la cotización es invisible (pedido del dueño,
+          // 8-nov-2026): ni "Consultando tarifas", ni courier, ni tarifa
+          // tachada. Ver "Starken $3.990" confundía a gente que ya sabía que
+          // el envío es gratis. Corre igual por detrás para dejar elegido el
+          // courier del pedido; si falla, asegurarEnvio() sigue con Starken y
+          // el pago no se traba. Sin envío gratis se ve como antes.
+          const silencioso = envioGratis();
+          const mostrar = html => { if (!silencioso) results.innerHTML = html; };
+          if (silencioso) results.innerHTML = '';
 
           if (!region) {
-            results.innerHTML = '<div class="shipping-error">Selecciona tu región.</div>';
+            mostrar('<div class="shipping-error">Selecciona tu región.</div>');
             return;
           }
           if (!commune) {
-            results.innerHTML = '<div class="shipping-error">Ingresa la comuna de destino.</div>';
+            mostrar('<div class="shipping-error">Ingresa la comuna de destino.</div>');
             return;
           }
 
-          results.innerHTML = '<div class="shipping-msg">Consultando tarifas en tiempo real...</div>';
+          mostrar('<div class="shipping-msg">Consultando tarifas en tiempo real...</div>');
           // OJO: acá NO se borra selectedShipping ni se esconde el total. La
           // cotización anterior sigue valiendo hasta que llegue una nueva
           // buena; borrarla de entrada era lo que dejaba al cliente sin poder
@@ -3256,24 +3265,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ region, commune, city: commune, address, regionCode: getRegionCode(region) })
-            }, s => { results.innerHTML = '<div class="shipping-msg">' + s + '</div>'; });
+            }, s => mostrar('<div class="shipping-msg">' + s + '</div>'));
             const data = await res.json();
             // Si mientras esperábamos se pidió otra cotización, esta quedó
             // vieja: no toca ni el DOM ni selectedShipping.
             if (turno !== turnoCotizacion) return;
 
             if (!res.ok || !data.carriers?.length) {
-              results.innerHTML = `<div class="shipping-error">${data.error || 'No hay opciones de envío para esta dirección.'}</div>`;
+              mostrar(`<div class="shipping-error">${data.error || 'No hay opciones de envío para esta dirección.'}</div>`);
               return;
             }
 
             // Tras la oferta de lanzamiento, el envío es gratis: lo paga la tienda
             if (envioGratis()) {
               data.carriers = data.carriers.map(c => ({ ...c, precioNormal: c.price, price: 0 }));
-              // Ya sabemos la tarifa real de su comuna: el aviso pasa de
-              // "verás cuánto te ahorras" al monto concreto que se ahorró.
-              const normales = data.carriers.map(c => c.precioNormal).filter(p => p > 0);
-              if (normales.length) mostrarAvisoEnvioGratis(Math.min(...normales));
+            }
+
+            // El courier que le cuesta menos a la tienda (el envío es gratis).
+            let idx = 0, menor = Infinity;
+            data.carriers.forEach((c, i) => {
+              const costo = (c.precioNormal != null ? c.precioNormal : c.price) || 0;
+              if (costo < menor) { menor = costo; idx = i; }
+            });
+            if (silencioso) {
+              if (data.carriers[idx]) aplicarCourier(data.carriers[idx], commune, region, address, null);
+              return;
             }
 
             let html = '<div class="carrier-list">';
@@ -3300,16 +3316,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // porque el envío es gratis) y así el total y el botón de pago
             // quedan listos de inmediato. Igual puede cambiarlo si quiere.
             const opciones = Array.from(results.querySelectorAll('.carrier-option'));
-            let idx = 0, menor = Infinity;
-            data.carriers.forEach((c, i) => {
-              const costo = (c.precioNormal != null ? c.precioNormal : c.price) || 0;
-              if (costo < menor) { menor = costo; idx = i; }
-            });
             if (data.carriers[idx]) {
               aplicarCourier(data.carriers[idx], commune, region, address, opciones[idx]);
             }
           } catch(e) {
-            results.innerHTML = `<div class="shipping-error">Error: ${e.message || 'No se pudo conectar con el servidor. ¿Está corriendo npm start?'}</div>`;
+            mostrar(`<div class="shipping-error">Error: ${e.message || 'No se pudo conectar con el servidor. ¿Está corriendo npm start?'}</div>`);
             console.error('[calcularEnvio]', e);
           }
         }
@@ -3345,9 +3356,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const radio = el.querySelector('input[type=radio]');
             if (radio) radio.checked = true;
           }
-          // El aviso muestra el ahorro exacto de ESE courier (cada uno cobra
-          // distinto, así que el monto cambia según cuál quede elegido).
-          if (carrier.precioNormal > 0) mostrarAvisoEnvioGratis(carrier.precioNormal);
         }
 
         // Convierte "3 a 6 días hábiles" en fechas concretas ("Llega entre el jue 9 y el lun 13 de jul")
