@@ -69,6 +69,56 @@ fbq('track', 'PageView');
 src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
+<!-- TikTok Pixel Code Start -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(
+var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")
+;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+
+
+  ttq.load('DBOC1FRC77UFJFNQK47G');
+  ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- TikTok Pixel Code End -->
+<script>
+// Purchase para TikTok. A Meta la compra le llega SOLO desde el servidor
+// (Conversions API); TikTok no tiene envío desde el servidor, así que lo manda
+// el navegador, pero únicamente si /orden/estado confirma que la orden está
+// pagada, y con el monto del servidor (nunca el de la URL).
+// La guarda anti-duplicado va en localStorage —compartido entre pestañas— y no
+// en sessionStorage, que es por pestaña: eso era lo que duplicaba compras en
+// Meta cuando la pasarela devolvía al cliente en una pestaña nueva. Además el
+// event_id 'purchase-<orden>' le permite a TikTok deduplicar.
+(function(){
+  var q = new URLSearchParams(location.search);
+  var ref = q.get('orden') || q.get('payment_id') || q.get('collection_id');
+  if (!ref || !window.ttq) return;
+  var clave = 'deus-tt-purchase-' + ref;
+  try { if (localStorage.getItem(clave)) return; } catch (e) {}
+  var API = (window.DEUS_API_BASE || '').replace(/\/$/, '');
+  var intentos = 0, MAX = 5;
+  function verificar(){
+    intentos++;
+    fetch(API + '/orden/estado?ref=' + encodeURIComponent(ref), { cache: 'no-store' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if (d && d.pagado) {
+          try {
+            if (localStorage.getItem(clave)) return;
+            localStorage.setItem(clave, '1');
+          } catch (e) {}
+          var datos = { currency: 'CLP', content_type: 'product', content_name: 'DEUS Band' };
+          if (d.monto > 0) datos.value = d.monto;
+          ttq.track('Purchase', datos, { event_id: 'purchase-' + ref });
+        } else if (intentos < MAX) setTimeout(verificar, 2000);
+      })
+      .catch(function(){ if (intentos < MAX) setTimeout(verificar, 2000); });
+  }
+  verificar();
+})();
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#080808;font-family:'DM Sans',sans-serif;color:#f2f2f2;display:flex;align-items:center;justify-content:center;min-height:100vh;}

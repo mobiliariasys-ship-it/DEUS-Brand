@@ -84,6 +84,19 @@ fbq('track', 'PageView');
 src="https://www.facebook.com/tr?id=2086346891978245&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
+<!-- TikTok Pixel Code Start -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(
+var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")
+;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+
+
+  ttq.load('DBOC1FRC77UFJFNQK47G');
+  ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- TikTok Pixel Code End -->
 <link rel="canonical" href="https://deusbrand.cl/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 
@@ -3448,6 +3461,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const clave = [id, cantidad, precio].join('|');
           if (clave === ultimoAddToCart) return;
           ultimoAddToCart = clave;
+          if (window.ttq) ttq.track('AddToCart', {
+            value: precio * cantidad,
+            currency: 'CLP',
+            content_type: 'product',
+            contents: [{ content_id: id, content_name: nombre, quantity: cantidad, price: precio }]
+          });
           if (!window.fbq) return;
           fbq('track', 'AddToCart', {
             value: precio * cantidad,
@@ -3530,6 +3549,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // que ingreso datos de pago, no dos. Se renueva al reabrir.
           nuevoApiEventId();
           if (window.fbq) fbq('track', 'InitiateCheckout', { value: checkoutTapones ? TAPONES_PRICE : precioBanda(), currency: 'CLP', content_name: checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band' });
+          if (window.ttq) ttq.track('InitiateCheckout', { value: checkoutTapones ? TAPONES_PRICE : precioBanda(), currency: 'CLP', content_type: 'product', content_id: checkoutTapones ? 'tapones' : 'deus-band', content_name: checkoutTapones ? 'Tapones de oído DEUS' : 'DEUS Band' });
           if (window.deusTrackCheckout) window.deusTrackCheckout();
           // Embudo del checkout — paso 1: abrió el checkout.
           if (window.deusEvento) window.deusEvento('co:1abrio');
@@ -4606,6 +4626,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           msg.textContent = 'Conectando con Webpay...';
           actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
+          if (window.ttq) ttq.track('AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP', content_type: 'product' }, { event_id: apiEventId });
           try {
             const res = await fetchBackend('/flow/crear', {
               method: 'POST',
@@ -4651,6 +4672,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           msg.textContent = 'Conectando con Webpay...';
           actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
+          if (window.ttq) ttq.track('AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP', content_type: 'product' }, { event_id: apiEventId });
           try {
             // fetchBackend, no fetch pelado: esta era la única vía de pago sin
             // reintentos ni timeout. Con el backend dormido (Render apaga el
@@ -4706,6 +4728,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           msg.textContent = 'Preparando pago seguro...';
           actualizarPixelMatching(datosPedido());
           if (window.fbq) fbq('track', 'AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP' }, { eventID: apiEventId });
+          if (window.ttq) ttq.track('AddPaymentInfo', { value: calcularTotalCarrito() + (selectedShipping?.price || 0), currency: 'CLP', content_type: 'product' }, { event_id: apiEventId });
           try {
             const res = await fetchBackend('/crear-preferencia', {
               method: 'POST',
