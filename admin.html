@@ -185,8 +185,14 @@
   .devol-mes{display:block;margin-top:4px;}
   .devol-mes input{width:3.2em;background:transparent;border:1px solid var(--border,#2a2a32);color:#e8e8ee;border-radius:6px;padding:2px 4px;font:inherit;font-size:.7rem;text-align:center;}
   /* Ruleta "Gira y gana": correos que dejó la gente */
-  .ru-premios{font-size:.66rem;color:#8a8a92;margin:-4px 0 12px;line-height:1.7;}
-  .ru-premios b{color:#d0d0d0;}
+  .ru-mejor{font-size:.8rem;color:#c8c8d0;margin:-2px 0 10px;line-height:1.5;}
+  .ru-mejor b{color:var(--green,#3fd9a0);}
+  .ru-mejor small{display:block;font-size:.64rem;color:#8a8a92;margin-top:2px;}
+  .ru-rank{margin-bottom:14px;}
+  .ru-lista{max-height:440px;overflow-y:auto;}
+  .ru-rank td:not(:first-child),.ru-rank th:not(:first-child){text-align:right;white-space:nowrap;}
+  .ru-rank tr.ru-top td{color:#e8e8ee;font-weight:600;}
+  .ru-badge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:.6rem;font-weight:700;background:rgba(63,217,160,.14);color:var(--green,#3fd9a0);}
   .ru-acc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
   .ru-acc input{flex:1;min-width:170px;background:var(--card,#141418);border:1px solid var(--border);color:#e8e8ee;border-radius:8px;padding:9px 11px;font:inherit;font-size:.78rem;}
   .ru-gen{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px;}
@@ -561,7 +567,8 @@
       <div class="side-logo"><span class="side-mark"></span>DEUS</div>
       <button class="nav-i active" onclick="irA('top',this)"><span class="ico">📊</span> Dashboard</button>
       <button class="nav-i" onclick="irA('sec-graficos',this)"><span class="ico">📈</span> Gráficos</button>
-      <!-- Mismo orden que el panel: Plata, Conversión, Operación y Registros. -->
+      <!-- Mismo orden que el panel: Ruleta, Plata, Conversión, Operación y Registros. -->
+      <button class="nav-i" onclick="irA('sec-ruleta',this)"><span class="ico">🎡</span> Ruleta</button>
       <button class="nav-i" onclick="irA('sec-utilidad',this)"><span class="ico">💰</span> Utilidad</button>
       <button class="nav-i" onclick="irA('sec-checkout',this)"><span class="ico">🧾</span> Checkout</button>
       <button class="nav-i" onclick="irA('sec-gastoh',this)"><span class="ico">⏱️</span> Gasto por hora</button>
@@ -656,6 +663,44 @@
       <div class="sel-res" id="conv-sel-res"></div>
     </section>
     </div>
+
+    <!-- Ruleta "Gira y gana": va arriba, justo después de los gráficos
+         (pedido del dueño, 8-nov-2026; antes iba al final del panel). -->
+    <div class="grupo-h">🎡 Ruleta · Gira y gana</div>
+    <section id="sec-ruleta">
+      <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
+      <div class="util-kpis" id="ru-kpis"></div>
+      <!-- Qué premio convierte mejor: de los que lo ganaron, cuántos compraron. -->
+      <div class="ru-mejor" id="ru-mejor"></div>
+      <div class="scroll"><table id="t-ru-premios" class="ru-rank"><thead><tr><th>Premio</th><th>Ganaron</th><th>Compraron</th><th>Conversión</th><th>Aún pueden comprar</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ru-premios-empty" style="display:none">Todavía nadie ha girado la ruleta.</div>
+      <div class="ru-gen">
+        <div class="ru-gen-h">🎟️ Generar códigos</div>
+        <div class="ru-acc">
+          <select id="ru-gen-premio" aria-label="Premio del código">
+            <option value="todos">Uno de cada premio</option>
+            <option value="d3000">$3.000 OFF</option>
+            <option value="p5">5% OFF</option>
+            <option value="correa">Correa extra</option>
+            <option value="p7">7% OFF</option>
+            <option value="tapones">Tapones de oído gratis</option>
+            <option value="p10">10% OFF</option>
+          </select>
+          <input id="ru-gen-email" type="email" placeholder="Solo para este correo (opcional)" aria-label="Correo que puede usar el código (opcional)">
+          <button class="btn" onclick="generarCodigosRuleta(this)">Generar</button>
+        </div>
+        <div class="ru-gen-nota">Duran 48 horas y sirven una sola vez. Sin correo, cualquiera puede usarlos; con correo, solo esa persona. No cuentan como giros de la ruleta.</div>
+        <div id="ru-gen-res"></div>
+      </div>
+      <div class="ru-acc">
+        <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
+        <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
+        <button class="btn ghost" onclick="descargarRuleta()">Descargar CSV</button>
+      </div>
+      <!-- Alto máximo: la sección va arriba y la lista crece con cada giro. -->
+      <div class="scroll ru-lista"><table id="t-ruleta"><thead><tr><th>Fecha</th><th>Correo y premio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ruleta-empty" style="display:none">Todavía nadie ha dejado su correo en la ruleta.</div>
+    </section>
 
     <!-- Plata: utilidad, gasto en ads por hora, Ads Manager y qué canal deja plata. -->
     <div class="grupo-h">💰 Plata · cuánto queda y en qué se va</div>
@@ -953,37 +998,6 @@
       <div class="winner" id="winner"></div>
       <div class="scroll"><table id="t-tickets"><thead><tr><th>N° ticket</th><th>Nombre</th><th>Instagram</th><th>N° orden</th><th>Fecha</th></tr></thead><tbody></tbody></table></div>
       <div class="empty" id="tickets-empty" style="display:none">Aún no hay tickets canjeados.</div>
-    </section>
-
-    <section id="sec-ruleta">
-      <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
-      <div class="util-kpis" id="ru-kpis"></div>
-      <div class="ru-premios" id="ru-premios"></div>
-      <div class="ru-gen">
-        <div class="ru-gen-h">🎟️ Generar códigos</div>
-        <div class="ru-acc">
-          <select id="ru-gen-premio" aria-label="Premio del código">
-            <option value="todos">Uno de cada premio</option>
-            <option value="d3000">$3.000 OFF</option>
-            <option value="p5">5% OFF</option>
-            <option value="correa">Correa extra</option>
-            <option value="p7">7% OFF</option>
-            <option value="tapones">Tapones de oído gratis</option>
-            <option value="p10">10% OFF</option>
-          </select>
-          <input id="ru-gen-email" type="email" placeholder="Solo para este correo (opcional)" aria-label="Correo que puede usar el código (opcional)">
-          <button class="btn" onclick="generarCodigosRuleta(this)">Generar</button>
-        </div>
-        <div class="ru-gen-nota">Duran 48 horas y sirven una sola vez. Sin correo, cualquiera puede usarlos; con correo, solo esa persona. No cuentan como giros de la ruleta.</div>
-        <div id="ru-gen-res"></div>
-      </div>
-      <div class="ru-acc">
-        <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
-        <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
-        <button class="btn ghost" onclick="descargarRuleta()">Descargar CSV</button>
-      </div>
-      <div class="scroll"><table id="t-ruleta"><thead><tr><th>Fecha</th><th>Correo y premio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="ruleta-empty" style="display:none">Todavía nadie ha dejado su correo en la ruleta.</div>
     </section>
 
     <p style="font-size:.66rem;color:#666;line-height:1.5;margin-top:18px">
@@ -2219,10 +2233,33 @@
       kpi('Compraron con su código', usados, usados ? 'bien' : '', (pers.length ? Math.round(usados*100/pers.length) : 0) + '% de los que giraron') +
       kpi('Premios vigentes', vigentes, '', 'todavía pueden comprar') +
       kpi('Vencieron sin usar', vencidos);
-    var por = ruleta.porPremio || {};
-    document.getElementById('ru-premios').innerHTML = Object.keys(por).filter(function(k){ return por[k].giros; }).map(function(k){
-      var x = por[k]; return esc(x.etiqueta) + ': <b>' + x.giros + '</b>' + (x.usados ? ' (' + x.usados + (x.usados===1 ? ' compró)' : ' compraron)') : '');
-    }).join(' · ');
+    // Qué premio convierte mejor: de los que lo ganaron, cuántos compraron con
+    // su código. Solo gente que giró (sin los códigos generados a mano). Los
+    // vigentes todavía pueden comprar, así que la tasa puede subir.
+    var por = ruleta.porPremio || {}, est = {};
+    Object.keys(por).forEach(function(k){ est[k] = { etiqueta: por[k].etiqueta || k, giros:0, usados:0, vigentes:0 }; });
+    pers.forEach(function(p){
+      var k = p.premioId; if(!k) return;
+      if(!est[k]) est[k] = { etiqueta: p.premio || k, giros:0, usados:0, vigentes:0 };
+      est[k].giros++;
+      if(p.estado==='usado') est[k].usados++;
+      else if(p.estado==='vigente') est[k].vigentes++;
+    });
+    var rank = Object.keys(est).map(function(k){ var x = est[k]; x.tasa = x.giros ? x.usados / x.giros : 0; return x; })
+      .filter(function(x){ return x.giros; })
+      .sort(function(a,b){ return (b.tasa - a.tasa) || (b.usados - a.usados) || (b.giros - a.giros); });
+    var mejor = rank.length && rank[0].usados ? rank[0] : null;
+    var pctRu = function(x){ return Math.round(x.tasa * 100) + '%'; };
+    document.getElementById('ru-mejor').innerHTML = !rank.length ? '' : mejor
+      ? '🏆 El que mejor convierte: <b>' + esc(mejor.etiqueta) + '</b> · ' + mejor.usados + ' de ' + mejor.giros + ' compraron (' + pctRu(mejor) + ')' +
+        (mejor.giros < 10 ? '<small>Pocos giros todavía: tómalo como tendencia, no como regla.</small>' : '')
+      : 'Todavía nadie compró con un premio de la ruleta.';
+    rows('#t-ru-premios', rank, function(x){
+      var top = mejor && x === mejor;
+      return '<td>' + esc(x.etiqueta) + (top ? '<span class="ru-badge">Mejor</span>' : '') + '</td>' +
+        '<td>' + x.giros + '</td><td>' + x.usados + '</td><td>' + pctRu(x) + '</td><td>' + x.vigentes + '</td>';
+    }, 'ru-premios-empty');
+    if (mejor) { var trs = document.querySelectorAll('#t-ru-premios tbody tr'); if (trs[0]) trs[0].className = 'ru-top'; }
     var q = (document.getElementById('ru-buscar').value || '').trim().toLowerCase();
     var vistas = q ? todos.filter(function(p){ return String(p.email||'').toLowerCase().indexOf(q) >= 0 || String(p.codigo||'').toLowerCase().indexOf(q) >= 0; }) : todos;
     rows('#t-ruleta', vistas, function(p){

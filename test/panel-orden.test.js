@@ -18,11 +18,12 @@ test('el checkout va justo debajo de la utilidad diaria y el gasto por hora desp
 });
 
 test('las secciones van agrupadas y los registros plegados al final', () => {
-  const orden = ['sec-utilidad', 'sec-checkout', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-embudo', 'sec-conducta',
+  // La ruleta va arriba de todo, antes de Plata (pedido del dueño, 8-nov-2026).
+  const orden = ['sec-ruleta', 'sec-utilidad', 'sec-checkout', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-embudo', 'sec-conducta',
     'sec-convierte', 'sec-negocio', 'sec-pedidos', 'sec-resenas', 'sec-chat', 'sec-ventas', 'sec-sorteo'];
   const posiciones = orden.map(pos);
   assert.deepStrictEqual(posiciones, posiciones.slice().sort((a, b) => a - b), 'orden de las secciones');
-  assert.strictEqual((HTML.match(/<div class="grupo-h">/g) || []).length, 4);
+  assert.strictEqual((HTML.match(/<div class="grupo-h">/g) || []).length, 5);
   for (const id of ['sec-ventas', 'sec-sorteo']) {
     assert.match(HTML, new RegExp('<section id="' + id + '" class="plegable cerrada">'), id + ' empieza plegada');
     assert.match(HTML, new RegExp("onclick=\"plegar\\('" + id + "'\\)\">Mostrar ▾</button>"));
