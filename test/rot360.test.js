@@ -29,13 +29,18 @@ function tieneAlfa(buf) {
 
 const cuadro = k => 'f_' + String(k).padStart(3, '0') + '.webp';
 // La carpeta sale del propio index.html: se prueba lo que de verdad carga la web.
-const usada = (html.match(/function src\(i\)\{ return '([^']+)\/f_'/) || [])[1];
+// Desde el 10-nov-2026 hay dos: la liviana para celular y la de 900 px.
+const carpetas = (() => { const m = html.match(/var CARPETA = \([^\n]*\) \? '([^']+)' : '([^']+)';/); return m ? [m[1], m[2]] : []; })();
+const usada = carpetas[1];
 
 test('los 85 cuadros que carga la web tienen fondo transparente', () => {
-  assert.ok(usada, 'no se encontró la carpeta de cuadros en src()');
-  for (let k = 1; k <= N_CUADROS; k++) {
-    const buf = fs.readFileSync(path.join(RAIZ, usada, cuadro(k)));
-    assert.ok(tieneAlfa(buf), usada + '/' + cuadro(k) + ' no tiene canal alfa (¿se subió con el fondo negro?)');
+  assert.deepStrictEqual(carpetas, ['img/rot360-v4m', 'img/rot360-v3'], 'no se encontraron las carpetas de cuadros');
+  assert.ok(html.includes("function src(i){ return CARPETA+'/f_'"), 'src() usa la carpeta elegida');
+  for (const c of carpetas) {
+    for (let k = 1; k <= N_CUADROS; k++) {
+      const buf = fs.readFileSync(path.join(RAIZ, c, cuadro(k)));
+      assert.ok(tieneAlfa(buf), c + '/' + cuadro(k) + ' no tiene canal alfa (¿se subió con el fondo negro?)');
+    }
   }
 });
 

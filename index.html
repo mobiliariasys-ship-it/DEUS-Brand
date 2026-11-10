@@ -32,6 +32,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-53HZPXLL');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Foto principal (negra): se pide desde acá (después del viewport: antes de él el celular calcula mal
+     sizes y baja la de 1200 además de la de 800), antes que las fuentes, para que
+     en 4G no espere a que baje todo el HTML. Mismos srcset/sizes que la <img>.
+     sizes 68vw en celular: con pantallas de 3x elige la de 800 px (77 KB) y no
+     la de 1200 (136 KB); a ~340 px de ancho se ve igual de nítida (10-nov-2026). -->
+<link rel="preload" as="image" fetchpriority="high" imagesrcset="img/portada/negra-800.webp?v=10 800w, img/portada/negra-1200.webp?v=10 1200w" imagesizes="(max-width:900px) 68vw, 600px">
 <title>DEUS Band Chile — Smartband y Pulsera Inteligente | Sueño, Ritmo Cardíaco y Fitness</title>
 <meta name="description" content="DEUS Band: smartband chilena con monitor de sueño, ritmo cardíaco, HRV y hasta 20 días de batería. Pulsera inteligente sin pantalla para entrenar, dormir y recuperarte mejor. $68.990 con envío a todo Chile en 1-3 días. 3 cuotas sin interés.">
 <meta name="keywords" content="deus band, deusband, smartband chile, smartband sin pantalla, smartwatch sin pantalla, pulsera inteligente, banda inteligente, pulsera de actividad, fitness tracker chile, monitor de sueño, ritmo cardíaco, HRV, banda de recuperación, alternativa whoop, alternativa oura, banda sin suscripción, wearable chile, DEUS Band Chile">
@@ -2758,7 +2764,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              igual que la foto; las bandas se mecen como péndulos al cambiar
              de color o al tocarlas (ver bandasHero). Se arma al terminar la
              página: no compite con la foto principal. -->
-        <div class="slide-w"><img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" srcset="img/portada/negra-800.webp?v=10 800w, img/portada/negra-1200.webp?v=10 1200w" src="img/portada/negra-800.webp?v=10" data-color="negra" alt="DEUS Band negra — smartband de salud color negro"><div class="sl-arte" data-color="negra" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 68vw, 600px" srcset="img/portada/negra-800.webp?v=10 800w, img/portada/negra-1200.webp?v=10 1200w" src="img/portada/negra-800.webp?v=10" data-color="negra" alt="DEUS Band negra — smartband de salud color negro"><div class="sl-arte" data-color="negra" aria-hidden="true"></div></div>
         <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/gris-800.webp?v=10 800w, img/portada/gris-1200.webp?v=10 1200w" data-src="img/portada/gris-800.webp?v=10" data-color="gris" alt="DEUS Band gris"><div class="sl-arte" data-color="gris" aria-hidden="true"></div></div>
         <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/rosada-800.webp?v=10 800w, img/portada/rosada-1200.webp?v=10 1178w" data-src="img/portada/rosada-800.webp?v=10" data-color="rosada" alt="DEUS Band rosada"><div class="sl-arte" data-color="rosada" aria-hidden="true"></div></div>
       </div>
@@ -4869,7 +4875,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Buin</div>
       </div>
       <div class="review-card" data-rid="f-diorr.jayy">
-        <img class="review-photo" src="img/resena-diorr-gris.webp" data-original="img/resena-diorr.webp" alt="DEUS Band con correa de nylon gris en la muñeca, entrenando con mancuernas en el gimnasio. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" fetchpriority="low" src="img/resena-diorr-gris.webp" data-original="img/resena-diorr.webp" alt="DEUS Band con correa de nylon gris en la muñeca, entrenando con mancuernas en el gimnasio. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <!-- La foto original del cliente es con correa negra (img/resena-diorr.webp); esta se editó
              para mostrar la gris y se avisa a la vista, para no hacer pasar la edición por foto real. -->
         <p class="review-nota">Foto editada para mostrar la correa gris</p>
@@ -4879,21 +4885,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Las Condes</div>
       </div>
       <div class="review-card" data-rid="f-pdrozzzz">
-        <img class="review-photo" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" fetchpriority="low" src="img/resena-pedro.webp" alt="DEUS Band en la muñeca — reseña de Pedro" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Muy bueno, llegó en el tiempo correspondiente y la atención 10 de 10, y del producto nada que decir, muy bueno."</p>
         <div class="review-author"><span class="review-ig">@Pdrozzzz</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Frutillar</div>
       </div>
       <div class="review-card review-extra" data-rid="f-cffs_kvbir">
-        <img class="review-photo" src="img/resena-cffs-v2.webp" alt="DEUS Band en la muñeca en una cancha de tenis de arcilla — reseña de @cffs_kvbir" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" fetchpriority="low" src="img/resena-cffs-v2.webp" alt="DEUS Band en la muñeca en una cancha de tenis de arcilla — reseña de @cffs_kvbir" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Las mejores mediciones gracias a DEUS Band 💪🏽"</p>
         <div class="review-author"><span class="review-ig">@cffs_kvbir</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>San Miguel</div>
       </div>
       <div class="review-card review-extra" data-rid="f-elhayecknico">
-        <img class="review-photo" src="img/resena-nicolas-gris.webp" data-original="img/resena-nicolas.webp" alt="DEUS Band con correa de nylon gris en la muñeca al aire libre. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" fetchpriority="low" src="img/resena-nicolas-gris.webp" data-original="img/resena-nicolas.webp" alt="DEUS Band con correa de nylon gris en la muñeca al aire libre. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <!-- La foto original del cliente es con correa negra (img/resena-nicolas.webp); esta se editó
              para mostrar la gris y se avisa a la vista, igual que la de @diorr.jayy. -->
         <p class="review-nota">Foto editada para mostrar la correa gris</p>
@@ -4903,13 +4909,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Villarrica</div>
       </div>
       <div class="review-card" data-rid="f-diego.vidal23">
-        <img class="review-photo" src="img/resena-diego-2.webp" style="object-position:50% 80%" alt="DEUS Band negra con correa perforada en la muñeca, dentro del auto — reseña de Diego" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" fetchpriority="low" src="img/resena-diego-2.webp" style="object-position:50% 80%" alt="DEUS Band negra con correa perforada en la muñeca, dentro del auto — reseña de Diego" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Excelente producto, muy cómodo y útil para mis entrenamientos. 10/10"</p>
         <div class="review-author"><span class="review-ig">@diego.vidal23</span> · Instagram</div>
       </div>
       <div class="review-card review-extra" data-rid="f-andres.fuentesg">
-        <img class="review-photo" src="img/resena-andres-gris.webp" data-original="img/resena-andres.webp" alt="DEUS Band con correa de nylon gris asomando bajo el guante, durante una sesión de kinesiología — reseña de Andrés. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" fetchpriority="low" src="img/resena-andres-gris.webp" data-original="img/resena-andres.webp" alt="DEUS Band con correa de nylon gris asomando bajo el guante, durante una sesión de kinesiología — reseña de Andrés. Foto del cliente editada para mostrar la correa gris" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <!-- La foto original del cliente es con correa negra (img/resena-andres.webp); esta se editó
              para mostrar la gris y se avisa a la vista, para no hacer pasar la edición por foto real. -->
         <p class="review-nota">Foto editada para mostrar la correa gris</p>
@@ -4919,20 +4925,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>Puerto Varas</div>
       </div>
       <div class="review-card" data-rid="f-keznit_god">
-        <img class="review-photo" src="img/resena-keznit.webp" alt="DEUS Band negra con correa de nylon en la muñeca — reseña de Keznit" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" fetchpriority="low" src="img/resena-keznit.webp" alt="DEUS Band negra con correa de nylon en la muñeca — reseña de Keznit" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Gracias a los chicos de DEUS que me ayudan en este proceso de cambio físico, gracias a su band veo las calorías, sueño, pasos, etc. Unos cracks."</p>
         <div class="review-author"><span class="review-ig">@keznit_god</span> · Instagram</div>
         <div class="review-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 22s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="11" r="2.6"/></svg>La Florida</div>
       </div>
       <div class="review-card" data-rid="f-martinnoct">
-        <img class="review-photo" src="img/resena-martin.webp" alt="DEUS Band con correa de nylon en la muñeca, junto a una bicicleta de ruta — reseña de @martinnoct" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" fetchpriority="low" src="img/resena-martin.webp" alt="DEUS Band con correa de nylon en la muñeca, junto a una bicicleta de ruta — reseña de @martinnoct" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Feliz como una lombrizzz"</p>
         <div class="review-author"><span class="review-ig">@martinnoct</span> · Instagram</div>
       </div>
       <div class="review-card" data-rid="f-_cristobalnanning">
-        <img class="review-photo" src="img/resena-cristobal.webp" alt="DEUS Band en la muneca en el gimnasio — reseña de Cristóbal Nanning" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
+        <img class="review-photo" fetchpriority="low" src="img/resena-cristobal.webp" alt="DEUS Band en la muneca en el gimnasio — reseña de Cristóbal Nanning" loading="lazy" decoding="async" onclick="abrirFotoResena(this.src)">
         <div class="review-stars">★★★★★</div>
         <p class="review-text">"Entrenando mejor con DEUS Band 🔝"</p>
         <div class="review-author"><span class="review-ig">@_cristobalnanning</span> · Instagram</div>
@@ -5316,7 +5322,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // negro) la piden las páginas sin clearRect: con cuadros transparentes la banda
     // dejaba estela. rot360-v2 (el aro todavía negro) queda para las páginas
     // abiertas con esa versión; se puede borrar pasada una semana.
-    function src(i){ return 'img/rot360-v3/f_'+String(i+1).padStart(3,'0')+'.webp'; }
+    // En celular van los de 600 px más comprimidos (img/rot360-v4m: 1,2 MB en vez de
+    // 2,2 MB; a ese tamaño se ven iguales). En 4G los de 900 tardaban tanto que la
+    // vuelta de demostración partía con cuadros faltantes y la banda se pegaba
+    // (10-nov-2026). En pantallas grandes siguen los de 900.
+    var CARPETA = (Math.min(window.innerWidth || 0, (screen && screen.width) || 9999) < 700) ? 'img/rot360-v4m' : 'img/rot360-v3';
+    function src(i){ return CARPETA+'/f_'+String(i+1).padStart(3,'0')+'.webp'; }
     var frames=new Array(N), pendientes=N, idx=BLUE, auto=null;
     var HERO=0;               // ángulo de reposo: frente, con el sensor apagado
     var interactuado=false;   // el visitante ya tomó la banda al menos una vez
@@ -5326,7 +5337,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var reduceMov=!!(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches);
     // Los cuadros tienen fondo transparente: sin limpiar, cada uno se dibujaría
     // encima del anterior y la banda quedaría con estela.
-    function draw(){ var f=frames[idx]; if(f&&f.complete){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(f,0,0,canvas.width,canvas.height); } }
+    // Si el cuadro pedido todavía no llega, se dibuja el más cercano que ya esté:
+    // antes no se dibujaba nada y la banda quedaba quieta hasta que llegaba.
+    function cercano(i){
+      if(frames[i]) return frames[i];
+      for(var d=1; d<N/2; d++){
+        var a=frames[((i+d)%N+N)%N], b=frames[((i-d)%N+N)%N];
+        if(a) return a; if(b) return b;
+      }
+      return null;
+    }
+    function draw(){ var f=cercano(idx); if(f&&f.complete){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(f,0,0,canvas.width,canvas.height); } }
     // La vuelta cierra con un fundido suave (f_074-085) entre el final y el
     // inicio del giro real, así rota continuo sin reinicio visible.
     function show(i){ idx=((i%N)+N)%N; draw(); }
@@ -5362,7 +5383,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     function cargarCuadros(){
       if(cargado) return; cargado=true;
       mostrarPista(); // la manito + texto aparecen apenas la sección entra en vista (clave en celular)
-      for(var i=0;i<N;i++){
+      // Primero el cuadro que se ve y después en orden de vuelta, así lo que se
+      // muestra al girar va llegando en el mismo orden en que se necesita.
+      var orden=[BLUE, HERO]; for(var k=0;k<N;k++) if(k!==BLUE && k!==HERO) orden.push(k);
+      orden.forEach(function(i){
         (function(i){
           var im=new Image();
           im.onload=function(){
@@ -5373,14 +5397,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           im.onerror=function(){ if(--pendientes===0) startAuto(); };
           im.src=src(i);
         })(i);
-      }
-      // Respaldo: aunque un cuadro se cuelgue, la banda empieza a girar igual
-      setTimeout(startAuto,3500);
+      });
+      // La vuelta de demostración espera a que estén TODOS los cuadros: antes
+      // partía igual a los 3,5 s y en 4G giraba con huecos (se pegaba y después
+      // saltaba). Si en 15 s no llegaron todos, no hay vuelta: queda la pista
+      // para que el visitante la gire él (dibuja el cuadro más cercano que haya).
+      setTimeout(function(){ if(pendientes>0){ demoHecho=true; mostrarPista(); } },15000);
     }
     if('IntersectionObserver' in window){
       var io=new IntersectionObserver(function(entries){
         if(entries.some(function(e){return e.isIntersecting;})){ cargarCuadros(); io.disconnect(); }
-      },{rootMargin:'900px'});
+      },{rootMargin:'1600px'});  // empieza a bajar los cuadros con más anticipación
       io.observe(wrap);
     } else { cargarCuadros(); }
     var dragging=false, startX=0, startIdx=0, firstTouch=true, movido=0;
@@ -5465,7 +5492,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // ── Visor 360 en pantalla completa (con zoom) ──
     var full=null, fc=null, fctx=null, fidx=BLUE;
     var zScale=1, zx=0, zy=0; // zoom y desplazamiento
-    function drawFull(){ var f=frames[fidx]; if(f&&f.complete){ fctx.clearRect(0,0,fc.width,fc.height); fctx.drawImage(f,0,0,fc.width,fc.height); } }
+    function drawFull(){ var f=cercano(fidx); if(f&&f.complete){ fctx.clearRect(0,0,fc.width,fc.height); fctx.drawImage(f,0,0,fc.width,fc.height); } }
     // fc solo existe una vez que se abrió el visor a pantalla completa. Sin esta
     // guarda, cualquier Escape en la página lanzaba un error de JS.
     function applyZoom(){ if(!fc) return; fc.style.transform='translate('+zx+'px,'+zy+'px) scale('+zScale+')'; }
