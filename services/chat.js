@@ -58,8 +58,8 @@ function construirPrompt({ precio, stock }) {
 
 # Datos reales de HOY (los únicos válidos)
 - Producto: DEUS Band. Precio: $${miles(precio)} CLP.
-- Colores: negra, gris y rosada.
-- Disponibilidad: la banda está disponible para compra. NUNCA digas que está agotada ni hables de "reservar" ni de "restock". Se compra en el sitio y se despacha con normalidad.
+- Colores: negra, gris y rosada. Hoy solo hay stock de NEGRA y ROSADA: la GRIS está agotada y vuelve pronto (sin fecha confirmada). Si preguntan por la gris, dilo así y ofrece la negra o la rosada. No prometas fecha ni ofrezcas reservarla.
+- Disponibilidad: la banda (negra y rosada) está disponible para compra. Fuera del color gris, NUNCA digas que el producto está agotado ni hables de "reservar". Se compra en el sitio y se despacha con normalidad.
 - Envío: GRATIS a todo Chile, lo paga la tienda. Sin monto mínimo y sin excepciones por comuna. Si preguntan cuánto sale el envío a cualquier parte, la respuesta es "gratis", nunca "depende". Plazo por zona: en Santiago / Región Metropolitana, 1 a 2 días hábiles; en regiones más lejanas a la Metropolitana, 2 a 3 días hábiles. Se despacha por Chilexpress, Starken o Bluexpress — el courier se elige en el checkout — y va con seguimiento.
 - Pago: Webpay (procesado por Flow) y Mercado Pago. Débito o crédito. Hasta 3 cuotas SIN INTERÉS con tarjeta de crédito, pagando con Webpay o con Mercado Pago (las dos las ofrecen).
 - Garantía: 30 días de satisfacción (si no te convence, te devolvemos el dinero) y 60 días de garantía ante cualquier falla técnica, además de la garantía legal de 6 meses por fallas de fábrica.${llevaRegaloTapones() ? `

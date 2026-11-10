@@ -863,8 +863,12 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .clabel{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);}
 .cdot{width:28px;height:28px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:border-color .2s,transform .15s;}
 .cdot.active{border-color:#aaa;}
-.cdot.sold-out{opacity:.4;position:relative;}
-.cdot.sold-out::after{content:'';position:absolute;left:-4px;right:-4px;top:50%;height:2px;background:#c33;transform:rotate(-45deg);}
+.cdot.sold-out{opacity:.45;position:relative;}
+.cdot.sold-out::after{content:'';position:absolute;left:-4px;right:-4px;top:50%;height:2px;background:#d8d8d8;transform:rotate(-45deg);}
+/* Aviso del color agotado: renglón propio dentro de la fila de colores */
+.colors-row{flex-wrap:wrap;}
+.color-agotado{flex-basis:100%;margin-top:2px;font-size:.68rem;letter-spacing:.4px;color:#b9b9b9;}
+.color-agotado::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#888;opacity:.6;margin-right:7px;vertical-align:0;}
 .cdot:hover{border-color:#fff;transform:scale(1.1);}
 
 @media(max-width:860px){
@@ -1533,6 +1537,7 @@ body.sb-on .wa-float{bottom:82px;}
    regla, y el anillo blanco del hover tapaba el dorado del color elegido. */
 .co-cu-d.on{border-color:#e8b464;transform:scale(1.08);}
 .co-cu-d.agotado{opacity:.35;cursor:not-allowed;}
+.co-cu-ago{font-size:.66rem;color:#9a9a9a;margin-top:6px;}
 .co-stock{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:#e8b464;margin-top:12px;letter-spacing:.5px;}
 .stock-note{font-size:.78rem;color:#e8b464;letter-spacing:.5px;margin:0 0 16px;}
 .proof-line{font-size:.74rem;color:#aaa;letter-spacing:.5px;margin:0 0 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;}
@@ -2781,6 +2786,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="cdot" style="background:#888;" title="Gris" onclick="setColor('gris',this)"></div>
           <div class="cdot" style="background:#e8b4bc;" title="Rosado" onclick="setColor('rosada',this)"></div>
           <span class="color-now" id="color-now">Negro</span>
+          <!-- Color sin stock: "Gris agotado · pronto restock", en su propio
+               renglón dentro de la fila de colores. Lo pinta marcarAgotados()
+               desde la tabla AGOTADOS; vacío = no se ve. -->
+          <div class="color-agotado" id="color-agotado" style="display:none"></div>
         </div>
         <!-- Aparece solo si la foto que se está viendo no es el color elegido -->
         <div class="color-mismatch" id="color-mismatch" style="display:none"></div>
@@ -3507,9 +3516,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             colorOrder.map(c => {
               const ago = (typeof AGOTADOS !== 'undefined' && AGOTADOS[c]);
               return '<div class="co-cu-d' + (c === sel ? ' on' : '') + (ago ? ' agotado' : '') +
-                '" style="background:' + COLOR_HEX[c] + '" title="' + (COLOR_LABEL[c] || c) + '"' +
+                '" style="background:' + COLOR_HEX[c] + '" title="' + (COLOR_LABEL[c] || c) + (ago ? ' — agotado, pronto restock' : '') + '"' +
                 (ago ? '' : ' onclick="setColorUnidad(' + i + ',\'' + c + '\')"') + '></div>';
-            }).join('') + '</div></div>').join('');
+            }).join('') + '</div></div>').join('') +
+            ((typeof textoAgotados === 'function' && textoAgotados()) ? '<div class="co-cu-ago">' + textoAgotados() + '</div>' : '');
         }
         // colorForzado/qtyForzada: cuando se compra DESDE EL CARRITO, el color y
         // la cantidad vienen del carrito — NO de la posición del carrusel (así un
@@ -5847,18 +5857,44 @@ let currentSlide = 0;
 let selectedColor = 'negra';
 
 // Colores sin stock: no se pueden comprar ni agregar al carrito.
-// Vacío = catálogo completo a la venta. Los cruces rojos sobre los círculos
-// hacían caer la confianza de toda la página, no sólo la del color tachado,
-// así que se prefiere vender los tres y resolver el stock en el pedido.
-// Para volver a agotar uno: agregarlo acá Y ponerle la clase .sold-out al
-// círculo en la fila de colores. Esta tabla apaga sola los cinco guardas
+// Vacío = catálogo completo a la venta.
+// GRIS agotado desde el 10-nov-2026 (pedido del dueño: que se diga EN EL COLOR
+// "agotado · pronto restock", no en la barra de arriba). Cuando llegue el
+// stock: dejar la tabla vacía ({}) y listo — marcarAgotados() pinta sola el
+// círculo tachado y el aviso bajo los colores, y esta tabla apaga los guardas
 // (checkout, carrito, setColor, aviso de color y texto de stock).
-const AGOTADOS = {};
+// La raya del círculo es gris clara y no roja: los cruces rojos hacían caer
+// la confianza de toda la página, no solo la del color tachado.
+const AGOTADOS = { gris: true };
+const TEXTO_RESTOCK = 'pronto restock';
 
 // Stock real desde el backend: el mismo contador que baja con cada pago
 // confirmado (endpoint /stock del proyecto web). Sin números fijos en el front.
 let stockRestante = null;
 const COLOR_LABEL = { negra: 'negro', gris: 'gris', rosada: 'rosado' };
+
+// "Gris agotado · pronto restock" (uno por cada color sin stock).
+function textoAgotados() {
+  return colorOrder.filter(c => AGOTADOS[c]).map(c => {
+    const n = COLOR_LABEL[c] || c;
+    return n.charAt(0).toUpperCase() + n.slice(1) + ' agotado · ' + TEXTO_RESTOCK;
+  }).join(' · ');
+}
+// Marca en la fila de colores los que están agotados: círculo atenuado con
+// una raya y, debajo, el aviso. Sale todo de AGOTADOS.
+function marcarAgotados() {
+  document.querySelectorAll('.colors-row .cdot').forEach((d, i) => {
+    const c = colorOrder[i], ago = !!AGOTADOS[c];
+    const n = COLOR_LABEL[c] || c || '';
+    const nombre = n.charAt(0).toUpperCase() + n.slice(1);
+    d.classList.toggle('sold-out', ago);
+    d.title = ago ? nombre + ' — agotado, ' + TEXTO_RESTOCK : nombre;
+    d.setAttribute('aria-label', d.title);
+  });
+  const nota = document.getElementById('color-agotado');
+  if (nota) { const t = textoAgotados(); nota.textContent = t; nota.style.display = t ? '' : 'none'; }
+}
+marcarAgotados();
 
 // Sincroniza aviso de stock, foto y color en página y checkout
 function textoStock(color) {
@@ -5867,7 +5903,7 @@ function textoStock(color) {
   // Se arma con el color de verdad en vez de un texto fijo: antes decía
   // siempre "negro agotado, disponible en gris", que hoy es al revés.
   const disponible = colorOrder.filter(c => !AGOTADOS[c]).map(c => COLOR_LABEL[c] || c);
-  return 'Color ' + (COLOR_LABEL[color] || color).toUpperCase() + ' agotado' +
+  return 'Color ' + (COLOR_LABEL[color] || color).toUpperCase() + ' agotado · ' + TEXTO_RESTOCK +
          (disponible.length ? ' — disponible en ' + disponible.join(' y ') : '');
 }
 function updateStockUI() {
@@ -6258,8 +6294,8 @@ function actualizarAvisoColor() {
   av.style.display = '';
   if (AGOTADOS[viendo]) {
     // Sin botón para elegirlo: ofrecerlo y que después falle sería peor.
-    av.innerHTML = 'El ' + nCap + ' está <b>agotado</b> — tu pedido va en ' +
-      (COLOR_LABEL[selectedColor] || selectedColor);
+    av.innerHTML = '<span>El ' + n + ' está <b>agotado</b>: tu pedido va en ' +
+      (COLOR_LABEL[selectedColor] || selectedColor) + '</span>';
     return;
   }
   av.innerHTML = 'Estás viendo el ' + nCap +
