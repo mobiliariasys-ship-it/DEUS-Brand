@@ -1,6 +1,6 @@
 'use strict';
 // Ruleta "Gira y gana" (desde el 4-nov-2026, en lugar de la pestaña del
-// sorteo mensual). A los 11 segundos en la web aparece la ruleta: la persona
+// sorteo mensual). A los 5,4 segundos en la web aparece la ruleta: la persona
 // deja su correo, gira, y le llega al correo un código con su premio.
 //
 // El premio lo decide ESTE archivo, nunca el navegador: el navegador solo
@@ -37,6 +37,10 @@ const PREMIOS = [
   { id: 'p10',     etiqueta: '10% OFF',        tipo: 'descuento', pct: 10,     prob: 0.005, prefijo: 'DEUS10' },
 ];
 const VIGENCIA_MS = 48 * 60 * 60 * 1000;   // el premio dura 48 horas
+// Premio vencido SIN usar: a las 24 h de vencer, ese mismo correo puede girar
+// de nuevo (pedido del dueño, 10-nov-2026). Un premio usado no da otro giro.
+// index.html lleva el mismo número (REGIRO_MS) para avisarle al cliente.
+const REGIRO_MS = 24 * 60 * 60 * 1000;
 const RESERVA_MS = 30 * 60 * 1000;         // al empezar a pagar, el código se aparta 30 min
 const REENVIO_MS = 10 * 60 * 1000;         // a un mismo correo, máximo un reenvío cada 10 min
 const COLORES_CORREA = ['negra', 'gris'];  // correas de tela que hay en stock
@@ -184,12 +188,21 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     const t = ahora();
     if (tiene(estado.porCorreo, v.clave) && tiene(estado.codigos, estado.porCorreo[v.clave])) {
       const reg = estado.codigos[estado.porCorreo[v.clave]];
-      const reenviar = !reg.usado && t <= reg.vence && (!reg.ultimoEnvio || t - reg.ultimoEnvio > REENVIO_MS);
-      if (reenviar) { reg.ultimoEnvio = t; await guardar(); }
-      const pub = datos(reg);
-      delete pub.codigo;
-      delete pub.color;
-      return { yaGiro: true, reenviar, publico: { yaGiro: true, ...pub }, paraCorreo: { ...datos(reg), email: reg.emailEnvio || reg.email } };
+      // ¿Ya puede girar de nuevo? Solo si el premio venció sin usarse y pasaron
+      // 24 h desde que venció. Si no, se responde lo de siempre (y se le dice
+      // desde cuándo puede). Cuando sí puede, sigue de largo: sale un premio y
+      // un código nuevos, y el viejo queda en el registro como vencido.
+      const giraDesde = reg.vence + REGIRO_MS;
+      if (reg.usado || t < giraDesde) {
+        const reenviar = !reg.usado && t <= reg.vence && (!reg.ultimoEnvio || t - reg.ultimoEnvio > REENVIO_MS);
+        if (reenviar) { reg.ultimoEnvio = t; await guardar(); }
+        const pub = datos(reg);
+        delete pub.codigo;
+        delete pub.color;
+        pub.usado = !!reg.usado;
+        if (!reg.usado && t > reg.vence) pub.giraDesde = new Date(giraDesde).toISOString();
+        return { yaGiro: true, reenviar, publico: { yaGiro: true, ...pub }, paraCorreo: { ...datos(reg), email: reg.emailEnvio || reg.email } };
+      }
     }
     const premio = sortear(aleatorio());
     const codigo = nuevoCodigo(premio.prefijo);
@@ -352,6 +365,6 @@ function servicio() {
 }
 
 module.exports = {
-  PREMIOS, VIGENCIA_MS, RESERVA_MS, COLORES_CORREA, MENSAJES, DESECHABLES, LARGO_CODIGO,
+  PREMIOS, VIGENCIA_MS, REGIRO_MS, RESERVA_MS, COLORES_CORREA, MENSAJES, DESECHABLES, LARGO_CODIGO,
   sortear, premioPorId, normalizarCodigo, validarCorreo, enmascarar, crearServicio, servicio,
 };

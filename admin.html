@@ -2227,10 +2227,15 @@
     var pers = todos.filter(function(p){ return !p.manual; });
     var contar = function(est){ return pers.filter(function(p){ return p.estado===est; }).length; };
     var usados = contar('usado'), vigentes = contar('vigente'), vencidos = contar('vencido');
-    document.getElementById('ru-total').textContent = pers.length + (pers.length===1 ? ' correo' : ' correos');
+    // Un mismo correo puede girar de nuevo si su premio venció (24 h después
+    // de vencer): cada giro es una fila, pero la persona se cuenta una vez.
+    var vistosRu = {}, unicos = 0;
+    pers.forEach(function(p){ var k = String(p.email||'').toLowerCase(); if(k && !vistosRu[k]){ vistosRu[k] = 1; unicos++; } });
+    var regiros = pers.length - unicos;
+    document.getElementById('ru-total').textContent = unicos + (unicos===1 ? ' correo' : ' correos');
     document.getElementById('ru-kpis').innerHTML =
-      kpi('Dejaron su correo', pers.length) +
-      kpi('Compraron con su código', usados, usados ? 'bien' : '', (pers.length ? Math.round(usados*100/pers.length) : 0) + '% de los que giraron') +
+      kpi('Dejaron su correo', unicos, '', regiros > 0 ? pers.length + ' giros · ' + regiros + (regiros===1 ? ' volvió a girar' : ' volvieron a girar') : '') +
+      kpi('Compraron con su código', usados, usados ? 'bien' : '', (unicos ? Math.round(usados*100/unicos) : 0) + '% de los que giraron') +
       kpi('Premios vigentes', vigentes, '', 'todavía pueden comprar') +
       kpi('Vencieron sin usar', vencidos);
     // Qué premio convierte mejor: de los que lo ganaron, cuántos compraron con
@@ -2273,7 +2278,10 @@
     }, 'ruleta-empty');
   }
   function copiarCorreosRuleta(btn){
-    var t = ((ruleta && ruleta.personas) || []).filter(function(p){ return !p.manual && p.email; }).map(function(p){ return p.email; }).join(', ');
+    // Sin repetir: quien volvió a girar aparece en dos filas con el mismo correo.
+    var yaRu = {};
+    var t = ((ruleta && ruleta.personas) || []).filter(function(p){ return !p.manual && p.email; }).map(function(p){ return p.email; })
+      .filter(function(m){ var k = String(m).toLowerCase(); if(yaRu[k]) return false; yaRu[k] = 1; return true; }).join(', ');
     if(!t) return;
     var hecho = function(){ btn.textContent = '¡Copiados!'; setTimeout(function(){ btn.textContent = 'Copiar correos'; }, 1600); };
     try { navigator.clipboard.writeText(t).then(hecho, function(){ prompt('Copia los correos:', t); }); }

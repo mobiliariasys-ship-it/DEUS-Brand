@@ -1969,7 +1969,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- Ruleta "Gira y gana" (desde el 4-nov-2026, en lugar de la pestaña del
      sorteo mensual; el sorteo de noviembre se hace igual con quienes ya
-     participan y su ventana sigue en la página). Aparece a los 11 segundos de
+     participan y su ventana sigue en la página). Aparece a los 5,4 segundos de
      estar en la web, una sola vez; después se abre desde la pestaña. Diseño
      "Colores DEUS": gajos negro, gris y rosado, como las bandas. El premio lo
      decide el servidor (services/ruleta.js): acá solo se anima la ruleta hasta
@@ -2106,7 +2106,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // Negro, gris y rosado: los colores de las bandas.
   var PALETA = [['#2a2a2f', '#141416', '#f2f2f2'], ['#a3a3a3', '#7d7d7d', '#141416'], ['#f0c3ca', '#d99aa5', '#3a1820']];
   var CLAVE = 'deus-ruleta';
-  var SEGUNDOS = 11;
+  // 5,4 segundos de pestaña visible (pedido del dueño, 10-nov-2026; antes
+  // eran 11 y quien se iba antes nunca la veía).
+  var ESPERA_MS = 5400;
+  // Premio vencido sin usar: a las 24 h de vencer, el mismo correo puede
+  // girar de nuevo. Mismo número que REGIRO_MS de services/ruleta.js.
+  var REGIRO_MS = 24 * 60 * 60 * 1000;
   var GIRO_MAX_MS = 3000;
   var quieto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var base = (window.DEUS_API_BASE || '').replace(/\/$/, '');
@@ -2116,6 +2121,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function evento(n) { try { if (window.deusEvento) window.deusEvento('accion:' + n); } catch (e) {} }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function clp(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+  // "jueves, 12 de noviembre, 14:30" en la hora del visitante.
+  function cuando(ms) {
+    try { return new Date(ms).toLocaleString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false }); }
+    catch (e) { return new Date(ms).toLocaleString(); }
+  }
   function precio() { try { return precioBanda(); } catch (e) { return 68990; } }
 
   // ── La ruleta en SVG ──
@@ -2365,11 +2375,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     card.addEventListener('pointerdown', rayoAlPuntero);
     return card;
   }
-  function pantallaInicio() {
+  function pantallaInicio(segunda) {
     var card = montar('<button class="rl-x" aria-label="Cerrar">✕</button>' +
-      '<span class="rl-tag">🎁 Un regalo por visitarnos</span>' +
+      '<span class="rl-tag">' + (segunda === true ? '🎁 Antes de irte' : '🎁 Un regalo por visitarnos') + '</span>' +
       '<div class="rl-tit">Gira y <b>gana</b></div>' +
-      '<p class="rl-sub">Déjanos tu correo y gira la ruleta. Te mandamos tu premio al instante.</p>' +
+      '<p class="rl-sub">' + (segunda === true
+        ? 'Déjanos tu correo, gira la ruleta y usa tu premio ahora mismo en tu compra.'
+        : 'Déjanos tu correo y gira la ruleta. Te mandamos tu premio al instante.') + '</p>' +
       rueda(rot) +
       '<form class="rl-form" id="rl-form" novalidate><input class="rl-in" id="rl-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo electrónico" aria-label="Tu correo electrónico">' +
       '<div class="rl-err" id="rl-err" role="alert"></div>' +
@@ -2394,7 +2406,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var pedido = fetch(base + '/ruleta/girar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: correo }) })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok || !d.premio) { var e = new Error(d.error || 'error'); e.campo = d.campo; throw e; } return d; }); });
     girar(pedido, function (d) {
-      var e = leer(); e.estado = 'giro'; e.email = correo; e.codigo = d.codigo; e.premio = d.premio; e.color = d.color; e.vence = d.vence; e.yaGiro = !!d.yaGiro; guardar(e);
+      var e = leer(); e.estado = 'giro'; e.email = correo; e.codigo = d.codigo; e.premio = d.premio; e.color = d.color; e.vence = d.vence; e.yaGiro = !!d.yaGiro; e.usado = !!d.usado; guardar(e);
       finalFuerte(indiceDe(d.premio.id));
       setTimeout(function () { pantallaPremio(); }, quieto ? 300 : 1300);
     }, function (e) {
@@ -2412,10 +2424,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       '<div class="rl-fino" style="margin:-6px 0 10px">Úsalo comprando con ese mismo correo. Un código por compra.</div>';
     var cod = '<div class="rl-cod"><div><div class="k">Tu código</div><div class="v">' + esc(e.codigo) + '</div></div><button type="button" class="rl-copiar" id="rl-copiar">Copiar</button></div>';
     var medio = '';
-    if (!e.codigo) {
+    var vencido = venceMs && Date.now() > venceMs;
+    // Vencido sin usar: se le dice desde cuándo puede girar de nuevo con el
+    // mismo correo (24 h después de vencer). Usado: no hay otro giro.
+    var vencidoSinUsar = vencido && !e.usado;
+    var giraMs = venceMs + REGIRO_MS;
+    var notaRegiro = !vencidoSinUsar ? '' : '<p class="rl-texto">' + (Date.now() >= giraMs
+      ? 'Ya puedes <b>volver a girar</b> con tu mismo correo.'
+      : 'Con tu mismo correo puedes volver a girar desde el <b>' + esc(cuando(giraMs)) + '</b>.') + '</p>';
+    if (e.usado) {
+      medio = '<p class="rl-texto">Con este correo ya ganaste y usaste tu premio. ¡Gracias por tu compra!</p>';
+    } else if (!e.codigo) {
       // Ya había girado con este correo: por seguridad el código solo llega a
       // ese correo (si no, cualquiera vería el premio de otro escribiendo su correo).
-      medio = '<p class="rl-texto">Ya giraste con este correo. Por seguridad, tu código <b>solo llega a ese correo</b>: búscalo en tu bandeja de entrada (o en spam). Ahí está el botón para usarlo.</p>';
+      medio = vencido ? '' : '<p class="rl-texto">Ya giraste con este correo. Por seguridad, tu código <b>solo llega a ese correo</b>: búscalo en tu bandeja de entrada (o en spam). Ahí está el botón para usarlo.</p>';
     } else if (pr.tipo === 'descuento') {
       var p = precio(), d = pr.monto ? pr.monto : Math.ceil(p * pr.pct / 100);
       medio = cod + enviado + '<div class="rl-precio"><s>' + clp(p) + '</s><b>' + clp(p - d) + '</b></div>';
@@ -2429,13 +2451,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     } else {
       medio = '<p class="rl-texto">Tus <b>tapones de oído DEUS</b> van de regalo en el mismo paquete que tu banda.</p>' + cod + enviado;
     }
-    var vencido = venceMs && Date.now() > venceMs;
     var card = montar('<button class="rl-x" aria-label="Cerrar">✕</button>' + rueda(giroFinal, indiceDe(pr.id)) +
-      '<span class="rl-tag">' + (vencido ? 'Tu premio venció' : tag) + '</span>' +
+      '<span class="rl-tag">' + (e.usado ? 'Ya usaste tu premio' : vencido ? 'Tu premio venció' : tag) + '</span>' +
       '<div class="rl-premio">' + esc(titulo) + '</div><div class="rl-envio">' + (pr.tipo === 'tapones' ? 'de regalo + envío gratis' : '+ envío gratis') + '</div>' +
-      medio +
-      (vencido ? '<button type="button" class="rl-btn" id="rl-otra">Girar de nuevo</button>'
-        : !e.codigo ? '<button type="button" class="rl-btn" id="rl-listo">Entendido</button>'
+      medio + notaRegiro +
+      (vencidoSinUsar ? '<button type="button" class="rl-btn" id="rl-otra">Girar de nuevo</button>'
+        : (e.usado || !e.codigo) ? '<button type="button" class="rl-btn" id="rl-listo">Entendido</button>'
         : '<button type="button" class="rl-btn" id="rl-usar">' + (pr.tipo === 'descuento' ? 'Usar mi descuento' : 'Usar mi premio') + '</button>' +
           '<div class="rl-reloj">Tu premio vence en <b id="rl-reloj">--:--:--</b></div>'));
     card.classList.add('gano');
@@ -2457,7 +2478,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var listo = card.querySelector('#rl-listo');
     if (listo) listo.addEventListener('click', cerrarRuleta);
     var otra = card.querySelector('#rl-otra');
-    if (otra) otra.addEventListener('click', function () { guardar({ estado: 'visto' }); pantallaInicio(); });
+    if (otra) otra.addEventListener('click', function () {
+      var correoAntes = e.email;
+      guardar({ estado: 'visto' }); pantallaInicio();
+      // Deja escrito el correo de antes: es el que puede volver a girar.
+      var inp = document.getElementById('rl-email'); if (inp && correoAntes) inp.value = correoAntes;
+    });
     clearInterval(relojTimer);
     var reloj = card.querySelector('#rl-reloj');
     function tic() {
@@ -2490,7 +2516,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   };
   window.addEventListener('resize', ajustarLienzo);
 
-  // ── A los 11 segundos (de pestaña visible), una sola vez ──
+  // ── Segunda oportunidad (10-nov-2026) ──
+  // Antes, quien cerraba la ruleta una vez no la volvía a ver nunca. Ahora, si
+  // la cerró SIN girar y después abre el checkout y lo cierra sin pagar, se le
+  // muestra una vez más: es alguien con intención de compra que dudó, justo a
+  // quien más le sirve un premio. Una sola vez por navegador (clave aparte:
+  // el estado de la ruleta se reescribe entero en varios puntos). No aparece
+  // si ya giró ni si ya tiene un código aplicado (p. ej. llegó desde el correo
+  // del premio). La llama cerrarCheckout().
+  var CLAVE_2DA = 'deus-ruleta-2da';
+  window.ruletaSegundaOportunidad = function () {
+    try {
+      if (leer().estado !== 'visto') return;
+      if (localStorage.getItem(CLAVE_2DA) || localStorage.getItem('deus-ruleta-aplicado')) return;
+      if (capa || otraVentanaAbierta()) return;
+      localStorage.setItem(CLAVE_2DA, '1');
+    } catch (e) { return; } // sin localStorage no hay cómo saber si ya la vio
+    pantallaInicio(true);
+    evento('ruleta-vista'); evento('ruleta-segunda');
+  };
+
+  // ── A los 5,4 segundos (de pestaña visible), una sola vez ──
   function otraVentanaAbierta() {
     var ids = ['checkout-overlay', 'chat-panel', 'reviews-modal', 'rifaOverlay', 'fn-modal', 'resenaOverlay', 'cart-drawer'];
     for (var i = 0; i < ids.length; i++) {
@@ -2514,16 +2560,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }, 700);
     };
     if (document.readyState === 'complete') aplicar(); else window.addEventListener('load', aplicar);
-  } else if (!leer().estado) {
-    var vistos = 0;
+  } else reiniciarSiVencio(function () {
+    if (leer().estado) return;
+    var vistos = 0, PASO_MS = 200;
     var t = setInterval(function () {
       if (document.visibilityState !== 'visible') return;
-      if (++vistos < SEGUNDOS) return;
+      vistos += PASO_MS;
+      if (vistos < ESPERA_MS) return;
       if (leer().estado) { clearInterval(t); return; }
       if (capa || otraVentanaAbierta()) return; // espera a que cierre la otra ventana
       clearInterval(t);
       window.abrirRuleta();
-    }, 1000);
+    }, PASO_MS);
+  });
+  // Premio vencido hace más de 24 h: ese correo ya puede girar de nuevo, así
+  // que para este visitante la ruleta parte de cero (vuelve a aparecer sola y
+  // recupera su segunda oportunidad). Antes se le pregunta al servidor qué
+  // pasó con el código: si lo USÓ en una compra, no se le ofrece otro giro.
+  function reiniciarSiVencio(seguir) {
+    var e = leer(), v = Date.parse(e.vence);
+    if (e.estado !== 'giro' || e.usado || !v || Date.now() < v + REGIRO_MS) return seguir();
+    var limpiar = function () { try { localStorage.removeItem(CLAVE); localStorage.removeItem(CLAVE_2DA); } catch (x) {} seguir(); };
+    // Giró con un correo que ya tenía premio (acá no hay código que consultar):
+    // se limpia y, al girar, decide el servidor.
+    if (!e.codigo) return limpiar();
+    fetch(base + '/ruleta/codigo/' + encodeURIComponent(e.codigo), { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.error === 'usado') { e.usado = true; guardar(e); seguir(); }
+        else if (d && d.error === 'vencido') limpiar();
+        else seguir();
+      })
+      .catch(function () { seguir(); });
   }
 })();
 </script>
@@ -3586,6 +3654,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
           overlay.classList.remove('show');
           document.body.style.overflow = '';
+          // Cerró el checkout sin pagar: segunda oportunidad de la ruleta (una
+          // sola vez, y solo si antes la cerró sin girar). No en "solo
+          // tapones": los premios son para la compra de la banda.
+          if (!checkoutTapones && window.ruletaSegundaOportunidad) window.ruletaSegundaOportunidad();
         }
         function ocultarRescate() {
           document.getElementById('rescue-bar').classList.remove('show');

@@ -1,6 +1,6 @@
 'use strict';
 // Ruleta "Gira y gana" (desde el 4-nov-2026, en lugar de la pestaña del
-// sorteo): a los 11 segundos aparece, la persona deja su correo, gira (máximo
+// sorteo): a los 5,4 segundos aparece, la persona deja su correo, gira (máximo
 // 3 segundos) y le llega un código de 48 horas. El premio lo decide el
 // servidor y lo que se cobra lo calcula calcularMonto(): el navegador solo
 // manda el código. Estos tests cuidan las tres cosas que tocan plata: las
@@ -63,12 +63,28 @@ test('los gajos de la página son los mismos premios del servidor', () => {
   assert.deepStrictEqual([...ids].sort(), ruleta.PREMIOS.map(p => p.id).sort());
 });
 
-test('aparece a los 11 segundos y el giro dura máximo 3 segundos', () => {
-  assert.match(HTML, /var SEGUNDOS = 11;/);
+test('aparece a los 5,4 segundos y el giro dura máximo 3 segundos', () => {
+  assert.match(HTML, /var ESPERA_MS = 5400;/);
+  // El reloj avanza de a 200 ms y solo con la pestaña a la vista.
+  assert.match(HTML, /vistos \+= PASO_MS;\s+if \(vistos < ESPERA_MS\) return;/);
+  assert.ok(!/var SEGUNDOS = /.test(HTML), 'quedó el reloj viejo de 11 segundos');
   assert.match(HTML, /var GIRO_MAX_MS = 3000;/);
   // El giro se planifica para terminar ANTES de los 3 s (deja 300 ms de margen
   // para lo que tarda el celular en dibujar cada cuadro).
   assert.ok(HTML.includes('GIRO_MAX_MS / 1000 - .3'));
+});
+
+test('segunda oportunidad: al cerrar el checkout sin pagar, una sola vez', () => {
+  // Solo a quien la cerró sin girar, nunca con un código ya aplicado, y la
+  // marca queda en una clave propia para que no se borre con el estado.
+  const i = HTML.indexOf('window.ruletaSegundaOportunidad = function');
+  assert.ok(i > 0, 'falta la segunda oportunidad');
+  const fn = HTML.slice(i, HTML.indexOf('};', i));
+  assert.match(fn, /leer\(\)\.estado !== 'visto'\) return;/);
+  assert.match(fn, /localStorage\.getItem\(CLAVE_2DA\) \|\| localStorage\.getItem\('deus-ruleta-aplicado'\)\) return;/);
+  assert.match(fn, /localStorage\.setItem\(CLAVE_2DA, '1'\);/);
+  // El checkout la llama recién cuando se cierra de verdad, y no en "solo tapones".
+  assert.ok(HTML.includes('if (!checkoutTapones && window.ruletaSegundaOportunidad) window.ruletaSegundaOportunidad();'));
 });
 
 test('la pestaña del sorteo ahora abre la ruleta', () => {
@@ -143,6 +159,61 @@ test('el código dura 48 horas y sirve una sola vez', async () => {
   const otro = (await s2.girar('b@gmail.com')).publico;
   av2(48 * 3600 * 1000 + 1000);
   assert.strictEqual((await s2.validar(otro.codigo)).error, 'vencido');
+});
+
+test('premio vencido sin usar: a las 24 h de vencer, el mismo correo gira de nuevo', async () => {
+  const H = 3600 * 1000;
+  assert.strictEqual(ruleta.REGIRO_MS, 24 * H);
+  const { s, avanzar } = servicio();
+  const a = (await s.girar('vuelve@gmail.com')).publico;
+  // Vigente: no gira de nuevo ni se habla de volver a girar.
+  avanzar(47 * H);
+  let r = (await s.girar('vuelve@gmail.com')).publico;
+  assert.strictEqual(r.yaGiro, true);
+  assert.strictEqual(r.giraDesde, undefined);
+  // Vencido hace poco (48 h + 23 h): todavía no, pero se le dice desde cuándo.
+  avanzar(24 * H);
+  r = (await s.girar('v.uelve+otra@gmail.com')).publico;
+  assert.strictEqual(r.yaGiro, true, 'antes de las 24 h no gira (ni con la variante de Gmail)');
+  assert.strictEqual(r.usado, false);
+  assert.strictEqual(Date.parse(r.giraDesde), Date.parse(a.vence) + 24 * H);
+  // 48 h + 24 h cumplidas: premio y código nuevos, con sus propias 48 h.
+  avanzar(1 * H);
+  const b = (await s.girar('vuelve@gmail.com')).publico;
+  assert.strictEqual(b.yaGiro, false);
+  assert.ok(b.codigo && b.codigo !== a.codigo, 'sale un código nuevo');
+  assert.strictEqual((await s.validar(b.codigo)).ok, true);
+  assert.strictEqual((await s.validar(a.codigo)).error, 'vencido', 'el código viejo sigue vencido');
+  assert.strictEqual((await s.girar('vuelve@gmail.com')).publico.yaGiro, true, 'con el nuevo vigente no gira otra vez');
+  // El panel ve los dos giros de la misma persona.
+  const l = await s.lista();
+  assert.deepStrictEqual(l.map(x => x.estado), ['vigente', 'vencido']);
+  assert.ok(l.every(x => x.email === 'vuelve@gmail.com'));
+});
+
+test('un premio USADO no da otro giro, pase el tiempo que pase', async () => {
+  const { s, avanzar } = servicio();
+  const a = (await s.girar('compro@gmail.com')).publico;
+  await s.marcarUsado(a.codigo, 'orden-9');
+  avanzar(30 * 24 * 3600 * 1000);
+  const r = (await s.girar('compro@gmail.com')).publico;
+  assert.strictEqual(r.yaGiro, true);
+  assert.strictEqual(r.usado, true);
+  assert.strictEqual(r.giraDesde, undefined);
+  assert.strictEqual(r.codigo, undefined, 'el código sigue sin mostrarse en pantalla');
+});
+
+test('la página avisa cuándo se puede girar de nuevo, con las mismas 24 h del servidor', () => {
+  assert.match(HTML, /var REGIRO_MS = 24 \* 60 \* 60 \* 1000;/);
+  assert.ok(leer('services', 'ruleta.js').includes('const REGIRO_MS = 24 * 60 * 60 * 1000;'));
+  assert.ok(HTML.includes("'Con tu mismo correo puedes volver a girar desde el <b>'"));
+  // Al volver con el premio vencido hace más de 24 h la ruleta parte de cero,
+  // salvo que el código se haya usado en una compra.
+  const i = HTML.indexOf('function reiniciarSiVencio');
+  const fn = HTML.slice(i, HTML.indexOf('})();', i));
+  assert.match(fn, /Date\.now\(\) < v \+ REGIRO_MS\) return seguir\(\);/);
+  assert.match(fn, /d\.error === 'usado'\) \{ e\.usado = true; guardar\(e\); seguir\(\); \}/);
+  assert.match(fn, /d\.error === 'vencido'\) limpiar\(\);/);
 });
 
 test('un solo código por correo: solo lo usa el correo que lo ganó, una vez', async () => {
