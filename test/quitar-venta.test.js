@@ -79,12 +79,13 @@ test('el panel lista las ventas del día y quita la elegida, con confirmación',
   const els = {};
   const el = id => els[id] || (els[id] = { innerHTML: '', textContent: '', style: {}, classList: { add() {}, remove() {}, contains: () => false } });
   const pedidos = [];
-  let confirmo = true, recargas = 0;
+  let confirmo = true, recargas = 0, recargasMes = 0;
   const ctx = {
     BASE: '', clave: 'k', JSON, Promise, encodeURIComponent,
     document: { getElementById: el },
     confirm: () => confirmo,
     cargarUtilidad: () => { recargas++; },
+    cargarUtilMensual: () => { recargasMes++; },
     fetch: (url, op) => {
       pedidos.push({ url, op });
       const cuerpo = url.startsWith('/admin/ventas-manuales')
@@ -111,5 +112,6 @@ test('el panel lista las ventas del día y quita la elegida, con confirmación',
   assert.deepStrictEqual(JSON.parse(pedidos[0].op.body), { orden: 'manual-1' });
   assert.match(els['qv-msg'].textContent, /se quitó la venta de \$68\.990/);
   assert.strictEqual(recargas, 1, 'la utilidad se vuelve a cargar');
+  assert.strictEqual(recargasMes, 1, 'y la utilidad por mes también: quitar una venta cambia su mes');
   assert.ok(pedidos.some(p => p.url.startsWith('/admin/ventas-manuales?fecha=2026-10-29')), 'y la lista del día');
 });

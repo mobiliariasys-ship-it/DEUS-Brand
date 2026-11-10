@@ -129,4 +129,29 @@ function totalizar(filas) {
   }), { pedidos: 0, unidades: 0, conTapones: 0, conCorreas: 0, devoluciones: 0, pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, cargosML: 0, mlPublicidad: 0, mlComision: 0, mlEnvio: 0, mlDevolucion: 0, adsNeto: 0, ivaAds: 0, ads: 0, comprasMeta: 0, utilidad: 0 });
 }
 
-module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, CARGOS_ML, IVA, IVA_DESDE, diasDesdeIva, calcularDia, totalizar };
+// Utilidad por MES calendario (de Chile): suma los días de cada mes con la
+// misma cuenta de la tabla diaria, así que mes y días siempre cuadran.
+// `filas` viene en orden de fecha (lo que arma calcularDia día por día).
+//  - Se quitan los meses del principio sin ventas ni publicidad: son de antes
+//    de que existiera la tienda.
+//  - `incompleto` marca el primer mes cuando la ventana lo corta por la mitad
+//    (el panel pide 400 días: solo pasa si la tienda tiene más de eso).
+function agruparPorMes(filas) {
+  const grupos = [];
+  for (const f of filas || []) {
+    const mes = String(f.fecha).slice(0, 7);
+    let g = grupos[grupos.length - 1];
+    if (!g || g.mes !== mes) { g = { mes, filas: [] }; grupos.push(g); }
+    g.filas.push(f);
+  }
+  const meses = grupos.map((g, i) => ({
+    mes: g.mes,
+    dias: g.filas.length,
+    incompleto: i === 0 && String(g.filas[0].fecha).slice(8, 10) !== '01',
+    ...totalizar(g.filas)
+  }));
+  while (meses.length && !meses[0].pedidos && !meses[0].ingresos && !meses[0].ads) meses.shift();
+  return meses;
+}
+
+module.exports = { COSTO_BANDA, COSTO_ENVIO, TASA_PASARELA, CARGOS_ML, IVA, IVA_DESDE, diasDesdeIva, calcularDia, totalizar, agruparPorMes };

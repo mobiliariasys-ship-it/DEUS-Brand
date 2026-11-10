@@ -1091,7 +1091,10 @@ async function utilidadDiaria(diasParam) {
   // dias=iva: desde que la utilidad cuenta los ads con IVA (tarjeta
   // "Utilidad histórica" del panel). Si no, 7, 14 o 30.
   const desdeIva = diasParam === 'iva';
+  // dias=meses: los últimos 400 días (lo máximo que se le pide a Meta de una
+  // vez), para la tabla de utilidad por mes.
   const dias = desdeIva ? utilidad_.diasDesdeIva()
+    : diasParam === 'meses' ? 400
     : [7, 14, 30].includes(Number(diasParam)) ? Number(diasParam) : 14;
   const ventas = metrics.ventasPorDia(dias);
   // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
@@ -1140,6 +1143,23 @@ app.get('/admin/utilidad-diaria', async (req, res) => {
   if (!claveAdsOk(req, res)) return;
   try {
     res.json(await utilidadDiaria(req.query.dias));
+  } catch (e) {
+    errorAds(res, e);
+  }
+});
+
+// Utilidad por mes (julio, agosto, septiembre…): los mismos días de la tabla
+// diaria sumados por mes calendario. Es la misma cuenta, así que siempre
+// cuadra con ella. El gasto en ads va con IVA en TODOS los meses (Meta lo
+// cobra con IVA desde siempre; ver utilidad.IVA).
+app.get('/admin/utilidad-mensual', async (req, res) => {
+  if (!claveAdsOk(req, res)) return;
+  try {
+    const d = await utilidadDiaria('meses');
+    res.json({
+      meses: utilidad_.agruparPorMes(d.filas), adsOk: d.adsOk, adsError: d.adsError,
+      diagnostico: d.diagnostico, costos: d.costos
+    });
   } catch (e) {
     errorAds(res, e);
   }

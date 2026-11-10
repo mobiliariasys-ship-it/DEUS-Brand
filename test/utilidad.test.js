@@ -58,6 +58,53 @@ test('entradas vacías o basura no rompen la cuenta', () => {
   assert.strictEqual(r.pedidos, 0);
 });
 
+test('la utilidad por mes es la suma de sus días y cuadra con el total', () => {
+  // Ventana que parte a mitad de julio, con días vacíos antes de la primera venta.
+  const dias = [
+    { fecha: '2026-06-28' }, { fecha: '2026-06-29' }, { fecha: '2026-06-30' },            // sin tienda: se quita
+    { fecha: '2026-07-01' }, { fecha: '2026-07-20', pedidos: 2, unidades: 2, ingresos: 137980 },
+    { fecha: '2026-07-31', pedidos: 1, unidades: 3, ingresos: 206970 },
+    { fecha: '2026-08-01' },                                                                // sin ventas, con ads
+    { fecha: '2026-08-15', pedidos: 4, unidades: 4, ingresos: 275960 },
+    { fecha: '2026-09-02', pedidos: 1, unidades: 1, ingresos: 68990 },
+  ];
+  const ads = { '2026-07-20': 30000, '2026-08-01': 50000, '2026-08-15': 40000, '2026-09-02': 10000 };
+  const filas = dias.map(d => u.calcularDia(d, ads[d.fecha]));
+  const meses = u.agruparPorMes(filas);
+  assert.deepStrictEqual(meses.map(m => m.mes), ['2026-07', '2026-08', '2026-09'], 'junio no tenía ventas ni ads');
+  assert.deepStrictEqual(meses.map(m => m.dias), [3, 2, 1]);
+  // Cada mes = la suma de sus días, con la misma cuenta de la tabla diaria.
+  const julio = u.totalizar(filas.filter(f => f.fecha.startsWith('2026-07')));
+  assert.strictEqual(meses[0].pedidos, 3);
+  assert.strictEqual(meses[0].unidades, 5);
+  assert.strictEqual(meses[0].ingresos, 344950);
+  assert.strictEqual(meses[0].utilidad, julio.utilidad);
+  assert.strictEqual(meses[0].ads, Math.round(30000 * 1.19));
+  // Un mes sin ventas pero con publicidad NO se quita si está en el medio, y los meses suman el total.
+  assert.strictEqual(meses[1].ads, Math.round(50000 * 1.19) + Math.round(40000 * 1.19));
+  const total = u.totalizar(filas);
+  assert.strictEqual(meses.reduce((a, m) => a + m.utilidad, 0), total.utilidad);
+  assert.strictEqual(meses.reduce((a, m) => a + m.ingresos, 0), total.ingresos);
+  // El primer mes de la ventana se marca incompleto solo si no parte el día 1.
+  assert.strictEqual(meses[0].incompleto, false, 'julio parte el 1: los días de junio se quitaron por vacíos, no por la ventana');
+  const cortado = u.agruparPorMes(filas.slice(4));   // la ventana empieza el 20 de julio
+  assert.strictEqual(cortado[0].mes, '2026-07');
+  assert.strictEqual(cortado[0].incompleto, true);
+  assert.deepStrictEqual(u.agruparPorMes([]), []);
+});
+
+test('el panel pide la utilidad por mes con la misma cuenta de la diaria', () => {
+  const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  assert.ok(srv.includes("app.get('/admin/utilidad-mensual'"));
+  assert.ok(srv.includes("const d = await utilidadDiaria('meses');"));
+  assert.ok(srv.includes('meses: utilidad_.agruparPorMes(d.filas)'));
+  const ep = srv.slice(srv.indexOf("app.get('/admin/utilidad-mensual'"), srv.indexOf("app.get('/admin/utilidad-mensual'") + 200);
+  assert.ok(ep.includes('if (!claveAdsOk(req, res)) return;'), 'pide la clave del panel');
+  const admin = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
+  assert.ok(admin.includes('<section id="sec-utilmes">'));
+  assert.ok(admin.includes("fetch(BASE+'/admin/utilidad-mensual?clave='"));
+});
+
 test('el total suma todas las columnas', () => {
   const filas = [
     u.calcularDia({ pedidos: 2, unidades: 2, ingresos: 125980 }, 53910),

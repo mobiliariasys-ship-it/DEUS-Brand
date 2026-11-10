@@ -18,8 +18,9 @@ test('el checkout va justo debajo de la utilidad diaria y el gasto por hora desp
 });
 
 test('las secciones van agrupadas y los registros plegados al final', () => {
-  // La ruleta va arriba de todo, antes de Plata (pedido del dueño, 8-nov-2026).
-  const orden = ['sec-ruleta', 'sec-utilidad', 'sec-checkout', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-embudo', 'sec-conducta',
+  // Plata primero (con la utilidad por mes arriba) y la ruleta justo después
+  // (pedido del dueño, 10-nov-2026; el 8-nov la ruleta había subido arriba de Plata).
+  const orden = ['sec-utilmes', 'sec-utilidad', 'sec-checkout', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-ruleta', 'sec-embudo', 'sec-conducta',
     'sec-convierte', 'sec-negocio', 'sec-pedidos', 'sec-resenas', 'sec-chat', 'sec-ventas', 'sec-sorteo'];
   const posiciones = orden.map(pos);
   assert.deepStrictEqual(posiciones, posiciones.slice().sort((a, b) => a - b), 'orden de las secciones');

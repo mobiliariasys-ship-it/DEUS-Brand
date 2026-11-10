@@ -568,13 +568,14 @@
       <div class="side-logo"><span class="side-mark"></span>DEUS</div>
       <button class="nav-i active" onclick="irA('top',this)"><span class="ico">📊</span> Dashboard</button>
       <button class="nav-i" onclick="irA('sec-graficos',this)"><span class="ico">📈</span> Gráficos</button>
-      <!-- Mismo orden que el panel: Ruleta, Plata, Conversión, Operación y Registros. -->
-      <button class="nav-i" onclick="irA('sec-ruleta',this)"><span class="ico">🎡</span> Ruleta</button>
+      <!-- Mismo orden que el panel: Plata, Ruleta, Conversión, Operación y Registros. -->
+      <button class="nav-i" onclick="irA('sec-utilmes',this)"><span class="ico">📅</span> Por mes</button>
       <button class="nav-i" onclick="irA('sec-utilidad',this)"><span class="ico">💰</span> Utilidad</button>
       <button class="nav-i" onclick="irA('sec-checkout',this)"><span class="ico">🧾</span> Checkout</button>
       <button class="nav-i" onclick="irA('sec-gastoh',this)"><span class="ico">⏱️</span> Gasto por hora</button>
       <button class="nav-i" onclick="irA('sec-ads',this)"><span class="ico">📣</span> Ads</button>
       <button class="nav-i" onclick="irA('sec-canales',this)"><span class="ico">💸</span> Canales</button>
+      <button class="nav-i" onclick="irA('sec-ruleta',this)"><span class="ico">🎡</span> Ruleta</button>
       <button class="nav-i" onclick="irA('sec-embudo',this)"><span class="ico">🫗</span> Embudo</button>
       <button class="nav-i" onclick="irA('sec-conducta',this)"><span class="ico">🧭</span> Conducta</button>
       <button class="nav-i" onclick="irA('sec-convierte',this)"><span class="ico">🎯</span> Convierte</button>
@@ -665,46 +666,18 @@
     </section>
     </div>
 
-    <!-- Ruleta "Gira y gana": va arriba, justo después de los gráficos
-         (pedido del dueño, 8-nov-2026; antes iba al final del panel). -->
-    <div class="grupo-h">🎡 Ruleta · Gira y gana</div>
-    <section id="sec-ruleta">
-      <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
-      <div class="util-kpis" id="ru-kpis"></div>
-      <!-- Qué premio convierte mejor: de los que lo ganaron, cuántos compraron. -->
-      <div class="ru-mejor" id="ru-mejor"></div>
-      <div class="scroll"><table id="t-ru-premios" class="ru-rank"><thead><tr><th>Premio</th><th>Ganaron</th><th>Compraron</th><th>Conversión</th><th>Aún pueden comprar</th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="ru-premios-empty" style="display:none">Todavía nadie ha girado la ruleta.</div>
-      <div class="ru-gen">
-        <div class="ru-gen-h">🎟️ Generar códigos</div>
-        <div class="ru-acc">
-          <select id="ru-gen-premio" aria-label="Premio del código">
-            <option value="todos">Uno de cada premio</option>
-            <option value="d3000">$3.000 OFF</option>
-            <option value="p5">5% OFF</option>
-            <option value="correa">Correa extra</option>
-            <option value="p7">7% OFF</option>
-            <option value="tapones">Tapones de oído gratis</option>
-            <option value="p10">10% OFF</option>
-          </select>
-          <input id="ru-gen-email" type="email" placeholder="Solo para este correo (opcional)" aria-label="Correo que puede usar el código (opcional)">
-          <button class="btn" onclick="generarCodigosRuleta(this)">Generar</button>
-        </div>
-        <div class="ru-gen-nota">Duran 48 horas y sirven una sola vez. Sin correo, cualquiera puede usarlos; con correo, solo esa persona. No cuentan como giros de la ruleta.</div>
-        <div id="ru-gen-res"></div>
-      </div>
-      <div class="ru-acc">
-        <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
-        <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
-        <button class="btn ghost" onclick="descargarRuleta()">Descargar CSV</button>
-      </div>
-      <!-- Alto máximo: la sección va arriba y la lista crece con cada giro. -->
-      <div class="scroll ru-lista"><table id="t-ruleta"><thead><tr><th>Fecha</th><th>Correo y premio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="ruleta-empty" style="display:none">Todavía nadie ha dejado su correo en la ruleta.</div>
-    </section>
-
     <!-- Plata: utilidad, gasto en ads por hora, Ads Manager y qué canal deja plata. -->
     <div class="grupo-h">💰 Plata · cuánto queda y en qué se va</div>
+    <!-- Utilidad por mes (pedido del dueño, 10-nov-2026): los mismos días de la
+         tabla diaria sumados por mes calendario. -->
+    <section id="sec-utilmes">
+      <div class="sec-h"><h2>📅 Utilidad por mes</h2><button class="btn ghost" onclick="cargarUtilMensual()">Actualizar</button></div>
+      <div class="sec-act" id="utilmes-act"></div>
+      <div class="util-tabla" id="utilmes-tabla"></div>
+      <div class="util-nota" id="utilmes-nota"></div>
+      <div class="empty" id="utilmes-off" style="display:none">No se pudo cargar la utilidad por mes.</div>
+    </section>
+
     <section id="sec-utilidad">
       <div class="sec-h"><h2>💰 Utilidad diaria</h2><button class="btn ghost" onclick="cargarUtilidad()">Actualizar</button></div>
       <div class="sec-act" id="util-act"></div>
@@ -865,6 +838,45 @@
         </div>
       </div>
       <div class="empty" id="canal-empty" style="display:none">Aún sin compras rastreadas por canal.</div>
+    </section>
+
+    <!-- Ruleta "Gira y gana": va justo después del grupo Plata (pedido del
+         dueño, 10-nov-2026: la plata primero; el 8-nov había subido desde
+         el final del panel hasta arriba de Plata). -->
+    <div class="grupo-h">🎡 Ruleta · Gira y gana</div>
+    <section id="sec-ruleta">
+      <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
+      <div class="util-kpis" id="ru-kpis"></div>
+      <!-- Qué premio convierte mejor: de los que lo ganaron, cuántos compraron. -->
+      <div class="ru-mejor" id="ru-mejor"></div>
+      <div class="scroll"><table id="t-ru-premios" class="ru-rank"><thead><tr><th>Premio</th><th>Ganaron</th><th>Compraron</th><th>Conversión</th><th>Aún pueden comprar</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ru-premios-empty" style="display:none">Todavía nadie ha girado la ruleta.</div>
+      <div class="ru-gen">
+        <div class="ru-gen-h">🎟️ Generar códigos</div>
+        <div class="ru-acc">
+          <select id="ru-gen-premio" aria-label="Premio del código">
+            <option value="todos">Uno de cada premio</option>
+            <option value="d3000">$3.000 OFF</option>
+            <option value="p5">5% OFF</option>
+            <option value="correa">Correa extra</option>
+            <option value="p7">7% OFF</option>
+            <option value="tapones">Tapones de oído gratis</option>
+            <option value="p10">10% OFF</option>
+          </select>
+          <input id="ru-gen-email" type="email" placeholder="Solo para este correo (opcional)" aria-label="Correo que puede usar el código (opcional)">
+          <button class="btn" onclick="generarCodigosRuleta(this)">Generar</button>
+        </div>
+        <div class="ru-gen-nota">Duran 48 horas y sirven una sola vez. Sin correo, cualquiera puede usarlos; con correo, solo esa persona. No cuentan como giros de la ruleta.</div>
+        <div id="ru-gen-res"></div>
+      </div>
+      <div class="ru-acc">
+        <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
+        <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
+        <button class="btn ghost" onclick="descargarRuleta()">Descargar CSV</button>
+      </div>
+      <!-- Alto máximo: la sección va arriba y la lista crece con cada giro. -->
+      <div class="scroll ru-lista"><table id="t-ruleta"><thead><tr><th>Fecha</th><th>Correo y premio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ruleta-empty" style="display:none">Todavía nadie ha dejado su correo en la ruleta.</div>
     </section>
 
     <!-- Conversión: embudo, conducta y qué lleva a comprar (el checkout va arriba de todo). -->
@@ -2349,7 +2361,7 @@
       if(r.status===403||r.status===404){ throw new Error('clave'); }
       return r.json();
     }).then(function(d){
-      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); cargarRuleta(); pintarAvisoBtn(); activarPush(); }
+      if(primera){ localStorage.setItem('deus-admin-key',clave); document.getElementById('login').style.display='none'; document.getElementById('panel').style.display='block'; cargarAds(); cargarGastoHora(); cargarResenasPanel(); cargarRuleta(); cargarUtilMensual(); pintarAvisoBtn(); activarPush(); }
       pintar(d);
       avisarVentas(d);
       cargarChats();
@@ -2781,6 +2793,77 @@
       });
   }
 
+  // ── Utilidad por mes ──
+  // Los mismos días de la tabla diaria, sumados por mes calendario en el
+  // servidor (/admin/utilidad-mensual). Se pide al entrar, con "Actualizar" y
+  // al cargar o quitar una venta a mano; no cada 5 minutos como la diaria,
+  // porque son 400 días de Meta de una vez.
+  var MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  function nombreMes(ym){ var p = String(ym).split('-'); return (MESES_ES[parseInt(p[1], 10) - 1] || ym) + ' ' + p[0]; }
+  function cargarUtilMensual(){
+    fetch(BASE+'/admin/utilidad-mensual?clave='+encodeURIComponent(clave))
+      .then(function(r){ if(!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(pintarUtilMensual)
+      .catch(function(){
+        document.getElementById('utilmes-off').style.display='';
+        document.getElementById('utilmes-tabla').innerHTML='';
+        document.getElementById('utilmes-nota').textContent='';
+      });
+  }
+  function pintarUtilMensual(d){
+    var meses = d.meses || [];
+    document.getElementById('utilmes-off').style.display='none';
+    // Texto propio (no marcarAct): esta tabla NO se refresca sola cada 5 minutos.
+    var hhMes = new Date().toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/Santiago' });
+    document.getElementById('utilmes-act').innerHTML = 'Actualizado a las <b>' + hhMes + '</b> (hora de Chile) · incluye el mes en curso hasta hoy · se actualiza al abrir el panel o con el botón';
+    if(!meses.length){
+      document.getElementById('utilmes-tabla').innerHTML='<div class="empty">Todavía no hay ventas para armar los meses.</div>';
+      document.getElementById('utilmes-nota').textContent='';
+      return;
+    }
+    var esteMes = new Date().toLocaleDateString('en-CA', { timeZone:'America/Santiago' }).slice(0, 7);
+    var suma = function(k){ return meses.reduce(function(a, m){ return a + (Number(m[k]) || 0); }, 0); };
+    var t = { pedidos:suma('pedidos'), unidades:suma('unidades'), ingresos:suma('ingresos'), costoBandas:suma('costoBandas'),
+              costoEnvios:suma('costoEnvios'), pasarela:suma('pasarela'), cargosML:suma('cargosML'), ads:suma('ads'), utilidad:suma('utilidad') };
+    var conML = t.cargosML > 0;
+    var color = function(n){ return n >= 0 ? '#69c46d' : '#e07a6a'; };
+    var plata = function(n){ return (n >= 0 ? '' : '−') + money0(Math.abs(n)); };
+    // El más nuevo arriba, como la tabla diaria.
+    var filas = meses.slice().reverse().map(function(m){
+      var cls = m.utilidad >= 0 ? 'pos' : 'neg', pct = pctGanancia(m);
+      var marca = m.mes === esteMes ? ' <small style="color:#e7cf9c">· en curso (' + m.dias + (m.dias === 1 ? ' día' : ' días') + ')</small>'
+        : m.incompleto ? ' <small style="color:#9a9a9a" title="El panel mira hasta 400 días atrás: de este mes solo entran ' + m.dias + ' días">· parcial</small>' : '';
+      return '<tr' + (m.mes === esteMes ? ' class="hoy"' : '') + '>' +
+        '<td>' + nombreMes(m.mes) + marca + '</td>' +
+        '<td>' + m.pedidos + '</td><td>' + m.unidades + '</td>' +
+        '<td>' + money0(m.ingresos) + '</td>' +
+        '<td class="gasto">−' + money0(m.costoBandas) + '</td>' +
+        '<td class="gasto">−' + money0(m.costoEnvios) + '</td>' +
+        '<td class="gasto">−' + money0(m.pasarela) + '</td>' +
+        (conML ? '<td class="gasto">−' + money0(m.cargosML) + '</td>' : '') +
+        '<td class="gasto">−' + money0(m.ads) + '</td>' +
+        '<td class="util ' + cls + '">' + plata(m.utilidad) + '</td>' +
+        '<td class="' + (pct === null ? '' : cls) + '">' + textoPct(pct) + '</td>' +
+      '</tr>';
+    }).join('');
+    document.getElementById('utilmes-tabla').innerHTML =
+      '<table><thead><tr>' +
+      '<th>Mes</th><th>Pedidos</th><th>Unid.</th><th>Vendido</th>' +
+      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th>' + (conML ? '<th>Cargos ML</th>' : '') + '<th>Ads +IVA</th><th>Utilidad</th>' +
+      '<th title="Ganancia sobre gastos: utilidad ÷ todo lo gastado ese mes">% gan.</th>' +
+      '</tr></thead><tbody>' + filas + '</tbody><tfoot><tr>' +
+      '<th>Total</th><th>' + t.pedidos + '</th><th>' + t.unidades + '</th><th>' + money0(t.ingresos) + '</th>' +
+      '<th>−' + money0(t.costoBandas) + '</th><th>−' + money0(t.costoEnvios) + '</th><th>−' + money0(t.pasarela) + '</th>' +
+      (conML ? '<th>−' + money0(t.cargosML) + '</th>' : '') +
+      '<th>−' + money0(t.ads) + '</th>' +
+      '<th style="color:' + color(t.utilidad) + '">' + plata(t.utilidad) + '</th>' +
+      '<th style="color:' + color(t.utilidad) + '">' + textoPct(pctGanancia(t)) + '</th>' +
+      '</tr></tfoot></table>';
+    var nota = 'Es la misma cuenta de la utilidad diaria, sumada por mes. El gasto en ads va con IVA en todos los meses.';
+    if (!d.adsOk) nota += ' ⚠️ El gasto en ads figura en 0 y la utilidad está inflada. Motivo: ' + (d.adsError || 'Meta no respondió') + '.';
+    document.getElementById('utilmes-nota').textContent = nota;
+  }
+
   // Proyección mensual: "si el mes entero fuera como estos días". Promedio por
   // día de lo que se está mirando (los días elegidos en Conversión, o los
   // últimos 7/14/30) llevado a 30 días. No es un pronóstico: solo escala.
@@ -3111,6 +3194,7 @@
       msg.style.color = '#69c46d'; msg.textContent = 'Listo: se quitó la venta de ' + money0(v.monto) + '.';
       cargarQuitarVenta();
       cargarUtilidad();
+      cargarUtilMensual();
     })
     .catch(function(){ msg.style.color = '#e07a6a'; msg.textContent = 'No se pudo conectar con el servidor.'; });
   }
@@ -3157,6 +3241,7 @@
       if (res.d.duplicada) { msg.style.color = '#e7cf9c'; msg.textContent = 'Ese ID de pago ya estaba cargado — no se sumó de nuevo.'; return; }
       cerrarAltaVenta();
       cargarUtilidad();
+      cargarUtilMensual();
     })
     .catch(function(){
       btn.disabled = false; btn.textContent = 'Agregar';
