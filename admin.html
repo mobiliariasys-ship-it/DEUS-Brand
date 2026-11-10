@@ -231,6 +231,7 @@
   .util-add{background:transparent;border:1px solid var(--border);color:var(--faint);width:22px;height:22px;
     border-radius:6px;cursor:pointer;font-size:.8rem;line-height:1;padding:0;}
   .util-add:hover{border-color:var(--green);color:var(--green);}
+  #vm-monto-ver:empty{display:none;}
   /* Grupos del panel: Plata, Conversión, Operación y Registros. */
   .grupo-h{margin:38px 0 14px;padding-bottom:9px;border-bottom:1px solid var(--border-soft);color:var(--faint);
     font-size:.72rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;}
@@ -749,7 +750,7 @@
         <div class="vm-dia" id="vm-dia"></div>
         <button type="button" class="vm-ml-btn" id="vm-ml-btn" aria-pressed="false" onclick="vmToggleML()">Venta de Mercado Libre</button>
         <div class="vm-grid">
-          <div class="vm-campo"><label id="vm-monto-lbl">Monto cobrado</label><input id="vm-monto" type="number" inputmode="numeric" placeholder="68990" oninput="vmCalcML()"></div>
+          <div class="vm-campo"><label id="vm-monto-lbl">Monto cobrado</label><input id="vm-monto" type="text" inputmode="numeric" autocomplete="off" placeholder="68990" oninput="vmCalcML()"></div>
           <div class="vm-campo"><label>Unidades</label><input id="vm-unidades" type="number" inputmode="numeric" value="1" min="1" oninput="vmCalcML()"></div>
           <div class="vm-campo"><label>Medio de pago</label>
             <select id="vm-metodo" onchange="vmMetodo()">
@@ -758,6 +759,7 @@
               <option>Presencial</option><option>Transferencia</option><option>Otro</option>
             </select></div>
           <div class="vm-campo ancho" id="vm-ml-nota" style="display:none;font-size:.72rem;color:#e7cf9c;line-height:1.45;">Poné el precio completo de la venta (ej. $68.990), no lo que te deposita ML. El panel le descuenta lo que se queda Mercado Libre (publicidad, comisión, envío y devoluciones, según su resumen de los últimos 30 días) y el costo de la banda. La venta no entra en la conversión de la web ni en el sorteo.<div id="vm-ml-calc" style="margin-top:6px;color:#cfcfcf;"></div></div>
+          <div class="vm-campo ancho" id="vm-monto-ver" style="font-size:.74rem;color:#7fc9a0;margin-top:-4px;"></div>
           <div class="vm-campo"><label>Nombre (opcional)</label><input id="vm-nombre" placeholder="Cliente"></div>
           <div class="vm-campo ancho"><label>ID de pago (opcional)</label><input id="vm-orden" placeholder="se genera solo si lo dejás vacío"></div>
           <label class="vm-chk"><input type="checkbox" id="vm-tapones" onchange="vmCalcML()"> Es una compra de solo tapones</label>
@@ -3014,12 +3016,25 @@
     vmCalcML();
   }
 
+  // El monto tal como lo escribió: "68.990", "$68.990" y "68,990" valen 68990.
+  // Antes era parseInt() sobre un campo numérico: el punto de los miles se
+  // tomaba como decimal y "68.990" se guardaba como $68. Esa venta sumaba $68
+  // y restaba la banda y el envío enteros, así que BAJABA la utilidad del día
+  // (le pasó al dueño con una transferencia, 10-nov-2026).
+  function vmMontoLeido(){
+    var t = String(document.getElementById('vm-monto').value || '').replace(/\D/g, '');
+    return t ? parseInt(t, 10) : 0;
+  }
+
   // "ML se queda $X · te deposita $Y · menos la banda $Z", con la misma cuenta
-  // que hace el servidor.
+  // que hace el servidor. Si no es de ML, muestra (en vm-monto-ver) el monto
+  // tal como se va a guardar, para que un error de tipeo se vea antes de agregar.
   function vmCalcML(){
     var out = document.getElementById('vm-ml-calc');
     var ml = document.getElementById('vm-metodo').value === 'Mercado Libre';
-    var bruto = parseInt(document.getElementById('vm-monto').value, 10);
+    var bruto = vmMontoLeido();
+    var ver = document.getElementById('vm-monto-ver');
+    if (ver) ver.textContent = (!ml && bruto > 0) ? 'Se guarda como ' + money0(bruto) : '';
     var c = COSTOS_UTIL && COSTOS_UTIL.ml;
     if (!ml || !c || !bruto || bruto <= 0) { out.textContent = ''; return; }
     var cargos = cargosDeML(bruto, c);
@@ -3108,9 +3123,11 @@
   function guardarVentaManual(){
     var msg = document.getElementById('vm-msg');
     var btn = document.getElementById('vm-ok');
-    var monto = parseInt(document.getElementById('vm-monto').value, 10);
+    var monto = vmMontoLeido();
     var ml = document.getElementById('vm-metodo').value === 'Mercado Libre';
     if (!monto || monto <= 0) { msg.style.color = '#e07a6a'; msg.textContent = ml ? 'Poné el precio de la venta.' : 'Poné el monto que se cobró.'; return; }
+    // Ningún producto vale menos de $1.000: casi seguro faltan ceros.
+    if (monto < 1000) { msg.style.color = '#e07a6a'; msg.textContent = 'El monto ' + money0(monto) + ' es muy bajo. Escribe el monto completo, por ejemplo 68990.'; return; }
     var unidades = parseInt(document.getElementById('vm-unidades').value, 10) || 1;
     // Mediodía de Chile: cae dentro del día elegido sin importar el horario de
     // verano, que en septiembre cambia.

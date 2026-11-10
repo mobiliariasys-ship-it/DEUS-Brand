@@ -149,6 +149,29 @@ test('el panel pide el precio completo de ML y el servidor lo recibe como bruto'
   assert.ok(srv.includes('ml: utilidad_.CARGOS_ML'), 'el panel recibe los % de ML para hacer la cuenta');
 });
 
+test('el monto de una venta a mano se lee entero aunque lo escriban con puntos', () => {
+  // "68.990" se guardaba como $68 (parseInt cortaba en el punto): la venta
+  // restaba banda y envío contra $68 y BAJABA la utilidad del día.
+  const vm = require('vm');
+  const SRC = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
+  const i = SRC.indexOf('function vmMontoLeido(){');
+  assert.ok(i > 0, 'falta vmMontoLeido()');
+  const fn = SRC.slice(i, SRC.indexOf('\n  }', i) + 4);
+  const el = { value: '' };
+  const ctx = { document: { getElementById: () => el } };
+  vm.createContext(ctx); vm.runInContext(fn, ctx);
+  const leer = t => { el.value = t; return vm.runInContext('vmMontoLeido()', ctx); };
+  for (const t of ['68990', '68.990', '$68.990', '68,990', ' 68 990 ', '$ 68.990.-']) assert.strictEqual(leer(t), 68990, t);
+  assert.strictEqual(leer('137.980'), 137980);
+  assert.strictEqual(leer(''), 0);
+  assert.strictEqual(leer('abc'), 0);
+  // El campo es de texto (un type=number toma el punto como decimal) y el
+  // formulario no deja guardar montos que claramente perdieron ceros.
+  assert.ok(SRC.includes('<input id="vm-monto" type="text" inputmode="numeric"'));
+  assert.ok(SRC.includes('if (monto < 1000) {'));
+  assert.ok(!/parseInt\(document\.getElementById\('vm-monto'\)/.test(SRC), 'quedó un parseInt directo sobre el monto');
+});
+
 test('el formulario muestra cuánto se queda ML con la misma cuenta del servidor', () => {
   const vm = require('vm');
   const SRC = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
@@ -167,7 +190,7 @@ test('el formulario muestra cuánto se queda ML con la misma cuenta del servidor
   const ctx = { document: { getElementById: id => els[id] }, Math, Number, parseInt,
                 COSTOS_UTIL: { banda: u.COSTO_BANDA, ml: u.CARGOS_ML } };
   vm.createContext(ctx);
-  vm.runInContext(['cargosDeML', 'vmCalcML', 'money0'].map(extraer).join('\n'), ctx);
+  vm.runInContext(['cargosDeML', 'vmMontoLeido', 'vmCalcML', 'money0'].map(extraer).join('\n'), ctx);
   const calc = () => { vm.runInContext('vmCalcML()', ctx); return els['vm-ml-calc'].textContent; };
   assert.strictEqual(calc(), 'Mercado Libre se queda $20.956 · te deposita $48.034 · menos la banda: $31.034');
   els['vm-unidades'].value = '2'; els['vm-monto'].value = '137980';
