@@ -97,7 +97,7 @@ test('el panel pide la utilidad por mes con la misma cuenta de la diaria', () =>
   const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
   assert.ok(srv.includes("app.get('/admin/utilidad-mensual'"));
   assert.ok(srv.includes("const d = await utilidadDiaria('meses');"));
-  assert.ok(srv.includes('meses: utilidad_.agruparPorMes(d.filas)'));
+  assert.ok(srv.includes('meses: utilidad_.agruparPorMes(d.filas, await dv.porMes())'), 'y le resta las devoluciones del mes');
   const ep = srv.slice(srv.indexOf("app.get('/admin/utilidad-mensual'"), srv.indexOf("app.get('/admin/utilidad-mensual'") + 200);
   assert.ok(ep.includes('if (!claveAdsOk(req, res)) return;'), 'pide la clave del panel');
   const admin = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');

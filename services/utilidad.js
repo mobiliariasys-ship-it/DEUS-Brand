@@ -136,7 +136,11 @@ function totalizar(filas) {
 //    de que existiera la tienda.
 //  - `incompleto` marca el primer mes cuando la ventana lo corta por la mitad
 //    (el panel pide 400 días: solo pasa si la tienda tiene más de eso).
-function agruparPorMes(filas) {
+//  - `devol` = { 'AAAA-MM': { n, monto } }: plata devuelta a clientes ese mes
+//    (services/devoluciones.js). Se resta COMPLETA en el mes en que se pagó,
+//    igual que en la cartola; `utilidadAntesDevol` deja ver la cuenta sin eso.
+//    Es lo único que el mes tiene y los días no: la tabla diaria no las resta.
+function agruparPorMes(filas, devol) {
   const grupos = [];
   for (const f of filas || []) {
     const mes = String(f.fecha).slice(0, 7);
@@ -144,13 +148,22 @@ function agruparPorMes(filas) {
     if (!g || g.mes !== mes) { g = { mes, filas: [] }; grupos.push(g); }
     g.filas.push(f);
   }
-  const meses = grupos.map((g, i) => ({
-    mes: g.mes,
-    dias: g.filas.length,
-    incompleto: i === 0 && String(g.filas[0].fecha).slice(8, 10) !== '01',
-    ...totalizar(g.filas)
-  }));
-  while (meses.length && !meses[0].pedidos && !meses[0].ingresos && !meses[0].ads) meses.shift();
+  const meses = grupos.map((g, i) => {
+    const t = totalizar(g.filas);
+    const dv = (devol && devol[g.mes]) || {};
+    const devolMonto = Math.max(0, Math.round(Number(dv.monto) || 0));
+    return {
+      mes: g.mes,
+      dias: g.filas.length,
+      incompleto: i === 0 && String(g.filas[0].fecha).slice(8, 10) !== '01',
+      ...t,
+      devolN: Math.max(0, Math.round(Number(dv.n) || 0)),
+      devolMonto,
+      utilidadAntesDevol: t.utilidad,
+      utilidad: t.utilidad - devolMonto
+    };
+  });
+  while (meses.length && !meses[0].pedidos && !meses[0].ingresos && !meses[0].ads && !meses[0].devolMonto) meses.shift();
   return meses;
 }
 

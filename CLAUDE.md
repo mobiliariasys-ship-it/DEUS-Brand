@@ -38,6 +38,36 @@ Producción despliega desde el repo **`deus-band` rama `main`**
 **`DEUS-Brand`** (rama `claude/...`) es espejo de desarrollo. Todo cambio se
 commitea en ambos.
 
+> ⚠️ **Un push a cualquier rama `claude/**` de DEUS-Brand se publica solo**: el
+> workflow `sync-to-production` copia el repo entero a `deus-band` `main`, y de
+> ahí sale el sitio y el backend (Render). Antes de tocar nada, partí de la
+> versión que está en producción (todas las ramas `claude/*` se mantienen
+> iguales a ella); una rama vieja pisa la tienda con una versión antigua.
+
+## Cartola de Falabella y devoluciones (todos los meses)
+
+El dueño sube cada mes la cartola de su cuenta corriente de Banco Falabella,
+desde la que paga las devoluciones a clientes. Con cada cartola:
+
+1. Actualizar su artifact privado **"Cartola Falabella"** (pedirle el link, o
+   buscarlo con `Artifact` → `list`): agregar el mes y marcar con la categoría
+   `devolucion` las transferencias que son devoluciones a clientes.
+2. Anotar esas MISMAS devoluciones en `services/datos/devoluciones-falabella.json`
+   (fecha `AAAA-MM-DD`, monto y una nota genérica) y sumar el mes a
+   `mesesRevisados`, aunque no tenga ninguna. El panel las resta en
+   "📅 Utilidad por mes" (ver `services/devoluciones.js`); las que el dueño
+   haya cargado a mano y calcen con la cartola dejan de contarse solas.
+
+Cómo reconocer una devolución en la cartola: una "Transf. para <persona>" cuyo
+monto es un precio de venta de esa época ($68.990; antes $62.990 y $54.990) o
+ese precio menos el envío de vuelta ($6.000 o $6.150). Las transferencias a
+personas por otros montos son gastos personales. Ante la duda, preguntarle al
+dueño antes de restarla.
+
+**Este repositorio es público.** En ese JSON va solo fecha, monto y nota
+genérica: nunca nombres, RUT ni números de cuenta (lo verifica
+`test/devoluciones.test.js`). El detalle con nombres queda en el artifact.
+
 ## Métricas de la tienda (para analizar la conversión)
 
 Lo normal es que la clave esté como **secreto de red** del entorno (host

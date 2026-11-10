@@ -31,6 +31,8 @@ resenas-panel.json
 # Códigos de la ruleta "Gira y gana" en modo archivo: llevan el correo de
 # cada persona que giró.
 ruleta.json
+# Devoluciones cargadas a mano desde el panel (modo archivo).
+/devoluciones.json
 resena-foto-*.json
 resenas-orden.json
 

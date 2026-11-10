@@ -11,16 +11,18 @@ const path = require('path');
 const HTML = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
 const pos = id => { const i = HTML.indexOf('<section id="' + id + '"'); assert.ok(i >= 0, 'falta ' + id); return i; };
 
-test('el checkout va justo debajo de la utilidad diaria y el gasto por hora después', () => {
+test('debajo de la utilidad diaria va la utilidad por mes, después el checkout y el gasto por hora', () => {
+  // El 30-oct el dueño pidió el checkout justo debajo de la utilidad diaria; el
+  // 10-nov pidió la utilidad por mes debajo de la diaria, así que va entre las dos.
   const ids = [...HTML.matchAll(/<section id="(sec-[a-z]+)"/g)].map(m => m[1]);
   const u = ids.indexOf('sec-utilidad');
-  assert.deepStrictEqual(ids.slice(u, u + 3), ['sec-utilidad', 'sec-checkout', 'sec-gastoh']);
+  assert.deepStrictEqual(ids.slice(u, u + 4), ['sec-utilidad', 'sec-utilmes', 'sec-checkout', 'sec-gastoh']);
 });
 
 test('las secciones van agrupadas y los registros plegados al final', () => {
-  // Plata primero (con la utilidad por mes arriba) y la ruleta justo después
-  // (pedido del dueño, 10-nov-2026; el 8-nov la ruleta había subido arriba de Plata).
-  const orden = ['sec-utilmes', 'sec-utilidad', 'sec-checkout', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-ruleta', 'sec-embudo', 'sec-conducta',
+  // Plata primero (utilidad diaria y, debajo, la utilidad por mes) y la ruleta justo
+  // después (pedido del dueño, 10-nov-2026; el 8-nov la ruleta había subido arriba de Plata).
+  const orden = ['sec-utilidad', 'sec-utilmes', 'sec-checkout', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-ruleta', 'sec-embudo', 'sec-conducta',
     'sec-convierte', 'sec-negocio', 'sec-pedidos', 'sec-resenas', 'sec-chat', 'sec-ventas', 'sec-sorteo'];
   const posiciones = orden.map(pos);
   assert.deepStrictEqual(posiciones, posiciones.slice().sort((a, b) => a - b), 'orden de las secciones');

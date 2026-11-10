@@ -232,6 +232,9 @@
     border-radius:6px;cursor:pointer;font-size:.8rem;line-height:1;padding:0;}
   .util-add:hover{border-color:var(--green);color:var(--green);}
   #vm-monto-ver:empty{display:none;}
+  /* Utilidad por mes: los montos no se parten en dos líneas (la tabla se desliza si no cabe). */
+  #utilmes-tabla th,#utilmes-tabla td{white-space:nowrap;}
+  #utilmes-tabla td:first-child{white-space:normal;min-width:120px;}
   /* Grupos del panel: Plata, Conversión, Operación y Registros. */
   .grupo-h{margin:38px 0 14px;padding-bottom:9px;border-bottom:1px solid var(--border-soft);color:var(--faint);
     font-size:.72rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;}
@@ -569,8 +572,8 @@
       <button class="nav-i active" onclick="irA('top',this)"><span class="ico">📊</span> Dashboard</button>
       <button class="nav-i" onclick="irA('sec-graficos',this)"><span class="ico">📈</span> Gráficos</button>
       <!-- Mismo orden que el panel: Plata, Ruleta, Conversión, Operación y Registros. -->
-      <button class="nav-i" onclick="irA('sec-utilmes',this)"><span class="ico">📅</span> Por mes</button>
       <button class="nav-i" onclick="irA('sec-utilidad',this)"><span class="ico">💰</span> Utilidad</button>
+      <button class="nav-i" onclick="irA('sec-utilmes',this)"><span class="ico">📅</span> Por mes</button>
       <button class="nav-i" onclick="irA('sec-checkout',this)"><span class="ico">🧾</span> Checkout</button>
       <button class="nav-i" onclick="irA('sec-gastoh',this)"><span class="ico">⏱️</span> Gasto por hora</button>
       <button class="nav-i" onclick="irA('sec-ads',this)"><span class="ico">📣</span> Ads</button>
@@ -668,16 +671,6 @@
 
     <!-- Plata: utilidad, gasto en ads por hora, Ads Manager y qué canal deja plata. -->
     <div class="grupo-h">💰 Plata · cuánto queda y en qué se va</div>
-    <!-- Utilidad por mes (pedido del dueño, 10-nov-2026): los mismos días de la
-         tabla diaria sumados por mes calendario. -->
-    <section id="sec-utilmes">
-      <div class="sec-h"><h2>📅 Utilidad por mes</h2><button class="btn ghost" onclick="cargarUtilMensual()">Actualizar</button></div>
-      <div class="sec-act" id="utilmes-act"></div>
-      <div class="util-tabla" id="utilmes-tabla"></div>
-      <div class="util-nota" id="utilmes-nota"></div>
-      <div class="empty" id="utilmes-off" style="display:none">No se pudo cargar la utilidad por mes.</div>
-    </section>
-
     <section id="sec-utilidad">
       <div class="sec-h"><h2>💰 Utilidad diaria</h2><button class="btn ghost" onclick="cargarUtilidad()">Actualizar</button></div>
       <div class="sec-act" id="util-act"></div>
@@ -695,6 +688,18 @@
       <div class="util-tabla" id="util-tabla"></div>
       <div class="util-nota" id="util-nota"></div>
       <div class="empty" id="util-off" style="display:none">No se pudo cargar la utilidad.</div>
+    </section>
+
+    <!-- Utilidad por mes (pedido del dueño, 10-nov-2026): los mismos días de la
+         tabla diaria sumados por mes calendario, menos las devoluciones
+         pagadas a clientes. Va justo DEBAJO de la diaria (mismo día: primero
+         la puso arriba y pidió bajarla). -->
+    <section id="sec-utilmes">
+      <div class="sec-h"><h2>📅 Utilidad por mes</h2><button class="btn ghost" onclick="cargarUtilMensual()">Actualizar</button></div>
+      <div class="sec-act" id="utilmes-act"></div>
+      <div class="util-tabla" id="utilmes-tabla"></div>
+      <div class="util-nota" id="utilmes-nota"></div>
+      <div class="empty" id="utilmes-off" style="display:none">No se pudo cargar la utilidad por mes.</div>
     </section>
 
     <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió.
@@ -753,6 +758,23 @@
         <div id="qv-lista"></div>
         <div class="vm-msg" id="qv-msg"></div>
         <div class="vm-pie"><button class="btn ghost" onclick="cerrarQuitarVenta()">Cerrar</button></div>
+      </div>
+    </div>
+
+    <!-- Devoluciones pagadas a clientes en un mes: las de la cartola de
+         Falabella (solo se ven) y las que el dueño agrega a mano (se quitan). -->
+    <div class="vm-fondo" id="dv-fondo" onclick="if(event.target===this)cerrarDevoluciones()">
+      <div class="vm-caja">
+        <h3>Devoluciones a clientes</h3>
+        <div class="vm-dia" id="dv-mes"></div>
+        <div id="dv-lista"></div>
+        <div class="vm-grid" style="margin-top:16px">
+          <div class="vm-campo"><label>Fecha en que pagaste</label><input id="dv-fecha" type="date"></div>
+          <div class="vm-campo"><label>Monto devuelto</label><input id="dv-monto" type="text" inputmode="numeric" autocomplete="off" placeholder="68990"></div>
+          <div class="vm-campo ancho"><label>Nota (opcional)</label><input id="dv-nota" maxlength="80" placeholder="Ej: no le gustó, pedido de octubre"></div>
+        </div>
+        <div class="vm-msg" id="dv-msg"></div>
+        <div class="vm-pie"><button class="btn ghost" onclick="cerrarDevoluciones()">Cerrar</button><button class="btn" id="dv-ok" onclick="agregarDevolucion()">Agregar devolución</button></div>
       </div>
     </div>
 
@@ -2824,13 +2846,20 @@
     var esteMes = new Date().toLocaleDateString('en-CA', { timeZone:'America/Santiago' }).slice(0, 7);
     var suma = function(k){ return meses.reduce(function(a, m){ return a + (Number(m[k]) || 0); }, 0); };
     var t = { pedidos:suma('pedidos'), unidades:suma('unidades'), ingresos:suma('ingresos'), costoBandas:suma('costoBandas'),
-              costoEnvios:suma('costoEnvios'), pasarela:suma('pasarela'), cargosML:suma('cargosML'), ads:suma('ads'), utilidad:suma('utilidad') };
+              costoEnvios:suma('costoEnvios'), pasarela:suma('pasarela'), cargosML:suma('cargosML'), ads:suma('ads'),
+              devolMonto:suma('devolMonto'), devolN:suma('devolN'), utilidad:suma('utilidad') };
+    // % de ganancia del mes: como pctGanancia(), pero la plata devuelta también es gasto.
+    var pctMes = function(m){
+      var g = (m.costoBandas || 0) + (m.costoEnvios || 0) + (m.pasarela || 0) + (m.cargosML || 0) + (m.ads || 0) + (m.devolMonto || 0);
+      return g > 0 ? (m.utilidad || 0) / g * 100 : null;
+    };
+    var celdaDevol = function(m){ return '−' + money0(m.devolMonto || 0) + (m.devolN ? ' <small>(' + m.devolN + ')</small>' : ''); };
     var conML = t.cargosML > 0;
     var color = function(n){ return n >= 0 ? '#69c46d' : '#e07a6a'; };
     var plata = function(n){ return (n >= 0 ? '' : '−') + money0(Math.abs(n)); };
     // El más nuevo arriba, como la tabla diaria.
     var filas = meses.slice().reverse().map(function(m){
-      var cls = m.utilidad >= 0 ? 'pos' : 'neg', pct = pctGanancia(m);
+      var cls = m.utilidad >= 0 ? 'pos' : 'neg', pct = pctMes(m);
       var marca = m.mes === esteMes ? ' <small style="color:#e7cf9c">· en curso (' + m.dias + (m.dias === 1 ? ' día' : ' días') + ')</small>'
         : m.incompleto ? ' <small style="color:#9a9a9a" title="El panel mira hasta 400 días atrás: de este mes solo entran ' + m.dias + ' días">· parcial</small>' : '';
       return '<tr' + (m.mes === esteMes ? ' class="hoy"' : '') + '>' +
@@ -2842,27 +2871,139 @@
         '<td class="gasto">−' + money0(m.pasarela) + '</td>' +
         (conML ? '<td class="gasto">−' + money0(m.cargosML) + '</td>' : '') +
         '<td class="gasto">−' + money0(m.ads) + '</td>' +
+        '<td class="gasto">' + celdaDevol(m) + '</td>' +
         '<td class="util ' + cls + '">' + plata(m.utilidad) + '</td>' +
         '<td class="' + (pct === null ? '' : cls) + '">' + textoPct(pct) + '</td>' +
+        '<td><button class="util-add" title="Ver o agregar devoluciones de ' + nombreMes(m.mes) + '" aria-label="Devoluciones de ' + nombreMes(m.mes) + '" onclick="abrirDevoluciones(\'' + m.mes + '\')">↩</button></td>' +
       '</tr>';
     }).join('');
     document.getElementById('utilmes-tabla').innerHTML =
       '<table><thead><tr>' +
       '<th>Mes</th><th>Pedidos</th><th>Unid.</th><th>Vendido</th>' +
-      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th>' + (conML ? '<th>Cargos ML</th>' : '') + '<th>Ads +IVA</th><th>Utilidad</th>' +
-      '<th title="Ganancia sobre gastos: utilidad ÷ todo lo gastado ese mes">% gan.</th>' +
+      '<th>Bandas</th><th>Envíos</th><th>Pasarela</th>' + (conML ? '<th>Cargos ML</th>' : '') + '<th>Ads +IVA</th>' +
+      '<th title="Plata que devolviste a clientes ese mes">Devoluc.</th><th>Utilidad</th>' +
+      '<th title="Ganancia sobre gastos: utilidad ÷ todo lo gastado ese mes">% gan.</th><th></th>' +
       '</tr></thead><tbody>' + filas + '</tbody><tfoot><tr>' +
       '<th>Total</th><th>' + t.pedidos + '</th><th>' + t.unidades + '</th><th>' + money0(t.ingresos) + '</th>' +
       '<th>−' + money0(t.costoBandas) + '</th><th>−' + money0(t.costoEnvios) + '</th><th>−' + money0(t.pasarela) + '</th>' +
       (conML ? '<th>−' + money0(t.cargosML) + '</th>' : '') +
       '<th>−' + money0(t.ads) + '</th>' +
+      '<th>' + celdaDevol(t) + '</th>' +
       '<th style="color:' + color(t.utilidad) + '">' + plata(t.utilidad) + '</th>' +
-      '<th style="color:' + color(t.utilidad) + '">' + textoPct(pctGanancia(t)) + '</th>' +
+      '<th style="color:' + color(t.utilidad) + '">' + textoPct(pctMes(t)) + '</th><th></th>' +
       '</tr></tfoot></table>';
-    var nota = 'Es la misma cuenta de la utilidad diaria, sumada por mes. El gasto en ads va con IVA en todos los meses.';
+    // Qué meses ya tienen la cartola revisada: en los demás solo cuentan las
+    // devoluciones que el dueño agregó a mano.
+    var rev = d.mesesRevisados || [];
+    var corto = function(ym){ return nombreMes(ym).split(' ')[0].toLowerCase(); };
+    var con = meses.filter(function(m){ return rev.indexOf(m.mes) >= 0; }).map(function(m){ return corto(m.mes); });
+    var sin = meses.filter(function(m){ return rev.indexOf(m.mes) < 0; }).map(function(m){ return corto(m.mes); });
+    var nota = 'Es la misma cuenta de la utilidad diaria, sumada por mes, menos las devoluciones: la plata que devolviste a clientes ese mes. ' +
+      'Salen de tu cartola de Banco Falabella' + (con.length ? ' (revisada: ' + con.join(', ') + ')' : '') +
+      ' y de las que agregues con el botón ↩.' +
+      (sin.length ? ' Falta la cartola de ' + sin.join(', ') + ': ahí solo cuentan las que agregues a mano.' : '') +
+      ' Se restan completas; si la banda volvió y la revendiste, ese mes ganaste ' + money0((d.costos && d.costos.banda) || 17000) + ' más por cada una.' +
+      ' El gasto en ads va con IVA en todos los meses.';
     if (!d.adsOk) nota += ' ⚠️ El gasto en ads figura en 0 y la utilidad está inflada. Motivo: ' + (d.adsError || 'Meta no respondió') + '.';
     document.getElementById('utilmes-nota').textContent = nota;
   }
+
+  // ── Devoluciones pagadas a clientes (la utilidad por mes las resta) ──
+  // Las de la cartola de Falabella solo se ven; las cargadas a mano se pueden
+  // quitar. Una cargada a mano que ya llegó en la cartola no se cuenta dos
+  // veces (el servidor la marca enCartola).
+  var dvMes = null, dvTodas = [], dvRevisados = [], dvDelMes = [];
+  function leerMontoDe(id){
+    var t = String(document.getElementById(id).value || '').replace(/\D/g, '');
+    return t ? parseInt(t, 10) : 0;
+  }
+  function abrirDevoluciones(mes){
+    dvMes = mes;
+    document.getElementById('dv-mes').textContent = nombreMes(mes);
+    document.getElementById('dv-msg').textContent = '';
+    document.getElementById('dv-monto').value = '';
+    document.getElementById('dv-nota').value = '';
+    // Fecha por defecto: hoy si es el mes en curso; si no, el último día de ese mes.
+    var hoy = new Date().toLocaleDateString('en-CA', { timeZone:'America/Santiago' });
+    var p = mes.split('-');
+    var ultimo = new Date(Date.UTC(parseInt(p[0], 10), parseInt(p[1], 10), 0)).toISOString().slice(0, 10);
+    var tope = hoy.slice(0, 7) === mes ? hoy : ultimo;
+    var f = document.getElementById('dv-fecha');
+    f.min = mes + '-01'; f.max = tope; f.value = tope;
+    document.getElementById('dv-lista').innerHTML = '<div class="empty">Cargando...</div>';
+    document.getElementById('dv-fondo').classList.add('on');
+    cargarDevoluciones();
+  }
+  function cerrarDevoluciones(){
+    document.getElementById('dv-fondo').classList.remove('on');
+    dvMes = null;
+  }
+  function cargarDevoluciones(){
+    return fetch(BASE + '/admin/devoluciones?clave=' + encodeURIComponent(clave))
+      .then(function(r){ if (!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(function(d){ dvTodas = d.devoluciones || []; dvRevisados = d.mesesRevisados || []; pintarDevoluciones(); })
+      .catch(function(){ document.getElementById('dv-lista').innerHTML = '<div class="empty">No se pudieron cargar las devoluciones.</div>'; });
+  }
+  function pintarDevoluciones(){
+    if (!dvMes) return;
+    var el = document.getElementById('dv-lista');
+    dvDelMes = dvTodas.filter(function(d){ return String(d.fecha).slice(0, 7) === dvMes; });
+    var revisada = dvRevisados.indexOf(dvMes) >= 0;
+    var estado = '<div style="font-size:.7rem;line-height:1.45;margin-bottom:6px;color:' + (revisada ? '#7fc9a0' : '#e7cf9c') + '">' +
+      (revisada ? '✓ La cartola de Falabella de este mes ya está revisada.'
+                : 'Todavía no subes la cartola de este mes: solo cuentan las que agregues acá.') + '</div>';
+    if (!dvDelMes.length) { el.innerHTML = estado + '<div class="empty">Sin devoluciones este mes.</div>'; return; }
+    el.innerHTML = estado + dvDelMes.map(function(d, i){
+      var det = d.fecha.slice(8, 10) + '/' + d.fecha.slice(5, 7) + (d.nota ? ' · ' + esc(d.nota) : '') +
+        (d.origen === 'cartola' ? ' · de la cartola'
+          : d.enCartola ? ' · ya está en la cartola: no se resta dos veces, puedes quitarla'
+          : ' · agregada a mano');
+      return '<div class="qv-item"><div><b>' + money0(d.monto) + '</b><small>' + det + '</small></div>' +
+        (d.origen === 'manual' ? '<button class="qv-btn" onclick="quitarDevolucion(' + i + ')">Quitar</button>' : '') + '</div>';
+    }).join('');
+  }
+  function agregarDevolucion(){
+    var msg = document.getElementById('dv-msg'), btn = document.getElementById('dv-ok');
+    var fecha = document.getElementById('dv-fecha').value, monto = leerMontoDe('dv-monto');
+    if (!fecha) { msg.style.color = '#e07a6a'; msg.textContent = 'Pon la fecha en que pagaste la devolución.'; return; }
+    if (!monto || monto < 1000) { msg.style.color = '#e07a6a'; msg.textContent = 'Pon el monto completo que devolviste, por ejemplo 68990.'; return; }
+    btn.disabled = true; msg.style.color = '#9a9a9a'; msg.textContent = 'Guardando...';
+    return fetch(BASE + '/admin/devolucion?clave=' + encodeURIComponent(clave), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fecha: fecha, monto: monto, nota: (document.getElementById('dv-nota').value || '').trim() })
+    })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res){
+      btn.disabled = false;
+      if (!res.ok || !res.d.ok) { msg.style.color = '#e07a6a'; msg.textContent = res.d.error || 'No se pudo guardar.'; return; }
+      msg.style.color = '#69c46d'; msg.textContent = 'Listo: se restan ' + money0(monto) + ' en ' + nombreMes(fecha.slice(0, 7)) + '.';
+      document.getElementById('dv-monto').value = ''; document.getElementById('dv-nota').value = '';
+      cargarDevoluciones();
+      cargarUtilMensual();
+    })
+    .catch(function(){ btn.disabled = false; msg.style.color = '#e07a6a'; msg.textContent = 'No se pudo conectar con el servidor.'; });
+  }
+  function quitarDevolucion(i){
+    var d = dvDelMes[i];
+    if (!d || d.origen !== 'manual') return;
+    if (!confirm('¿Quitar la devolución de ' + money0(d.monto) + ' del ' + d.fecha + '? No se puede deshacer.')) return;
+    var msg = document.getElementById('dv-msg');
+    msg.style.color = '#9a9a9a'; msg.textContent = 'Quitando...';
+    return fetch(BASE + '/admin/devolucion/quitar?clave=' + encodeURIComponent(clave), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: d.id })
+    })
+    .then(function(r){ return r.json().then(function(x){ return { ok: r.ok, d: x }; }); })
+    .then(function(res){
+      if (!res.ok || !res.d.ok) { msg.style.color = '#e07a6a'; msg.textContent = res.d.error || 'No se pudo quitar.'; return; }
+      msg.style.color = '#69c46d'; msg.textContent = 'Listo: se quitó la devolución de ' + money0(d.monto) + '.';
+      cargarDevoluciones();
+      cargarUtilMensual();
+    })
+    .catch(function(){ msg.style.color = '#e07a6a'; msg.textContent = 'No se pudo conectar con el servidor.'; });
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && document.getElementById('dv-fondo').classList.contains('on')) cerrarDevoluciones();
+  });
 
   // Proyección mensual: "si el mes entero fuera como estos días". Promedio por
   // día de lo que se está mirando (los días elegidos en Conversión, o los

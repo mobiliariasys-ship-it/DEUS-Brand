@@ -14,6 +14,7 @@ const colores_ = require('./services/colores');
 const correo_ = require('./services/correo');
 const ruleta_ = require('./services/ruleta');
 const utilidad_ = require('./services/utilidad');
+const devoluciones_ = require('./services/devoluciones');
 const { getStock, decrementStock, setStock } = require('./services/stock');
 const metrics = require('./services/metrics');
 const persist = require('./services/persist');
@@ -1156,12 +1157,56 @@ app.get('/admin/utilidad-mensual', async (req, res) => {
   if (!claveAdsOk(req, res)) return;
   try {
     const d = await utilidadDiaria('meses');
+    // Cada mes resta la plata devuelta a clientes (cartola + cargadas a mano).
+    const dv = devoluciones_.servicio();
     res.json({
-      meses: utilidad_.agruparPorMes(d.filas), adsOk: d.adsOk, adsError: d.adsError,
-      diagnostico: d.diagnostico, costos: d.costos
+      meses: utilidad_.agruparPorMes(d.filas, await dv.porMes()), mesesRevisados: dv.mesesRevisados(),
+      adsOk: d.adsOk, adsError: d.adsError, diagnostico: d.diagnostico, costos: d.costos
     });
   } catch (e) {
     errorAds(res, e);
+  }
+});
+
+// ── Devoluciones pagadas a clientes (se restan en la utilidad por mes) ──
+// Las de la cartola de Falabella vienen de services/datos/devoluciones-*.json
+// (solo fecha y monto); las cargadas a mano se guardan acá. Ver
+// services/devoluciones.js. Misma clave del panel.
+app.get('/admin/devoluciones', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try {
+    const dv = devoluciones_.servicio();
+    res.json({ devoluciones: await dv.lista(), mesesRevisados: dv.mesesRevisados() });
+  } catch (e) {
+    console.error('[admin/devoluciones]', e.message);
+    res.status(500).json({ error: 'No se pudieron leer las devoluciones.' });
+  }
+});
+
+app.post('/admin/devolucion', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try {
+    const { fecha, monto, nota } = req.body || {};
+    const d = await devoluciones_.servicio().agregar({ fecha, monto, nota });
+    console.log('[admin/devolucion] devolución cargada a mano:', d.fecha, d.monto);
+    res.json({ ok: true, devolucion: { id: d.id, fecha: d.fecha, monto: d.monto, nota: d.nota } });
+  } catch (e) {
+    if (e.deUsuario) return res.status(400).json({ error: e.message });
+    console.error('[admin/devolucion]', e.message);
+    res.status(500).json({ error: 'No se pudo guardar la devolución.' });
+  }
+});
+
+app.post('/admin/devolucion/quitar', async (req, res) => {
+  if (!clavePanelOk(req, res)) return;
+  try {
+    const q = await devoluciones_.servicio().quitar(req.body && req.body.id);
+    if (!q) return res.status(404).json({ error: 'No hay una devolución cargada a mano con ese id.' });
+    console.log('[admin/devolucion/quitar] devolución cargada a mano quitada:', q.fecha, q.monto);
+    res.json({ ok: true, quitada: { fecha: q.fecha, monto: q.monto } });
+  } catch (e) {
+    console.error('[admin/devolucion/quitar]', e.message);
+    res.status(500).json({ error: 'No se pudo quitar la devolución.' });
   }
 });
 

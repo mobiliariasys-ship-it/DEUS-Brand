@@ -1,0 +1,14 @@
+{
+  "fuente": "Cartola de la cuenta corriente (Banco Falabella) que sube el dueño cada mes. Solo fecha y monto: el detalle con nombres queda en su página privada de la cartola.",
+  "mesesRevisados": ["2026-07", "2026-09", "2026-10"],
+  "devoluciones": [
+    { "fecha": "2026-09-02", "monto": 54990, "nota": "Devolución a cliente" },
+    { "fecha": "2026-09-16", "monto": 62990, "nota": "Devolución con el envío descontado: $68.990 − $6.000" },
+    { "fecha": "2026-09-21", "monto": 54990, "nota": "Devolución a cliente" },
+    { "fecha": "2026-09-21", "monto": 62990, "nota": "Devolución con el envío descontado: $68.990 − $6.000" },
+    { "fecha": "2026-10-07", "monto": 68990, "nota": "Devolución completa" },
+    { "fecha": "2026-10-07", "monto": 56840, "nota": "Devolución con el envío descontado: $62.990 − $6.150" },
+    { "fecha": "2026-10-13", "monto": 68990, "nota": "Devolución completa" },
+    { "fecha": "2026-10-29", "monto": 62840, "nota": "Devolución con el envío descontado: $68.990 − $6.150" }
+  ]
+}
