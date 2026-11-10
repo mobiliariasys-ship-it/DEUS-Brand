@@ -39,7 +39,8 @@ const PREMIOS = [
 const VIGENCIA_MS = 48 * 60 * 60 * 1000;   // el premio dura 48 horas
 // Premio vencido SIN usar: a las 24 h de vencer, ese mismo correo puede girar
 // de nuevo (pedido del dueño, 10-nov-2026). Un premio usado no da otro giro.
-// index.html lleva el mismo número (REGIRO_MS) para avisarle al cliente.
+// index.html lleva el mismo número (REGIRO_MS). La página no lo anuncia: el
+// dueño lo avisará por correo más adelante (giraDesde ya viaja en la respuesta).
 const REGIRO_MS = 24 * 60 * 60 * 1000;
 const RESERVA_MS = 30 * 60 * 1000;         // al empezar a pagar, el código se aparta 30 min
 const REENVIO_MS = 10 * 60 * 1000;         // a un mismo correo, máximo un reenvío cada 10 min

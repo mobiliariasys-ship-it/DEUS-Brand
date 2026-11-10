@@ -203,10 +203,11 @@ test('un premio USADO no da otro giro, pase el tiempo que pase', async () => {
   assert.strictEqual(r.codigo, undefined, 'el código sigue sin mostrarse en pantalla');
 });
 
-test('la página avisa cuándo se puede girar de nuevo, con las mismas 24 h del servidor', () => {
+test('la página permite el nuevo giro a las 24 h (igual que el servidor) pero NO lo anuncia', () => {
   assert.match(HTML, /var REGIRO_MS = 24 \* 60 \* 60 \* 1000;/);
   assert.ok(leer('services', 'ruleta.js').includes('const REGIRO_MS = 24 * 60 * 60 * 1000;'));
-  assert.ok(HTML.includes("'Con tu mismo correo puedes volver a girar desde el <b>'"));
+  // El dueño lo avisará por correo más adelante: en pantalla no se dice nada.
+  assert.ok(!/volver a girar/i.test(HTML), 'la pantalla no debe anunciar el nuevo giro');
   // Al volver con el premio vencido hace más de 24 h la ruleta parte de cero,
   // salvo que el código se haya usado en una compra.
   const i = HTML.indexOf('function reiniciarSiVencio');

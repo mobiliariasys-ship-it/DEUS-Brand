@@ -2110,7 +2110,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // eran 11 y quien se iba antes nunca la veía).
   var ESPERA_MS = 5400;
   // Premio vencido sin usar: a las 24 h de vencer, el mismo correo puede
-  // girar de nuevo. Mismo número que REGIRO_MS de services/ruleta.js.
+  // girar otra vez. Mismo número que REGIRO_MS de services/ruleta.js. La
+  // página no lo anuncia: el dueño lo avisará por correo más adelante.
   var REGIRO_MS = 24 * 60 * 60 * 1000;
   var GIRO_MAX_MS = 3000;
   var quieto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -2121,11 +2122,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function evento(n) { try { if (window.deusEvento) window.deusEvento('accion:' + n); } catch (e) {} }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function clp(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
-  // "jueves, 12 de noviembre, 14:30" en la hora del visitante.
-  function cuando(ms) {
-    try { return new Date(ms).toLocaleString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false }); }
-    catch (e) { return new Date(ms).toLocaleString(); }
-  }
   function precio() { try { return precioBanda(); } catch (e) { return 68990; } }
 
   // ── La ruleta en SVG ──
@@ -2425,19 +2421,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var cod = '<div class="rl-cod"><div><div class="k">Tu código</div><div class="v">' + esc(e.codigo) + '</div></div><button type="button" class="rl-copiar" id="rl-copiar">Copiar</button></div>';
     var medio = '';
     var vencido = venceMs && Date.now() > venceMs;
-    // Vencido sin usar: se le dice desde cuándo puede girar de nuevo con el
-    // mismo correo (24 h después de vencer). Usado: no hay otro giro.
+    // Vencido sin usar: a las 24 h de vencer ese correo puede girar otra vez,
+    // pero la pantalla NO lo anuncia (pedido del dueño, 10-nov-2026: se le
+    // avisará por correo más adelante). Usado: no hay otro giro.
     var vencidoSinUsar = vencido && !e.usado;
-    var giraMs = venceMs + REGIRO_MS;
-    var notaRegiro = !vencidoSinUsar ? '' : '<p class="rl-texto">' + (Date.now() >= giraMs
-      ? 'Ya puedes <b>volver a girar</b> con tu mismo correo.'
-      : 'Con tu mismo correo puedes volver a girar desde el <b>' + esc(cuando(giraMs)) + '</b>.') + '</p>';
+    var yaPuedeGirar = vencidoSinUsar && Date.now() >= venceMs + REGIRO_MS;
     if (e.usado) {
       medio = '<p class="rl-texto">Con este correo ya ganaste y usaste tu premio. ¡Gracias por tu compra!</p>';
     } else if (!e.codigo) {
       // Ya había girado con este correo: por seguridad el código solo llega a
       // ese correo (si no, cualquiera vería el premio de otro escribiendo su correo).
-      medio = vencido ? '' : '<p class="rl-texto">Ya giraste con este correo. Por seguridad, tu código <b>solo llega a ese correo</b>: búscalo en tu bandeja de entrada (o en spam). Ahí está el botón para usarlo.</p>';
+      medio = '<p class="rl-texto">Ya giraste con este correo. Por seguridad, tu código <b>solo llega a ese correo</b>: búscalo en tu bandeja de entrada (o en spam). Ahí está el botón para usarlo.</p>';
     } else if (pr.tipo === 'descuento') {
       var p = precio(), d = pr.monto ? pr.monto : Math.ceil(p * pr.pct / 100);
       medio = cod + enviado + '<div class="rl-precio"><s>' + clp(p) + '</s><b>' + clp(p - d) + '</b></div>';
@@ -2454,7 +2448,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var card = montar('<button class="rl-x" aria-label="Cerrar">✕</button>' + rueda(giroFinal, indiceDe(pr.id)) +
       '<span class="rl-tag">' + (e.usado ? 'Ya usaste tu premio' : vencido ? 'Tu premio venció' : tag) + '</span>' +
       '<div class="rl-premio">' + esc(titulo) + '</div><div class="rl-envio">' + (pr.tipo === 'tapones' ? 'de regalo + envío gratis' : '+ envío gratis') + '</div>' +
-      medio + notaRegiro +
+      medio +
       (vencidoSinUsar ? '<button type="button" class="rl-btn" id="rl-otra">Girar de nuevo</button>'
         : (e.usado || !e.codigo) ? '<button type="button" class="rl-btn" id="rl-listo">Entendido</button>'
         : '<button type="button" class="rl-btn" id="rl-usar">' + (pr.tipo === 'descuento' ? 'Usar mi descuento' : 'Usar mi premio') + '</button>' +
@@ -2481,8 +2475,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if (otra) otra.addEventListener('click', function () {
       var correoAntes = e.email;
       guardar({ estado: 'visto' }); pantallaInicio();
-      // Deja escrito el correo de antes: es el que puede volver a girar.
-      var inp = document.getElementById('rl-email'); if (inp && correoAntes) inp.value = correoAntes;
+      // Si ya pasaron las 24 h, deja escrito el correo de antes (ya le sirve).
+      var inp = document.getElementById('rl-email'); if (inp && correoAntes && yaPuedeGirar) inp.value = correoAntes;
     });
     clearInterval(relojTimer);
     var reloj = card.querySelector('#rl-reloj');
