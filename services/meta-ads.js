@@ -16,7 +16,12 @@
 // Sin META_ADS_ACCESS_TOKEN / META_AD_ACCOUNT_ID las funciones lanzan error
 // explícito (el panel admin lo muestra), a diferencia de meta-capi.js que
 // se queda inerte en silencio — acá sí hace falta feedback de error.
-const API_VERSION = 'v21.0';
+// Versión de la API de Meta. v21.0 venció como Marketing API en sep-2025;
+// Meta igual atendía las llamadas subiéndolas a la versión más vieja viva
+// (v24.0), que venció el 10-nov-2026: ese día el panel quedó en "Meta no
+// respondió" y sin gasto. Mantener igual en meta-ads.js y meta-capi.js, y
+// subirla antes de que venza (developers.facebook.com/docs/graph-api/changelog/versions).
+const API_VERSION = 'v26.0';
 const BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
 
 function creds() {

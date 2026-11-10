@@ -29,7 +29,12 @@ const crypto = require('crypto');
 const persist = require('./persist');
 
 const PIXEL_ID = (process.env.META_PIXEL_ID || '2086346891978245').trim();
-const API_VERSION = 'v21.0';
+// Versión de la API de Meta. v21.0 venció como Marketing API en sep-2025;
+// Meta igual atendía las llamadas subiéndolas a la versión más vieja viva
+// (v24.0), que venció el 10-nov-2026: ese día el panel quedó en "Meta no
+// respondió" y sin gasto. Mantener igual en meta-ads.js y meta-capi.js, y
+// subirla antes de que venza (developers.facebook.com/docs/graph-api/changelog/versions).
+const API_VERSION = 'v26.0';
 
 // Meta exige los identificadores del usuario hasheados en SHA-256, en minúsculas
 // y sin espacios, para poder emparejar la compra con la persona sin exponer el dato.
