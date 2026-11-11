@@ -547,6 +547,19 @@ app.get('/admin/promo-1111', async (req, res) => {
   try { res.json(await promo_.campana().vistaPrevia(await fuentesPromo())); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
+// El dueño pega correos (p. ej. de sus avisos "Nuevo pedido") que no quedaron
+// guardados: entran como pagos empezados, con los mismos descartes.
+app.post('/admin/promo-1111/agregar', async (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+  res.set('Cache-Control', 'no-store');
+  try {
+    const delDueno = [process.env.MAIL_TO, process.env.GMAIL_USER, process.env.MAIL_REPLY_TO];
+    const agregados = await intentos_.registro().importar(String((req.body && req.body.correos) || '').slice(0, 200000), delDueno);
+    res.json({ agregados, ...(await promo_.campana().vistaPrevia(await fuentesPromo())) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 app.post('/admin/promo-1111/enviar', async (req, res) => {
   const clave = (process.env.STOCK_KEY || '').trim();
   if (!clave) return res.status(404).json({ error: 'No disponible' });

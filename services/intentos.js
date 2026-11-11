@@ -8,6 +8,11 @@
 const ARCHIVO = 'intentos-pago.json';
 const MAX = 3000; // los más nuevos
 
+// Correos que vienen en el texto de los avisos pero no son de clientes: la
+// tienda, las pasarelas, el que manda los correos y los "no-reply".
+const DOMINIOS_SISTEMA = /@(deusbrand\.cl|flow\.cl|mercadopago\.(com|cl)|mercadolibre\.(com|cl)|transbank\.cl|resend\.(dev|com)|gmail-smtp-in\.l\.google\.com)$/;
+function esDeSistema(e) { return DOMINIOS_SISTEMA.test(e) || /^(no-?reply|noreply|notificaciones|mailer-daemon|postmaster)@/.test(e); }
+
 function crearRegistro({ load, save, ahora = () => Date.now() }) {
   let lista = null;
   let cargando = null;
@@ -45,12 +50,36 @@ function crearRegistro({ load, save, ahora = () => Date.now() }) {
     }
   }
 
+  // Correos pegados por el dueño en el panel (p. ej. de los avisos "Nuevo
+  // pedido" de su Gmail): pedidos viejos de Webpay/Flow que no quedaron
+  // guardados. Sin fecha (no se sabe cuándo fueron) y sin repetir.
+  // excluir: correos del dueño (los avisos traen su propio correo).
+  async function importar(texto, excluir = []) {
+    await cola;
+    const l = await cargar();
+    const ya = new Set(l.map(x => x.email));
+    const fuera = new Set(excluir.map(e => String(e || '').trim().toLowerCase()).filter(Boolean));
+    // Línea por línea: "Nombre Apellido <correo>" guarda también el nombre
+    // (así se saca a quien compró con otro correo); un correo suelto, sin él.
+    const nombres = new Map();
+    for (const linea of String(texto || '').split(/\r?\n/)) {
+      const m = linea.match(/^\s*([^<>@\n]*?)\s*<\s*([^<>\s]+@[^<>\s]+)\s*>/);
+      if (m && m[1]) nombres.set(m[2].toLowerCase(), m[1].slice(0, 90));
+    }
+    const nuevos = [...new Set(String(texto || '').toLowerCase().match(/[a-z0-9._%+'-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}/g) || [])]
+      .filter(e => !ya.has(e) && !fuera.has(e) && !esDeSistema(e));
+    for (const e of nuevos) l.push({ fecha: null, email: e, nombre: nombres.get(e) || '', pasarela: 'panel', orden: '' });
+    if (l.length > MAX) l.splice(0, l.length - MAX);
+    if (nuevos.length) await save(ARCHIVO, l);
+    return nuevos.length;
+  }
+
   async function todos() {
     await cola;
     return (await cargar()).slice();
   }
 
-  return { anotar, todos };
+  return { anotar, todos, importar };
 }
 
 let instancia = null;

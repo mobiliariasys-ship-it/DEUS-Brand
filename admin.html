@@ -208,6 +208,9 @@
   .promo-cifra{font-size:.8rem;color:#e8e8ee;margin:10px 0 8px;line-height:1.5;}
   .promo-cifra b{color:#e7cf9c;font-size:1rem;}
   .promo-ok{margin-top:8px;font-size:.72rem;color:#7fd589;line-height:1.5;}
+  .promo-pegar{margin-top:10px;font-size:.72rem;color:#c9c9d1;}
+  .promo-pegar summary{cursor:pointer;padding:4px 0;}
+  .promo-pegar textarea{width:100%;box-sizing:border-box;margin:8px 0;background:var(--card,#141418);border:1px solid var(--border);color:#e8e8ee;border-radius:8px;padding:9px 11px;font:inherit;font-size:.74rem;}
   .ru-manual{background:rgba(120,170,255,.14);color:#8fb4ff;}
   .ru-estado{display:inline-block;font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap;}
   .ru-usado{background:rgba(105,196,109,.14);color:#69c46d;}
@@ -907,6 +910,12 @@
         </div>
         <div class="ru-gen-nota">Si tu plan de Resend es el gratis (100 correos al día), pon un máximo y deja margen para las confirmaciones de compra de hoy.</div>
         <div id="promo-res"></div>
+        <details class="promo-pegar">
+          <summary>Agregar correos de pedidos que no pagaron</summary>
+          <div class="ru-gen-nota">Pega correos sueltos o el texto de tus avisos "Nuevo pedido": se sacan los correos solos. Igual no le llega a quien compró.</div>
+          <textarea id="promo-pegar" rows="4" placeholder="correo1@gmail.com, correo2@hotmail.com…" aria-label="Correos a agregar"></textarea>
+          <button class="btn ghost" onclick="agregarCorreosPromo(this)">Agregar</button>
+        </details>
       </div>
       <div class="ru-acc">
         <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
@@ -2412,6 +2421,22 @@
     fetch(BASE+'/admin/promo-1111?clave='+encodeURIComponent(clave), { cache:'no-store' })
       .then(function(r){ return r.json(); }).then(pintarPromo1111)
       .catch(function(){ pintarPromo1111({ error: 'No hubo conexión con el servidor.' }); });
+  }
+  function agregarCorreosPromo(btn){
+    var t = document.getElementById('promo-pegar');
+    if(!t.value.trim()) return;
+    var txt = btn.textContent; btn.disabled = true; btn.textContent = 'Agregando…';
+    fetch(BASE+'/admin/promo-1111/agregar?clave='+encodeURIComponent(clave), {
+      method:'POST', cache:'no-store', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ correos: t.value })
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if(!d || d.error){ document.getElementById('promo-res').innerHTML = '<div class="ru-gen-err">' + esc((d && d.error) || 'No se pudieron agregar.') + '</div>'; return; }
+      t.value = '';
+      pintarPromo1111(d);
+      document.getElementById('promo-res').innerHTML = '<div class="promo-ok">Se agregaron ' + d.agregados + ' correos nuevos (los repetidos y los que compraron no cuentan).</div>';
+    }).catch(function(){
+      document.getElementById('promo-res').innerHTML = '<div class="ru-gen-err">No hubo conexión con el servidor. Intenta de nuevo.</div>';
+    }).then(function(){ btn.disabled = false; btn.textContent = txt; });
   }
   function enviarPromo1111(btn){
     var max = parseInt(document.getElementById('promo-max').value, 10);

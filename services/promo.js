@@ -73,7 +73,7 @@ function audiencia({ personasRuleta = [], pedidos = [], intentos = [], correosCo
   const checkouts = [
     ...pedidos.filter(p => p && !PAGADOS.has(p.status))
       .map(p => ({ email: p.customer && p.customer.email, nombre: p.customer && p.customer.name, fecha: p.created_at })),
-    ...intentos.filter(Boolean).map(i => ({ email: i.email, nombre: i.nombre, fecha: i.fecha })),
+    ...intentos.filter(Boolean).map(i => ({ email: i.email, nombre: i.nombre, fecha: i.fecha, pegado: i.pasarela === 'panel' })),
   ];
   // Quien tiene un pago empezado hace menos de una hora no recibe nada (ni
   // por la ruleta): puede estar pagando en este momento.
@@ -85,7 +85,8 @@ function audiencia({ personasRuleta = [], pedidos = [], intentos = [], correosCo
   }
   for (const c of checkouts) {
     const f = Date.parse(c.fecha);
-    if (!(f >= CHECKOUT_DESDE)) continue;
+    // Los pegados desde el panel no traen fecha: el dueño ya los revisó.
+    if (!c.pegado && !(f >= CHECKOUT_DESDE)) continue;
     const n = nombreClave(c.nombre);
     if (n && nombresQueCompraron.has(n)) continue;
     sumar(c.email, c.fecha, 'checkout');

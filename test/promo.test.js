@@ -93,6 +93,28 @@ test('los pagos empezados se guardan sin trabar nada', async () => {
   for (const f of ['routes/flow.js', 'routes/transbank.js']) assert.match(leer(f), /intentos_\.anotar\(\{ email: customerEmail/);
 });
 
+test('correos pegados en el panel: entran sin fecha y sin repetirse, y el que compró no', async () => {
+  const intentos = require('../services/intentos');
+  const m = memoria();
+  const r = intentos.crearRegistro({ load: m.load, save: m.save });
+  const texto = 'De: DEUS Band <wellness@deusbrand.cl> Para: dueno@gmail.com\nNuevo pedido de Carla <carla@gmail.com>\nEmail: Pedro@Hotmail.com\ncarla@gmail.com, compro@gmail.com, no-reply@flow.cl';
+  assert.strictEqual(await r.importar(texto, ['dueno@gmail.com']), 3);
+  assert.strictEqual(await r.importar(texto, ['dueno@gmail.com']), 0);
+  const lista = promo.audiencia({ intentos: await r.todos(), correosCompradores: ['compro@gmail.com'] });
+  assert.deepStrictEqual(lista.map(p => p.clave).sort(), ['carla@gmail.com', 'pedro@hotmail.com']);
+  // "Nombre <correo>": guarda el nombre, y quien compró con OTRO correo queda fuera.
+  await r.importar('Rosa Vera <rosa.pedido@gmail.com>\nLuis Soto <luis@gmail.com>');
+  const conNombre = (await r.todos()).find(x => x.email === 'rosa.pedido@gmail.com');
+  assert.strictEqual(conNombre.nombre, 'Rosa Vera');
+  const lista2 = promo.audiencia({ intentos: await r.todos(), nombresCompradores: ['Rosa Vera'], correosCompradores: ['compro@gmail.com'] });
+  assert.ok(!lista2.some(p => p.clave === 'rosa.pedido@gmail.com'));
+  assert.ok(lista2.some(p => p.clave === 'luis@gmail.com'));
+  const server = leer('server.js');
+  const i = server.indexOf("app.post('/admin/promo-1111/agregar'");
+  assert.ok(i > 0);
+  assert.match(server.slice(i, i + 400), /Clave incorrecta/);
+});
+
 test('audiencia: quien ya recibió el correo no vuelve a aparecer', () => {
   const lista = promo.audiencia({
     personasRuleta: [{ email: 'ana@gmail.com', fecha: '2026-11-05T10:00:00Z', estado: 'vencido' }],
