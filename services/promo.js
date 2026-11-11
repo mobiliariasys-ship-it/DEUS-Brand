@@ -25,13 +25,29 @@ const ARCHIVO = 'promo-1111.json';
 const PAUSA_MS = 600;            // Resend acepta 2 por segundo
 const MAX_FALLOS_SEGUIDOS = 3;   // sin Resend no se siguen generando códigos
 const PAGADOS = new Set(['approved', 'paid', 'enviado']);
+// Los pedidos de Mercado Pago NO cambian a pagado cuando se pagan (quedan
+// 'pending' hasta que se despachan): al comprador se lo reconoce por su ticket
+// de compra, que existe para toda venta web desde agosto de 2026. Un pedido
+// sin pagar más viejo que eso no entra, porque ahí no hay cómo saber si
+// después compró.
+const CHECKOUT_DESDE = Date.parse('2026-08-05T00:00:00Z');
+
+// "María José  Pérez" y "maria jose perez" son el mismo nombre. Solo cuentan
+// nombres de dos palabras o más: un "Juan" suelto no identifica a nadie.
+function nombreClave(n) {
+  const t = String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-zñ ]/g, ' ').replace(/\s+/g, ' ').trim();
+  return t.split(' ').length >= 2 ? t : '';
+}
 
 // Quiénes reciben el correo, del que dejó su correo más reciente al más viejo.
 //  personasRuleta: ruleta.lista()  ·  pedidos: los de server.js
-//  correosCompradores: correos de los tickets de compra (una por venta pagada)
+//  correosCompradores / nombresCompradores: de los tickets de compra (uno por
+//    venta pagada). El nombre saca a quien pagó con OTRO correo que el del
+//    pedido que dejó a medias.
 //  yaEnviados: claves (correo normalizado) que ya recibieron este correo
-function audiencia({ personasRuleta = [], pedidos = [], correosCompradores = [], yaEnviados = new Set() } = {}) {
+function audiencia({ personasRuleta = [], pedidos = [], correosCompradores = [], nombresCompradores = [], yaEnviados = new Set() } = {}) {
   const clave = e => { const v = validarCorreo(e); return v.ok ? v : null; };
+  const nombresQueCompraron = new Set(nombresCompradores.map(nombreClave).filter(Boolean));
   const compraron = new Set();
   for (const e of correosCompradores) { const v = clave(e); if (v) compraron.add(v.clave); }
   for (const p of personasRuleta) if (p.estado === 'usado') { const v = clave(p.email); if (v) compraron.add(v.clave); }
@@ -47,7 +63,14 @@ function audiencia({ personasRuleta = [], pedidos = [], correosCompradores = [],
     else { prev.origenes.add(origen); if (f > prev.fecha) { prev.fecha = f; prev.email = v.envio; } }
   };
   for (const p of personasRuleta) if (!p.manual && p.email) sumar(p.email, p.fecha, 'ruleta');
-  for (const p of pedidos) if (p && !PAGADOS.has(p.status)) sumar(p.customer && p.customer.email, p.created_at, 'checkout');
+  for (const p of pedidos) {
+    if (!p || PAGADOS.has(p.status)) continue;
+    const f = Date.parse(p.created_at);
+    if (!(f >= CHECKOUT_DESDE)) continue;
+    const n = nombreClave(p.customer && p.customer.name);
+    if (n && nombresQueCompraron.has(n)) continue;
+    sumar(p.customer && p.customer.email, p.created_at, 'checkout');
+  }
 
   return [...por.values()]
     .sort((a, b) => b.fecha - a.fecha)

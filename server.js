@@ -534,6 +534,7 @@ function fuentesPromo() {
     personasRuleta,
     pedidos,
     correosCompradores: metrics.obtenerTickets().map(t => t.email).filter(Boolean),
+    nombresCompradores: metrics.obtenerTickets().map(t => t.nombre).filter(Boolean),
   }));
 }
 app.get('/admin/promo-1111', async (req, res) => {

@@ -46,6 +46,21 @@ test('audiencia: saca a los que compraron y junta el mismo correo escrito distin
   assert.deepStrictEqual(lista[0].origenes, ['checkout']);
 });
 
+test('audiencia: el pago a medias de alguien que después compró con otro correo no entra', () => {
+  const lista = promo.audiencia({
+    pedidos: [
+      // Pagó después con otro correo: su nombre está en las compras.
+      { status: 'pending', created_at: '2026-11-10T10:00:00Z', customer: { name: 'María José  Pérez', email: 'mjp@hotmail.com' } },
+      // Un nombre de una sola palabra no basta para sacarlo.
+      { status: 'pending', created_at: '2026-11-10T10:00:00Z', customer: { name: 'Juan', email: 'juan@hotmail.com' } },
+      // Anterior a los tickets de compra: no se sabe si compró, no entra.
+      { status: 'pending', created_at: '2026-07-20T10:00:00Z', customer: { name: 'Luis Soto', email: 'luis@hotmail.com' } },
+    ],
+    nombresCompradores: ['maria jose perez', 'Juan'],
+  });
+  assert.deepStrictEqual(lista.map(p => p.clave), ['juan@hotmail.com']);
+});
+
 test('audiencia: quien ya recibió el correo no vuelve a aparecer', () => {
   const lista = promo.audiencia({
     personasRuleta: [{ email: 'ana@gmail.com', fecha: '2026-11-05T10:00:00Z', estado: 'vencido' }],
