@@ -12,10 +12,17 @@ function destinatario() {
 // ── Envío por Resend (HTTPS — funciona en Render) ──
 // `to` opcional: si no se indica, va al dueño (destinatario()).
 function enviarViaResend(subject, html, attachments, to) {
+  return resendDetallado(subject, html, attachments, to).then(r => r.ok);
+}
+
+// Igual que enviarViaResend, pero dice QUÉ respondió Resend ({ ok, status,
+// cuerpo }): el correo 11:11 lo necesita para detenerse cuando se acaba la
+// cuota del día (429) en vez de seguir generando códigos que no llegan.
+function resendDetallado(subject, html, attachments, to) {
   return new Promise(resolve => {
     const key = process.env.RESEND_API_KEY;
     const dest = to || destinatario();
-    if (!key || !dest) return resolve(false);
+    if (!key || !dest) return resolve({ ok: false, status: 0, cuerpo: 'Falta RESEND_API_KEY o destinatario' });
 
     const body = {
       from: process.env.MAIL_FROM || 'DEUS Band <onboarding@resend.dev>',
@@ -45,15 +52,15 @@ function enviarViaResend(subject, html, attachments, to) {
       res.on('end', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           console.log('[email] Enviado vía Resend');
-          resolve(true);
+          resolve({ ok: true, status: res.statusCode, cuerpo: '' });
         } else {
           console.error('[email] Resend error', res.statusCode, raw.substring(0, 250));
-          resolve(false);
+          resolve({ ok: false, status: res.statusCode, cuerpo: raw.substring(0, 400) });
         }
       });
     });
-    req.on('error', e => { console.error('[email] Resend req error', e.message); resolve(false); });
-    req.setTimeout(10000, () => { req.destroy(); resolve(false); });
+    req.on('error', e => { console.error('[email] Resend req error', e.message); resolve({ ok: false, status: 0, cuerpo: e.message }); });
+    req.setTimeout(10000, () => { req.destroy(); resolve({ ok: false, status: 0, cuerpo: 'timeout' }); });
     req.write(payload);
     req.end();
   });
@@ -516,4 +523,63 @@ async function enviarPremioRuleta(datos) {
   return ok;
 }
 
-module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, enviarPremioRuleta, diagnostico };
+// Correo "11:11" (pedido del dueño, 11-nov-2026): a quien dejó su correo y no
+// compró, 10% OFF por 24 horas. Lo manda services/promo.js, de a uno.
+// El asunto es lo que se ve en la notificación del celular: parte con la
+// varita (pedido del dueño) y dice de qué se trata, como pide el art. 28 B de
+// la Ley 19.496 para los correos promocionales; el pie da cómo darse de baja.
+// Solo por Resend: devuelve { ok, status, cuerpo } para que el envío masivo
+// sepa si se acabó la cuota del día.
+const ASUNTO_1111 = '🪄 ¿Estabas buscando una DEUS Band? Tu 10% del 11:11 ✨ solo por 24 horas';
+function html1111({ codigo, vence }) {
+  const { precioBanda } = require('./precio');
+  const precio = precioBanda();
+  const descuento = Math.ceil(precio * 10 / 100); // igual que descuentoPremio()
+  const link = `${SITIO}/?premio=${encodeURIComponent(codigo)}`;
+  const fv = new Date(vence);
+  const venceTxt = fv.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', weekday: 'long', day: 'numeric', month: 'long' }).replace(',', '')
+    + ' a las ' + fv.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false });
+  const check = (texto) => `<tr><td style="padding:8px 0;width:30px;vertical-align:middle"><span style="display:inline-block;width:22px;height:22px;border-radius:11px;background:#0a7d2c;color:#ffffff;font-weight:bold;font-size:13px;line-height:22px;text-align:center">✓</span></td><td style="padding:8px 0;font-size:14.5px;color:#222;text-align:left;vertical-align:middle">${texto}</td></tr>`;
+  return `
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">✨ Pide un deseo: 10% OFF en tu DEUS Band. Tu código vence en 24 horas.</div>
+    <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee">
+      <div style="background:#fff4d6;border-bottom:1px solid #f0d58a;color:#7a5200;padding:11px 16px;text-align:center;font-size:13.5px;font-weight:bold">⚠️ Aviso: tu 10% de descuento vence en 24 horas</div>
+      <div style="background:#080808;padding:22px 24px 18px;text-align:center">
+        <img src="${SITIO}/img/logo-email.png" alt="DEUS BRAND" width="190" style="width:190px;max-width:72%;height:auto;display:inline-block;border:0;outline:none;text-decoration:none;">
+        <div style="margin-top:14px;font-size:12px;letter-spacing:3px;color:#e7cf9c;font-weight:bold">🪄 11:11 · PIDE UN DESEO ✨</div>
+      </div>
+      <div style="padding:26px 24px 24px;text-align:center;color:#222">
+        <h1 style="font-size:25px;line-height:1.2;margin:0 0 10px;color:#111">¿Estabas buscando una DEUS Band?</h1>
+        <p style="font-size:15px;color:#444;line-height:1.55;margin:0 0 18px">Hoy es 11.11, y a las 11:11 se piden deseos ✨. Si el tuyo era tu DEUS Band, acá te dejamos un <b>10% de descuento</b> para tu compra. Válido solo por <b>24 horas</b>.</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f7;border-radius:10px;margin:0 0 16px"><tr><td style="padding:4px 14px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            ${check('<b>10% de descuento</b> en tu DEUS Band')}
+            ${check('<b>Envío gratis</b> a todo Chile, llega en 1 a 2 días')}
+            ${check('<b>3 cuotas sin interés</b>')}
+          </table>
+        </td></tr></table>
+        <div style="border:2px dashed #d9b46c;background:#fbf6ec;border-radius:10px;padding:12px;margin:0 0 16px">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#888">Tu código mágico 🪄</div>
+          <div style="font-size:27px;font-weight:bold;letter-spacing:4px;color:#111;margin-top:4px">${codigo}</div>
+        </div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eeeeee;border-radius:10px;margin:0 0 18px"><tr>
+          <td style="padding:10px;width:88px"><img src="${SITIO}/img/thumb-negra.webp" alt="DEUS Band" width="78" height="78" style="width:78px;height:78px;border-radius:8px;display:block;border:0"></td>
+          <td style="padding:10px 10px 10px 4px;text-align:left"><b style="font-size:15px;color:#111">DEUS Band</b><br>
+            <s style="color:#999;font-size:13px">${money(precio)}</s> <b style="font-size:20px;color:#111">${money(precio - descuento)}</b><br>
+            <span style="font-size:12px;color:#0a7d2c;font-weight:bold">Envío gratis · 3 cuotas sin interés</span></td>
+        </tr></table>
+        <a href="${link}" style="display:block;background:#111111;color:#e7cf9c;text-decoration:none;font-weight:bold;letter-spacing:1.5px;font-size:14px;text-transform:uppercase;border-radius:10px;padding:16px">🪄 Usar mi 10% ahora</a>
+        <p style="font-size:12.5px;color:#888;margin:14px 0 0;line-height:1.5">Tu código vence el <b>${venceTxt}</b>, 24 horas después de este correo. Un solo uso, en una compra hecha con <b>este mismo correo</b>.</p>
+      </div>
+      <div style="border-top:1px solid #eee;padding:14px 20px 18px;font-size:11.5px;color:#999;text-align:center;line-height:1.6">
+        Recibiste este correo porque dejaste tu correo en deusbrand.cl.<br>Si no quieres recibir más promociones, responde este correo con la palabra BAJA.<br>DEUS Brand · Santiago, Chile
+      </div>
+    </div>`;
+}
+async function enviarPromo1111(datos) {
+  const email = (datos && datos.email || '').trim();
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, status: 0, cuerpo: 'correo inválido' };
+  return resendDetallado(ASUNTO_1111, html1111(datos), null, email);
+}
+
+module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, enviarPremioRuleta, enviarPromo1111, ASUNTO_1111, html1111, diagnostico };

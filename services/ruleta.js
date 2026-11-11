@@ -296,7 +296,11 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     }
     const t = ahora();
     const codigo = nuevoCodigo(p.prefijo);
-    estado.codigos[codigo] = { codigo, premio: p.id, email, emailEnvio, creado: t, vence: t + VIGENCIA_MS, color: null, usado: null, reserva: null, manual: true };
+    // vigenciaMs: los del correo 11:11 duran 24 h desde que se mandan, no 48.
+    // campana: de qué envío salió el código (los del panel no llevan).
+    const vigencia = Number(opciones.vigenciaMs) > 0 ? Number(opciones.vigenciaMs) : VIGENCIA_MS;
+    estado.codigos[codigo] = { codigo, premio: p.id, email, emailEnvio, creado: t, vence: t + vigencia, color: null, usado: null, reserva: null, manual: true };
+    if (opciones.campana) estado.codigos[codigo].campana = String(opciones.campana).slice(0, 30);
     await guardar();
     return { ...datos(estado.codigos[codigo]), email: emailEnvio };
   }

@@ -13,6 +13,7 @@ const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, envi
 const colores_ = require('./services/colores');
 const correo_ = require('./services/correo');
 const ruleta_ = require('./services/ruleta');
+const promo_ = require('./services/promo');
 const utilidad_ = require('./services/utilidad');
 const devoluciones_ = require('./services/devoluciones');
 const { getStock, decrementStock, setStock } = require('./services/stock');
@@ -522,6 +523,34 @@ app.post('/admin/ruleta/generar', async (req, res) => {
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
+});
+
+// ── Correo 11:11: 10% OFF por 24 h a quien dejó su correo y no compró ──
+// Ver services/promo.js. GET = vista previa (cuántos y estado del envío);
+// POST /enviar = arranca el envío en segundo plano (el panel va preguntando
+// el estado con el GET). Misma clave que /admin/ruleta.
+function fuentesPromo() {
+  return ruleta_.servicio().lista().then(personasRuleta => ({
+    personasRuleta,
+    pedidos,
+    correosCompradores: metrics.obtenerTickets().map(t => t.email).filter(Boolean),
+  }));
+}
+app.get('/admin/promo-1111', async (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+  res.set('Cache-Control', 'no-store');
+  try { res.json(await promo_.campana().vistaPrevia(await fuentesPromo())); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/admin/promo-1111/enviar', async (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+  res.set('Cache-Control', 'no-store');
+  try { res.json(await promo_.campana().iniciar(await fuentesPromo(), { maximo: req.body && req.body.maximo })); }
+  catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/notificaciones', async (req, res) => {

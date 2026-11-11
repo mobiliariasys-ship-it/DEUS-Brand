@@ -205,6 +205,9 @@
   .ru-gen-cod{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86rem;letter-spacing:.6px;color:#e8e8ee;user-select:all;}
   .ru-gen-c span{flex:1;min-width:150px;font-size:.66rem;color:#8a8a92;}
   .ru-gen-err{margin-top:8px;font-size:.7rem;color:#ff7a7a;}
+  .promo-cifra{font-size:.8rem;color:#e8e8ee;margin:10px 0 8px;line-height:1.5;}
+  .promo-cifra b{color:#e7cf9c;font-size:1rem;}
+  .promo-ok{margin-top:8px;font-size:.72rem;color:#7fd589;line-height:1.5;}
   .ru-manual{background:rgba(120,170,255,.14);color:#8fb4ff;}
   .ru-estado{display:inline-block;font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap;}
   .ru-usado{background:rgba(105,196,109,.14);color:#69c46d;}
@@ -890,6 +893,20 @@
         </div>
         <div class="ru-gen-nota">Duran 48 horas y sirven una sola vez. Sin correo, cualquiera puede usarlos; con correo, solo esa persona. No cuentan como giros de la ruleta.</div>
         <div id="ru-gen-res"></div>
+      </div>
+      <!-- Correo 11:11 (11-nov-2026): 10% OFF por 24 h a quien dejó su correo
+           y no compró. Ver services/promo.js. -->
+      <div class="ru-gen" id="promo-1111">
+        <div class="ru-gen-h">🪄 Correo 11:11 · 10% OFF por 24 horas</div>
+        <div class="ru-gen-nota">Le llega a quien dejó su correo en la ruleta o en un pago de Mercado Pago y no compró. Cada uno recibe su propio código: sirve una vez, solo con su correo, y vence 24 horas después de que le llega. Nadie lo recibe dos veces.</div>
+        <div class="promo-cifra" id="promo-cifra">Calculando a quiénes les llega…</div>
+        <div class="ru-acc">
+          <input id="promo-max" type="number" min="1" inputmode="numeric" placeholder="Máximo a enviar (vacío = todos)" aria-label="Máximo de correos a enviar">
+          <button class="btn" id="promo-btn" onclick="enviarPromo1111(this)" disabled>Enviar</button>
+          <button class="btn ghost" onclick="cargarPromo1111()">Actualizar</button>
+        </div>
+        <div class="ru-gen-nota">Si tu plan de Resend es el gratis (100 correos al día), pon un máximo y deja margen para las confirmaciones de compra de hoy.</div>
+        <div id="promo-res"></div>
       </div>
       <div class="ru-acc">
         <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
@@ -2250,6 +2267,7 @@
       .then(function(r){ return r.json(); })
       .then(function(d){ if(!d || d.error) return; ruleta = d; pintarRuleta(); })
       .catch(function(){});
+    cargarPromo1111();
   }
   function fechaRuleta(iso){
     try { return new Date(iso).toLocaleString('es-CL', { timeZone:'America/Santiago', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }); }
@@ -2366,6 +2384,50 @@
     }).catch(function(){
       out.innerHTML = '<div class="ru-gen-err">No hubo conexión con el servidor. Intenta de nuevo.</div>';
     }).then(function(){ btn.disabled = false; btn.textContent = txt; });
+  }
+  // ── Correo 11:11 ──
+  var promoTimer = null, promoTotal = 0;
+  function pintarPromo1111(d){
+    var cifra = document.getElementById('promo-cifra'), btn = document.getElementById('promo-btn'), res = document.getElementById('promo-res');
+    if(!cifra) return;
+    if(!d || d.error){ cifra.textContent = (d && d.error) || 'No se pudo calcular.'; btn.disabled = true; return; }
+    if(typeof d.total === 'number'){
+      promoTotal = d.total;
+      cifra.innerHTML = d.total
+        ? 'Le llegaría a <b>' + d.total + '</b> persona' + (d.total === 1 ? '' : 's') + ' (' + d.porOrigen.ruleta + ' de la ruleta, ' + d.porOrigen.checkout + ' de pagos sin terminar).'
+        : 'No queda nadie por recibirlo.';
+      if(d.yaRecibieron) cifra.innerHTML += '<br><small>Ya lo recibieron ' + d.yaRecibieron + '.</small>';
+    }
+    var enviando = d.estado === 'enviando';
+    btn.disabled = enviando || !promoTotal;
+    btn.textContent = enviando ? 'Enviando…' : 'Enviar';
+    if(d.estado === 'enviando' || d.estado === 'listo' || d.estado === 'detenido'){
+      var txt = (enviando ? 'Enviando: ' : (d.estado === 'listo' ? '✅ Listo: ' : '⚠️ Se detuvo: ')) + d.enviados + ' de ' + d.totalEnvio + ' enviados' + (d.fallidos ? ' · ' + d.fallidos + ' fallaron' : '') + '.';
+      res.innerHTML = '<div class="' + (d.estado === 'detenido' ? 'ru-gen-err' : 'promo-ok') + '">' + esc(txt) + (d.motivo ? '<br>' + esc(d.motivo) : '') + '</div>';
+    }
+    clearTimeout(promoTimer);
+    if(enviando) promoTimer = setTimeout(cargarPromo1111, 3000);
+  }
+  function cargarPromo1111(){
+    fetch(BASE+'/admin/promo-1111?clave='+encodeURIComponent(clave), { cache:'no-store' })
+      .then(function(r){ return r.json(); }).then(pintarPromo1111)
+      .catch(function(){ pintarPromo1111({ error: 'No hubo conexión con el servidor.' }); });
+  }
+  function enviarPromo1111(btn){
+    var max = parseInt(document.getElementById('promo-max').value, 10);
+    var n = max > 0 ? Math.min(max, promoTotal) : promoTotal;
+    if(!n || !confirm('¿Enviar el correo 11:11 (10% OFF por 24 horas) a ' + n + ' persona' + (n === 1 ? '' : 's') + '? No se puede deshacer.')) return;
+    btn.disabled = true; btn.textContent = 'Enviando…';
+    fetch(BASE+'/admin/promo-1111/enviar?clave='+encodeURIComponent(clave), {
+      method:'POST', cache:'no-store', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ maximo: max > 0 ? max : null })
+    }).then(function(r){ return r.json(); }).then(function(d){
+      pintarPromo1111(d);
+      promoTimer = setTimeout(cargarPromo1111, 2000);
+    }).catch(function(){
+      document.getElementById('promo-res').innerHTML = '<div class="ru-gen-err">No hubo conexión con el servidor. Intenta de nuevo.</div>';
+      btn.disabled = false; btn.textContent = 'Enviar';
+    });
   }
   function copiarCodigosRuleta(btn, i){
     var t = i < 0
