@@ -31,6 +31,9 @@ const PAGADOS = new Set(['approved', 'paid', 'enviado']);
 // sin pagar más viejo que eso no entra, porque ahí no hay cómo saber si
 // después compró.
 const CHECKOUT_DESDE = Date.parse('2026-08-05T00:00:00Z');
+// Quien empezó a pagar hace menos de una hora puede estar pagando ahora mismo:
+// mandarle un 10% justo después de pagar el precio completo es un reclamo.
+const CHECKOUT_RECIENTE_MS = 60 * 60 * 1000;
 
 // "María José  Pérez" y "maria jose perez" son el mismo nombre. Solo cuentan
 // nombres de dos palabras o más: un "Juan" suelto no identifica a nadie.
@@ -44,8 +47,12 @@ function nombreClave(n) {
 //  correosCompradores / nombresCompradores: de los tickets de compra (uno por
 //    venta pagada). El nombre saca a quien pagó con OTRO correo que el del
 //    pedido que dejó a medias.
+//  intentos: pagos empezados por Flow/Webpay (services/intentos.js)
 //  yaEnviados: claves (correo normalizado) que ya recibieron este correo
-function audiencia({ personasRuleta = [], pedidos = [], correosCompradores = [], nombresCompradores = [], yaEnviados = new Set() } = {}) {
+//  ahora: para no escribirle a quien empezó a pagar hace menos de una hora
+// Alguien que hizo tres pedidos y pagó el tercero queda fuera entero: todo se
+// agrupa por correo, y basta UNA compra con ese correo (o ese nombre).
+function audiencia({ personasRuleta = [], pedidos = [], intentos = [], correosCompradores = [], nombresCompradores = [], yaEnviados = new Set(), ahora = Date.now() } = {}) {
   const clave = e => { const v = validarCorreo(e); return v.ok ? v : null; };
   const nombresQueCompraron = new Set(nombresCompradores.map(nombreClave).filter(Boolean));
   const compraron = new Set();
@@ -63,14 +70,27 @@ function audiencia({ personasRuleta = [], pedidos = [], correosCompradores = [],
     else { prev.origenes.add(origen); if (f > prev.fecha) { prev.fecha = f; prev.email = v.envio; } }
   };
   for (const p of personasRuleta) if (!p.manual && p.email) sumar(p.email, p.fecha, 'ruleta');
-  for (const p of pedidos) {
-    if (!p || PAGADOS.has(p.status)) continue;
-    const f = Date.parse(p.created_at);
-    if (!(f >= CHECKOUT_DESDE)) continue;
-    const n = nombreClave(p.customer && p.customer.name);
-    if (n && nombresQueCompraron.has(n)) continue;
-    sumar(p.customer && p.customer.email, p.created_at, 'checkout');
+  const checkouts = [
+    ...pedidos.filter(p => p && !PAGADOS.has(p.status))
+      .map(p => ({ email: p.customer && p.customer.email, nombre: p.customer && p.customer.name, fecha: p.created_at })),
+    ...intentos.filter(Boolean).map(i => ({ email: i.email, nombre: i.nombre, fecha: i.fecha })),
+  ];
+  // Quien tiene un pago empezado hace menos de una hora no recibe nada (ni
+  // por la ruleta): puede estar pagando en este momento.
+  const pagandoAhora = new Set();
+  for (const c of checkouts) {
+    const f = Date.parse(c.fecha);
+    const v = clave(c.email);
+    if (v && f > ahora - CHECKOUT_RECIENTE_MS) pagandoAhora.add(v.clave);
   }
+  for (const c of checkouts) {
+    const f = Date.parse(c.fecha);
+    if (!(f >= CHECKOUT_DESDE)) continue;
+    const n = nombreClave(c.nombre);
+    if (n && nombresQueCompraron.has(n)) continue;
+    sumar(c.email, c.fecha, 'checkout');
+  }
+  for (const k of pagandoAhora) por.delete(k);
 
   return [...por.values()]
     .sort((a, b) => b.fecha - a.fecha)
@@ -104,7 +124,7 @@ function crearCampana({ load, save, ruleta, enviar, ahora = () => Date.now(), es
 
   async function vistaPrevia(fuentes) {
     await cargar();
-    const lista = audiencia({ ...fuentes, yaEnviados: new Set(Object.keys(estado.enviados)) });
+    const lista = audiencia({ ...fuentes, ahora: ahora(), yaEnviados: new Set(Object.keys(estado.enviados)) });
     const porOrigen = { ruleta: 0, checkout: 0 };
     for (const p of lista) for (const o of p.origenes) porOrigen[o]++;
     return { ...publico(), total: lista.length, porOrigen };
@@ -144,7 +164,7 @@ function crearCampana({ load, save, ruleta, enviar, ahora = () => Date.now(), es
   async function iniciar(fuentes, { maximo } = {}) {
     await cargar();
     if (trabajo && trabajo.estado === 'enviando') return publico();
-    const lista = audiencia({ ...fuentes, yaEnviados: new Set(Object.keys(estado.enviados)) });
+    const lista = audiencia({ ...fuentes, ahora: ahora(), yaEnviados: new Set(Object.keys(estado.enviados)) });
     const tope = parseInt(maximo, 10);
     const cola = tope > 0 ? lista.slice(0, tope) : lista;
     trabajo = { estado: 'enviando', total: cola.length, enviados: 0, fallidos: 0, motivo: null, inicio: new Date(ahora()).toISOString(), fin: null };

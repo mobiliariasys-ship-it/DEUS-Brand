@@ -7,6 +7,7 @@ const correo_ = require('../services/correo');
 const colores_ = require('../services/colores');
 const { decrementStock, getStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
+const intentos_ = require('../services/intentos');
 const metrics = require('../services/metrics');
 const metaCapi = require('../services/meta-capi');
 
@@ -144,6 +145,8 @@ router.post('/flow/crear', async (req, res) => {
     enviarPedidoNuevo(pedido).catch(e => console.error('[email]', e.message));
     // Si en 10 min no hay pago confirmado, correo de recuperación al cliente
     programarRecuperacion(commerceOrder, pedido);
+    // Guarda el pago empezado (sin esto se perdía al reiniciar): ver services/intentos.js
+    intentos_.anotar({ email: customerEmail, nombre: customerName, pasarela: 'Flow', orden: commerceOrder });
 
     console.log('[flow/crear] orden=' + commerceOrder + ' monto=' + amount);
     res.json({ url: r.body.url + '?token=' + r.body.token });

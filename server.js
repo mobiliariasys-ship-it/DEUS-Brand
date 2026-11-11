@@ -14,6 +14,7 @@ const colores_ = require('./services/colores');
 const correo_ = require('./services/correo');
 const ruleta_ = require('./services/ruleta');
 const promo_ = require('./services/promo');
+const intentos_ = require('./services/intentos');
 const utilidad_ = require('./services/utilidad');
 const devoluciones_ = require('./services/devoluciones');
 const { getStock, decrementStock, setStock } = require('./services/stock');
@@ -530,9 +531,10 @@ app.post('/admin/ruleta/generar', async (req, res) => {
 // POST /enviar = arranca el envío en segundo plano (el panel va preguntando
 // el estado con el GET). Misma clave que /admin/ruleta.
 function fuentesPromo() {
-  return ruleta_.servicio().lista().then(personasRuleta => ({
+  return Promise.all([ruleta_.servicio().lista(), intentos_.registro().todos()]).then(([personasRuleta, intentos]) => ({
     personasRuleta,
     pedidos,
+    intentos,
     correosCompradores: metrics.obtenerTickets().map(t => t.email).filter(Boolean),
     nombresCompradores: metrics.obtenerTickets().map(t => t.nombre).filter(Boolean),
   }));

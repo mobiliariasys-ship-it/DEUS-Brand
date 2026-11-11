@@ -47,3 +47,7 @@ resenas-orden.json
 # Aviso push de ventas en modo archivo: lleva la llave privada VAPID y las
 # suscripciones del navegador del dueño. Nunca al repositorio.
 avisos-push.json
+# Correo 11:11 y pagos empezados en modo archivo: llevan correos y nombres de
+# clientes. El repositorio es público: nunca se suben.
+intentos-pago.json
+promo-1111.json

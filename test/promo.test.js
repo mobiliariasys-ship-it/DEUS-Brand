@@ -61,6 +61,38 @@ test('audiencia: el pago a medias de alguien que después compró con otro corre
   assert.deepStrictEqual(lista.map(p => p.clave), ['juan@hotmail.com']);
 });
 
+test('audiencia: pagos empezados por Webpay; el que hizo 3 pedidos y pagó uno no entra', () => {
+  const ahora = Date.parse('2026-11-11T18:00:00Z');
+  const lista = promo.audiencia({
+    ahora,
+    intentos: [
+      { fecha: '2026-11-09T10:00:00Z', email: 'tres@gmail.com', nombre: 'Pedro Rojas' },
+      { fecha: '2026-11-09T11:00:00Z', email: 'tres@gmail.com', nombre: 'Pedro Rojas' },
+      { fecha: '2026-11-09T12:00:00Z', email: 'tres@gmail.com', nombre: 'Pedro Rojas' },
+      { fecha: '2026-11-10T12:00:00Z', email: 'nocompro@gmail.com', nombre: 'Ana Díaz' },
+      // Empezó a pagar hace 20 minutos: puede estar pagando ahora.
+      { fecha: '2026-11-11T17:40:00Z', email: 'pagando@gmail.com', nombre: 'Rosa Vera' },
+    ],
+    personasRuleta: [{ email: 'pagando@gmail.com', fecha: '2026-11-11T17:30:00Z', estado: 'vigente' }],
+    correosCompradores: ['tres@gmail.com'],
+  });
+  assert.deepStrictEqual(lista.map(p => p.clave), ['nocompro@gmail.com']);
+});
+
+test('los pagos empezados se guardan sin trabar nada', async () => {
+  const intentos = require('../services/intentos');
+  const m = memoria();
+  const r = intentos.crearRegistro({ load: m.load, save: m.save });
+  r.anotar({ email: 'Ana@Gmail.com', nombre: 'Ana Díaz', pasarela: 'Webpay', orden: 'O-1' });
+  r.anotar({ email: '', nombre: 'sin correo' });
+  r.anotar({ email: 'beto@gmail.com', nombre: 'Beto', pasarela: 'Flow', orden: 'deus-2' });
+  const todos = await r.todos();
+  assert.deepStrictEqual(todos.map(x => x.email), ['ana@gmail.com', 'beto@gmail.com']);
+  assert.strictEqual(m.datos[intentos.ARCHIVO].length, 2);
+  // Las dos pasarelas lo anotan al crear el pago.
+  for (const f of ['routes/flow.js', 'routes/transbank.js']) assert.match(leer(f), /intentos_\.anotar\(\{ email: customerEmail/);
+});
+
 test('audiencia: quien ya recibió el correo no vuelve a aparecer', () => {
   const lista = promo.audiencia({
     personasRuleta: [{ email: 'ana@gmail.com', fecha: '2026-11-05T10:00:00Z', estado: 'vencido' }],

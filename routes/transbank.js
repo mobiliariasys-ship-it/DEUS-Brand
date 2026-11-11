@@ -5,6 +5,7 @@ const { enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, envi
 const colores_ = require('../services/colores');
 const { decrementStock, getStock } = require('../services/stock');
 const { programarRecuperacion, marcarPagado } = require('../services/recovery');
+const intentos_ = require('../services/intentos');
 const metrics = require('../services/metrics');
 const metaCapi = require('../services/meta-capi');
 
@@ -99,6 +100,8 @@ router.post('/webpay/crear', async (req, res) => {
     enviarPedidoNuevo(pedido).catch(e => console.error('[email]', e.message));
     // Si en 10 min no hay pago confirmado, correo de recuperación al cliente
     programarRecuperacion(buyOrder, pedido);
+    // Guarda el pago empezado (sin esto se perdía al reiniciar): ver services/intentos.js
+    intentos_.anotar({ email: customerEmail, nombre: customerName, pasarela: 'Webpay', orden: buyOrder });
 
     console.log(`[webpay/crear] buyOrder=${buyOrder} | monto=${amount}`);
     res.json({ url: resp.url, token: resp.token });
