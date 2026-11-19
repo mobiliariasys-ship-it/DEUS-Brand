@@ -2108,14 +2108,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   'use strict';
   // Gajos en el sentido del reloj desde arriba. Los ids son los de
   // services/ruleta.js: el servidor devuelve uno y la ruleta se detiene ahí.
-  // El $10.000 (pedido del dueño, 19-nov-2026) va en dorado y al final: así
-  // queda entre la correa y el 5%, sin dos gajos del mismo color pegados.
+  // Pedidos del dueño (19-nov-2026): el $10.000 va en dorado y al final, y
+  // el 7% arriba en negro, pegado al $10.000 (los dos a los lados del
+  // puntero); el 5% abajo, en gris. El color sale de la posición (negro,
+  // gris, rosado...), así que ningún gajo queda pegado a otro de su color.
   var GAJOS = [
-    { id: 'p5',      a: '5%',      b: 'OFF' },
+    { id: 'p7',      a: '7%',      b: 'OFF' },
     { id: 'tapones', a: 'TAPONES', a2: 'DE OÍDO', b: 'GRATIS' },
     { id: 'd3000',   a: '$3.000',  b: 'OFF' },
     { id: 'p10',     a: '10%',     b: 'OFF' },
-    { id: 'p7',      a: '7%',      b: 'OFF' },
+    { id: 'p5',      a: '5%',      b: 'OFF' },
     { id: 'd7000',   a: '$7.000',  b: 'OFF' },
     { id: 'correa',  a: 'CORREA',  b: 'EXTRA' },
     { id: 'd10000',  a: '$10.000', b: 'OFF', dorado: true }

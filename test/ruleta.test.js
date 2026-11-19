@@ -510,3 +510,20 @@ test('el $10.000 va en dorado y los premios nuevos se cobran como monto fijo', (
   assert.strictEqual(calcularMonto({ cantidad: 1, premio: { tipo: 'descuento', monto: 7000 } }).total, PRECIO - 7000);
   assert.strictEqual(calcularMonto({ cantidad: 1, premio: { tipo: 'descuento', monto: 10000 } }).total, PRECIO - 10000);
 });
+
+test('arriba van el 7% en negro y el $10.000 dorado; el 5% abajo, en gris', () => {
+  // Pedido del dueño (19-nov-2026). El gajo 0 empieza en el puntero y gira con
+  // el reloj: con 8 gajos, el 0 y el 7 son los de arriba, el 4 el de abajo.
+  const gajos = HTML.slice(HTML.indexOf('var GAJOS = ['), HTML.indexOf('];', HTML.indexOf('var GAJOS = [')));
+  const ids = [...gajos.matchAll(/\{ id: '([a-z0-9]+)',/g)].map(m => m[1]);
+  assert.strictEqual(ids.length, 8);
+  assert.strictEqual(ids[0], 'p7', 'el 7% arriba, a la derecha del puntero');
+  assert.strictEqual(ids[7], 'd10000', 'el $10.000 arriba, a la izquierda del puntero');
+  assert.strictEqual(ids[4], 'p5', 'el 5% abajo');
+  // Colores por posición: los normales van negro, gris, rosado... (el dorado
+  // no cuenta). El 7% es el 1.º normal (negro) y el 5% el 5.º (gris).
+  const normales = ids.filter(id => id !== 'd10000');
+  const color = id => ['negro', 'gris', 'rosado'][normales.indexOf(id) % 3];
+  assert.strictEqual(color('p7'), 'negro');
+  assert.strictEqual(color('p5'), 'gris');
+});
