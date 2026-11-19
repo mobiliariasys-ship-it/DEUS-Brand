@@ -24,13 +24,17 @@
 //  - Al empezar a pagar queda reservado 30 minutos para esa compra.
 //
 // Probabilidades (decisión del dueño, 4-nov-2026; el 6-nov bajó los tapones
-// a 0,2% y el 10% OFF a 0,5%, y lo que se liberó pasó al $3.000). Suman
-// exactamente 1. Costo promedio por venta con código ≈ $2.930.
+// a 0,2% y el 10% OFF a 0,5%, y lo que se liberó pasó al $3.000). El
+// 19-nov-2026 el dueño pidió que a quien le salía el 5% le salga el 7%: el 5%
+// queda en la ruleta pero sale solo el 0,1% de las veces (no en 0: un premio
+// que se ve y nunca sale sería publicidad engañosa), y sus 19,9 puntos pasan
+// al 7% (3% → 22,9%). Suman exactamente 1. Costo promedio por venta con
+// código ≈ $3.205 (antes ≈ $2.930: cada 7% en vez de 5% son $1.380 más).
 const PREMIOS = [
   { id: 'd3000',   etiqueta: '$3.000 OFF',     tipo: 'descuento', monto: 3000, prob: 0.613, prefijo: 'DEUS3K' },
-  { id: 'p5',      etiqueta: '5% OFF',         tipo: 'descuento', pct: 5,      prob: 0.20,  prefijo: 'DEUS5' },
+  { id: 'p5',      etiqueta: '5% OFF',         tipo: 'descuento', pct: 5,      prob: 0.001, prefijo: 'DEUS5' },
   { id: 'correa',  etiqueta: 'Correa extra',   tipo: 'correa',                 prob: 0.15,  prefijo: 'CORREA' },
-  { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.03,  prefijo: 'DEUS7' },
+  { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.229, prefijo: 'DEUS7' },
   // Los tapones tienen que poder salir: un premio que se muestra en la ruleta
   // y nunca sale sería publicidad engañosa (SERNAC).
   { id: 'tapones', etiqueta: 'Tapones de oído gratis', tipo: 'tapones',        prob: 0.002, prefijo: 'TAPONES' },

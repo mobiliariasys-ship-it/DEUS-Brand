@@ -34,7 +34,8 @@ function servicio(opciones = {}) {
 
 test('las probabilidades son las que eligió el dueño y suman 100%', () => {
   const p = Object.fromEntries(ruleta.PREMIOS.map(x => [x.id, x.prob]));
-  assert.deepStrictEqual(p, { d3000: 0.613, p5: 0.20, correa: 0.15, p7: 0.03, tapones: 0.002, p10: 0.005 });
+  // 19-nov-2026: el 5% pasó a 0,1% y sus 19,9 puntos al 7% (antes 20% y 3%).
+  assert.deepStrictEqual(p, { d3000: 0.613, p5: 0.001, correa: 0.15, p7: 0.229, tapones: 0.002, p10: 0.005 });
   const suma = ruleta.PREMIOS.reduce((s, x) => s + x.prob, 0);
   assert.ok(Math.abs(suma - 1) < 1e-9, 'suman ' + suma);
 });

@@ -195,6 +195,8 @@
   .ru-badge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:.6rem;font-weight:700;background:rgba(63,217,160,.14);color:var(--green,#3fd9a0);}
   .ru-acc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
   .ru-acc input{flex:1;min-width:170px;background:var(--card,#141418);border:1px solid var(--border);color:#e8e8ee;border-radius:8px;padding:9px 11px;font:inherit;font-size:.78rem;}
+  .ru-dia-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.74rem;font-weight:700;color:#e8e8ee;margin:2px 0 8px;}
+  .ru-dia{margin-bottom:14px;}
   .ru-gen{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px;}
   .ru-gen-h{font-size:.74rem;font-weight:700;color:#e8e8ee;margin-bottom:8px;}
   .ru-gen .ru-acc{margin-bottom:6px;}
@@ -358,7 +360,7 @@
   /* Charts */
   .chart-container{width:100%;overflow-x:auto;background:#0b0b0b;border-radius:12px;padding:14px;border:1px solid var(--border-soft);}
   /* Alto fijo: frameBarras dibuja el canvas al tamaño en que se ve. */
-  #chartDias,#chartVentas,#chartConv{width:100%;height:210px;display:block;min-width:520px;}
+  #chartDias,#chartVentas,#chartConv,#chartCorreos{width:100%;height:210px;display:block;min-width:520px;}
   /* minmax(0,1fr): con 1fr la columna no bajaba del ancho de los canvas (820px)
      y en el celular el panel quedaba más ancho que la pantalla. */
   .two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:15px;}
@@ -875,6 +877,15 @@
     <section id="sec-ruleta">
       <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
       <div class="util-kpis" id="ru-kpis"></div>
+      <!-- Cuánta gente deja su correo cada día (pedido del dueño, 19-nov-2026):
+           personas NUEVAS por día de Chile, últimos 30 días. Sale de la misma
+           lista de la ruleta (correosPorDia): no cuenta los códigos generados a
+           mano ni a quien vuelve a girar, que ya se contó el día que dejó su
+           correo por primera vez. -->
+      <div class="ru-dia">
+        <div class="ru-dia-h"><span>📧 Correos nuevos por día · últimos 30 días</span><span class="pill" id="ru-dia-total"></span></div>
+        <div class="chart-container"><canvas id="chartCorreos" width="820" height="200"></canvas></div>
+      </div>
       <!-- Qué premio convierte mejor: de los que lo ganaron, cuántos compraron. -->
       <div class="ru-mejor" id="ru-mejor"></div>
       <div class="scroll"><table id="t-ru-premios" class="ru-rank"><thead><tr><th>Premio</th><th>Ganaron</th><th>Compraron</th><th>Conversión</th><th>Aún pueden comprar</th></tr></thead><tbody></tbody></table></div>
@@ -2282,6 +2293,29 @@
     try { return new Date(iso).toLocaleString('es-CL', { timeZone:'America/Santiago', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }); }
     catch(e){ return iso; }
   }
+  // Correos NUEVOS por día de Chile en los últimos `dias` días, terminando
+  // hoy: cada correo cuenta una sola vez, el día que lo dejó por primera vez
+  // (quien vuelve a girar no suma de nuevo). Los códigos generados a mano no
+  // son gente que dejó su correo. `hoy` (YYYY-MM-DD) solo lo pasan los tests.
+  function correosPorDia(personas, dias, hoy){
+    var diaChile = function(iso){ return new Date(iso).toLocaleDateString('en-CA', { timeZone:'America/Santiago' }); };
+    var primera = {};
+    (personas||[]).forEach(function(p){
+      if(!p || p.manual || !p.fecha) return;
+      var k = String(p.email||'').toLowerCase(); if(!k) return;
+      if(!primera[k] || p.fecha < primera[k]) primera[k] = p.fecha;
+    });
+    var porDia = {};
+    Object.keys(primera).forEach(function(k){ var d = diaChile(primera[k]); porDia[d] = (porDia[d]||0) + 1; });
+    var fin = hoy || diaChile(new Date().toISOString());
+    var base = Date.UTC(+fin.slice(0,4), +fin.slice(5,7)-1, +fin.slice(8,10), 12);
+    var salida = [];
+    for(var i=dias-1;i>=0;i--){
+      var f = new Date(base - i*86400000).toISOString().slice(0,10);
+      salida.push({ fecha:f, valor: porDia[f]||0 });
+    }
+    return salida;
+  }
   function pintarRuleta(){
     if(!ruleta) return;
     var todos = ruleta.personas || [];
@@ -2296,6 +2330,11 @@
     pers.forEach(function(p){ var k = String(p.email||'').toLowerCase(); if(k && !vistosRu[k]){ vistosRu[k] = 1; unicos++; } });
     var regiros = pers.length - unicos;
     document.getElementById('ru-total').textContent = unicos + (unicos===1 ? ' correo' : ' correos');
+    var dia = correosPorDia(pers, 30);
+    var en30 = 0; dia.forEach(function(x){ en30 += x.valor; });
+    var hoyN = dia.length ? dia[dia.length-1].valor : 0;
+    document.getElementById('ru-dia-total').textContent = 'hoy ' + hoyN + ' · ' + en30 + ' en 30 días';
+    dibujarBarras('chartCorreos', dia, COLOR_BARRAS);
     document.getElementById('ru-kpis').innerHTML =
       kpi('Dejaron su correo', unicos, '', regiros > 0 ? pers.length + ' giros · ' + regiros + (regiros===1 ? ' volvió a girar' : ' volvieron a girar') : '') +
       kpi('Compraron con su código', usados, usados ? 'bien' : '', (unicos ? Math.round(usados*100/unicos) : 0) + '% de los que giraron') +
