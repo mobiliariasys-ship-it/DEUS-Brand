@@ -55,3 +55,28 @@ test('un color agotado no se puede elegir, ni en la página ni en el checkout', 
   // El chatbot dice lo mismo que la tienda.
   assert.match(fs.readFileSync(path.join(__dirname, '..', 'services', 'chat.js'), 'utf8'), /la GRIS está agotada y vuelve pronto/);
 });
+
+test('el aviso "Gris agotado" sale solo al mirar el gris, nunca con el negro en pantalla', () => {
+  // Pedido del dueño (19-nov-2026): con el negro elegido no tiene que leerse
+  // "agotado"; solo cuando toca el gris (o desliza hasta su foto).
+  const src = "const TEXTO_RESTOCK = 'pronto restock';\n" + extraer('textoAgotados') + '\n' + extraer('actualizarNotaAgotado');
+  const nota = { textContent: '', style: { display: 'none' } };
+  const ctx = {
+    AGOTADOS: { gris: true }, colorOrder: ['negra', 'gris', 'rosada'],
+    COLOR_LABEL: { negra: 'negro', gris: 'gris', rosada: 'rosado' }, currentSlide: 0,
+    document: { getElementById: id => (id === 'color-agotado' ? nota : null) },
+  };
+  vm.createContext(ctx); vm.runInContext(src, ctx);
+  const mirar = i => { ctx.currentSlide = i; vm.runInContext('actualizarNotaAgotado()', ctx); return nota.style.display === 'none' ? '' : nota.textContent; };
+  assert.strictEqual(mirar(0), '', 'con el negro en pantalla no se ve');
+  assert.strictEqual(mirar(1), 'Gris agotado · pronto restock', 'al tocar el gris sí se ve');
+  assert.strictEqual(mirar(2), '', 'con el rosado tampoco');
+  assert.strictEqual(mirar(0), '', 'al volver al negro se esconde de nuevo');
+  // Corre con cada cambio de foto (goSlide → updateStockUI → actualizarAvisoColor)
+  // y al cargar (marcarAgotados), que ya no lo deja fijo a la vista.
+  assert.ok(extraer('actualizarAvisoColor').includes('actualizarNotaAgotado();'));
+  assert.ok(extraer('marcarAgotados').includes('actualizarNotaAgotado();'));
+  assert.ok(!/nota\.style\.display = t \? '' : 'none'; \}/.test(extraer('marcarAgotados')), 'marcarAgotados ya no muestra el aviso por su cuenta');
+  // Con el aviso justo arriba, el recuadro de la foto no repite "agotado".
+  assert.ok(extraer('actualizarAvisoColor').includes("'<span>Tu pedido va en <b>'"));
+});
