@@ -34,8 +34,14 @@ function servicio(opciones = {}) {
 
 test('las probabilidades son las que eligió el dueño y suman 100%', () => {
   const p = Object.fromEntries(ruleta.PREMIOS.map(x => [x.id, x.prob]));
-  // 19-nov-2026: el 5% pasó a 0,1% y sus 19,9 puntos al 7% (antes 20% y 3%).
-  assert.deepStrictEqual(p, { d3000: 0.613, p5: 0.001, correa: 0.15, p7: 0.229, tapones: 0.002, p10: 0.005 });
+  // 19-nov-2026: el 5% pasó a 0,1%, el 7% sale más que el $3.000 (hasta el
+  // tope de $3.800 por giro) y entran el $7.000 (2%) y el $10.000 (1%).
+  assert.deepStrictEqual(p, { d3000: 0.222, p5: 0.001, correa: 0.15, p7: 0.59, d7000: 0.02, d10000: 0.01, tapones: 0.002, p10: 0.005 });
+  assert.ok(p.p7 > p.d3000, 'el 7% sale más que el $3.000');
+  // Tope del dueño: en promedio, cada giro no puede descontar más de $3.800
+  // en plata (una banda; la correa y los tapones van aparte).
+  const promedio = ruleta.PREMIOS.reduce((s, x) => s + x.prob * (x.monto || (x.pct ? Math.ceil(PRECIO * x.pct / 100) : 0)), 0);
+  assert.ok(promedio <= 3800, 'descuento promedio por giro $' + promedio.toFixed(0));
   const suma = ruleta.PREMIOS.reduce((s, x) => s + x.prob, 0);
   assert.ok(Math.abs(suma - 1) < 1e-9, 'suman ' + suma);
 });
@@ -100,7 +106,7 @@ test('un giro por persona: el mismo correo (con puntos o +etiqueta en Gmail) rec
   const a = await s.girar('camila.rojas@gmail.com');
   assert.strictEqual(a.yaGiro, false);
   assert.strictEqual(a.reenviar, true, 'el primer giro manda el correo');
-  assert.match(a.publico.codigo, /^(DEUS3K|DEUS5|DEUS7|DEUS10|CORREA|TAPONES)-[A-HJ-NP-Z2-9]{6}$/);
+  assert.match(a.publico.codigo, /^(DEUS3K|DEUS5|DEUS7|DEUS7K|DEUS10|DEUS10K|CORREA|TAPONES)-[A-HJ-NP-Z2-9]{6}$/);
   assert.strictEqual(a.paraCorreo.email, 'camila.rojas@gmail.com', 'el correo va escrito como lo dejó');
   for (const variante of ['  Camila.Rojas@Gmail.com ', 'camilarojas@gmail.com', 'c.a.m.i.l.a.rojas+ofertas@googlemail.com']) {
     const b = await s.girar(variante);
@@ -444,13 +450,13 @@ test('el correo de despacho dice qué correa del premio meter en el paquete', as
 test('el dueño genera uno de cada premio desde el panel: 48 h, una vez y no son giros', async () => {
   const { s, avanzar } = servicio();
   const cods = await s.generarUnoDeCada();
-  assert.deepStrictEqual(cods.map(c => c.premio.id), ['d3000', 'p5', 'correa', 'p7', 'tapones', 'p10']);
+  assert.deepStrictEqual(cods.map(c => c.premio.id), ['d3000', 'p5', 'correa', 'p7', 'd7000', 'd10000', 'tapones', 'p10']);
   for (const c of cods) {
     assert.match(c.codigo, /^[A-Z0-9]{3,8}-[A-Z0-9]{6}$/);
     assert.strictEqual(Date.parse(c.vence) - Date.parse('2026-11-04T12:00:00Z'), 48 * 3600 * 1000, 'duran 48 horas');
     assert.strictEqual(c.email, null);
   }
-  assert.strictEqual(new Set(cods.map(c => c.codigo)).size, 6, 'todos distintos');
+  assert.strictEqual(new Set(cods.map(c => c.codigo)).size, ruleta.PREMIOS.length, 'todos distintos');
   // Sin correo: cualquiera lo puede usar, pero UNA sola vez.
   const diez = cods.find(c => c.premio.id === 'p10');
   const r = await s.premioParaCobro(diez.codigo, null, { cliente: 'cualquiera@gmail.com' });
@@ -460,9 +466,9 @@ test('el dueño genera uno de cada premio desde el panel: 48 h, una vez y no son
   // No son giros: no suman en el resumen ni le quitan el giro a nadie.
   const res = await s.resumen();
   assert.strictEqual(res.giros, 0);
-  assert.strictEqual(res.manuales, 6);
+  assert.strictEqual(res.manuales, ruleta.PREMIOS.length);
   assert.strictEqual((await s.girar('cualquiera@gmail.com')).yaGiro, false, 'usar un código generado no le quita el giro');
-  assert.strictEqual((await s.lista()).filter(x => x.manual).length, 6);
+  assert.strictEqual((await s.lista()).filter(x => x.manual).length, ruleta.PREMIOS.length);
   // Vencen a las 48 horas, igual que los de la ruleta.
   avanzar(49 * 3600 * 1000);
   await assert.rejects(s.premioParaCobro(cods[0].codigo, null, { cliente: 'x@gmail.com' }), /venció/);
@@ -491,4 +497,16 @@ test('el panel genera códigos con su clave y no los mezcla con los correos de l
   assert.ok(admin.includes('<option value="todos">Uno de cada premio</option>'));
   assert.ok(admin.includes('var pers = todos.filter(function(p){ return !p.manual; });'), 'los generados no cuentan como gente que giró');
   assert.ok(admin.includes('return !p.manual && p.email;'), '"Copiar correos" no copia los generados');
+});
+
+test('el $10.000 va en dorado y los premios nuevos se cobran como monto fijo', () => {
+  // Pedido del dueño (19-nov-2026): $10.000 OFF en dorado (1%) y $7.000 OFF (2%).
+  const gajos = HTML.slice(HTML.indexOf('var GAJOS = ['), HTML.indexOf('];', HTML.indexOf('var GAJOS = [')));
+  assert.match(gajos, /\{ id: 'd10000',\s+a: '\$10\.000', b: 'OFF', dorado: true \}/);
+  assert.match(gajos, /\{ id: 'd7000',\s+a: '\$7\.000',\s+b: 'OFF' \}/);
+  assert.strictEqual((gajos.match(/dorado: true/g) || []).length, 1, 'un solo gajo dorado');
+  // El dorado no le quita su color a los demás: siguen negro, gris y rosado.
+  assert.ok(HTML.includes("var k = p.dorado ? DORADO : (normales++ % DORADO), col = PALETA[k][2];"));
+  assert.strictEqual(calcularMonto({ cantidad: 1, premio: { tipo: 'descuento', monto: 7000 } }).total, PRECIO - 7000);
+  assert.strictEqual(calcularMonto({ cantidad: 1, premio: { tipo: 'descuento', monto: 10000 } }).total, PRECIO - 10000);
 });

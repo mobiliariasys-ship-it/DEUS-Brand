@@ -28,13 +28,21 @@
 // 19-nov-2026 el dueño pidió que a quien le salía el 5% le salga el 7%: el 5%
 // queda en la ruleta pero sale solo el 0,1% de las veces (no en 0: un premio
 // que se ve y nunca sale sería publicidad engañosa), y sus 19,9 puntos pasan
-// al 7% (3% → 22,9%). Suman exactamente 1. Costo promedio por venta con
-// código ≈ $3.205 (antes ≈ $2.930: cada 7% en vez de 5% son $1.380 más).
+// al 7% (3% → 22,9%). Ese mismo día pidió además que el 7% salga más que el
+// $3.000 y dos premios nuevos: un $7.000 OFF (2%) y un $10.000 OFF (1%) que
+// va en DORADO en la ruleta de la página. Con un tope de $3.800 de descuento
+// promedio por giro, lo que sobra va al 7%: 7% 22,9% → 59%; $3.000
+// 61,3% → 22,2%. Suman exactamente 1. Descuento promedio por venta con
+// código ≈ $3.794 en plata, sin contar la correa ni los tapones (antes
+// ≈ $2.983). test/ruleta.test.js falla si pasa de $3.800.
 const PREMIOS = [
-  { id: 'd3000',   etiqueta: '$3.000 OFF',     tipo: 'descuento', monto: 3000, prob: 0.613, prefijo: 'DEUS3K' },
+  { id: 'd3000',   etiqueta: '$3.000 OFF',     tipo: 'descuento', monto: 3000, prob: 0.222, prefijo: 'DEUS3K' },
   { id: 'p5',      etiqueta: '5% OFF',         tipo: 'descuento', pct: 5,      prob: 0.001, prefijo: 'DEUS5' },
   { id: 'correa',  etiqueta: 'Correa extra',   tipo: 'correa',                 prob: 0.15,  prefijo: 'CORREA' },
-  { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.229, prefijo: 'DEUS7' },
+  { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.59,  prefijo: 'DEUS7' },
+  { id: 'd7000',   etiqueta: '$7.000 OFF',     tipo: 'descuento', monto: 7000, prob: 0.02,  prefijo: 'DEUS7K' },
+  // El $10.000 va en dorado en la ruleta de la página (GAJOS, dorado: true).
+  { id: 'd10000',  etiqueta: '$10.000 OFF',    tipo: 'descuento', monto: 10000, prob: 0.01, prefijo: 'DEUS10K' },
   // Los tapones tienen que poder salir: un premio que se muestra en la ruleta
   // y nunca sale sería publicidad engañosa (SERNAC).
   { id: 'tapones', etiqueta: 'Tapones de oído gratis', tipo: 'tapones',        prob: 0.002, prefijo: 'TAPONES' },
