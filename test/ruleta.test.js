@@ -36,13 +36,14 @@ test('las probabilidades son las que eligió el dueño y suman 100%', () => {
   const p = Object.fromEntries(ruleta.PREMIOS.map(x => [x.id, x.prob]));
   // 19-nov-2026: el 5% pasó a 0,1%, el 7% sale más que el $3.000 (hasta el
   // tope de $3.800 por giro) y entran el $7.000 (2%) y el $10.000 (1%).
-  // Ese mismo día el 10% salió de la ruleta (prob 0) y su 0,5% pasó al 7%.
-  assert.deepStrictEqual(p, { d3000: 0.222, p5: 0.001, correa: 0.15, p7: 0.595, d7000: 0.02, d10000: 0.01, tapones: 0.002, p10: 0 });
+  // Ese mismo día el 10% salió de la ruleta (prob 0) y su 0,5% pasó al $10.000.
+  assert.deepStrictEqual(p, { d3000: 0.222, p5: 0.001, correa: 0.15, p7: 0.59, d7000: 0.02, d10000: 0.015, tapones: 0.002, p10: 0 });
   assert.ok(p.p7 > p.d3000, 'el 7% sale más que el $3.000');
   // Tope del dueño: en promedio, cada giro no puede descontar más de $3.800
   // en plata (una banda; la correa y los tapones van aparte).
   const promedio = ruleta.PREMIOS.reduce((s, x) => s + x.prob * (x.monto || (x.pct ? Math.ceil(PRECIO * x.pct / 100) : 0)), 0);
-  assert.ok(promedio <= 3800, 'descuento promedio por giro $' + promedio.toFixed(0));
+  // 20-nov-2026: el 0,5% del 10% pasó al $10.000 y el tope subió a $3.810.
+  assert.ok(promedio <= 3810, 'descuento promedio por giro $' + promedio.toFixed(0));
   const suma = ruleta.PREMIOS.reduce((s, x) => s + x.prob, 0);
   assert.ok(Math.abs(suma - 1) < 1e-9, 'suman ' + suma);
 });
