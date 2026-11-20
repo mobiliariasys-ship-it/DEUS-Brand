@@ -2364,8 +2364,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   var capa = null, correoUsado = '', relojTimer = null;
   function cerrarRuleta() {
     if (!capa || girando) return;
-    var e = leer(); if (!e.estado) { e.estado = 'visto'; guardar(e); }
+    var e = leer(); if (!e.estado) { e.estado = 'visto'; e.cerro = Date.now(); guardar(e); }
     clearInterval(relojTimer);
+    if (e.estado === 'visto') vigilarInteres();
     capa.classList.remove('abierta');
     var c = capa; capa = null; lienzo = null; ctx = null; rayos = [];
     setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 260);
@@ -2542,16 +2543,53 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // si ya giró ni si ya tiene un código aplicado (p. ej. llegó desde el correo
   // del premio). La llama cerrarCheckout().
   var CLAVE_2DA = 'deus-ruleta-2da';
-  window.ruletaSegundaOportunidad = function () {
+  window.ruletaSegundaOportunidad = function (motivo) {
     try {
-      if (leer().estado !== 'visto') return;
-      if (localStorage.getItem(CLAVE_2DA) || localStorage.getItem('deus-ruleta-aplicado')) return;
-      if (capa || otraVentanaAbierta()) return;
+      if (leer().estado !== 'visto') return false;
+      if (localStorage.getItem(CLAVE_2DA) || localStorage.getItem('deus-ruleta-aplicado')) return false;
+      if (capa || otraVentanaAbierta()) return false;
       localStorage.setItem(CLAVE_2DA, '1');
-    } catch (e) { return; } // sin localStorage no hay cómo saber si ya la vio
+    } catch (e) { return false; } // sin localStorage no hay cómo saber si ya la vio
     pantallaInicio(true);
-    evento('ruleta-vista'); evento('ruleta-segunda');
+    evento('ruleta-vista'); evento('ruleta-segunda'); evento('ruleta-segunda-' + (motivo || 'checkout'));
+    return true;
   };
+
+  // ── Más momentos para la segunda oportunidad (20-nov-2026) ──
+  // Panel, 11 al 20-nov: ~45% de las visitas ve la ruleta y solo ~13% de esas
+  // gira. La segunda oportunidad al cerrar el checkout convierte ~16% (5
+  // compras de 32), pero salía 2-3 veces al día. Pedido del dueño: que vuelva
+  // a salir a quien no la usó. Ahora esa MISMA y ÚNICA reaparición (CLAVE_2DA:
+  // una vez por navegador, sea cual sea el gatillo) también llega:
+  //  - 'vuelta': cuando vuelve a la web en otra visita (30 min o más después
+  //    de cerrarla), a los mismos 5,4 s de pestaña visible.
+  //  - 'interes': en la misma visita, tras 60 s más de pestaña visible y
+  //    habiendo llegado al precio (hito:precio): ya conoce el producto y duda.
+  //  - 'salida': en computador, cuando el mouse sale por arriba de la ventana
+  //    (va a cerrar la pestaña), si lleva al menos 15 s desde que la cerró.
+  // Cada gatillo deja su evento (accion:ruleta-segunda-<motivo>) para medir en
+  // el panel cuál convierte.
+  var VUELTA_MS = 30 * 60 * 1000, INTERES_MS = 60 * 1000, SALIDA_MIN_MS = 15 * 1000;
+  var vigilando = false, desde = Date.now();
+  function yaSalio() { try { return !!(localStorage.getItem(CLAVE_2DA) || localStorage.getItem('deus-ruleta-aplicado')); } catch (e) { return true; } }
+  function vioPrecio() { try { return !!sessionStorage.getItem('deus-ev-hito:precio'); } catch (e) { return false; } }
+  function vigilarInteres() {
+    if (vigilando || yaSalio()) return;
+    vigilando = true; desde = Date.now();
+    var visible = 0, PASO = 1000;
+    var t = setInterval(function () {
+      if (yaSalio() || leer().estado !== 'visto') { clearInterval(t); return; }
+      if (document.visibilityState !== 'visible') return;
+      visible += PASO;
+      if (visible >= INTERES_MS && vioPrecio() && window.ruletaSegundaOportunidad('interes')) clearInterval(t);
+    }, PASO);
+  }
+  document.addEventListener('mouseout', function (ev) {
+    if (ev.relatedTarget || ev.clientY > 0 || !vigilando) return;
+    if (!(window.matchMedia && window.matchMedia('(pointer: fine)').matches)) return;
+    if (Date.now() - desde < SALIDA_MIN_MS) return;
+    window.ruletaSegundaOportunidad('salida');
+  });
 
   // ── A los 5,4 segundos (de pestaña visible), una sola vez ──
   function otraVentanaAbierta() {
@@ -2578,6 +2616,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     };
     if (document.readyState === 'complete') aplicar(); else window.addEventListener('load', aplicar);
   } else reiniciarSiVencio(function () {
+    var ant = leer();
+    if (ant.estado === 'visto') {
+      if (yaSalio()) return;
+      vigilarInteres();
+      // Sin 'cerro' = la cerró antes de que existiera este dato: es otra visita.
+      if (ant.cerro && Date.now() - ant.cerro < VUELTA_MS) return;
+      var vv = 0;
+      var tv = setInterval(function () {
+        if (yaSalio()) { clearInterval(tv); return; }
+        if (document.visibilityState !== 'visible') return;
+        vv += 200;
+        if (vv >= ESPERA_MS && window.ruletaSegundaOportunidad('vuelta')) clearInterval(tv);
+      }, 200);
+      return;
+    }
     if (leer().estado) return;
     var vistos = 0, PASO_MS = 200;
     var t = setInterval(function () {
