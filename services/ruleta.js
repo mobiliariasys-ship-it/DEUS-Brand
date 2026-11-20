@@ -1,6 +1,6 @@
 'use strict';
 // Ruleta "Gira y gana" (desde el 4-nov-2026, en lugar de la pestaña del
-// sorteo mensual). A los 5,4 segundos en la web aparece la ruleta: la persona
+// sorteo mensual). A los 3 segundos en la web aparece la ruleta: la persona
 // deja su correo, gira, y le llega al correo un código con su premio.
 //
 // El premio lo decide ESTE archivo, nunca el navegador: el navegador solo
@@ -22,6 +22,9 @@
 //    juntar códigos girando con otros correos: cada correo tiene un código y
 //    solo ese correo lo puede usar. Una compra lleva un solo código.
 //  - Al empezar a pagar queda reservado 30 minutos para esa compra.
+//  - Segundo lanzamiento (20-nov-2026, ver otroLanzamiento): quien giró y
+//    no ha usado su premio lanza UNA vez más y le llegan los dos códigos para
+//    que elija uno. Usar uno anula el otro, así que sigue siendo un premio.
 //
 // Probabilidades (decisión del dueño, 4-nov-2026; el 6-nov bajó los tapones
 // a 0,2% y el 10% OFF a 0,5%, y lo que se liberó pasó al $3.000). El
@@ -91,6 +94,8 @@ const MENSAJES = {
   'uno-solo': 'Solo se puede usar un código por compra.',
   'otro-correo': 'Este código es de otro correo. Para usarlo, compra con el mismo correo con el que giraste la ruleta',
   'desechable': 'Usa tu correo de siempre: a los correos temporales no les podemos mandar premios.',
+  'par-usado': 'Ya usaste el otro código de tu ruleta: los dos premios eran para elegir uno.',
+  'sin-giro': 'Primero gira la ruleta con tu correo.',
 };
 
 const tiene = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -122,6 +127,20 @@ function sortear(r) {
     if (r < acumulado) return p;
   }
   return PREMIOS[0]; // por redondeo de coma flotante, nunca debería llegar acá
+}
+
+// El segundo lanzamiento: el mismo sorteo pero SIN el premio que ya tiene.
+// Si no, más de un tercio de las veces le saldría lo mismo (el 7% sale el
+// 59%) y no habría nada que elegir. Los demás premios mantienen su peso.
+function sortearOtro(r, excluir) {
+  const opciones = PREMIOS.filter(p => p.enRuleta !== false && p.prob > 0 && p.id !== excluir);
+  const total = opciones.reduce((s, p) => s + p.prob, 0);
+  let acumulado = 0;
+  for (const p of opciones) {
+    acumulado += p.prob / total;
+    if (r < acumulado) return p;
+  }
+  return opciones[opciones.length - 1];
 }
 
 // Lo que se puede mostrar del premio (sin probabilidades ni prefijos).
@@ -197,6 +216,22 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
       vence: new Date(reg.vence).toISOString(),
     };
   }
+  // Los dos códigos de un segundo lanzamiento se apuntan entre sí (reg.par):
+  // es uno u otro, así que si usó el otro, este ya no sirve.
+  function parDe(reg) {
+    return reg && reg.par && tiene(estado.codigos, reg.par) ? estado.codigos[reg.par] : null;
+  }
+  function usadoPar(reg) {
+    const p = parDe(reg);
+    return reg.usado || (p && p.usado) || null;
+  }
+  // Lo que va en el correo: uno o, si lanzó dos veces, los dos códigos.
+  function paraElCorreo(reg) {
+    const p = parDe(reg);
+    const o = { ...datos(reg), email: reg.emailEnvio || reg.email };
+    if (p) o.otro = datos(p);
+    return o;
+  }
 
   // Un giro por persona. Devuelve:
   //  publico    → lo que se responde al navegador (sin código si ya había girado)
@@ -214,15 +249,16 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
       // desde cuándo puede). Cuando sí puede, sigue de largo: sale un premio y
       // un código nuevos, y el viejo queda en el registro como vencido.
       const giraDesde = reg.vence + REGIRO_MS;
-      if (reg.usado || t < giraDesde) {
-        const reenviar = !reg.usado && t <= reg.vence && (!reg.ultimoEnvio || t - reg.ultimoEnvio > REENVIO_MS);
+      const usado = usadoPar(reg);
+      if (usado || t < giraDesde) {
+        const reenviar = !usado && t <= reg.vence && (!reg.ultimoEnvio || t - reg.ultimoEnvio > REENVIO_MS);
         if (reenviar) { reg.ultimoEnvio = t; await guardar(); }
         const pub = datos(reg);
         delete pub.codigo;
         delete pub.color;
-        pub.usado = !!reg.usado;
-        if (!reg.usado && t > reg.vence) pub.giraDesde = new Date(giraDesde).toISOString();
-        return { yaGiro: true, reenviar, publico: { yaGiro: true, ...pub }, paraCorreo: { ...datos(reg), email: reg.emailEnvio || reg.email } };
+        pub.usado = !!usado;
+        if (!usado && t > reg.vence) pub.giraDesde = new Date(giraDesde).toISOString();
+        return { yaGiro: true, reenviar, publico: { yaGiro: true, ...pub }, paraCorreo: paraElCorreo(reg) };
       }
     }
     const premio = sortear(aleatorio());
@@ -234,12 +270,45 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     return { yaGiro: false, reenviar: true, publico: { yaGiro: false, ...datos(reg) }, paraCorreo: { ...datos(reg), email: v.envio } };
   }
 
+  // "Otra oportunidad de lanzamiento" (pedido del dueño, 20-nov-2026): quien
+  // ya giró y todavía no usa su premio lanza UNA vez más. Sale un premio
+  // distinto al primero (sortearOtro) y le llegan los DOS códigos al correo
+  // para que elija: usar uno anula el otro (validar → 'par-usado'). Los dos
+  // vencen juntos, 48 h desde este segundo lanzamiento.
+  // Se pide con el correo Y el código del primer giro: lo tiene solo quien
+  // giró (en su navegador o en su correo), no cualquiera que escriba un
+  // correo ajeno. Si ya lanzó dos veces, devuelve lo mismo (no sale otro).
+  async function otroLanzamiento(email, codigoAnterior) {
+    await cargar();
+    const v = validarCorreo(email);
+    if (!v.ok) throw error(v.tipo);
+    const c1 = normalizarCodigo(codigoAnterior);
+    const reg1 = tiene(estado.porCorreo, v.clave) && estado.porCorreo[v.clave] === c1 ? buscar(c1) : null;
+    if (!reg1) throw error('sin-giro');
+    if (usadoPar(reg1)) throw error('usado');
+    const t = ahora();
+    if (t > reg1.vence) throw error('vencido');
+    const ya = parDe(reg1);
+    if (ya) return { yaLanzo: true, reenviar: false, publico: { yaLanzo: true, ...datos(ya), anterior: datos(reg1) }, paraCorreo: paraElCorreo(reg1) };
+    const premio = sortearOtro(aleatorio(), reg1.premio);
+    const codigo = nuevoCodigo(premio.prefijo);
+    const reg2 = { codigo, premio: premio.id, email: reg1.email, emailEnvio: reg1.emailEnvio, creado: t, vence: t + VIGENCIA_MS, color: null, usado: null, reserva: null, ultimoEnvio: t, par: reg1.codigo, segundo: true };
+    estado.codigos[codigo] = reg2;
+    reg1.par = codigo;
+    reg1.vence = reg2.vence;
+    reg1.ultimoEnvio = t;
+    await guardar();
+    return { yaLanzo: false, reenviar: true, publico: { yaLanzo: false, ...datos(reg2), anterior: datos(reg1) }, paraCorreo: paraElCorreo(reg1) };
+  }
+
   // ¿Sirve este código para pagar ahora? { ok, error, mensaje, ...datos }
   async function validar(codigo) {
     await cargar();
     const reg = buscar(codigo);
     if (!reg) return { ok: false, error: 'no-existe', mensaje: MENSAJES['no-existe'] };
     if (reg.usado) return { ok: false, error: 'usado', mensaje: MENSAJES.usado };
+    const par = parDe(reg);
+    if (par && par.usado) return { ok: false, error: 'par-usado', mensaje: MENSAJES['par-usado'] };
     if (ahora() > reg.vence) return { ok: false, error: 'vencido', mensaje: MENSAJES.vencido };
     return { ok: true, ...datos(reg) };
   }
@@ -338,35 +407,41 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     await cargar();
     const por = {};
     for (const p of PREMIOS) por[p.id] = { etiqueta: p.etiqueta, giros: 0, usados: 0 };
-    let manuales = 0;
+    let manuales = 0, segundos = 0;
     for (const reg of Object.values(estado.codigos)) {
       if (reg.manual) { manuales++; continue; }
+      if (reg.segundo) segundos++;
       if (!por[reg.premio]) continue;
       por[reg.premio].giros++;
       if (reg.usado) por[reg.premio].usados++;
     }
     const giros = Object.values(por).reduce((s, x) => s + x.giros, 0);
     const usados = Object.values(por).reduce((s, x) => s + x.usados, 0);
-    return { giros, usados, porPremio: por, manuales };
+    return { giros, usados, porPremio: por, manuales, segundos };
   }
 
   // Para el panel (con clave): cada persona que dejó su correo, del más
   // nuevo al más viejo, con su premio y si ya compró, sigue vigente o venció.
+  // Con segundo lanzamiento son dos filas (segundo: true en la segunda); la
+  // que no eligió queda 'anulado' cuando usa la otra.
   async function lista() {
     await cargar();
     const t = ahora();
     return Object.values(estado.codigos)
       .map(reg => {
         const p = premioPorId(reg.premio);
+        const par = parDe(reg);
         return {
           fecha: new Date(reg.creado).toISOString(),
           email: reg.emailEnvio || reg.email || '',
           manual: !!reg.manual,
+          segundo: !!reg.segundo,
+          par: par ? par.codigo : null,
           premio: p ? p.etiqueta : reg.premio,
           premioId: reg.premio,
           codigo: reg.codigo,
           color: reg.color || null,
-          estado: reg.usado ? 'usado' : (t > reg.vence ? 'vencido' : 'vigente'),
+          estado: reg.usado ? 'usado' : (par && par.usado) ? 'anulado' : (t > reg.vence ? 'vencido' : 'vigente'),
           orden: reg.usado ? reg.usado.orden : null,
           vence: new Date(reg.vence).toISOString(),
         };
@@ -374,7 +449,7 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
       .sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
   }
 
-  return { girar, validar, elegirColor, premioParaCobro, marcarUsado, resumen, lista, generar, generarUnoDeCada };
+  return { girar, otroLanzamiento, validar, elegirColor, premioParaCobro, marcarUsado, resumen, lista, generar, generarUnoDeCada };
 }
 
 // Una sola instancia para server.js, Flow y Transbank (comparten los códigos).
@@ -391,5 +466,5 @@ function servicio() {
 
 module.exports = {
   PREMIOS, VIGENCIA_MS, REGIRO_MS, RESERVA_MS, COLORES_CORREA, MENSAJES, DESECHABLES, LARGO_CODIGO,
-  sortear, premioPorId, normalizarCodigo, validarCorreo, enmascarar, crearServicio, servicio,
+  sortear, sortearOtro, premioPorId, normalizarCodigo, validarCorreo, enmascarar, crearServicio, servicio,
 };

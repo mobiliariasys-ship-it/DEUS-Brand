@@ -1,6 +1,6 @@
 'use strict';
 // Ruleta "Gira y gana" (desde el 4-nov-2026, en lugar de la pestaña del
-// sorteo): a los 5,4 segundos aparece, la persona deja su correo, gira (máximo
+// sorteo): a los 3 segundos aparece, la persona deja su correo, gira (máximo
 // 3 segundos) y le llega un código de 48 horas. El premio lo decide el
 // servidor y lo que se cobra lo calcula calcularMonto(): el navegador solo
 // manda el código. Estos tests cuidan las tres cosas que tocan plata: las
@@ -73,8 +73,12 @@ test('los gajos de la página son los mismos premios del servidor', () => {
   assert.deepStrictEqual([...ids].sort(), ruleta.PREMIOS.filter(p => p.enRuleta !== false).map(p => p.id).sort());
 });
 
-test('aparece a los 5,4 segundos y el giro dura máximo 3 segundos', () => {
-  assert.match(HTML, /var ESPERA_MS = 5400;/);
+test('aparece a los 3 segundos y el giro dura máximo 3 segundos', () => {
+  // 20-nov-2026: de 5,4 a 3 s (el 55% de las visitas se iba antes de verla).
+  assert.match(HTML, /var ESPERA_MS = 3000;/);
+  // Y dice de entrada que todos los gajos son premio.
+  assert.ok(HTML.includes('<b>Premio seguro</b> en cada giro: solo necesitas tu correo.'));
+  assert.ok(HTML.includes('Todos los gajos son premio'));
   // El reloj avanza de a 200 ms y solo con la pestaña a la vista.
   assert.match(HTML, /vistos \+= PASO_MS;\s+if \(vistos < ESPERA_MS\) return;/);
   assert.ok(!/var SEGUNDOS = /.test(HTML), 'quedó el reloj viejo de 11 segundos');
@@ -85,13 +89,16 @@ test('aparece a los 5,4 segundos y el giro dura máximo 3 segundos', () => {
 });
 
 test('segunda oportunidad: al cerrar el checkout sin pagar, una sola vez', () => {
-  // Solo a quien la cerró sin girar, nunca con un código ya aplicado, y la
-  // marca queda en una clave propia para que no se borre con el estado.
+  // A quien la cerró sin girar, o a quien giró y no usó su premio (otro
+  // lanzamiento, desde el 20-nov). Sin girar, nunca con un código ya aplicado.
+  // La marca queda en una clave propia para que no se borre con el estado.
   const i = HTML.indexOf('window.ruletaSegundaOportunidad = function');
   assert.ok(i > 0, 'falta la segunda oportunidad');
   const fn = HTML.slice(i, HTML.indexOf('};', i));
-  assert.match(fn, /leer\(\)\.estado !== 'visto'\) return;/);
-  assert.match(fn, /localStorage\.getItem\(CLAVE_2DA\) \|\| localStorage\.getItem\('deus-ruleta-aplicado'\)\) return;/);
+  assert.match(fn, /if \(e\.estado === 'giro'\) \{ if \(!puedeOtroLanzamiento\(e\)\) return false; otro = true; \}/);
+  assert.match(fn, /else if \(e\.estado !== 'visto'\) return false;/);
+  assert.match(fn, /if \(localStorage\.getItem\(CLAVE_2DA\)\) return false;/);
+  assert.match(fn, /if \(!otro && localStorage\.getItem\('deus-ruleta-aplicado'\)\) return false;/);
   assert.match(fn, /localStorage\.setItem\(CLAVE_2DA, '1'\);/);
   // El checkout la llama recién cuando se cierra de verdad, y no en "solo tapones".
   assert.ok(HTML.includes('if (!checkoutTapones && window.ruletaSegundaOportunidad) window.ruletaSegundaOportunidad();'));
@@ -223,7 +230,7 @@ test('la página permite el nuevo giro a las 24 h (igual que el servidor) pero N
   const i = HTML.indexOf('function reiniciarSiVencio');
   const fn = HTML.slice(i, HTML.indexOf('})();', i));
   assert.match(fn, /Date\.now\(\) < v \+ REGIRO_MS\) return seguir\(\);/);
-  assert.match(fn, /d\.error === 'usado'\) \{ e\.usado = true; guardar\(e\); seguir\(\); \}/);
+  assert.match(fn, /d\.error === 'usado' \|\| d\.error === 'par-usado'\)\) \{ e\.usado = true; guardar\(e\); seguir\(\); \}/);
   assert.match(fn, /d\.error === 'vencido'\) limpiar\(\);/);
 });
 
@@ -531,4 +538,155 @@ test('arriba van el 7% en negro y el $10.000 dorado; el 5% abajo, en gris', () =
   const color = id => ['negro', 'gris', 'rosado'][normales.indexOf(id) % 3];
   assert.strictEqual(color('p7'), 'negro');
   assert.strictEqual(color('p5'), 'gris');
+});
+
+// ── Otra oportunidad de lanzamiento (pedido del dueño, 20-nov-2026) ──
+// Quien giró y no usó su premio lanza una vez más: sale un premio distinto,
+// le llegan los dos códigos al correo y elige uno (usar uno anula el otro).
+// Con azar 0,5 el primer giro cae en el 7% y el segundo (sin el 7%) en el $3.000.
+
+test('otro lanzamiento: solo quien giró (con su código), una vez, y sale un premio distinto', async () => {
+  const { s, avanzar } = servicio({ azar: () => 0.5 });
+  const a = (await s.girar('lanza@gmail.com')).publico;
+  assert.strictEqual(a.premio.id, 'p7');
+  // Sin el código del primer giro (o con otro correo) no se puede.
+  await assert.rejects(() => s.otroLanzamiento('lanza@gmail.com', 'DEUS7-AAAAAA'), e => e.codigoError === 'sin-giro');
+  await assert.rejects(() => s.otroLanzamiento('otro@gmail.com', a.codigo), e => e.codigoError === 'sin-giro');
+  await assert.rejects(() => s.otroLanzamiento('nuevo@gmail.com', ''), e => e.codigoError === 'sin-giro');
+  avanzar(10 * 3600 * 1000);
+  // El mismo correo escrito distinto (Gmail) y el código en minúscula sirven.
+  const r = await s.otroLanzamiento('l.anza+x@gmail.com', a.codigo.toLowerCase());
+  assert.strictEqual(r.yaLanzo, false);
+  assert.strictEqual(r.reenviar, true);
+  assert.strictEqual(r.publico.premio.id, 'd3000', 'no repite el 7% que ya tiene');
+  assert.ok(r.publico.codigo && r.publico.codigo !== a.codigo);
+  assert.strictEqual(r.publico.anterior.codigo, a.codigo);
+  // Los dos vencen juntos, 48 h desde el segundo lanzamiento.
+  assert.strictEqual(r.publico.vence, r.publico.anterior.vence);
+  assert.strictEqual(Date.parse(r.publico.vence), Date.parse(a.vence) + 10 * 3600 * 1000);
+  // Al correo van los dos, al correo como lo escribió la primera vez.
+  assert.strictEqual(r.paraCorreo.email, 'lanza@gmail.com');
+  assert.strictEqual(r.paraCorreo.codigo, a.codigo);
+  assert.strictEqual(r.paraCorreo.otro.codigo, r.publico.codigo);
+  // Una sola vez: pedirlo de nuevo devuelve lo mismo, sin sortear ni reenviar.
+  const r2 = await s.otroLanzamiento('lanza@gmail.com', a.codigo);
+  assert.strictEqual(r2.yaLanzo, true);
+  assert.strictEqual(r2.reenviar, false);
+  assert.strictEqual(r2.publico.codigo, r.publico.codigo);
+  assert.strictEqual((await s.lista()).length, 2);
+  // Con el código del segundo tampoco sale un tercero.
+  await assert.rejects(() => s.otroLanzamiento('lanza@gmail.com', r.publico.codigo), e => e.codigoError === 'sin-giro');
+  // Si alguien escribe ese correo en la ruleta, al dueño le llegan los dos.
+  avanzar(11 * 60 * 1000);
+  const g = await s.girar('lanza@gmail.com');
+  assert.strictEqual(g.yaGiro, true);
+  assert.strictEqual(g.paraCorreo.otro.codigo, r.publico.codigo);
+  assert.ok(!('codigo' in g.publico), 'en pantalla sigue sin verse el código');
+});
+
+test('otro lanzamiento: es uno u otro (usar uno anula el otro)', async () => {
+  const { s, avanzar } = servicio({ azar: () => 0.5 });
+  const a = (await s.girar('elige@gmail.com')).publico;
+  const b = (await s.otroLanzamiento('elige@gmail.com', a.codigo)).publico;
+  assert.strictEqual((await s.validar(a.codigo)).ok, true);
+  assert.strictEqual((await s.validar(b.codigo)).ok, true);
+  // Paga con el segundo: el primero ya no sirve.
+  assert.ok(await s.premioParaCobro(b.codigo, '', { cliente: 'elige@gmail.com' }));
+  assert.strictEqual(await s.marcarUsado(b.codigo, 'orden-5'), true);
+  const v = await s.validar(a.codigo);
+  assert.strictEqual(v.error, 'par-usado');
+  assert.ok(v.mensaje.includes('el otro código'));
+  await assert.rejects(() => s.premioParaCobro(a.codigo, '', { cliente: 'elige@gmail.com' }), e => e.codigoError === 'par-usado');
+  // El panel: uno 'usado' y el otro 'anulado'.
+  const l = await s.lista();
+  assert.strictEqual(l.find(x => x.codigo === b.codigo).estado, 'usado');
+  assert.strictEqual(l.find(x => x.codigo === b.codigo).segundo, true);
+  assert.strictEqual(l.find(x => x.codigo === a.codigo).estado, 'anulado');
+  assert.strictEqual((await s.resumen()).segundos, 1);
+  // Ya usó su premio: no hay giro nuevo ni otro lanzamiento, pase lo que pase.
+  avanzar(30 * 24 * 3600 * 1000);
+  const g = (await s.girar('elige@gmail.com')).publico;
+  assert.strictEqual(g.yaGiro, true);
+  assert.strictEqual(g.usado, true);
+  await assert.rejects(() => s.otroLanzamiento('elige@gmail.com', a.codigo), e => e.codigoError === 'usado');
+});
+
+test('otro lanzamiento: no con el premio usado ni vencido; los dos vencen juntos', async () => {
+  const { s } = servicio({ azar: () => 0.5 });
+  const a = (await s.girar('usado@gmail.com')).publico;
+  await s.marcarUsado(a.codigo, 'orden-1');
+  await assert.rejects(() => s.otroLanzamiento('usado@gmail.com', a.codigo), e => e.codigoError === 'usado');
+  const { s: s2, avanzar: av2 } = servicio({ azar: () => 0.5 });
+  const c = (await s2.girar('tarde@gmail.com')).publico;
+  av2(48 * 3600 * 1000 + 1000);
+  await assert.rejects(() => s2.otroLanzamiento('tarde@gmail.com', c.codigo), e => e.codigoError === 'vencido');
+  // Con los dos sin usar: vencen juntos y, a las 24 h de vencer, gira de nuevo (como siempre).
+  const { s: s3, avanzar: av3 } = servicio({ azar: () => 0.5 });
+  const x = (await s3.girar('par@gmail.com')).publico;
+  const y = (await s3.otroLanzamiento('par@gmail.com', x.codigo)).publico;
+  av3(48 * 3600 * 1000 + 1000);
+  assert.strictEqual((await s3.validar(x.codigo)).error, 'vencido');
+  assert.strictEqual((await s3.validar(y.codigo)).error, 'vencido');
+  assert.strictEqual((await s3.lista()).filter(p => p.estado === 'vencido').length, 2);
+  av3(24 * 3600 * 1000);
+  const z = (await s3.girar('par@gmail.com')).publico;
+  assert.strictEqual(z.yaGiro, false, 'premio y código nuevos');
+});
+
+test('el segundo lanzamiento reparte como la ruleta, sin el premio que ya tiene', () => {
+  for (const ya of ['p7', 'd3000', 'correa', 'd10000']) {
+    const N = 100000, cuenta = {};
+    for (let i = 0; i < N; i++) { const p = ruleta.sortearOtro(i / N, ya); cuenta[p.id] = (cuenta[p.id] || 0) + 1; }
+    assert.ok(!cuenta[ya], 'repitió ' + ya);
+    assert.ok(!cuenta.p10, 'el 10% no está en la ruleta');
+    const resto = ruleta.PREMIOS.filter(p => p.enRuleta !== false && p.id !== ya);
+    const total = resto.reduce((t, p) => t + p.prob, 0);
+    for (const p of resto) assert.ok(Math.abs((cuenta[p.id] || 0) / N - p.prob / total) < 0.0002, ya + ' → ' + p.id);
+  }
+});
+
+test('el servidor tiene la ruta del otro lanzamiento, con los frenos del giro', () => {
+  const src = leer('server.js');
+  const i = src.indexOf("app.post('/ruleta/otra'");
+  assert.ok(i > 0, 'falta la ruta');
+  const ep = src.slice(i, src.indexOf('\n});', i));
+  assert.ok(ep.includes('giroPedidoIp.lleno(ip)') && ep.includes('giroPedidoIp.anotar(ip)'));
+  assert.ok(ep.includes("giroNuevoTodos.lleno('todos')"));
+  assert.ok(ep.includes('res.json(r.publico);') && !ep.includes('res.json(r.paraCorreo'));
+  assert.ok(ep.includes('enviarPremioRuleta(r.paraCorreo)'), 'los dos códigos van al correo');
+});
+
+test('el correo del segundo lanzamiento trae los dos códigos, cada uno con su botón', async () => {
+  const email = require('../services/email');
+  const [m] = await conCorreos(() => email.enviarPremioRuleta({
+    email: 'camila@gmail.com', codigo: 'DEUS7-K7Q2AB', vence: '2026-11-22T18:42:00Z',
+    premio: { id: 'p7', etiqueta: '7% OFF', tipo: 'descuento', pct: 7 },
+    otro: { codigo: 'CORREA-M3P9ZZ', vence: '2026-11-22T18:42:00Z', premio: { id: 'correa', etiqueta: 'Correa extra', tipo: 'correa' } },
+  }));
+  assert.deepStrictEqual(m.to, ['camila@gmail.com']);
+  assert.match(m.subject, /Tus 2 premios/);
+  assert.match(m.subject, /elige 7% OFF o Correa extra/);
+  for (const c of ['DEUS7-K7Q2AB', 'CORREA-M3P9ZZ']) {
+    assert.ok(m.html.includes(c), 'falta ' + c);
+    assert.ok(m.html.includes('https://deusbrand.cl/?premio=' + c + '"'), 'falta el botón de ' + c);
+  }
+  assert.ok(m.html.includes('$64.160'), 'el 7% con su precio final');
+  assert.ok(m.html.includes('al usar uno, el otro se anula'));
+  assert.ok(m.html.includes('este mismo correo'));
+});
+
+test('la página ofrece otro lanzamiento a quien giró y no usó su premio', () => {
+  assert.ok(HTML.includes('Tienes otra oportunidad de lanzamiento'));
+  assert.ok(HTML.includes("fetch(base + '/ruleta/otra'"));
+  assert.ok(HTML.includes('JSON.stringify({ email: e.email, codigo: e.codigo })'), 'se pide con el código del primer giro');
+  // Solo con el código revisado (sirve y no lo usó), sin un segundo ya hecho.
+  const f = HTML.slice(HTML.indexOf('function puedeOtroLanzamiento'), HTML.indexOf('function pantallaOtroLanzamiento'));
+  assert.match(f, /e\.codigo !== codigoVivo \|\| e\.usado \|\| e\.otro/);
+  // Los dos premios se eligen en la pantalla, cada uno con su botón.
+  assert.ok(HTML.includes("opcion({ codigo: e.codigo, premio: pr }, '1er lanzamiento', 0, vencido)"));
+  assert.ok(HTML.includes("opcion({ codigo: e.otro.codigo, premio: e.otro.premio }, '2º lanzamiento', 1, vencido)"));
+  // El gajo del premio que ya tiene se ve apagado: esta vez no puede salir.
+  assert.ok(HTML.includes('rueda(rot, undefined, gajoApagado)'));
+  // Los nombres de los eventos caben en lo que acepta el panel (24 caracteres).
+  for (const ev of ['ruleta-otro-ofrecido', 'ruleta-otro-checkout', 'ruleta-otro-giro', 'ruleta-otro-usar']) assert.ok(ev.length <= 24);
 });

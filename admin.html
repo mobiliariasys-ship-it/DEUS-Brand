@@ -2324,13 +2324,20 @@
     // Los códigos que generó el dueño no son gente que giró: no entran en los
     // números, pero sí se ven en la tabla (marcados 🎟️).
     var pers = todos.filter(function(p){ return !p.manual; });
-    var contar = function(est){ return pers.filter(function(p){ return p.estado===est; }).length; };
+    // Con segundo lanzamiento la persona tiene dos filas que vencen juntas:
+    // vigentes y vencidos se cuentan por persona (sin la fila del 2º lanzamiento).
+    var contar = function(est){ return pers.filter(function(p){ return p.estado===est && (est==='usado' || !p.segundo); }).length; };
     var usados = contar('usado'), vigentes = contar('vigente'), vencidos = contar('vencido');
     // Un mismo correo puede girar de nuevo si su premio venció (24 h después
     // de vencer): cada giro es una fila, pero la persona se cuenta una vez.
     var vistosRu = {}, unicos = 0;
     pers.forEach(function(p){ var k = String(p.email||'').toLowerCase(); if(k && !vistosRu[k]){ vistosRu[k] = 1; unicos++; } });
-    var regiros = pers.length - unicos;
+    var segundos = pers.filter(function(p){ return p.segundo; }).length;
+    var regiros = pers.length - segundos - unicos;
+    var subCorreo = [];
+    if (regiros > 0 || segundos > 0) subCorreo.push(pers.length + ' giros');
+    if (segundos > 0) subCorreo.push(segundos + ' con 2º lanzamiento');
+    if (regiros > 0) subCorreo.push(regiros + (regiros===1 ? ' volvió a girar' : ' volvieron a girar'));
     document.getElementById('ru-total').textContent = unicos + (unicos===1 ? ' correo' : ' correos');
     var dia = correosPorDia(pers, 30);
     var en30 = 0; dia.forEach(function(x){ en30 += x.valor; });
@@ -2338,7 +2345,7 @@
     document.getElementById('ru-dia-total').textContent = 'hoy ' + hoyN + ' · ' + en30 + ' en 30 días';
     dibujarBarras('chartCorreos', dia, COLOR_BARRAS);
     document.getElementById('ru-kpis').innerHTML =
-      kpi('Dejaron su correo', unicos, '', regiros > 0 ? pers.length + ' giros · ' + regiros + (regiros===1 ? ' volvió a girar' : ' volvieron a girar') : '') +
+      kpi('Dejaron su correo', unicos, '', subCorreo.join(' · ')) +
       kpi('Compraron con su código', usados, usados ? 'bien' : '', (unicos ? Math.round(usados*100/unicos) : 0) + '% de los que giraron') +
       kpi('Premios vigentes', vigentes, '', 'todavía pueden comprar') +
       kpi('Vencieron sin usar', vencidos);
@@ -2374,10 +2381,11 @@
     rows('#t-ruleta', vistas, function(p){
       var est = p.estado==='usado' ? '<span class="ru-estado ru-usado">✅ Compró</span>'
         : p.estado==='vigente' ? '<span class="ru-estado ru-vigente">⏳ Vigente</span><span class="ru-cod">vence ' + fechaRuleta(p.vence) + '</span>'
+        : p.estado==='anulado' ? '<span class="ru-estado ru-vencido">Eligió el otro</span><span class="ru-cod">ya no sirve</span>'
         : '<span class="ru-estado ru-vencido">Venció</span><span class="ru-cod">sin usar</span>';
       return '<td class="ru-f">' + fechaRuleta(p.fecha) + '</td>' +
         '<td><span class="ru-mail">' + (p.manual ? '🎟️ ' + (p.email ? esc(p.email) : 'Generado · cualquier correo') : esc(p.email)) + '</span><span class="ru-cod">' + esc(p.premio) +
-        (p.premioId==='correa' && p.color ? ' (' + esc(p.color) + ')' : '') + ' · ' + esc(p.codigo) + '</span></td>' +
+        (p.premioId==='correa' && p.color ? ' (' + esc(p.color) + ')' : '') + ' · ' + esc(p.codigo) + (p.segundo ? ' · 2º lanzamiento' : '') + '</span></td>' +
         '<td>' + est + '</td>';
     }, 'ruleta-empty');
   }

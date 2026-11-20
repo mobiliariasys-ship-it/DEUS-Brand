@@ -475,6 +475,29 @@ app.post('/ruleta/girar', async (req, res) => {
     res.status(500).json({ error: 'No pudimos girar la ruleta. Intenta de nuevo.' });
   }
 });
+// "Otra oportunidad de lanzamiento": quien ya giró y no ha usado su premio
+// lanza una vez más; le llegan los dos códigos al correo para que elija uno.
+// Se pide con el código del primer giro (ver ruleta.otroLanzamiento).
+app.post('/ruleta/otra', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const email = req.body && typeof req.body.email === 'string' ? req.body.email : '';
+  const codigo = req.body && typeof req.body.codigo === 'string' ? req.body.codigo : '';
+  if (!correo_.esUsable(email) || !codigo) return res.status(400).json({ error: 'Primero gira la ruleta con tu correo.' });
+  const ip = ipCliente(req);
+  if (giroPedidoIp.lleno(ip)) return res.status(429).json({ error: MUCHOS });
+  giroPedidoIp.anotar(ip);
+  if (giroNuevoTodos.lleno('todos')) return res.status(429).json({ error: 'Mucha gente girando en este momento. Intenta en unos minutos.' });
+  try {
+    const r = await ruleta_.servicio().otroLanzamiento(correo_.normalizar(email), codigo);
+    if (!r.yaLanzo) giroNuevoTodos.anotar('todos');
+    if (r.reenviar) enviarPremioRuleta(r.paraCorreo).catch(e => console.error('[ruleta] correo de los dos premios:', e.message));
+    res.json(r.publico);
+  } catch (e) {
+    if (e.codigoError) return res.status(400).json({ error: e.message, tipo: e.codigoError });
+    console.error('[ruleta/otra]', e.message);
+    res.status(500).json({ error: 'No pudimos lanzar la ruleta. Intenta de nuevo.' });
+  }
+});
 // Color de la correa del premio (lo elige en la ruleta o en el correo).
 app.post('/ruleta/color', async (req, res) => {
   const ip = ipCliente(req);

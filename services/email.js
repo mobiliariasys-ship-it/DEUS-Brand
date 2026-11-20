@@ -455,6 +455,7 @@ const SITIO = 'https://deusbrand.cl';
 async function enviarPremioRuleta(datos) {
   const email = (datos && datos.email || '').trim();
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return false;
+  if (datos.otro && datos.otro.codigo) return enviarDosPremiosRuleta(datos, email);
   const { precioBanda } = require('./precio');
   const premio = datos.premio || {};
   const codigo = String(datos.codigo || '');
@@ -520,6 +521,54 @@ async function enviarPremioRuleta(datos) {
   const asunto = `🎁 Ganaste en la ruleta DEUS: ${premio.tipo === 'descuento' ? titulo : titulo.toLowerCase()} + envío gratis`;
   const ok = await enviarCorreo(asunto, html, null, email);
   console.log(ok ? '[email] Premio de la ruleta enviado: ' + email : '[email] No se pudo enviar el premio de la ruleta: ' + email);
+  return ok;
+}
+
+// "Otra oportunidad de lanzamiento" (20-nov-2026): los DOS códigos en un
+// correo, cada uno con su botón, para que elija cuál usar. Usar uno anula el
+// otro y los dos vencen juntos. datos: lo de enviarPremioRuleta + otro: { codigo, premio, vence }.
+async function enviarDosPremiosRuleta(datos, email) {
+  const { precioBanda } = require('./precio');
+  const precio = precioBanda();
+  const fv = new Date(datos.otro.vence || datos.vence);
+  const vence = fv.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', weekday: 'long', day: 'numeric', month: 'long' }).replace(',', '')
+    + ' a las ' + fv.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false });
+  const titulo = p => p.tipo === 'correa' ? 'Correa extra' : p.tipo === 'tapones' ? 'Tapones de oído' : p.etiqueta;
+  const tarjeta = (x, n) => {
+    const p = x.premio || {};
+    const codigo = String(x.codigo || '');
+    const d = p.monto ? p.monto : (p.pct ? Math.ceil(precio * p.pct / 100) : 0);
+    const detalle = p.tipo === 'correa' ? 'Tu DEUS Band con <b>3 correas</b>: las 2 de siempre + 1 de tela extra, negra o gris (la eliges en la web).'
+      : p.tipo === 'tapones' ? '<b>Tapones de oído DEUS</b> de regalo en el mismo paquete que tu banda.'
+      : `DEUS Band a <s style="color:#999">${money(precio)}</s> <b style="color:#111;font-size:16px">${money(precio - d)}</b>`;
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6dcc6;border-radius:12px;margin:0 0 14px"><tr><td style="padding:14px 16px;text-align:left">
+          <div style="font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:#b0812f;font-weight:bold">${n}</div>
+          <div style="font-size:21px;font-weight:bold;color:#111;margin:4px 0">${titulo(p)} + envío gratis</div>
+          <div style="font-size:13.5px;color:#555;line-height:1.45;margin:0 0 10px">${detalle}</div>
+          <div style="border:2px dashed #d9b46c;background:#fbf6ec;border-radius:8px;padding:8px 10px;margin:0 0 10px;text-align:center"><div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#888">Código</div><div style="font-size:22px;font-weight:bold;letter-spacing:3px;color:#111;margin-top:2px">${codigo}</div></div>
+          <a href="${SITIO}/?premio=${encodeURIComponent(codigo)}" style="display:block;background:#111111;color:#e7cf9c;text-decoration:none;font-weight:bold;letter-spacing:1.2px;font-size:13px;text-transform:uppercase;border-radius:9px;padding:14px;text-align:center">Usar este premio</a>
+        </td></tr></table>`;
+  };
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee">
+      <div style="background:#080808;padding:24px;text-align:center">
+        <img src="${SITIO}/img/logo-email.png" alt="DEUS BRAND" width="190" style="width:190px;max-width:72%;height:auto;display:inline-block;border:0;outline:none;text-decoration:none;">
+      </div>
+      <div style="padding:28px 24px 24px;text-align:center;color:#222">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b0812f;font-weight:bold">Otra oportunidad de lanzamiento</div>
+        <h1 style="font-size:25px;line-height:1.2;margin:8px 0 6px;color:#111">Elige tu premio</h1>
+        <p style="font-size:14.5px;color:#555;line-height:1.5;margin:0 0 18px">Lanzaste dos veces y estos son tus dos premios. Usa el que más te guste: <b>al usar uno, el otro se anula</b>.</p>
+        ${tarjeta(datos, '1er lanzamiento')}
+        ${tarjeta(datos.otro, '2º lanzamiento')}
+        <p style="font-size:12.5px;color:#888;margin:4px 0 0;line-height:1.5">Los dos vencen el <b>${vence}</b>. Un código por compra, hecha con <b>este mismo correo</b>.</p>
+      </div>
+      <div style="border-top:1px solid #eee;padding:14px 20px 18px;font-size:11.5px;color:#999;text-align:center;line-height:1.6">
+        Recibiste este correo porque giraste la ruleta en deusbrand.cl.<br>DEUS Brand · Santiago, Chile
+      </div>
+    </div>`;
+  const asunto = `🎁 Tus 2 premios de la ruleta DEUS: elige ${titulo(datos.premio || {})} o ${titulo(datos.otro.premio || {})}`;
+  const ok = await enviarCorreo(asunto, html, null, email);
+  console.log(ok ? '[email] Dos premios de la ruleta enviados: ' + email : '[email] No se pudieron enviar los dos premios de la ruleta: ' + email);
   return ok;
 }
 
