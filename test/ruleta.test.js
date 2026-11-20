@@ -36,7 +36,8 @@ test('las probabilidades son las que eligió el dueño y suman 100%', () => {
   const p = Object.fromEntries(ruleta.PREMIOS.map(x => [x.id, x.prob]));
   // 19-nov-2026: el 5% pasó a 0,1%, el 7% sale más que el $3.000 (hasta el
   // tope de $3.800 por giro) y entran el $7.000 (2%) y el $10.000 (1%).
-  assert.deepStrictEqual(p, { d3000: 0.222, p5: 0.001, correa: 0.15, p7: 0.59, d7000: 0.02, d10000: 0.01, tapones: 0.002, p10: 0.005 });
+  // Ese mismo día el 10% salió de la ruleta (prob 0) y su 0,5% pasó al 7%.
+  assert.deepStrictEqual(p, { d3000: 0.222, p5: 0.001, correa: 0.15, p7: 0.595, d7000: 0.02, d10000: 0.01, tapones: 0.002, p10: 0 });
   assert.ok(p.p7 > p.d3000, 'el 7% sale más que el $3.000');
   // Tope del dueño: en promedio, cada giro no puede descontar más de $3.800
   // en plata (una banda; la correa y los tapones van aparte).
@@ -47,7 +48,7 @@ test('las probabilidades son las que eligió el dueño y suman 100%', () => {
 });
 
 test('ningún premio que se ve en la ruleta tiene 0% (SERNAC: publicidad engañosa)', () => {
-  for (const p of ruleta.PREMIOS) assert.ok(p.prob > 0, p.etiqueta + ' nunca saldría');
+  for (const p of ruleta.PREMIOS.filter(x => x.enRuleta !== false)) assert.ok(p.prob > 0, p.etiqueta + ' nunca saldría');
 });
 
 test('el sorteo reparte exactamente según las probabilidades', () => {
@@ -57,17 +58,18 @@ test('el sorteo reparte exactamente según las probabilidades', () => {
     cuenta[p.id] = (cuenta[p.id] || 0) + 1;
   }
   for (const p of ruleta.PREMIOS) {
-    assert.ok(Math.abs(cuenta[p.id] / N - p.prob) < 0.0001, p.id + ': ' + cuenta[p.id] / N);
+    assert.ok(Math.abs((cuenta[p.id] || 0) / N - p.prob) < 0.0001, p.id + ': ' + (cuenta[p.id] || 0) / N);
   }
   assert.strictEqual(ruleta.sortear(0).id, 'd3000');
-  assert.strictEqual(ruleta.sortear(0.9999999).id, 'p10');
+  assert.strictEqual(ruleta.sortear(0.9999999).id, 'tapones');
+  assert.ok(!Object.keys(cuenta).includes('p10'), 'el 10% ya no sale en la ruleta');
 });
 
 test('los gajos de la página son los mismos premios del servidor', () => {
   // Si un premio se agrega en services/ruleta.js y no en la ruleta de la
   // página (o al revés), la ruleta se detendría en un gajo equivocado.
   const ids = [...HTML.matchAll(/\{ id: '([a-z0-9]+)',\s+a: '/g)].map(m => m[1]);
-  assert.deepStrictEqual([...ids].sort(), ruleta.PREMIOS.map(p => p.id).sort());
+  assert.deepStrictEqual([...ids].sort(), ruleta.PREMIOS.filter(p => p.enRuleta !== false).map(p => p.id).sort());
 });
 
 test('aparece a los 5,4 segundos y el giro dura máximo 3 segundos', () => {
@@ -513,13 +515,15 @@ test('el $10.000 va en dorado y los premios nuevos se cobran como monto fijo', (
 
 test('arriba van el 7% en negro y el $10.000 dorado; el 5% abajo, en gris', () => {
   // Pedido del dueño (19-nov-2026). El gajo 0 empieza en el puntero y gira con
-  // el reloj: con 8 gajos, el 0 y el 7 son los de arriba, el 4 el de abajo.
+  // el reloj: con 7 gajos (desde que salió el 10%), el 0 y el 6 son los de
+  // arriba y el 3 y el 4 los de abajo.
   const gajos = HTML.slice(HTML.indexOf('var GAJOS = ['), HTML.indexOf('];', HTML.indexOf('var GAJOS = [')));
   const ids = [...gajos.matchAll(/\{ id: '([a-z0-9]+)',/g)].map(m => m[1]);
-  assert.strictEqual(ids.length, 8);
+  assert.strictEqual(ids.length, 7);
+  assert.ok(!ids.includes('p10'), 'el 10% ya no va en la ruleta');
   assert.strictEqual(ids[0], 'p7', 'el 7% arriba, a la derecha del puntero');
-  assert.strictEqual(ids[7], 'd10000', 'el $10.000 arriba, a la izquierda del puntero');
-  assert.strictEqual(ids[4], 'p5', 'el 5% abajo');
+  assert.strictEqual(ids[6], 'd10000', 'el $10.000 arriba, a la izquierda del puntero');
+  assert.ok(ids.indexOf('p5') === 3 || ids.indexOf('p5') === 4, 'el 5% abajo');
   // Colores por posición: los normales van negro, gris, rosado... (el dorado
   // no cuenta). El 7% es el 1.º normal (negro) y el 5% el 5.º (gris).
   const normales = ids.filter(id => id !== 'd10000');

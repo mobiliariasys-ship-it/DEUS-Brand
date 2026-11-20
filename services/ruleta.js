@@ -35,18 +35,24 @@
 // 61,3% → 22,2%. Suman exactamente 1. Descuento promedio por venta con
 // código ≈ $3.794 en plata, sin contar la correa ni los tapones (antes
 // ≈ $2.983). test/ruleta.test.js falla si pasa de $3.800.
+// Ese mismo 19-nov el dueño pidió sacar el 10% OFF de la ruleta: ya no se
+// muestra ni sale (enRuleta: false, prob 0) y su 0,5% pasó al 7% (59% →
+// 59,5%). Sigue definido porque lo usan el correo 11:11 (services/promo.js)
+// y los códigos que genera el dueño desde el panel, y para que los códigos
+// de 10% ya entregados se puedan seguir canjeando.
 const PREMIOS = [
   { id: 'd3000',   etiqueta: '$3.000 OFF',     tipo: 'descuento', monto: 3000, prob: 0.222, prefijo: 'DEUS3K' },
   { id: 'p5',      etiqueta: '5% OFF',         tipo: 'descuento', pct: 5,      prob: 0.001, prefijo: 'DEUS5' },
   { id: 'correa',  etiqueta: 'Correa extra',   tipo: 'correa',                 prob: 0.15,  prefijo: 'CORREA' },
-  { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.59,  prefijo: 'DEUS7' },
+  { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.595, prefijo: 'DEUS7' },
   { id: 'd7000',   etiqueta: '$7.000 OFF',     tipo: 'descuento', monto: 7000, prob: 0.02,  prefijo: 'DEUS7K' },
   // El $10.000 va en dorado en la ruleta de la página (GAJOS, dorado: true).
   { id: 'd10000',  etiqueta: '$10.000 OFF',    tipo: 'descuento', monto: 10000, prob: 0.01, prefijo: 'DEUS10K' },
   // Los tapones tienen que poder salir: un premio que se muestra en la ruleta
   // y nunca sale sería publicidad engañosa (SERNAC).
   { id: 'tapones', etiqueta: 'Tapones de oído gratis', tipo: 'tapones',        prob: 0.002, prefijo: 'TAPONES' },
-  { id: 'p10',     etiqueta: '10% OFF',        tipo: 'descuento', pct: 10,     prob: 0.005, prefijo: 'DEUS10' },
+  // Fuera de la ruleta desde el 19-nov-2026 (ver arriba).
+  { id: 'p10',     etiqueta: '10% OFF',        tipo: 'descuento', pct: 10,     prob: 0,     prefijo: 'DEUS10', enRuleta: false },
 ];
 const VIGENCIA_MS = 48 * 60 * 60 * 1000;   // el premio dura 48 horas
 // Premio vencido SIN usar: a las 24 h de vencer, ese mismo correo puede girar
@@ -110,6 +116,7 @@ function validarCorreo(email) {
 function sortear(r) {
   let acumulado = 0;
   for (const p of PREMIOS) {
+    if (p.enRuleta === false) continue;
     acumulado += p.prob;
     if (r < acumulado) return p;
   }
