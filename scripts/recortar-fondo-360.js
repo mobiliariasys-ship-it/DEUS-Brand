@@ -48,6 +48,14 @@ const PERFORACIONES_MAX = 1; // % del área: más que esto es la cara perforada 
 const DESTELLO_TENUE = 45;   // el destello no pasa de ~36 sobre el fondo
 const DESTELLO_ALTO = 50;    // px arriba/abajo de la altura del sensor
 const DESTELLO_HUECO = 40;   // px: tiene que haber fondo así de cerca arriba Y abajo
+// Limpieza para fondo gris (21-nov-2026: sobre el gris humo se veían "sombras"
+// al girar). Donde se ve el interior de la correa a través del aro, el render
+// pinta partes sin luz del MISMO #080808 del fondo: el recorte las sacaba a
+// medias y quedaban jirones negros con huecos grises. Sobre la tarjeta negra no
+// se notaba; sobre gris parecen manchas.
+const R_APERTURA = 5;     // px: el fondo de afuera no entra por pasadas más angostas que 2·R (si no, se comía caras de la correa tan negras como el fondo)
+const R_CIERRE = 8;      // px: rendijas de fondo más angostas que 2·R entre partes de la banda pasan a banda (negro, sombra)
+const ISLA_MIN = 400;     // px: pedazos sueltos de banda más chicos que esto son restos del recorte
 
 const nombre = k => 'f_' + String(k).padStart(3, '0') + '.webp';
 
@@ -128,6 +136,58 @@ function marcarDestello(data, W, H, C, fondo, dif) {
   return marca;
 }
 
+// Distancia chamfer 3-4 (en tercios de píxel) al píxel más cercano con m=1.
+function distanciaA(m, W, H) {
+  const N = W * H, d = new Float32Array(N);
+  for (let p = 0; p < N; p++) d[p] = m[p] ? 0 : 1e9;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const p = y * W + x; if (!d[p]) continue;
+    let v = d[p];
+    if (x > 0) v = Math.min(v, d[p - 1] + 3);
+    if (y > 0) { v = Math.min(v, d[p - W] + 3); if (x > 0) v = Math.min(v, d[p - W - 1] + 4); if (x < W - 1) v = Math.min(v, d[p - W + 1] + 4); }
+    d[p] = v;
+  }
+  for (let y = H - 1; y >= 0; y--) for (let x = W - 1; x >= 0; x--) {
+    const p = y * W + x; if (!d[p]) continue;
+    let v = d[p];
+    if (x < W - 1) v = Math.min(v, d[p + 1] + 3);
+    if (y < H - 1) { v = Math.min(v, d[p + W] + 3); if (x < W - 1) v = Math.min(v, d[p + W + 1] + 4); if (x > 0) v = Math.min(v, d[p + W - 1] + 4); }
+    d[p] = v;
+  }
+  return d;
+}
+
+// Cierre morfológico de radio r: dilata y erosiona. Rellena las rendijas más
+// angostas que 2r entre partes de m sin agrandar su contorno.
+function cerrar(m, W, H, r) {
+  const N = W * H, dil = new Uint8Array(N), d1 = distanciaA(m, W, H);
+  for (let p = 0; p < N; p++) dil[p] = d1[p] <= 3 * r ? 1 : 0;
+  const fuera = new Uint8Array(N);
+  for (let p = 0; p < N; p++) fuera[p] = dil[p] ? 0 : 1;
+  const d2 = distanciaA(fuera, W, H), out = new Uint8Array(N);
+  for (let p = 0; p < N; p++) out[p] = d2[p] > 3 * r ? 1 : 0;
+  return out;
+}
+
+// Pedazos sueltos de banda (8-conectados) más chicos que min → fondo.
+function quitarIslas(fondo, W, H, min) {
+  const N = W * H, visto = new Uint8Array(N), cola = new Int32Array(N);
+  for (let s = 0; s < N; s++) {
+    if (fondo[s] || visto[s]) continue;
+    let ini = 0, fin = 0; cola[fin++] = s; visto[s] = 1;
+    while (ini < fin) {
+      const p = cola[ini++], x = p % W, y = (p / W) | 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const q = yy * W + xx;
+        if (!fondo[q] && !visto[q]) { visto[q] = 1; cola[fin++] = q; }
+      }
+    }
+    if (fin < min) for (let j = 0; j < fin; j++) fondo[cola[j]] = 1;
+  }
+}
+
 // Cuadro del giro -> RGBA sin fondo (Buffer W*H*4)
 function recortarCuadro({ data, W, H, C }) {
   const N = W * H;
@@ -136,20 +196,55 @@ function recortarCuadro({ data, W, H, C }) {
     const i = p * C;
     dif[p] = Math.max(Math.abs(data[i] - FONDO), Math.abs(data[i + 1] - FONDO), Math.abs(data[i + 2] - FONDO));
   }
-  // Regiones de negro (4-conectadas): las del borde son fondo; las encerradas, si pasan el filtro
+  // Fondo de afuera: el negro que toca el borde del cuadro. Antes se inundaba
+  // directo y se colaba por grietas de 1-2 px del contorno hasta caras de la
+  // correa del mismo negro (quedaban transparentes a medias). Ahora se inunda
+  // sobre el negro "abierto" (sin las pasadas más angostas que 2·R_APERTURA) y
+  // después se recupera el contorno exacto creciendo hasta R_APERTURA+2 px.
+  const cand = new Uint8Array(N), noCand = new Uint8Array(N);
+  for (let p = 0; p < N; p++) { cand[p] = dif[p] <= TOLERANCIA ? 1 : 0; noCand[p] = 1 - cand[p]; }
+  const dA = distanciaA(noCand, W, H), eros = new Uint8Array(N);
+  for (let p = 0; p < N; p++) eros[p] = cand[p] && dA[p] > 3 * R_APERTURA ? 1 : 0;
+  const dB = distanciaA(eros, W, H), abierto = new Uint8Array(N);
+  for (let p = 0; p < N; p++) abierto[p] = cand[p] && dB[p] <= 3 * R_APERTURA ? 1 : 0;
   const fondo = new Uint8Array(N); const visto = new Uint8Array(N); const cola = new Int32Array(N);
-  for (let s = 0; s < N; s++) {
-    if (visto[s] || dif[s] > TOLERANCIA) continue;
-    let ini = 0, fin = 0, borde = false; cola[fin++] = s; visto[s] = 1;
-    while (ini < fin) {
-      const p = cola[ini++]; const x = p % W, y = (p / W) | 0;
-      if (x === 0 || y === 0 || x === W - 1 || y === H - 1) borde = true;
-      for (const q of vecinos4(p, W, H)) if (q >= 0 && !visto[q] && dif[q] <= TOLERANCIA) { visto[q] = 1; cola[fin++] = q; }
-    }
-    const px = cola.subarray(0, fin);
-    // < 900 px no llega al radio mínimo: perforaciones y rendijas, se quedan
-    if (borde || (fin >= 900 && esFondoEncerrado(px, W))) for (const p of px) fondo[p] = 1;
+  let fin = 0;
+  for (let p = 0; p < N; p++) {
+    const x = p % W, y = (p / W) | 0;
+    if ((x === 0 || y === 0 || x === W - 1 || y === H - 1) && abierto[p] && !fondo[p]) { fondo[p] = 1; cola[fin++] = p; }
   }
+  for (let ini = 0; ini < fin;) {
+    const p = cola[ini++];
+    for (const q of vecinos4(p, W, H)) if (q >= 0 && abierto[q] && !fondo[q]) { fondo[q] = 1; cola[fin++] = q; }
+  }
+  // Recuperar el contorno: crecer dentro del negro, como mucho R_APERTURA+2 pasos
+  let frente = [];
+  for (let p = 0; p < N; p++) if (fondo[p]) frente.push(p);
+  for (let paso = 0; paso < R_APERTURA + 2 && frente.length; paso++) {
+    const sig = [];
+    for (const p of frente) for (const q of vecinos4(p, W, H)) if (q >= 0 && cand[q] && !fondo[q]) { fondo[q] = 1; sig.push(q); }
+    frente = sig;
+  }
+  // Regiones de negro encerradas por la banda (4-conectadas): fondo visto a
+  // través del aro si pasan el filtro.
+  for (let s = 0; s < N; s++) {
+    if (visto[s] || fondo[s] || !cand[s]) continue;
+    let ini = 0, f = 0; cola[f++] = s; visto[s] = 1;
+    while (ini < f) {
+      const p = cola[ini++];
+      for (const q of vecinos4(p, W, H)) if (q >= 0 && !visto[q] && !fondo[q] && cand[q]) { visto[q] = 1; cola[f++] = q; }
+    }
+    const px = cola.subarray(0, f);
+    // < 900 px no llega al radio mínimo: perforaciones y rendijas, se quedan
+    if (f >= 900 && esFondoEncerrado(px, W)) for (const p of px) fondo[p] = 1;
+  }
+  // Rendijas entre partes de la banda → banda (quedan negras, como sombra) y
+  // pedazos sueltos → fondo. Ver R_CIERRE e ISLA_MIN.
+  const opaco = new Uint8Array(N);
+  for (let p = 0; p < N; p++) opaco[p] = fondo[p] ? 0 : 1;
+  const cerrado = cerrar(opaco, W, H, R_CIERRE);
+  for (let p = 0; p < N; p++) if (fondo[p] && cerrado[p]) fondo[p] = 0;
+  quitarIslas(fondo, W, H, ISLA_MIN);
   const destello = marcarDestello(data, W, H, C, fondo, dif);
   const out = Buffer.alloc(N * 4);
   for (let p = 0; p < N; p++) {
