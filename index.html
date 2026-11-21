@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="tema-humo">
 <head>
 <meta charset="UTF-8">
 <!-- Estado de reserva cacheado: se marca ANTES de pintar para no mostrar el
@@ -1772,6 +1772,106 @@ body.sb-on .wa-float{bottom:82px;}
 .asb-logo{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:5px;flex-shrink:0;}
 .asb-btn{background:#0a84ff;color:#fff;border:none;border-radius:16px;padding:7px 18px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:700;text-decoration:none;flex-shrink:0;}
 @media(max-width:400px){.asb-sub{font-size:.64rem;}}
+</style>
+<style id="tema-humo">
+/* ── Tema "gris humo" (Combinación 3 · las 4 juntas, pedido del dueño 21-nov-2026) ──
+   Mezcla de grafito #2b2e33, acero #3b3f44, azul pizarra #263140 y topo cálido
+   #38332e a partes iguales: fondo #313439, tarjetas #3a3d43, bordes #4b4f57 y
+   texto #f4f4f4. Solo cambian fondos, tarjetas y bordes: textos, botones, fotos,
+   los colores del producto (círculos de color, correas) y la ruleta quedan igual.
+   Los demás grises oscuros escritos a mano se aclaran con la misma escala que la
+   maqueta (L nueva = 37,6 + 0,78·L vieja, con el tinte gris azulado), así se
+   mantiene qué va más oscuro y qué más claro. Todo cuelga de la clase
+   html.tema-humo: quitándola del <html> vuelve el grafito de antes. */
+html.tema-humo{--black:#313439;--dark:#36393f;--card:#3a3d43;--border:#4b4f57;--white:#f4f4f4;}
+html.tema-humo .checkout-modal{--card:#3f4248;--border:#51545a;--dark:#3a3d43;}
+html.tema-humo .announce-bar{background:#282b31;border-bottom:1px solid #373a40;}
+html.tema-humo .abcd-box{background:#33363c;border:1px solid #44474d;}
+html.tema-humo .cd-box{background:#282b31;}
+html.tema-humo .raspe{border:1px solid #46494f;background:#32353b;}
+html.tema-humo .raspe-zona{background:#2e3137;}
+html.tema-humo .soft-in{background:radial-gradient(70% 30% at 50% 0%,rgba(255,255,255,.08),rgba(255,255,255,0) 70%),linear-gradient(180deg,#3a3d43 0%,#34373d 50%,#32353b 100%);}
+html.tema-humo .rollo-cuadro img{background:#36393f;}
+html.tema-humo header{background:#32363c;border:1px solid #41444a;}
+html.tema-humo .hdr-pulse{background:#2c2f35;border:1px solid #474a50;}
+html.tema-humo .gal{background:#393c42;}
+html.tema-humo .gal img.span2{background:#393c42;}
+html.tema-humo .qty-dialog-content{background:#2d3036;}
+html.tema-humo .qty-dialog-input{background:#33363c;}
+html.tema-humo .straps-tag{background:#36393f;border:1px solid #494c52;}
+html.tema-humo .review-video{background:#2f3238;}
+html.tema-humo .prod-rating .rating-txt{border-bottom:1px solid #575a60;}
+html.tema-humo .resist-badge{border:1px solid #494c52;background:linear-gradient(135deg,#35383e,#303339);}
+html.tema-humo .chat-panel{background:#2d3036;border:1px solid #42454b;}
+html.tema-humo .chat-head{background:#31343a;border-bottom:1px solid #3f4248;}
+html.tema-humo .chat-msg.bot{background:#373a40;}
+html.tema-humo .chat-typing{background:#373a40;}
+html.tema-humo .chat-sug button{background:#34373d;border:1px solid #45484e;}
+html.tema-humo .chat-foot{border-top:1px solid #3f4248;background:#2f3238;}
+html.tema-humo .chat-input{background:#373a40;border:1px solid #474a50;}
+html.tema-humo .chat-input:focus{border-color:#5b5e64;}
+html.tema-humo .btn-review{border:1px solid #5b5e64;}
+html.tema-humo .rifa-tab{background:linear-gradient(135deg,#5a5a61,#4f5258);}
+html.tema-humo .rifa-modal{background:radial-gradient(120% 90% at 50% 0%,#22190c 0%,#2d3036 55%);}
+html.tema-humo .rfcd-box{background:#33363c;}
+html.tema-humo .rifa-input{background:#31343a;}
+html.tema-humo .resena-modal{background:#2d3036;}
+html.tema-humo .resena-input{background:#2f3238;}
+html.tema-humo .resena-file{border:1px dashed #5b5e64;}
+html.tema-humo .banner{background:#292c32;border-top:1px solid #393c42;}
+html.tema-humo .banner-line{background:#42454b;}
+html.tema-humo .how-img{background:#2f3238;}
+html.tema-humo .how-img.contain{background:#2d3036;}
+html.tema-humo .rot-hint{border:1px solid #4f5258;}
+html.tema-humo .rot-badge{border:1.5px solid #4f5258;}
+html.tema-humo .rot-full{background:#282b31;}
+html.tema-humo .rot-full-hint{border:1px solid #42454b;}
+html.tema-humo .diseno-video video{background:#2c2f35;}
+html.tema-humo .benefit:hover{border-color:#4f5258;}
+html.tema-humo .benefit-btn{background:#31343a;}
+html.tema-humo .store-logo{background:#33363c;}
+html.tema-humo .respaldo{border-top:1px solid #393c42;}
+html.tema-humo .cd-unit{background:#22252b;}
+html.tema-humo .offer-banner{background:linear-gradient(100deg,#2d3036 0%,#373a40 50%,#2d3036 100%);border-top:1px solid #3f4248;border-bottom:1px solid #3f4248;}
+html.tema-humo .cd-unit{background:#22252b;border:1px solid #45484e;}
+html.tema-humo .gal-slider{background:#393c42;}
+html.tema-humo .slide{background:#393c42;}
+html.tema-humo .shipping-input{background:#2f3238;}
+html.tema-humo .ac-list{background:#2f3238;}
+html.tema-humo .ac-item{border-bottom:1px solid #36393f;}
+html.tema-humo .ac-item:hover{background:#393c42;}
+html.tema-humo .checkout-modal{background:#393c42;border:1px solid #51545a;}
+html.tema-humo .checkout-modal .shipping-input,html.tema-humo .checkout-modal .ac-list{background:#3b3e44;border-color:#51545a;}
+html.tema-humo .checkout-modal .btn-pay{background:#3f4248;}
+html.tema-humo .checkout-modal .btn-pay:hover:not(:disabled){background:#45484e;}
+html.tema-humo .checkout-modal .co-prod img{background:#3f4248;border-color:#51545a;}
+html.tema-humo .co-prod img{background:#393c42;}
+html.tema-humo .reserva-regalo .regalo-img{background:#393c42;}
+html.tema-humo .reassure-item{background:#2e3137;}
+html.tema-humo .spec{background:#2e3137;}
+html.tema-humo .spec-bat{background:#404349;}
+html.tema-humo .spec-dest{background:linear-gradient(180deg,rgba(60,195,207,.1),rgba(60,195,207,.02)),#2e3137;}
+html.tema-humo .reviews-modal-box{background:#2d3036;}
+html.tema-humo .upsell-card{background:#303339;}
+html.tema-humo .cq{box-shadow:0 0 0 3px #2f3238,0 0 0 4px #43464c,0 6px 16px rgba(0,0,0,.55),inset 0 2px 6px rgba(0,0,0,.18);}
+html.tema-humo .cq-big{box-shadow:0 0 0 6px #2f3238,0 0 0 7px #44474d,0 14px 30px rgba(0,0,0,.6),inset 0 3px 10px rgba(0,0,0,.2);}
+html.tema-humo .rescue-stay{border:1px solid #575a60;}
+html.tema-humo .btn-pay{background:#33363c;border:1px solid #494c52;}
+html.tema-humo .btn-pay:hover:not(:disabled){background:#373a40;}
+html.tema-humo .cart-drawer{background:#2d3036;}
+html.tema-humo .cart-item{background:#33363c;}
+html.tema-humo .cart-item-img{background:#393c42;}
+html.tema-humo .cart-drawer-footer{background:#2c2f35;}
+html.tema-humo .app-smartbar{background:#303339;}
+html.tema-humo .rlc-in{border:1px solid #56595f;}
+html.tema-humo .rlc-cols button{border:1px solid #51545a;}
+html.tema-humo .tapones-card{background:#2d3036;}
+html.tema-humo .tapones-gallery{background:#31343a;}
+html.tema-humo .tapones-slide{background:#31343a;}
+html.tema-humo .pago-elegido{background:#2e3137;}
+html.tema-humo .sticky-buy{background:rgba(44,47,53,.97);}
+html.tema-humo .hero-overlay{background:linear-gradient(transparent 0%,rgba(40,43,49,.92) 100%);}
+html.tema-humo .fn-box{background:linear-gradient(180deg,rgba(73,76,82,.82),rgba(53,56,62,.9));}
 </style>
 </head>
 <body>
