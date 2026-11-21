@@ -5539,9 +5539,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // v5 / v5m (21-nov-2026): recorte nuevo para el fondo gris humo. Sobre gris se
     // veían "sombras" al girar: jirones del interior de la correa y caras de la
     // correa recortadas a medias (ver R_APERTURA, R_CIERRE e ISLA_MIN en
-    // scripts/recortar-fondo-360.js). v3 y v4m quedan para las páginas abiertas
-    // antes del cambio; se pueden borrar pasada una semana.
-    var CARPETA = (Math.min(window.innerWidth || 0, (screen && screen.width) || 9999) < 700) ? 'img/rot360-v5m' : 'img/rot360-v5';
+    // scripts/recortar-fondo-360.js). v6 / v6m (mismo día): sin los pelitos oscuros
+    // que el cierre armaba uniendo ruido suelto al contorno (ver R_PELO). v3, v4m,
+    // v5 y v5m quedan para las páginas abiertas antes; se pueden borrar pasada
+    // una semana.
+    var CARPETA = (Math.min(window.innerWidth || 0, (screen && screen.width) || 9999) < 700) ? 'img/rot360-v6m' : 'img/rot360-v6';
     function src(i){ return CARPETA+'/f_'+String(i+1).padStart(3,'0')+'.webp'; }
     var frames=new Array(N), pendientes=N, idx=BLUE, auto=null;
     var HERO=0;               // ángulo de reposo: frente, con el sensor apagado
