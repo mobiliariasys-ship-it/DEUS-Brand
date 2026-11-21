@@ -15,6 +15,8 @@ const correo_ = require('./services/correo');
 const ruleta_ = require('./services/ruleta');
 const promo_ = require('./services/promo');
 const intentos_ = require('./services/intentos');
+const recordatorios_ = require('./services/recordatorios');
+let recordatorios = null; // se arranca en arrancar(), con los datos ya cargados
 const utilidad_ = require('./services/utilidad');
 const devoluciones_ = require('./services/devoluciones');
 const { getStock, decrementStock, setStock } = require('./services/stock');
@@ -547,6 +549,16 @@ app.post('/admin/ruleta/generar', async (req, res) => {
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
+});
+
+// Panel: cómo va el recordatorio automático de la ruleta (última vuelta,
+// enviados desde que arrancó el servidor). Misma clave que /admin/ruleta.
+app.get('/admin/ruleta/recordatorios', async (req, res) => {
+  const clave = (process.env.STOCK_KEY || '').trim();
+  if (!clave) return res.status(404).json({ error: 'No disponible' });
+  if ((req.query.clave || '') !== clave) return res.status(403).json({ error: 'Clave incorrecta' });
+  res.set('Cache-Control', 'no-store');
+  res.json(recordatorios ? recordatorios.estado() : { vuelta: null });
 });
 
 // ── Correo 11:11: 10% OFF por 24 h a quien dejó su correo y no compró ──
@@ -1611,5 +1623,9 @@ async function arrancar() {
   app.listen(PORT, () => {
     console.log(`Servidor DEUS corriendo en http://localhost:${PORT}`);
   });
+  // Recordatorio de la ruleta: 5 h después del código, a quien no compró
+  // (services/recordatorios.js). Mismas fuentes que el correo 11:11 para saber
+  // quién compró o está pagando.
+  recordatorios = recordatorios_.iniciar({ fuentes: fuentesPromo });
 }
 arrancar();

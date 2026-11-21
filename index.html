@@ -4173,9 +4173,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function descuentoRuleta() {
           if (!premioRuleta || checkoutTapones) return 0;
           const pr = premioRuleta.premio || {};
-          if (pr.tipo !== 'descuento') return 0;
           const bandas = precioBanda() * checkoutQty;
-          const d = pr.monto ? pr.monto : Math.ceil(bandas * (pr.pct || 0) / 100);
+          let d = 0;
+          if (pr.tipo === 'descuento') d = pr.monto ? pr.monto : Math.ceil(bandas * (pr.pct || 0) / 100);
+          // Recordatorio (21-nov-2026): correa o tapones + un % (pctExtra).
+          if (pr.pctExtra) d += Math.ceil(bandas * pr.pctExtra / 100);
           return Math.min(d, bandas);
         }
         function guardarPremioAplicado() {
@@ -4233,6 +4235,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               quitarCodigoRuleta();
               const m = document.getElementById('rlc-msg');
               if (m) { m.className = 'rlc-msg mal'; m.textContent = d.mensaje || 'Tu código ya no sirve.'; }
+            } else if (d.ok && d.premio && premioRuleta && premioRuleta.codigo === cod) {
+              // El premio pudo mejorar después de aplicarlo (recordatorio): se
+              // muestra el de ahora, que es el que cobra el servidor.
+              premioRuleta.premio = d.premio;
+              guardarPremioAplicado();
+              pintarCodigoRuleta();
+              actualizarTotalCheckout();
             }
           } catch (e) {}
         }
@@ -4285,7 +4294,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           inp.value = cod;
           inp.readOnly = true;
           btn.textContent = 'Quitar';
-          const nombre = pr.tipo === 'correa' ? 'correa de tela extra' : pr.tipo === 'tapones' ? 'tapones de oído de regalo' : String(pr.etiqueta || 'premio');
+          const nombre = (pr.tipo === 'correa' ? 'correa de tela extra' : pr.tipo === 'tapones' ? 'tapones de oído de regalo' : String(pr.etiqueta || 'premio'))
+            + (pr.pctExtra ? ' + ' + Number(pr.pctExtra) + '% OFF' : '') + (pr.mejoradoDe ? ' (mejorado)' : '');
           msg.className = 'rlc-msg bien';
           msg.innerHTML = ok + '<span>Premio de la ruleta aplicado: <b></b></span>';
           msg.querySelector('b').textContent = nombre;

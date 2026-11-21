@@ -332,8 +332,11 @@ test('el navegador no puede mandar la correa del premio como un par extra pagado
 });
 
 test('el checkout estima el descuento con la MISMA regla que el servidor', () => {
-  assert.ok(HTML.includes('const d = pr.monto ? pr.monto : Math.ceil(bandas * (pr.pct || 0) / 100);'));
+  assert.ok(HTML.includes("if (pr.tipo === 'descuento') d = pr.monto ? pr.monto : Math.ceil(bandas * (pr.pct || 0) / 100);"));
   assert.match(leer('services', 'precio.js'), /Math\.ceil\(precioBanda\(\) \* \(qty \|\| 1\) \* premio\.pct \/ 100\)/);
+  // Recordatorio (21-nov-2026): la correa o los tapones + un %, igual en los dos lados.
+  assert.ok(HTML.includes('if (pr.pctExtra) d += Math.ceil(bandas * pr.pctExtra / 100);'));
+  assert.match(leer('services', 'precio.js'), /if \(premio\.pctExtra\) d \+= Math\.ceil\(precioBanda\(\) \* \(qty \|\| 1\) \* premio\.pctExtra \/ 100\)/);
 });
 
 test('las tres pasarelas validan el código antes de cobrar y lo marcan usado al aprobarse', () => {

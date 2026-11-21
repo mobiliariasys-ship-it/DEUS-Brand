@@ -2328,6 +2328,8 @@
     // vigentes y vencidos se cuentan por persona (sin la fila del 2º lanzamiento).
     var contar = function(est){ return pers.filter(function(p){ return p.estado===est && (est==='usado' || !p.segundo); }).length; };
     var usados = contar('usado'), vigentes = contar('vigente'), vencidos = contar('vencido');
+    var conRec = pers.filter(function(p){ return p.recordatorioResultado === 'enviado'; });
+    var recEnv = conRec.length, recCompro = conRec.filter(function(p){ return p.estado === 'usado' || p.estado === 'anulado'; }).length;
     // Un mismo correo puede girar de nuevo si su premio venció (24 h después
     // de vencer): cada giro es una fila, pero la persona se cuenta una vez.
     var vistosRu = {}, unicos = 0;
@@ -2348,7 +2350,10 @@
       kpi('Dejaron su correo', unicos, '', subCorreo.join(' · ')) +
       kpi('Compraron con su código', usados, usados ? 'bien' : '', (unicos ? Math.round(usados*100/unicos) : 0) + '% de los que giraron') +
       kpi('Premios vigentes', vigentes, '', 'todavía pueden comprar') +
-      kpi('Vencieron sin usar', vencidos);
+      kpi('Vencieron sin usar', vencidos) +
+      // Recordatorio automático (21-nov-2026): 5 h después del código, con el
+      // premio mejorado. "Compraron después": usaron el código (o el otro del par).
+      kpi('Recordatorios enviados', recEnv, '', recEnv ? recCompro + (recCompro === 1 ? ' compró después' : ' compraron después') : 'salen 5 h después del código');
     // Qué premio convierte mejor: de los que lo ganaron, cuántos compraron con
     // su código. Solo gente que giró (sin los códigos generados a mano). Los
     // vigentes todavía pueden comprar, así que la tasa puede subir.
@@ -2385,7 +2390,8 @@
         : '<span class="ru-estado ru-vencido">Venció</span><span class="ru-cod">sin usar</span>';
       return '<td class="ru-f">' + fechaRuleta(p.fecha) + '</td>' +
         '<td><span class="ru-mail">' + (p.manual ? '🎟️ ' + (p.email ? esc(p.email) : 'Generado · cualquier correo') : esc(p.email)) + '</span><span class="ru-cod">' + esc(p.premio) +
-        (p.premioId==='correa' && p.color ? ' (' + esc(p.color) + ')' : '') + ' · ' + esc(p.codigo) + (p.segundo ? ' · 2º lanzamiento' : '') + '</span></td>' +
+        (p.premioId==='correa' && p.color ? ' (' + esc(p.color) + ')' : '') + ' · ' + esc(p.codigo) + (p.segundo ? ' · 2º lanzamiento' : '') +
+        (p.recordatorioResultado === 'enviado' ? ' · 📩 recordatorio ' + fechaRuleta(p.recordatorio) + (p.recordatorio2 ? ' y último aviso ' + fechaRuleta(p.recordatorio2) : '') : p.recordatorioResultado === 'compro' ? ' · ya había comprado' : '') + '</span></td>' +
         '<td>' + est + '</td>';
     }, 'ruleta-empty');
   }

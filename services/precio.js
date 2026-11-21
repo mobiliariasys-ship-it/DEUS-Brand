@@ -102,10 +102,16 @@ const CORREA_PREMIO = {
 // HACIA ARRIBA (a favor del cliente), como hacía el código DEUSKEZ: anunciar
 // 5% y descontar 4,99% no puede pasar.
 function descuentoPremio(premio, qty) {
-  if (!premio || premio.tipo !== 'descuento') return 0;
-  if (premio.monto) return Math.max(0, Math.round(premio.monto));
-  if (premio.pct) return Math.ceil(precioBanda() * (qty || 1) * premio.pct / 100);
-  return 0;
+  if (!premio) return 0;
+  let d = 0;
+  if (premio.tipo === 'descuento') {
+    if (premio.monto) d = Math.max(0, Math.round(premio.monto));
+    else if (premio.pct) d = Math.ceil(precioBanda() * (qty || 1) * premio.pct / 100);
+  }
+  // Recordatorio de la ruleta (21-nov-2026): la correa o los tapones del premio
+  // + un % de descuento sobre las bandas (pctExtra, ver services/ruleta.js).
+  if (premio.pctExtra) d += Math.ceil(precioBanda() * (qty || 1) * premio.pctExtra / 100);
+  return d;
 }
 
 // Promoción de tapones: con PROMO_TAPONES en true, toda compra CON banda lleva

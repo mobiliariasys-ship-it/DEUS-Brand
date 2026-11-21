@@ -572,6 +572,99 @@ async function enviarDosPremiosRuleta(datos, email) {
   return ok;
 }
 
+// Recordatorio de la ruleta (pedido del dueño, 21-nov-2026): a quien no compró,
+// 5 horas después de que se le generó el código (al otro día si fue de noche).
+// Le recuerda que su código vence y le cuenta la mejora: el descuento sube a
+// 10% OFF, o a la correa / los tapones se les suma un 10% OFF (la hace
+// services/ruleta.js). datos: { email, vence, codigos: [{ codigo, premio, antes, vence }] }
+// (dos códigos si lanzó dos veces). El asunto dice de qué se trata y el pie
+// cómo darse de baja (art. 28 B, Ley 19.496). Solo por Resend: devuelve
+// { ok, status, cuerpo } para detenerse si se acaba la cuota del día.
+function textoMejora(c) {
+  const p = c.premio || {}, a = c.antes || {};
+  const nombre = x => x.tipo === 'correa' ? 'correa extra' : x.tipo === 'tapones' ? 'tapones de oído de regalo' : x.etiqueta;
+  if (p.mejoradoDe) return { titulo: `Tu premio sube a ${p.etiqueta}`, corto: `de ${a.etiqueta} pasa a ${p.etiqueta}` };
+  if (p.pctExtra) return { titulo: `${a.tipo === 'tapones' ? 'Tapones de oído' : 'Correa extra'} + ${p.pctExtra}% OFF`, corto: `a tu ${nombre(a)} le sumamos un ${p.pctExtra}% de descuento` };
+  return { titulo: `${p.etiqueta} + envío gratis`, corto: '' };
+}
+function asuntoRecordatorioRuleta(codigos, vez, horasQuedan) {
+  const lista = codigos || [];
+  if (vez === 2) {
+    const h = Math.max(1, Number(horasQuedan) || 1);
+    return `⏰ Último aviso: ${lista.length > 1 ? 'tus códigos DEUS vencen' : 'tu código DEUS vence'} en ${h} ${h === 1 ? 'hora' : 'horas'}`;
+  }
+  if (lista.length > 1) return lista.some(c => c.premio && (c.premio.mejoradoDe || c.premio.pctExtra))
+    ? '⏰ Tus códigos DEUS vencen pronto: te mejoramos los premios'
+    : '⏰ Tus códigos DEUS vencen pronto';
+  const p = (lista[0] && lista[0].premio) || {}, a = (lista[0] && lista[0].antes) || {};
+  if (p.mejoradoDe) return `⏰ Tu código DEUS vence pronto: te subimos el premio a ${p.etiqueta}`;
+  if (p.pctExtra) return a.tipo === 'tapones'
+    ? `⏰ Tus tapones de regalo vencen pronto: te sumamos ${p.pctExtra}% OFF`
+    : `⏰ Tu correa extra vence pronto: te sumamos ${p.pctExtra}% OFF`;
+  return `⏰ Tu código DEUS vence pronto: no pierdas tu ${p.etiqueta || 'premio'}`;
+}
+function htmlRecordatorioRuleta({ codigos, vence, vez, horasQuedan }) {
+  const { precioBanda } = require('./precio');
+  const precio = precioBanda();
+  const lista = codigos || [];
+  const fv = new Date(vence || (lista[0] && lista[0].vence));
+  const venceTxt = fv.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', weekday: 'long', day: 'numeric', month: 'long' }).replace(',', '')
+    + ' a las ' + fv.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false });
+  const dos = lista.length > 1;
+  const tarjeta = (c, n) => {
+    const p = c.premio || {}, a = c.antes || {}, t = textoMejora(c);
+    const codigo = String(c.codigo || '');
+    // Misma cuenta que descuentoPremio() en services/precio.js (1 banda).
+    const d = (p.tipo === 'descuento' ? (p.monto ? p.monto : Math.ceil(precio * (p.pct || 0) / 100)) : 0)
+      + (p.pctExtra ? Math.ceil(precio * p.pctExtra / 100) : 0);
+    const antesTxt = p.mejoradoDe ? `<div style="font-size:13px;color:#888;margin:0 0 6px">Tenías <s>${a.etiqueta}</s> · ahora <b style="color:#0a7d2c">${p.etiqueta}</b></div>`
+      : p.pctExtra ? `<div style="font-size:13px;color:#888;margin:0 0 6px">${a.tipo === 'tapones' ? 'Tus tapones de regalo' : 'Tu correa de tela extra (negra o gris)'} <b style="color:#0a7d2c">+ ${p.pctExtra}% OFF</b></div>` : '';
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6dcc6;border-radius:12px;margin:0 0 14px"><tr><td style="padding:14px 16px;text-align:left">
+          ${n ? `<div style="font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:#b0812f;font-weight:bold">${n}</div>` : ''}
+          <div style="font-size:21px;font-weight:bold;color:#111;margin:4px 0">${t.titulo}</div>
+          ${antesTxt}
+          <div style="font-size:14px;color:#555;margin:0 0 10px">DEUS Band ${d ? `<s style="color:#999">${money(precio)}</s> <b style="color:#111;font-size:18px">${money(precio - d)}</b>` : `<b style="color:#111;font-size:18px">${money(precio)}</b>`} <span style="font-size:12px;color:#0a7d2c;font-weight:bold">· envío gratis</span></div>
+          <div style="border:2px dashed #d9b46c;background:#fbf6ec;border-radius:8px;padding:8px 10px;margin:0 0 10px;text-align:center"><div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#888">Tu código</div><div style="font-size:22px;font-weight:bold;letter-spacing:3px;color:#111;margin-top:2px">${codigo}</div></div>
+          <a href="${SITIO}/?premio=${encodeURIComponent(codigo)}" style="display:block;background:#111111;color:#e7cf9c;text-decoration:none;font-weight:bold;letter-spacing:1.2px;font-size:13px;text-transform:uppercase;border-radius:9px;padding:14px;text-align:center">${p.mejoradoDe || p.pctExtra ? 'Usar mi premio mejorado' : 'Usar mi premio'}</a>
+        </td></tr></table>`;
+  };
+  const uno = lista[0] ? textoMejora(lista[0]) : { corto: '' };
+  const ultimo = vez === 2;
+  const h = Math.max(1, Number(horasQuedan) || 1);
+  const quedan = h + (h === 1 ? ' hora' : ' horas');
+  const mejorado = lista.some(c => c.premio && (c.premio.mejoradoDe || c.premio.pctExtra));
+  const lead = ultimo
+    ? `Te quedan <b>${quedan}</b> para usar ${dos ? 'tus premios' : 'tu premio'}${mejorado ? ' mejorado' + (dos ? 's' : '') : ''}. Después ${dos ? 'los códigos dejan' : 'el código deja'} de servir.`
+    : dos
+    ? 'Todavía no usas tus premios y tus códigos vencen pronto. Para que no los pierdas, <b>te los mejoramos</b>. Usa el que más te guste: al usar uno, el otro se anula.'
+    : 'Todavía no usas tu premio y tu código vence pronto.' + (uno.corto ? ` Para que no lo pierdas, <b>${uno.corto}</b>.` : ' Úsalo antes de que se pierda.');
+  return `
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">⏰ Tu código vence el ${venceTxt}. ${dos ? 'Te mejoramos tus premios.' : (uno.corto ? 'Te mejoramos tu premio.' : '')}</div>
+    <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee">
+      <div style="background:#fff4d6;border-bottom:1px solid #f0d58a;color:#7a5200;padding:11px 16px;text-align:center;font-size:13.5px;font-weight:bold">⏰ ${ultimo ? 'Último aviso: quedan ' + quedan : (dos ? 'Tus códigos vencen' : 'Tu código vence') + ' el ' + venceTxt}</div>
+      <div style="background:#080808;padding:22px 24px;text-align:center">
+        <img src="${SITIO}/img/logo-email.png" alt="DEUS BRAND" width="190" style="width:190px;max-width:72%;height:auto;display:inline-block;border:0;outline:none;text-decoration:none;">
+      </div>
+      <div style="padding:26px 24px 24px;text-align:center;color:#222">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b0812f;font-weight:bold">${ultimo ? 'Último aviso' : 'Recordatorio de tu premio'}</div>
+        <h1 style="font-size:25px;line-height:1.2;margin:8px 0 8px;color:#111">${ultimo ? (dos ? 'Tus premios vencen hoy' : 'Tu premio vence en ' + quedan) : dos ? 'Te mejoramos tus premios' : (uno.corto ? 'Te mejoramos tu premio' : 'Tu premio te está esperando')}</h1>
+        <p style="font-size:14.5px;color:#555;line-height:1.5;margin:0 0 18px">${lead}</p>
+        ${lista.map((c, i) => tarjeta(c, dos ? (i === 0 ? '1er lanzamiento' : '2º lanzamiento') : '')).join('')}
+        <p style="font-size:12.5px;color:#888;margin:4px 0 0;line-height:1.5">${dos ? 'Los dos vencen' : 'Tu código vence'} el <b>${venceTxt}</b>. Un solo uso, en una compra hecha con <b>este mismo correo</b>.</p>
+      </div>
+      <div style="border-top:1px solid #eee;padding:14px 20px 18px;font-size:11.5px;color:#999;text-align:center;line-height:1.6">
+        Recibiste este correo porque giraste la ruleta en deusbrand.cl.<br>Si no quieres recibir más correos como este, responde con la palabra BAJA.<br>DEUS Brand · Santiago, Chile
+      </div>
+    </div>`;
+}
+async function enviarRecordatorioRuleta(datos) {
+  const email = (datos && datos.email || '').trim();
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, status: 0, cuerpo: 'correo inválido' };
+  const r = await resendDetallado(asuntoRecordatorioRuleta(datos.codigos, datos.vez, datos.horasQuedan), htmlRecordatorioRuleta(datos), null, email);
+  console.log(r.ok ? '[email] Recordatorio de la ruleta enviado: ' + email : '[email] No se pudo enviar el recordatorio de la ruleta: ' + email);
+  return r;
+}
+
 // Correo "11:11" (pedido del dueño, 11-nov-2026): a quien dejó su correo y no
 // compró, 10% OFF por 24 horas. Lo manda services/promo.js, de a uno.
 // El asunto es lo que se ve en la notificación del celular: parte con la
@@ -631,4 +724,4 @@ async function enviarPromo1111(datos) {
   return resendDetallado(ASUNTO_1111, html1111(datos), null, email);
 }
 
-module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, enviarPremioRuleta, enviarPromo1111, ASUNTO_1111, html1111, diagnostico };
+module.exports = { enviarCorreo, enviarPedidoNuevo, enviarPagoConfirmado, enviarConfirmacionCliente, enviarEnvioDespachado, enviarTicketSorteo, enviarResena, enviarPagoFallido, enviarPremioRuleta, enviarPromo1111, ASUNTO_1111, html1111, enviarRecordatorioRuleta, asuntoRecordatorioRuleta, htmlRecordatorioRuleta, diagnostico };

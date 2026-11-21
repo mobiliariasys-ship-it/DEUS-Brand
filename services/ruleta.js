@@ -1,4 +1,5 @@
 'use strict';
+const { precioBanda } = require('./precio');
 // Ruleta "Gira y gana" (desde el 4-nov-2026, en lugar de la pestaña del
 // sorteo mensual). A los 3 segundos en la web aparece la ruleta: la persona
 // deja su correo, gira, y le llega al correo un código con su premio.
@@ -68,6 +69,67 @@ const RESERVA_MS = 30 * 60 * 1000;         // al empezar a pagar, el código se 
 const REENVIO_MS = 10 * 60 * 1000;         // a un mismo correo, máximo un reenvío cada 10 min
 const COLORES_CORREA = ['negra', 'gris'];  // correas de tela que hay en stock
 const ARCHIVO = 'ruleta.json';
+// Recordatorio (pedido del dueño, 21-nov-2026): a quien no compró, 5 horas
+// después de que se le generó el código, un correo que le recuerda que su
+// código vence y le mejora el premio: el descuento sube a 10% OFF (si el suyo
+// valía menos) y la correa o los tapones suman un 10% OFF. Si el código se
+// generó a las 20:00 o más tarde, sale al otro día. Nunca de noche: solo entre
+// las 9:00 y las 22:00 de Chile (lo que caiga fuera sale a las 10:00). Ese mismo
+// día pidió que sean DOS: el segundo es el último aviso, 6 horas antes de que
+// venza (si eso cae de noche, a las 10:00 si todavía quedan 2 horas para
+// comprar; si no, a las 21:00 de la noche anterior), y como mínimo 4 horas
+// después del primero. Los manda services/recordatorios.js.
+const RECORDATORIO_MS = 5 * 60 * 60 * 1000;
+const RECORDATORIO_CORTE = 20;     // hora de Chile: códigos de esta hora en adelante → al otro día
+const RECORDATORIO_MANANA = 10;    // hora de Chile a la que sale lo corrido a la mañana
+const HORARIO_CORREOS = [9, 22];   // [desde, hasta) en hora de Chile
+const ULTIMO_ANTES_MS = 6 * 60 * 60 * 1000;   // el 2º recordatorio, 6 h antes de que venza
+const MARGEN_COMPRA_MS = 2 * 60 * 60 * 1000;  // nunca con menos de 2 h para comprar
+const ENTRE_RECORDATORIOS_MS = 4 * 60 * 60 * 1000;
+const NOCHE_ANTERIOR = 21;                    // hora de Chile del 2º si la mañana ya no alcanza
+const MEJORA_PCT = 10;
+const ZONA = 'America/Santiago';
+
+// Fecha y hora de Chile (con su horario de verano) de un instante en ms.
+const FMT_CHILE = new Intl.DateTimeFormat('en-CA', { timeZone: ZONA, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+function partesChile(t) {
+  const o = {};
+  for (const x of FMT_CHILE.formatToParts(new Date(t))) o[x.type] = x.value;
+  return { y: +o.year, mo: +o.month, d: +o.day, h: (+o.hour) % 24, mi: +o.minute };
+}
+// Instante de la hora `h` en punto del día (y, mo, d) en Chile.
+function instanteChile(y, mo, d, h) {
+  const meta = Date.UTC(y, mo - 1, d, h);
+  let t = meta;
+  for (let i = 0; i < 3; i++) { const p = partesChile(t); t += meta - Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi); }
+  return t;
+}
+function enHorarioCorreos(t) {
+  const h = partesChile(t).h;
+  return h >= HORARIO_CORREOS[0] && h < HORARIO_CORREOS[1];
+}
+// Cuándo sale el recordatorio de un código generado en el instante `generado`.
+function momentoRecordatorio(generado) {
+  let t = generado + RECORDATORIO_MS;
+  if (partesChile(generado).h >= RECORDATORIO_CORTE || !enHorarioCorreos(t)) {
+    const p = partesChile(t);
+    let m = instanteChile(p.y, p.mo, p.d, RECORDATORIO_MANANA);
+    if (m < t) { const q = partesChile(t + 24 * 60 * 60 * 1000); m = instanteChile(q.y, q.mo, q.d, RECORDATORIO_MANANA); }
+    t = m;
+  }
+  return t;
+}
+// Cuándo sale el 2º recordatorio (último aviso) de un código que vence en `vence`.
+function momentoUltimoRecordatorio(vence) {
+  const t = vence - ULTIMO_ANTES_MS;
+  if (enHorarioCorreos(t)) return t;
+  const p = partesChile(t);
+  let m = instanteChile(p.y, p.mo, p.d, RECORDATORIO_MANANA);
+  if (m < t) { const q = partesChile(t + 24 * 60 * 60 * 1000); m = instanteChile(q.y, q.mo, q.d, RECORDATORIO_MANANA); }
+  if (m <= vence - MARGEN_COMPRA_MS) return m;
+  const n = p.h >= HORARIO_CORREOS[1] ? p : partesChile(t - 24 * 60 * 60 * 1000);
+  return instanteChile(n.y, n.mo, n.d, NOCHE_ANTERIOR);
+}
 // Sin 0/O ni 1/I/L: el código se lee en el celular y se tipea a mano.
 const LETRAS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const LARGO_CODIGO = 6;
@@ -208,10 +270,14 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
   // Lo que ve el navegador. Sin el correo: cualquiera que tipee un código
   // ajeno en el checkout no tiene por qué ver de quién es.
   function datos(reg) {
-    const p = premioPorId(reg.premio);
+    // Con recordatorio: el premio mejorado (mejora = 'p10') o el mismo más un %.
+    const p = premioPorId(reg.mejora || reg.premio);
+    const premio = premioPublico(p);
+    if (reg.mejora) premio.mejoradoDe = reg.premio;
+    if (reg.extraPct) premio.pctExtra = reg.extraPct;
     return {
       codigo: reg.codigo,
-      premio: premioPublico(p),
+      premio,
       color: reg.color || null,
       vence: new Date(reg.vence).toISOString(),
     };
@@ -354,6 +420,7 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     if (p.monto) r.monto = p.monto;
     if (p.pct) r.pct = p.pct;
     if (p.tipo === 'correa') r.color = COLORES_CORREA.includes(color) ? color : (v.color || 'negra');
+    if (reg.extraPct) r.pctExtra = reg.extraPct; // recordatorio: correa o tapones + %
     return r;
   }
 
@@ -430,15 +497,21 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     return Object.values(estado.codigos)
       .map(reg => {
         const p = premioPorId(reg.premio);
+        const pm = reg.mejora ? premioPorId(reg.mejora) : null;
         const par = parDe(reg);
+        const etiqueta = (p ? p.etiqueta : reg.premio) + (pm ? ' → ' + pm.etiqueta : '') + (reg.extraPct ? ' + ' + reg.extraPct + '% OFF' : '');
         return {
           fecha: new Date(reg.creado).toISOString(),
           email: reg.emailEnvio || reg.email || '',
           manual: !!reg.manual,
           segundo: !!reg.segundo,
           par: par ? par.codigo : null,
-          premio: p ? p.etiqueta : reg.premio,
+          premio: etiqueta,
           premioId: reg.premio,
+          mejorado: !!(reg.mejora || reg.extraPct),
+          recordatorio: reg.recordatorio ? reg.recordatorio.fecha : null,
+          recordatorioResultado: reg.recordatorio ? reg.recordatorio.resultado : null,
+          recordatorio2: reg.recordatorio2 && reg.recordatorio2.resultado === 'enviado' ? reg.recordatorio2.fecha : null,
           codigo: reg.codigo,
           color: reg.color || null,
           estado: reg.usado ? 'usado' : (par && par.usado) ? 'anulado' : (t > reg.vence ? 'vencido' : 'vigente'),
@@ -449,7 +522,98 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
       .sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
   }
 
-  return { girar, otroLanzamiento, validar, elegirColor, premioParaCobro, marcarUsado, resumen, lista, generar, generarUnoDeCada };
+  // ── Recordatorio (ver RECORDATORIO_MS) ──
+  // El premio mejorado: descuento que vale menos de 10% → 10% OFF; correa o
+  // tapones → el mismo premio + 10% OFF. Un descuento que ya vale 10% o más
+  // ($7.000, $10.000) se queda como está. No hace nada si ya se mejoró.
+  function mejorar(reg) {
+    const p = premioPorId(reg.premio);
+    if (!p || reg.mejora || reg.extraPct) return;
+    if (p.tipo === 'descuento') {
+      const precio = precioBanda();
+      const vale = p.monto ? p.monto : Math.ceil(precio * p.pct / 100);
+      if (vale < Math.ceil(precio * MEJORA_PCT / 100)) reg.mejora = 'p10';
+    } else {
+      reg.extraPct = MEJORA_PCT;
+    }
+  }
+  // Quienes ya deberían recibirlo: una fila por persona (su giro actual), sin
+  // usar, sin vencer, sin recordatorio todavía y con la hora cumplida. Con
+  // segundo lanzamiento cuenta desde el segundo (el correo con los dos códigos).
+  // vez: 1 (el primero, con la mejora) o 2 (el último aviso). El 2º solo si el
+  // 1º se mandó, con su hora cumplida y al menos 4 h después del 1º.
+  async function pendientesRecordatorio() {
+    await cargar();
+    const t = ahora(), out = [];
+    for (const codigo of Object.values(estado.porCorreo)) {
+      const reg = tiene(estado.codigos, codigo) ? estado.codigos[codigo] : null;
+      if (!reg || reg.manual || usadoPar(reg) || t > reg.vence) continue;
+      const fila = { codigo: reg.codigo, email: reg.emailEnvio || reg.email, clave: reg.email, vence: reg.vence };
+      if (!reg.recordatorio) {
+        const par = parDe(reg);
+        if (t >= momentoRecordatorio(Math.max(reg.creado, par ? par.creado : 0))) out.push({ ...fila, vez: 1 });
+      } else if (reg.recordatorio.resultado === 'enviado' && !reg.recordatorio2
+        && t >= momentoUltimoRecordatorio(reg.vence)
+        && t >= Date.parse(reg.recordatorio.fecha) + ENTRE_RECORDATORIOS_MS) {
+        out.push({ ...fila, vez: 2 });
+      }
+    }
+    return out;
+  }
+  // Mejora el premio (y el del otro código si lanzó dos veces) y devuelve lo
+  // que va en el correo. No marca el envío: eso lo hace marcarRecordatorio.
+  async function prepararRecordatorio(codigo, vez = 1) {
+    await cargar();
+    const reg = buscar(codigo);
+    if (!reg) return null;
+    const regs = [reg, parDe(reg)].filter(Boolean);
+    const antes = regs.map(r => premioPublico(premioPorId(r.premio)));
+    regs.forEach(mejorar); // en el 2º ya está mejorado: no cambia nada
+    await guardar();
+    return {
+      email: reg.emailEnvio || reg.email,
+      vez: vez === 2 ? 2 : 1,
+      vence: new Date(reg.vence).toISOString(),
+      horasQuedan: Math.max(1, Math.floor((reg.vence - ahora()) / (60 * 60 * 1000))),
+      codigos: regs.map((r, i) => ({ ...datos(r), antes: antes[i] })),
+    };
+  }
+  // Cuántos recordatorios (1º y 2º) salieron hoy, día de Chile: para el tope diario.
+  async function recordatoriosHoy() {
+    await cargar();
+    const h = partesChile(ahora()), mismoDia = f => { const p = partesChile(Date.parse(f)); return p.y === h.y && p.mo === h.mo && p.d === h.d; };
+    let n = 0;
+    for (const reg of Object.values(estado.codigos)) {
+      for (const r of [reg.recordatorio, reg.recordatorio2]) if (r && r.resultado === 'enviado' && mismoDia(r.fecha)) n++;
+    }
+    return n;
+  }
+  // resultado: 'enviado' | 'compro' (ya compró: no se le escribe más) | 'fallo'.
+  async function marcarRecordatorio(codigo, resultado, vez = 1) {
+    await cargar();
+    const reg = buscar(codigo);
+    if (!reg) return false;
+    const m = { fecha: new Date(ahora()).toISOString(), resultado: String(resultado || 'enviado') };
+    if (vez === 2) reg.recordatorio2 = m;
+    else reg.recordatorio = m;
+    if (m.resultado === 'compro' && vez !== 2) reg.recordatorio2 = m; // tampoco el último aviso
+    await guardar();
+    return true;
+  }
+  // Un envío que falló (sin ser falta de cuota). A los `max` fallos se da por perdido.
+  async function falloRecordatorio(codigo, max = 3, vez = 1) {
+    await cargar();
+    const reg = buscar(codigo);
+    if (!reg) return false;
+    const k = vez === 2 ? 'recordatorio2Fallos' : 'recordatorioFallos';
+    reg[k] = (reg[k] || 0) + 1;
+    if (reg[k] >= max) reg[vez === 2 ? 'recordatorio2' : 'recordatorio'] = { fecha: new Date(ahora()).toISOString(), resultado: 'fallo' };
+    await guardar();
+    return true;
+  }
+
+  return { girar, otroLanzamiento, validar, elegirColor, premioParaCobro, marcarUsado, resumen, lista, generar, generarUnoDeCada,
+    pendientesRecordatorio, prepararRecordatorio, marcarRecordatorio, falloRecordatorio, recordatoriosHoy };
 }
 
 // Una sola instancia para server.js, Flow y Transbank (comparten los códigos).
@@ -467,4 +631,5 @@ function servicio() {
 module.exports = {
   PREMIOS, VIGENCIA_MS, REGIRO_MS, RESERVA_MS, COLORES_CORREA, MENSAJES, DESECHABLES, LARGO_CODIGO,
   sortear, sortearOtro, premioPorId, normalizarCodigo, validarCorreo, enmascarar, crearServicio, servicio,
+  RECORDATORIO_MS, MEJORA_PCT, partesChile, enHorarioCorreos, momentoRecordatorio, momentoUltimoRecordatorio,
 };
