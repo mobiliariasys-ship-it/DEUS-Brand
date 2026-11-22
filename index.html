@@ -1844,6 +1844,12 @@ body.sb-on .wa-float{bottom:82px;}
 /* El mismo celeste, tenue, en las etiquetas de sección y en la cápsula del pulso */
 .soft-kicker{border-color:rgba(148,224,253,.3);}
 .hdr-pulse{border-color:rgba(148,224,253,.28);}
+/* En el celular los campos van con letra de 16px: con menos, el iPhone agranda
+   la página al tocarlos y después hay que alejar con los dedos (pedido del
+   dueño, 22-nov-2026). El correo de la ruleta y el código ya tenían 16px. */
+@media (hover:none) and (pointer:coarse){
+  .shipping-input,.chat-input,.resena-input,.rifa-input,.qty-dialog-input{font-size:16px;}
+}
 </style>
 </head>
 <body>
@@ -1856,7 +1862,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="announce-bar" id="offer-bar"><div class="ab-in"><b class="ab-titulo">🇨🇱 ENVÍO GRATIS<span class="solo-promo"> + TAPONES DE OÍDO GRATIS</span></b><span class="ab-plazo">1-2 días de envío a todo Chile</span></div></div>
 <div class="topbar" id="topbar">
 <header>
-  <img src="img/logo-deus-brand.svg" alt="DEUS Brand — Recovery &amp; Wellness" class="logo-img" onclick="location.href='/'" style="cursor:pointer">
+  <img src="img/logo-deus-brand.svg" alt="DEUS Brand — Recovery &amp; Wellness" class="logo-img" onclick="deusIrArriba()" style="cursor:pointer">
   <div class="hdr-right">
     <div class="hdr-pulse" title="Ritmo cardíaco en vivo"><span class="mon" aria-hidden="true"><svg class="hdr-pulse-heart" viewBox="0 0 138 18"><path d="M0 10H14L17 7L20 14L24 2L28 12L30 10H46M46 10H60L63 7L66 14L70 2L74 12L76 10H92M92 10H106L109 7L112 14L116 2L120 12L122 10H138"/></svg></span><b id="hdr-bpm">--</b><small>BPM</small></div>
   </div>
@@ -3288,11 +3294,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <div class="field-label">Datos de quien recibe</div>
             <div class="shipping-form">
-              <input class="shipping-input" id="co-nombre" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" oninput="window.deusEvento && window.deusEvento('co:2datos')" />
-              <input class="shipping-input" id="co-rut" aria-label="RUT (opcional)" placeholder="RUT (opcional)" style="grid-column:1/-1" />
-              <input class="shipping-input" id="co-email" type="email" inputmode="email" autocomplete="email" aria-label="Correo electrónico" placeholder="Correo electrónico" style="grid-column:1/-1" oninput="revisarEmail()" onblur="revisarEmail()" />
+              <input class="shipping-input" id="co-nombre" autocomplete="name" autocapitalize="words" enterkeyhint="next" aria-label="Nombre y apellido de quien recibe" placeholder="Nombre y apellido" style="grid-column:1/-1" oninput="window.deusEvento && window.deusEvento('co:2datos')" />
+              <input class="shipping-input" id="co-rut" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" aria-label="RUT (opcional)" placeholder="RUT (opcional)" style="grid-column:1/-1" />
+              <input class="shipping-input" id="co-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" enterkeyhint="next" aria-label="Correo electrónico" placeholder="Correo electrónico" style="grid-column:1/-1" oninput="revisarEmail()" onblur="revisarEmail()" />
               <div class="email-sug" id="email-sug" style="display:none;grid-column:1/-1"></div>
-              <input class="shipping-input" id="co-fono" type="tel" aria-label="Teléfono de contacto" placeholder="Teléfono (ej: +56 9 1234 5678)" style="grid-column:1/-1" />
+              <input class="shipping-input" id="co-fono" type="tel" inputmode="tel" autocomplete="tel" enterkeyhint="next" aria-label="Teléfono de contacto" placeholder="Teléfono (ej: +56 9 1234 5678)" style="grid-column:1/-1" />
             </div>
 
             <div class="field-label">Dirección de envío</div>
@@ -3305,7 +3311,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <input class="shipping-input" id="sh-commune" autocomplete="off" aria-label="Comuna de envío" placeholder="Comuna" oninput="filterComuna()" />
                 <div class="ac-list" id="comuna-list"></div>
               </div>
-              <input class="shipping-input" id="sh-address" aria-label="Dirección de envío" placeholder="Calle, número, depto" style="grid-column:1/-1" />
+              <input class="shipping-input" id="sh-address" autocomplete="street-address" enterkeyhint="done" aria-label="Dirección de envío" placeholder="Calle, número, depto" style="grid-column:1/-1" />
               <!-- Sin botón de calcular: el envío es gratis, así que pedirle al
                    cliente que "calcule" solo sembraba la duda de si se cobra.
                    Se cotiza solo (al elegir comuna, al salir de dirección) y
@@ -3918,6 +3924,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // El aviso de envío gratis se muestra de entrada, antes de calcular
           // nada, para que el cliente sepa al tiro que no paga despacho.
           mostrarAvisoEnvioGratis();
+          // Lo que escribió antes (mejora 4): solo rellena campos vacíos.
+          if (window.deusReponerBorrador) window.deusReponerBorrador();
           // El despliegue parte siempre desde arriba del todo; si se estaba
           // cerrando, se corta el cierre (ver .checkout-overlay en el CSS).
           clearTimeout(cierreCheckout);
@@ -7711,5 +7719,143 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
   <button class="lb-nav lb-next" onclick="zoomNav(1,event)" aria-label="Siguiente">&#8250;</button>
   <div class="lightbox-hint">Desliza para cambiar de color</div>
 </div>
+<script>
+// ── Comodidad (pedidos del dueño, 22-nov-2026) ──
+(function () {
+  'use strict';
+  var sinMovimiento = function () { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; };
+
+  // Mejora 10: tocar el logo sube al inicio sin recargar la página.
+  window.deusIrArriba = function () {
+    if (location.pathname === '/' || /\/index\.html$/.test(location.pathname)) {
+      try { scrollTo({ top: 0, behavior: sinMovimiento() ? 'auto' : 'smooth' }); } catch (e) { scrollTo(0, 0); }
+    } else {
+      location.href = '/';
+    }
+  };
+
+  // Mejora 3: "Siguiente" en el teclado del celular salta al campo que sigue.
+  // No en región ni comuna: ahí Enter elige de la lista de sugerencias.
+  var ORDEN = ['co-nombre', 'co-rut', 'co-email', 'co-fono', 'sh-region'];
+  ORDEN.slice(0, -1).forEach(function (id, i) {
+    var e = document.getElementById(id);
+    if (!e) return;
+    e.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter' || ev.isComposing) return;
+      var sig = document.getElementById(ORDEN[i + 1]);
+      if (sig) { ev.preventDefault(); sig.focus(); }
+    });
+  });
+
+  // Mejora 4: lo escrito en el checkout queda guardado en ESTE navegador
+  // (localStorage, 7 días) y se repone al volver a abrirlo o al recargar la
+  // página: no hay que escribir todo de nuevo. No va al servidor por esta vía
+  // y se borra al pagar con éxito (success.html). Solo rellena campos vacíos.
+  var CLAVE = 'deus-checkout-borrador', DIAS = 7;
+  var CAMPOS = ['co-nombre', 'co-rut', 'co-email', 'co-fono', 'sh-region', 'sh-commune', 'sh-address'];
+  var espera = null;
+  function guardarBorrador() {
+    clearTimeout(espera);
+    espera = setTimeout(function () {
+      var d = {}, alguno = false;
+      CAMPOS.forEach(function (id) {
+        var e = document.getElementById(id);
+        if (e && e.value.trim()) { d[id] = e.value.slice(0, 200); alguno = true; }
+      });
+      try {
+        if (alguno) localStorage.setItem(CLAVE, JSON.stringify({ t: Date.now(), d: d }));
+        else localStorage.removeItem(CLAVE);
+      } catch (e) {}
+    }, 400);
+  }
+  window.deusReponerBorrador = function () {
+    var b = null;
+    try { b = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { b = null; }
+    if (!b || !b.d || !(Date.now() - b.t < DIAS * 864e5)) {
+      try { localStorage.removeItem(CLAVE); } catch (e) {}
+      return;
+    }
+    CAMPOS.forEach(function (id) {
+      var e = document.getElementById(id);
+      if (e && !e.value && typeof b.d[id] === 'string') e.value = b.d[id];
+    });
+  };
+  CAMPOS.forEach(function (id) {
+    var e = document.getElementById(id);
+    if (e) { e.addEventListener('input', guardarBorrador); e.addEventListener('change', guardarBorrador); }
+  });
+
+  // Mejora 1: el "atrás" del celular (o el gesto de volver) cierra la ventana
+  // abierta en vez de sacar a la persona de la tienda. Al abrirse una ventana
+  // se agrega un paso al historial (misma dirección, no recarga); "atrás" lo
+  // consume y se cierra con su propio botón de cerrar, igual que si la persona
+  // lo tocara. Si se cierra con el botón, se quita ese paso. Si sigue abierta
+  // (el checkout muestra primero la barra de ayuda), se vuelve a poner.
+  if (!window.history || !history.pushState || !window.MutationObserver) return;
+  // [nombre, se ve cuando..., su botón de cerrar]
+  var VENTANAS = [
+    ['checkout', '#checkout-overlay.show:not(.cerrando)', '#checkout-overlay .checkout-close'],
+    ['ruleta', '.rl-capa.abierta', '.rl-capa.abierta .rl-x'],
+    ['carrito', '#cart-drawer.open', '#cart-drawer .cart-drawer-close'],
+    ['cantidad', '.qty-dialog.show', '.qty-dialog.show .cancel'],
+    ['foto-resena', '#foto-lightbox.show', '#foto-lightbox .foto-lightbox-close'],
+    ['visor', '#lightbox.show', '#lightbox .lightbox-close'],
+    ['visor-360', '.rot-full.show', '.rot-full.show .rot-full-close'],
+    ['resenas', '#reviews-modal.show', '#reviews-modal .reviews-modal-close'],
+    ['escribir-resena', '#resenaOverlay[style*="flex"]', '#resenaOverlay .resena-close'],
+    ['tapones', '#tapones-menu.show', '#tapones-menu .tapones-card-close'],
+    ['chat', '#chat-panel.show', '#chat-panel .chat-close'],
+    ['funcion', '#fn-modal[open]', '#fn-modal .fn-cerrar'],
+    ['sorteo', '.rifa-overlay.show', '.rifa-overlay.show .rifa-close']
+  ];
+  var abiertas = [];          // las que tienen su paso en el historial, la última arriba
+  var porAtras = {};          // las que se están cerrando por "atrás" (su paso ya se consumió)
+  var ignorar = 0;            // popstate provocados por nosotros mismos
+  function abierta(v) { return !!document.querySelector(v[1]); }
+  function revisar() {
+    var ahora = VENTANAS.filter(abierta).map(function (v) { return v[0]; });
+    var cerradas = abiertas.filter(function (id) { return ahora.indexOf(id) < 0; });
+    var nuevas = ahora.filter(function (id) { return abiertas.indexOf(id) < 0; });
+    var sobran = 0;
+    cerradas.forEach(function (id) {
+      abiertas.splice(abiertas.indexOf(id), 1);
+      if (porAtras[id]) delete porAtras[id]; else sobran++;
+    });
+    nuevas.forEach(function (id) {
+      abiertas.push(id);
+      // Si a la vez se cerró otra con su botón (p. ej. del carrito al
+      // checkout), su paso pasa a la nueva en vez de quitar uno y poner otro.
+      if (sobran > 0) { sobran--; history.replaceState({ deusVentana: id }, ''); }
+      else history.pushState({ deusVentana: id }, '');
+    });
+    if (sobran > 0) { ignorar++; history.go(-sobran); }
+  }
+  // Si recargó la página con una ventana abierta, su paso quedó en el
+  // historial: se limpia el actual y los de más atrás se saltan solos.
+  if (history.state && history.state.deusVentana) history.replaceState(null, '');
+  addEventListener('popstate', function (ev) {
+    if (ignorar > 0) { ignorar--; return; }
+    var id = abiertas[abiertas.length - 1];
+    if (!id) {
+      if (ev.state && ev.state.deusVentana) history.back();   // paso viejo: se salta
+      return;
+    }
+    var v = VENTANAS.filter(function (x) { return x[0] === id; })[0];
+    var boton = v && document.querySelector(v[2]);
+    porAtras[id] = true;
+    if (boton) boton.click();
+    if (abierta(v)) {                     // no se cerró: se vuelve a poner su paso
+      delete porAtras[id];
+      history.pushState({ deusVentana: id }, '');
+    }
+  });
+  var pendiente = false;
+  new MutationObserver(function () {
+    if (pendiente) return;
+    pendiente = true;
+    requestAnimationFrame(function () { pendiente = false; revisar(); });
+  }).observe(document.body, { attributes: true, attributeFilter: ['class', 'style', 'open'], childList: true, subtree: true });
+})();
+</script>
 </body>
 </html>

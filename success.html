@@ -62,7 +62,10 @@ fbq('track', 'PageView');
   // identidad de un cliente guardada en un equipo compartido. Al que abandonó
   // el checkout NO le pasa por acá, y es justamente el que queremos reconocer
   // cuando vuelva.
-  if (ref) { try { localStorage.removeItem('deus-fb-match'); } catch (e) {} }
+  // Lo mismo con el borrador del checkout (lo que escribió: nombre, RUT,
+  // correo, teléfono y dirección), que index.html guarda para no hacerle
+  // escribir todo de nuevo si cierra la ventana.
+  if (ref) { try { localStorage.removeItem('deus-fb-match'); localStorage.removeItem('deus-checkout-borrador'); } catch (e) {} }
 })();
 </script>
 <noscript><img height="1" width="1" style="display:none"
