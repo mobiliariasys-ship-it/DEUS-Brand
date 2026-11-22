@@ -1776,6 +1776,41 @@ body.sb-on .wa-float{bottom:82px;}
 .asb-logo{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:5px;flex-shrink:0;}
 .asb-btn{background:#0a84ff;color:#fff;border:none;border-radius:16px;padding:7px 18px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:700;text-decoration:none;flex-shrink:0;}
 @media(max-width:400px){.asb-sub{font-size:.64rem;}}
+
+/* ── Bordes "luz desde arriba" (pedido del dueño, 22-nov-2026) ──
+   Las superficies principales llevan un borde celeste, el #94e0fd del pulso
+   del encabezado y del sensor de la banda: más brillante arriba y apagándose
+   hacia abajo, como si la luz cayera sobre cada tarjeta, con un halo suave
+   arriba. Fijo, sin animación (el dueño probó una versión que latía y pidió
+   que no latiera). Solo en las superficies grandes: lo chico y repetido (las
+   funciones, las preguntas frecuentes, los datos de materiales) queda con su
+   borde gris para no llenar la página de líneas, y la garantía conserva su verde.
+   El borde es un ::after con máscara que deja solo el contorno. Va dentro de
+   @supports: un navegador sin máscaras pintaría el degradado sobre la tarjeta
+   entera; ahí simplemente queda el borde gris de antes. */
+@supports ((-webkit-mask-composite:xor) or (mask-composite:exclude)){
+  header,.detail,.buybox,.spec,.soft-in,.r360-card,.vidrio-card,.step,.cmp-wrap,.checkout-modal{border-color:transparent;}
+  header,.detail,.buybox,.spec,.r360-card,.vidrio-card,.step,.cmp-wrap{position:relative;}
+  header::after,.detail::after,.buybox::after,.spec::after,.soft-in::after,.r360-card::after,.vidrio-card::after,.step::after,.cmp-wrap::after,.checkout-modal::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;padding:1.25px;pointer-events:none;z-index:2;
+    background:linear-gradient(180deg,#dcf7ff 0%,#94e0fd 32%,rgba(148,224,253,.55) 68%,rgba(148,224,253,.22) 100%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+    mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;}
+  /* Halo celeste arriba, sumado a la sombra que ya tenía cada una */
+  header{box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.04),0 -2px 14px -4px rgba(148,224,253,.3);}
+  .soft-in{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 40px 90px -50px rgba(0,0,0,.9),0 -2px 14px -4px rgba(148,224,253,.3);}
+  .step,.cmp-wrap,.r360-card,.vidrio-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.3),0 26px 52px -30px rgba(0,0,0,.95),0 -2px 14px -4px rgba(148,224,253,.3);}
+  .detail,.buybox,.spec{box-shadow:0 -2px 14px -4px rgba(148,224,253,.3);}
+  /* El checkout, más iluminado y de un azul más intenso (pedido del dueño):
+     es el paso de pagar, así se destaca como una capa aparte. */
+  .checkout-modal::after{padding:1.5px;background:linear-gradient(180deg,#c6edff 0%,#5ec7ff 28%,rgba(72,166,255,.75) 62%,rgba(72,166,255,.38) 100%);}
+  .checkout-modal{box-shadow:0 -2px 26px -4px rgba(72,170,255,.5),0 24px 60px -24px rgba(0,0,0,.8);}
+}
+/* Luz azul que cae desde arriba dentro del checkout (sin máscara: sirve en todos los navegadores) */
+.checkout-modal{background:radial-gradient(110% 34% at 50% 0%,rgba(72,166,255,.17),rgba(72,166,255,0) 72%),#32353b;}
+/* El mismo celeste, tenue, en las etiquetas de sección y en la cápsula del pulso */
+.soft-kicker{border-color:rgba(148,224,253,.3);}
+.hdr-pulse{border-color:rgba(148,224,253,.28);}
 </style>
 </head>
 <body>
