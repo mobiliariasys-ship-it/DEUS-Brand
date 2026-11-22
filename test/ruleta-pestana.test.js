@@ -1,34 +1,25 @@
 'use strict';
-// La pestaña lateral "Gira y gana" baja sola a medida que se baja por la
-// página (pedido del dueño, 22-nov-2026): arriba va al medio y, cuando llega la
-// caja de compra, ya está abajo, para no tapar el precio ni el botón. Antes se
-// podía arrastrar; el dueño pidió que mejor no se moviera a mano.
+// La pestaña lateral "Gira y gana" va quieta, al medio a la izquierda, como
+// siempre. Se probó que se arrastrara y después que bajara sola con la página;
+// el dueño pidió volver a como estaba (22-nov-2026: "ponelo quieto como antes").
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const tab = html.indexOf('id="ruleta-tab"');
-const ini = html.indexOf('<script>', tab);
-const script = html.slice(ini, html.indexOf('</script>', ini));
 
-test('un toque la sigue abriendo', () => {
+test('un toque la abre', () => {
   assert.ok(html.includes('id="ruleta-tab" onclick="abrirRuleta()"'));
 });
 
-test('ya no se arrastra: el dedo sobre ella vuelve a mover la página', () => {
-  assert.ok(!/pointerdown|pointermove|setPointerCapture/.test(script), 'sin arrastre');
-  assert.ok(!/\.rifa-tab\{touch-action:none/.test(html), 'sin touch-action:none, deslizar sobre ella baja la página');
-  assert.ok(!html.includes("'deus-ruleta-tab'"), 'ya no se guarda una altura elegida a mano');
+test('va quieta al medio a la izquierda', () => {
+  assert.match(html, /\.rifa-tab\{position:fixed;left:0;top:50%;transform:translateY\(-50%\);/);
 });
 
-test('baja con la página, hasta quedar bajo la caja de compra', () => {
-  assert.ok(script.includes("getElementById('ruleta-tab')"), 'el script que sigue a la pestaña es el que la mueve');
-  assert.match(script, /addEventListener\('scroll', pedir, \{ passive: true \}\)/, 'escucha el scroll sin trabarlo');
-  assert.ok(script.includes('requestAnimationFrame'), 'se mueve una vez por cuadro');
-  assert.ok(script.includes("'.buybox'"), 'el recorrido termina cuando llega la caja de compra');
-  assert.ok(script.includes("'.sticky-buy'"), 'abajo deja libre la barra de compra');
-  assert.match(script, /var v = 'translateY\(-50%\) translateY\(' [\s\S]*?if \(v !== ultimo\) \{ tab\.style\.transform = v;/, 'se mueve con transform, y solo cuando cambia');
-  assert.match(html, /\.rifa-tab\{transition:padding \.2s,filter \.2s,transform \.35s/, 'el movimiento es suave');
+test('sin arrastre ni movimiento con la página', () => {
+  assert.ok(!/getElementById\('ruleta-tab'\)/.test(html), 'ningún script la mueve');
+  assert.ok(!html.includes("'deus-ruleta-tab'"), 'no guarda una altura');
+  assert.ok(!/\.rifa-tab\{touch-action:none/.test(html), 'el dedo sobre ella mueve la página');
+  assert.ok(!/\.rifa-tab\{transition:[^}]*transform/.test(html), 'sin transición de posición');
 });
