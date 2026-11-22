@@ -15,10 +15,11 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
 test('la paleta del sitio es Noche glaciar, suavizada', () => {
   // Mezcla entre Noche glaciar y el gris humo (el dueño la encontró "muy azul"):
-  // los grises azulados al 80 por ciento de su saturación.
-  assert.match(index, /:root \{\s*--black:#272b32; --dark:#2c3039; --card:#2e333c;\s*--border:#3e4450; --white:#f4f4f4;/);
-  assert.match(index, /\.checkout-modal\{--card:#343943;--border:#424957;--silver:#abb0bc;--dark:#2f343d;/);
-  assert.match(index, /<meta name="theme-color" content="#202228">/, 'la barra del navegador del celular calza con la barra de arriba');
+  // los grises azulados al 90 por ciento de su saturación (entre la mezcla con
+  // el gris humo y Noche glaciar).
+  assert.match(index, /:root \{\s*--black:#262a33; --dark:#2b303a; --card:#2d323d;\s*--border:#3d4350; --white:#f4f4f4;/);
+  assert.match(index, /\.checkout-modal\{--card:#323844;--border:#414857;--silver:#aab0bd;--dark:#2e333e;/);
+  assert.match(index, /<meta name="theme-color" content="#1f2229">/, 'la barra del navegador del celular calza con la barra de arriba');
 });
 
 test('el botón IA DEUS va en azul hielo', () => {
