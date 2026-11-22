@@ -1052,7 +1052,11 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .chat-fab span{white-space:nowrap;}
 .chat-fab .fab-short{display:none;}
 body.sb-on .chat-fab{bottom:82px;}
-@media(max-width:600px){.chat-fab{padding:12px 16px;font-size:.76rem;bottom:16px;right:16px;border-radius:14px;}.chat-fab svg{width:22px;height:22px;}.chat-fab .fab-full{display:none;}.chat-fab .fab-short{display:inline;}body.sb-on .chat-fab{bottom:76px;}}
+@media(max-width:600px){.chat-fab{padding:12px 16px;font-size:.76rem;bottom:16px;right:16px;border-radius:14px;}.chat-fab svg{width:22px;height:22px;}.chat-fab .fab-full{display:none;}.chat-fab .fab-short{display:inline;}body.sb-on .chat-fab{bottom:76px;}
+/* Con la barra de compra abierta el botón queda en un círculo chico (solo el
+   ícono): la pastilla con texto tapaba títulos y párrafos al bajar. */
+body.sb-on .chat-fab{width:50px;height:50px;padding:0;justify-content:center;border-radius:50%;}
+body.sb-on .chat-fab span{display:none!important;}}
 /* Panel del chat */
 .chat-panel{position:fixed;bottom:20px;right:20px;width:min(370px,calc(100vw - 32px));height:min(540px,calc(100vh - 90px));background:#242830;border:1px solid #343a47;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.6);z-index:1200;display:none;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;}
 .chat-panel.show{display:flex;}
@@ -1343,14 +1347,14 @@ body.sb-on .chat-panel{bottom:82px;}
 /* Lema bajo el título */
 .brand-head-tag{font-size:.82rem;letter-spacing:1px;color:var(--silver);margin-top:10px;font-weight:300;text-transform:none;}
 /* Barra de compra fija */
-.sticky-buy{position:fixed;left:0;right:0;bottom:0;z-index:900;display:flex;align-items:center;justify-content:center;gap:18px;background:rgba(34,38,46,.97);border-top:1px solid var(--border);padding:10px 16px;transform:translateY(110%);transition:transform .25s ease;}
+.sticky-buy{position:fixed;left:0;right:0;bottom:0;z-index:900;display:flex;align-items:center;justify-content:center;gap:18px;background:#22262e;border-top:1px solid var(--border);box-shadow:0 -10px 24px rgba(0,0,0,.35);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .25s ease;}
 .sticky-buy.show{transform:translateY(0);}
 .sticky-buy .sb-old{font-size:.72rem;color:var(--silver);text-decoration:line-through;margin-right:7px;}
 .sticky-buy b{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;font-weight:400;letter-spacing:1px;}
 .sb-btn{background:linear-gradient(180deg,#ffffff,#eaf0f4);color:#0d1014;border:none;border-radius:12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:12px 26px;font-family:'DM Sans',sans-serif;font-size:.74rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
 body.sb-on .wa-float{bottom:82px;}
 .sb-btn[data-buy]::after{content:"→";letter-spacing:0;font-size:.9rem;line-height:1;}
-@media(max-width:600px){body.sb-on .wa-float{bottom:76px;}.sticky-buy{gap:12px;padding:9px 12px;}.sb-btn{padding:11px 18px;font-size:.68rem;}}
+@media(max-width:600px){body.sb-on .wa-float{bottom:76px;}.sticky-buy{gap:12px;padding:9px 12px;padding-bottom:calc(9px + env(safe-area-inset-bottom));}.sb-btn{padding:11px 18px;font-size:.68rem;}}
 /* Garantía + Preguntas frecuentes */
 .faq{max-width:760px;margin:0 auto;padding:28px 24px 20px;}
 .faq-head{text-align:center;margin-bottom:24px;}
@@ -5376,7 +5380,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="r360-head">
             <div class="soft-kicker">Cómo funciona · 360°</div>
             <h2 class="r360-marca">DEUS BAND</h2>
-            <p class="r360-txt">Girá la banda y descubre la tecnología detrás de cada pulsación.</p>
+            <p class="r360-txt">Gira la banda y descubre la tecnología detrás de cada pulsación.</p>
           </div>
           <div class="how-row row-360">
           <div class="how-img seamless rot-360" id="rot360" aria-label="DEUS Band en 360 grados — arrastra o mantén una flecha para girar">
@@ -5387,7 +5391,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <button class="hold-arrow r" id="rot360-arrow-r" type="button" aria-label="Girar a la derecha">›</button>
             <div class="rot-finger" id="rot360-finger" aria-hidden="true">👆</div>
           </div>
-          <div class="rot-hint-wrap"><span class="rot-hint" id="rot360-hint">↔ Girala · se enciende el sensor</span></div>
+          <div class="rot-hint-wrap"><span class="rot-hint" id="rot360-hint">↔ Gírala · se enciende el sensor</span></div>
         </div>
           <!-- Materiales y sensor: va en la misma tarjeta, debajo de la banda girando -->
           <div class="bat-txt mat-en-360">
