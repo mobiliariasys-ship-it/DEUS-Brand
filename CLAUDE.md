@@ -44,6 +44,15 @@ commitea en ambos.
 > versión que está en producción (todas las ramas `claude/*` se mantienen
 > iguales a ella); una rama vieja pisa la tienda con una versión antigua.
 
+## Ergonomía de la web: proponer sin que lo pidan
+
+El dueño quiere que el asistente proponga por iniciativa propia mejoras de
+comodidad para el visitante, como la pestaña de la ruleta que se arrastra o el
+checkout que se despliega de arriba hacia abajo (22-nov-2026). Al tocar una
+parte de la web, si ves algo que molesta, tapa contenido o se puede hacer más
+cómodo, menciónalo en una línea al final de la respuesta, sin aplicarlo hasta
+que lo apruebe.
+
 ## Cartola de Falabella y devoluciones (todos los meses)
 
 El dueño sube cada mes la cartola de su cuenta corriente de Banco Falabella,
