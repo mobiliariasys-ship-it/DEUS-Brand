@@ -196,11 +196,13 @@ test('mantener presionada una banda no la saca como foto (menú de imagen del iP
   assert.match(HTML, /\.sl-arte img\{[^}]*-webkit-touch-callout:none/);
 });
 
-test('fotos principales: fondo oscuro y textos en celeste hielo, con nombres nuevos (caché de 7 días)', () => {
-  // Pedido del dueño (30-oct-2026): negra en carbón, gris en gris mate,
-  // rosada en rosado mate; mismos textos, en celeste hielo. Se cachean una
-  // semana, así que van con nombres nuevos para no mezclar fotos viejas con el
-  // fondo nuevo de las bandas que se mecen.
+test('fotos principales: fondo acero con textos oscuros, y la versión de caché al día', () => {
+  // Desde el 22-nov-2026 la negra y la gris van en acero glaciar con los
+  // textos oscuros (scripts/recolorear-portada.py, variante 'acero', que es
+  // la que corre por defecto); la rosada sigue en rosado pastel. Se cachean una
+  // semana: al cambiarlas se sube ?v=N, el mismo en las fotos y en la capa de
+  // las bandas que se mecen (si no, se mezclaría una foto vieja con el fondo
+  // nuevo de las bandas).
   for (const c of ['negra', 'gris', 'rosada']) {
     for (const base of [800, 1200]) assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'portada', `${c}-${base}.webp`)), `falta portada/${c}-${base}`);
     // ?v=N: se sube cuando cambia la foto (para saltarse el caché).
@@ -208,7 +210,17 @@ test('fotos principales: fondo oscuro y textos en celeste hielo, con nombres nue
     assert.match(HTML, new RegExp(`${c}: "img/portada/${c}-1200\\.webp\\?v=\\d+"`), 'el zoom y el carrito usan la foto nueva');
   }
   assert.ok(!/img\/hero-bandas\//.test(HTML) && !/slide-(negra|gris|rosada)-800/.test(HTML), 'nada apunta a los archivos viejos');
-  // Sobre la gris y la rosada (fondos claros) los puntitos del carrusel van oscuros.
-  assert.match(HTML, /gal\.classList\.toggle\('foto-clara', colorOrder\[currentSlide\] !== 'negra'\)/);
-  assert.match(HTML, /\.gal-slider\.foto-clara \.sdot\.active\{/);
+  const versiones = new Set([...HTML.matchAll(/img\/portada\/[a-z]+-(?:800|1200)\.webp\?v=(\d+)/g)].map(m => m[1]));
+  const capa = HTML.match(/'800\.webp\?v=(\d+) 800w, ' \+ b \+ '1200\.webp\?v=(\d+) 1200w'/);
+  assert.strictEqual(versiones.size, 1, 'todas las fotos de portada con la misma versión');
+  assert.ok(capa && capa[1] === capa[2] && versiones.has(capa[1]), 'la capa de las bandas usa la misma versión que las fotos');
+  const script = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'recolorear-portada.py'), 'utf8');
+  assert.match(script, /variante = sys\.argv\[2\] if len\(sys\.argv\) > 2 else 'acero'/, 'el script rehace la variante que se usa');
+  // Las tres fotos tienen fondo claro: los puntitos del carrusel van oscuros siempre.
+  assert.match(HTML, /\.sdot\{[^}]*background:rgba\(37,41,50,\.25\)/);
+  assert.match(HTML, /\.sdot\.active\{background:#414756;/);
+  assert.ok(!HTML.includes("toggle('foto-clara'"), 'ya no cambian según la foto');
+  // Mientras baja, cada foto muestra su fondo; el de la rosada es rosado (color del producto).
+  assert.match(HTML, /\.slide\[data-color="negra"\]\{background:linear-gradient\(90deg,#8496a3,/);
+  assert.match(HTML, /\.slide\[data-color="rosada"\]\{background:linear-gradient\(90deg,#e1c1c5,#e8cccf 50%,#f0d6da\);\}/);
 });

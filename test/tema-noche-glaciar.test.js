@@ -52,3 +52,10 @@ test('no toca los colores del producto, la ruleta ni los logos de marcas', () =>
   assert.ok(index.includes('fill="#00D7FE"'), 'Google Play conserva sus colores');
   assert.ok(index.includes('background:#FC4C02'), 'Strava conserva su naranjo');
 });
+
+test('los rojos con significado siguen rojos (la conversión de paleta los había pasado a celeste)', () => {
+  assert.ok(index.includes('.rlc-msg.mal{color:#ff8a8a;}'), 'el aviso de código inválido es rojo');
+  assert.match(index, /\.cart-item-remove\{color:#e05555;/, '"Eliminar" del carrito es rojo');
+  assert.match(index, /\.bpm-heart\{color:#e05555;/, 'el corazón del pulso es rojo');
+  assert.match(index, /\.offer-pill\{[^}]*background:linear-gradient\(135deg,#911f1f,#6b1313\);color:#ffdede;/, 'la etiqueta roja de oferta con su texto claro cálido');
+});

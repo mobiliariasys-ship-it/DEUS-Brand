@@ -5,6 +5,12 @@ Uso (desde la raíz del repo):
     python3 scripts/recortar-bandas.py /tmp/bandas      # dónde va cada banda (<color>.json)
     python3 scripts/recolorear-portada.py /tmp/bandas [variante]
 
+Hoy se usa la variante 'acero' (22-nov-2026): el dueño encontró que el fondo
+no combinaba ni hacía buen contraste, comparó varias mezclas de glaciar,
+niebla y grafito y eligió esta: un acero glaciar de tono medio con los textos
+y los dibujos de los íconos oscuros (la banda negra contrasta ~8,7:1 con su
+fondo y los textos ~5,6:1; antes, ~4,9:1 y ~3,2:1). La rosada no cambia.
+
 Pedido del dueño (30-oct-2026): partiendo del celeste grisáceo de las fotos
 originales, pero mate. La negra en ese celeste gris apagado con los textos en
 celeste hielo; la gris en uno más claro (que contraste con la banda gris) y la
@@ -37,7 +43,15 @@ GRIS_MATE = (74, 79, 84)     # texto sobre los fondos claros
 # Por color: fondo nuevo (lado oscuro, lado claro) y color del texto, en sRGB.
 # Sin texto, va en celeste hielo.
 VARIANTES = {
-    # La que se usa (30-oct-2026). Negra: el celeste grisáceo original, apagado
+    # La que se usa (22-nov-2026): acero glaciar de tono medio. Cuarto valor:
+    # el color de los trazos claros (los dibujos de los íconos, blancos en la
+    # original); sobre este fondo van oscuros, como el texto.
+    'acero': {
+        'negra': ((132, 150, 163), (178, 196, 208), (22, 28, 36), (22, 28, 36)),
+        'gris': ((140, 157, 169), (184, 200, 211), (22, 28, 36), (22, 28, 36)),
+        'rosada': ((226, 193, 198), (240, 214, 217), GRIS_MATE),
+    },
+    # Antes (30-oct-2026). Negra: el celeste grisáceo original, apagado
     # y lo bastante oscuro para el celeste hielo (contraste ~4:1 en la columna
     # de textos). Gris: más claro, para que la banda gris resalte. Rosada:
     # rosado pastel. Sobre esos dos, el texto en gris mate (~4:1).
@@ -754,6 +768,7 @@ def procesar(color, ruta, recortes, variante, salida):
     H, W, _ = A.shape
     oscuro, claro, *texto = VARIANTES[variante][color]
     tinta_nueva = np.array(texto[0] if texto else HIELO, float)
+    claro_nuevo = np.array(texto[1], float) if len(texto) > 1 else BLANCO
     N = fondo_nuevo(H, W, oscuro, claro, {'negra': 1, 'gris': 2, 'rosada': 3}[color])
     x0 = int(round(ZONA[0] * W))
     # Textos: más oscuro que el fondo → celeste hielo; más claro → blanco.
@@ -766,7 +781,7 @@ def procesar(color, ruta, recortes, variante, salida):
     a_claro = np.clip((L - bl - 8) / np.maximum(250 - bl - 8, 1), 0, 1)[..., None]
     out = N.copy()
     t = N[:, :x0] * (1 - a_tinta) + tinta_nueva * a_tinta
-    out[:, :x0] = t * (1 - a_claro) + BLANCO * a_claro
+    out[:, :x0] = t * (1 - a_claro) + claro_nuevo * a_claro
     fondo = out.copy()   # sin bandas: de acá sale el fondo que va detrás de las que se mecen
     # Bandas, con una sombra suave hacia abajo a la derecha.
     info = json.load(open(f'{recortes}/{color}.json'))
@@ -810,7 +825,7 @@ def procesar(color, ruta, recortes, variante, salida):
 
 if __name__ == '__main__':
     recortes = sys.argv[1]
-    variante = sys.argv[2] if len(sys.argv) > 2 else 'celeste'
+    variante = sys.argv[2] if len(sys.argv) > 2 else 'acero'
     salida = sys.argv[3] if len(sys.argv) > 3 else 'img'
     for color, ruta in FOTOS.items():
         procesar(color, ruta, recortes, variante, salida)

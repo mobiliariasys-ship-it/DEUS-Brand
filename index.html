@@ -37,7 +37,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
      en 4G no espere a que baje todo el HTML. Mismos srcset/sizes que la <img>.
      sizes 68vw en celular: con pantallas de 3x elige la de 800 px (77 KB) y no
      la de 1200 (136 KB); a ~340 px de ancho se ve igual de nítida (10-nov-2026). -->
-<link rel="preload" as="image" fetchpriority="high" imagesrcset="img/portada/negra-800.webp?v=10 800w, img/portada/negra-1200.webp?v=10 1200w" imagesizes="(max-width:900px) 68vw, 600px">
+<link rel="preload" as="image" fetchpriority="high" imagesrcset="img/portada/negra-800.webp?v=11 800w, img/portada/negra-1200.webp?v=11 1200w" imagesizes="(max-width:900px) 68vw, 600px">
 <title>DEUS Band Chile — Smartband y Pulsera Inteligente | Sueño, Ritmo Cardíaco y Fitness</title>
 <meta name="description" content="DEUS Band: smartband chilena con monitor de sueño, ritmo cardíaco, HRV y hasta 20 días de batería. Pulsera inteligente sin pantalla para entrenar, dormir y recuperarte mejor. $68.990 con envío a todo Chile en 1-3 días. 3 cuotas sin interés.">
 <meta name="keywords" content="deus band, deusband, smartband chile, smartband sin pantalla, smartwatch sin pantalla, pulsera inteligente, banda inteligente, pulsera de actividad, fitness tracker chile, monitor de sueño, ritmo cardíaco, HRV, banda de recuperación, alternativa whoop, alternativa oura, banda sin suscripción, wearable chile, DEUS Band Chile">
@@ -803,7 +803,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .price-old{font-size:.95rem;color:var(--silver);margin-bottom:6px;}.price-old .old-amount{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;color:#c6c8cc;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.45);text-decoration-thickness:1.5px;margin-left:8px;vertical-align:middle;}.price-save{display:inline-block;font-family:'DM Sans',sans-serif;font-size:.66rem;letter-spacing:1px;color:#82c7e9;border:1px solid rgba(130,199,233,.4);border-radius:20px;padding:3px 10px;margin-left:10px;vertical-align:middle;font-weight:600;}.price-offer-tag{font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:2px;color:#8aca9f;background:rgba(111,190,137,.12);border:1px solid rgba(111,190,137,.5);border-radius:6px;padding:4px 10px;vertical-align:middle;margin-left:8px;font-weight:600;}.price-block{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:22px;}
 .price-block sup{font-family:'DM Sans',sans-serif;font-size:1.2rem;color:var(--silver);vertical-align:top;margin-top:10px;margin-right:2px;font-weight:300;}
 /* Mejores prácticas mockup: pill de oferta, orden precio→normal, tarjetas */
-.offer-pill{display:inline-block;align-self:flex-start;background:linear-gradient(135deg,#911f1f,#6b1313);color:#e1f3fc;font-size:.64rem;letter-spacing:1.8px;font-weight:700;text-transform:uppercase;border-radius:20px;padding:7px 16px;margin-bottom:12px;}
+.offer-pill{display:inline-block;align-self:flex-start;background:linear-gradient(135deg,#911f1f,#6b1313);color:#ffdede;font-size:.64rem;letter-spacing:1.8px;font-weight:700;text-transform:uppercase;border-radius:20px;padding:7px 16px;margin-bottom:12px;}
 .price-block{margin-bottom:6px;}
 .price-old{margin-bottom:18px;}
 .price-block .price-save{vertical-align:middle;margin-left:12px;font-size:.72rem;padding:5px 12px;}
@@ -1296,7 +1296,7 @@ body.sb-on .chat-panel{bottom:82px;}
    del mismo ancho que la tarjeta de materiales y sensor, sin estirarla. */
 .row-360 .how-img{max-width:600px;width:100%;margin:0 auto;}
 .row-360 .how-txt{text-align:center;max-width:600px;margin:0 auto;}
-.bpm-heart{color:#4ab5eb;display:inline-block;font-size:.9rem;animation:bpmBeat 1.15s ease-in-out infinite;}
+.bpm-heart{color:#e05555;display:inline-block;font-size:.9rem;animation:bpmBeat 1.15s ease-in-out infinite;}
 @keyframes bpmBeat{0%,100%{transform:scale(1);}12%{transform:scale(1.4);}24%{transform:scale(1);}36%{transform:scale(1.2);}48%{transform:scale(1);}}
 .how-img.natural{aspect-ratio:auto;min-height:0!important;}
 .how-img.natural video{width:100%;height:auto;display:block;border-radius:12px;}
@@ -1444,9 +1444,12 @@ body.sb-on .wa-float{bottom:82px;}
 .slide-w{position:relative;min-width:100%;width:100%;height:100%;overflow:hidden;}
 /* Mientras baja cada foto se ve su mismo fondo (medido en la foto), no el gris
    oscuro: en 4G la gris y la rosada tardan un poco al cambiar de color. */
-.slide[data-color="negra"]{background:linear-gradient(90deg,#5b657a,#68728a 50%,#7b859c);}
-.slide[data-color="gris"]{background:linear-gradient(90deg,#a6abb6,#b4b8c1 50%,#bfc3cb);}
-.slide[data-color="rosada"]{background:linear-gradient(90deg,#b1dcf1,#c0e3f4 50%,#cfeaf7);}
+/* Mientras baja cada foto se ve su mismo fondo (acero en la negra y la gris
+   desde el 22-nov-2026). La rosada es un color del producto: siempre rosado
+   (la conversión de paleta del 22-nov la había dejado celeste por error). */
+.slide[data-color="negra"]{background:linear-gradient(90deg,#8496a3,#9badb9 50%,#b2c4d0);}
+.slide[data-color="gris"]{background:linear-gradient(90deg,#8c9da9,#a2b2be 50%,#b8c8d3);}
+.slide[data-color="rosada"]{background:linear-gradient(90deg,#e1c1c5,#e8cccf 50%,#f0d6da);}
 .sl-arte{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;}
 .sl-arte.lista{opacity:1;}
 .sl-arte img{position:absolute;display:block;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
@@ -1462,12 +1465,10 @@ body.sb-on .wa-float{bottom:82px;}
    .sl-banda). */
 .sl-banda img{position:static;width:100%;height:auto;pointer-events:none;filter:drop-shadow(6px 5px 7px rgba(12,49,68,.16));}
 .slider-dots{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:8px;}
-.sdot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.32);cursor:pointer;transition:all 0.2s;}
-/* Claros sobre la foto negra (fondo celeste gris mate); oscuros sobre la gris
-   y la rosada, que son claras (goSlide pone .foto-clara). */
-.sdot.active{background:#cce8f6;width:22px;border-radius:4px;}
-.gal-slider.foto-clara .sdot{background:rgba(37,41,50,.25);}
-.gal-slider.foto-clara .sdot.active{background:#414756;}
+/* Oscuros sobre las tres fotos: desde el 22-nov-2026 la negra también tiene
+   fondo claro (acero) y los claros de antes no se veían (~1,8:1). */
+.sdot{width:8px;height:8px;border-radius:50%;background:rgba(37,41,50,.25);cursor:pointer;transition:all 0.2s;}
+.sdot.active{background:#414756;width:22px;border-radius:4px;}
 
 .brand-head{display:flex;flex-direction:column;gap:6px;}
 .brand-head-top{font-size:0.7rem;letter-spacing:4px;color:#778199;text-transform:uppercase;}
@@ -1806,7 +1807,7 @@ body.sb-on .wa-float{bottom:82px;}
 .pay-methods{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:7px;font-size:.62rem;font-weight:600;letter-spacing:.5px;}
 /* Carrito */
 .cart-badge{position:fixed;bottom:20px;right:20px;z-index:950;background:#fff;color:#000;border-radius:50%;width:50px;height:50px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:transform .2s;}.cart-badge:hover{transform:scale(1.1);}.cart-badge.hidden{display:none;}
-.cart-drawer{position:fixed;right:0;top:0;bottom:0;width:100%;max-width:400px;background:#242830;border-left:1px solid var(--border);z-index:1100;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;}.cart-drawer.open{transform:translateX(0);}.cart-drawer-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}.cart-drawer-title{font-size:1rem;font-weight:700;}.cart-drawer-close{background:none;border:none;color:#778199;font-size:1.5rem;cursor:pointer;}.cart-drawer-body{padding:16px;}.cart-item{display:flex;gap:12px;padding:12px;background:#282c35;border-radius:8px;margin-bottom:12px;border:1px solid var(--border);}.cart-item-img{width:60px;height:60px;border-radius:6px;object-fit:cover;background:#2c313c;flex-shrink:0;}.cart-item-info{flex:1;}.cart-item-name{font-size:.75rem;font-weight:700;color:var(--white);}.cart-item-color{font-size:.65rem;color:var(--silver);margin-top:2px;}.cart-item-price{font-size:.8rem;color:#5ebeee;margin-top:4px;font-weight:700;}.cart-item-remove{color:#4ab5eb;font-size:.75rem;cursor:pointer;text-decoration:none;}
+.cart-drawer{position:fixed;right:0;top:0;bottom:0;width:100%;max-width:400px;background:#242830;border-left:1px solid var(--border);z-index:1100;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;}.cart-drawer.open{transform:translateX(0);}.cart-drawer-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}.cart-drawer-title{font-size:1rem;font-weight:700;}.cart-drawer-close{background:none;border:none;color:#778199;font-size:1.5rem;cursor:pointer;}.cart-drawer-body{padding:16px;}.cart-item{display:flex;gap:12px;padding:12px;background:#282c35;border-radius:8px;margin-bottom:12px;border:1px solid var(--border);}.cart-item-img{width:60px;height:60px;border-radius:6px;object-fit:cover;background:#2c313c;flex-shrink:0;}.cart-item-info{flex:1;}.cart-item-name{font-size:.75rem;font-weight:700;color:var(--white);}.cart-item-color{font-size:.65rem;color:var(--silver);margin-top:2px;}.cart-item-price{font-size:.8rem;color:#5ebeee;margin-top:4px;font-weight:700;}.cart-item-remove{color:#e05555;font-size:.75rem;cursor:pointer;text-decoration:none;}
 .cart-qty-btn{background:transparent;border:1px solid var(--border);color:#e8b464;width:24px;height:24px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;transition:all .2s;}
 .cart-qty-btn:hover{border-color:#e8b464;background:rgba(232,180,100,.1);}.cart-drawer-empty{text-align:center;padding:40px 16px;color:var(--silver);font-size:.8rem;}.cart-drawer-footer{padding:16px;border-top:1px solid var(--border);background:#22262e;position:sticky;bottom:0;}.cart-total{display:flex;justify-content:space-between;margin-bottom:12px;font-size:.9rem;}.cart-total-label{color:var(--silver);}.cart-total-price{color:var(--white);font-weight:700;}.cart-cta{width:100%;padding:14px;background:linear-gradient(180deg,#ffffff,#eaf0f4);color:#0d1014;border:none;border-radius:14px;font-weight:800;font-size:.75rem;letter-spacing:2px;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 12px 28px -12px rgba(255,255,255,.4);}.cart-cta::after{content:" →";letter-spacing:0;}
 /* Banner de app estilo Smart App Banner */
@@ -2153,7 +2154,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 .rlc-msg{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#7f889e;margin-top:8px;}
 .rlc-msg:empty{display:none;}
 .rlc-msg.bien{color:#81c798;}
-.rlc-msg.mal{color:#95d4f4;}
+.rlc-msg.mal{color:#ff8a8a;}
 .rlc-msg b{color:#f1f2f3;font-weight:700;}
 .rlc-tachado{color:#707b94;font-size:.9em;margin-right:6px;}
 .rlc-card{display:flex;align-items:center;gap:12px;margin:12px 0 2px;background:#0c1b11;border:1px solid #81c798;border-radius:12px;padding:12px;}
@@ -3056,9 +3057,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              igual que la foto; las bandas se mecen como péndulos al cambiar
              de color o al tocarlas (ver bandasHero). Se arma al terminar la
              página: no compite con la foto principal. -->
-        <div class="slide-w"><img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 68vw, 600px" srcset="img/portada/negra-800.webp?v=10 800w, img/portada/negra-1200.webp?v=10 1200w" src="img/portada/negra-800.webp?v=10" data-color="negra" alt="DEUS Band negra — smartband de salud color negro"><div class="sl-arte" data-color="negra" aria-hidden="true"></div></div>
-        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/gris-800.webp?v=10 800w, img/portada/gris-1200.webp?v=10 1200w" data-src="img/portada/gris-800.webp?v=10" data-color="gris" alt="DEUS Band gris"><div class="sl-arte" data-color="gris" aria-hidden="true"></div></div>
-        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/rosada-800.webp?v=10 800w, img/portada/rosada-1200.webp?v=10 1178w" data-src="img/portada/rosada-800.webp?v=10" data-color="rosada" alt="DEUS Band rosada"><div class="sl-arte" data-color="rosada" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="eager" fetchpriority="high" width="600" height="600" sizes="(max-width:900px) 68vw, 600px" srcset="img/portada/negra-800.webp?v=11 800w, img/portada/negra-1200.webp?v=11 1200w" src="img/portada/negra-800.webp?v=11" data-color="negra" alt="DEUS Band negra — smartband de salud color negro"><div class="sl-arte" data-color="negra" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/gris-800.webp?v=11 800w, img/portada/gris-1200.webp?v=11 1200w" data-src="img/portada/gris-800.webp?v=11" data-color="gris" alt="DEUS Band gris"><div class="sl-arte" data-color="gris" aria-hidden="true"></div></div>
+        <div class="slide-w"><img class="slide" loading="lazy" width="600" height="600" sizes="(max-width:900px) 100vw, 600px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-srcset="img/portada/rosada-800.webp?v=11 800w, img/portada/rosada-1200.webp?v=11 1178w" data-src="img/portada/rosada-800.webp?v=11" data-color="rosada" alt="DEUS Band rosada"><div class="sl-arte" data-color="rosada" aria-hidden="true"></div></div>
       </div>
       <div class="slider-dots">
         <span class="sdot active" onclick="goSlide(0,true)"></span>
@@ -6208,13 +6209,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </main>
 
 <script>
-// Las fotos principales (scripts/recolorear-portada.py): negra en celeste gris
-// mate con los textos en celeste hielo; gris en uno más claro y rosada en
-// rosado pastel, las dos con los textos en gris mate.
+// Las fotos principales (scripts/recolorear-portada.py, variante 'acero' desde
+// el 22-nov-2026): negra y gris en acero glaciar con los textos oscuros;
+// rosada en rosado pastel con los textos en gris mate.
 const bandImages = {
-  negra: "img/portada/negra-1200.webp?v=10",
-  gris: "img/portada/gris-1200.webp?v=10",
-  rosada: "img/portada/rosada-1200.webp?v=10",
+  negra: "img/portada/negra-1200.webp?v=11",
+  gris: "img/portada/gris-1200.webp?v=11",
+  rosada: "img/portada/rosada-1200.webp?v=11",
 };
 // Miniaturas para el recuadro de 64x64 del checkout. Antes ahí se usaba la
 // imagen grande (1200x1306, 95 KB) encogida por CSS: se descargaba entera en
@@ -6651,9 +6652,6 @@ function goSlide(i, elegir) {
   const slides = document.getElementById('slides');
   if (slides) slides.style.transform = `translateX(-${currentSlide*100}%)`;
   document.querySelectorAll('.sdot').forEach((d,idx) => d.classList.toggle('active', idx===currentSlide));
-  // Puntitos oscuros sobre las fotos de fondo claro (todas menos la negra).
-  const gal = document.getElementById('galSlider');
-  if (gal) gal.classList.toggle('foto-clara', colorOrder[currentSlide] !== 'negra');
   // Los círculos marcan el color ELEGIDO, no la foto visible.
   document.querySelectorAll('.cdot').forEach((d,idx) => d.classList.toggle('active', colorOrder[idx]===selectedColor));
   updateStockUI();
@@ -6718,9 +6716,10 @@ var bandasHero = (function () {
   // El clavo, a cuánto alto de foto por encima del borde de arriba.
   var CLAVO = 0.8;
   var armadas = {}, corriendo = false, tPrev = 0, introHecha = false;
-  // ?v=10: recortes limpios, bordes rectos, barra del marco negra con esquinas redondas, puntas redondeadas
-  // (las imágenes se cachean 7 días: al cambiarlas se sube el número).
-  function srcset(c, pieza) { var b = 'img/hero-bandas2/' + c + '-' + pieza + '-'; return b + '800.webp?v=10 800w, ' + b + '1200.webp?v=10 1200w'; }
+  // ?v=10: recortes limpios, bordes rectos, barra del marco negra con esquinas redondas, puntas redondeadas.
+  // ?v=11 (22-nov-2026): fondo acero en la negra y la gris (el mismo número que las fotos de portada).
+  // Las imágenes se cachean 7 días: al cambiarlas se sube el número.
+  function srcset(c, pieza) { var b = 'img/hero-bandas2/' + c + '-' + pieza + '-'; return b + '800.webp?v=11 800w, ' + b + '1200.webp?v=11 1200w'; }
   function pct(n) { return (n * 100).toFixed(3) + '%'; }
   function armar(c) {
     if (quieto || armadas[c] || !BANDAS_HERO[c]) return armadas[c];
