@@ -961,7 +961,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .reviews-grid .review-text{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
 /* aspect-ratio en vez de alto fijo: la foto es 3:4, recortarla a 200px de alto
    se comía la muñeca en varias. A 4:5 se ve el producto completo. */
-.review-photo{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;margin-bottom:14px;display:block;cursor:zoom-in;transition:opacity .2s;}
+.review-photo{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;margin-bottom:14px;display:block;cursor:zoom-in;transition:opacity .2s;background:#343a47;} /* fondo mientras carga: sin él, el recuadro vacío parecía roto */
 .review-photo:hover{opacity:.9;}
 /* Foto que NO abre el visor: .review-photo trae cursor:zoom-in y
    dejarlo sin onclick prometía una lupa que no hace nada. */
@@ -7759,6 +7759,27 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarRese
     var e = document.getElementById(id);
     if (e) { e.addEventListener('input', guardarBorrador); e.addEventListener('change', guardarBorrador); }
   });
+
+  // Fotos de las reseñas (el dueño notó que se demoraban, 22-nov-2026): van en
+  // un carrusel horizontal con carga diferida, y el iPhone recién pedía cada
+  // foto cuando su tarjeta entraba en pantalla, así que al deslizar se veía el
+  // recuadro vacío. Ahora se piden todas (unos 600 KB) apenas la sección está a
+  // unos 1.200 px de aparecer.
+  (function () {
+    var carr = document.getElementById('reviewsCarr');
+    if (!carr) return;
+    function precargar() {
+      carr.querySelectorAll('img.review-photo').forEach(function (i) {
+        if (i.getAttribute('loading') === 'lazy') i.setAttribute('loading', 'eager');
+        if (i.getAttribute('fetchpriority') === 'low') i.removeAttribute('fetchpriority');
+      });
+    }
+    if (!('IntersectionObserver' in window)) { precargar(); return; }
+    var io = new IntersectionObserver(function (es) {
+      if (es.some(function (e) { return e.isIntersecting; })) { precargar(); io.disconnect(); }
+    }, { rootMargin: '1200px 0px' });
+    io.observe(carr);
+  })();
 
   // Mejora 1: el "atrás" del celular (o el gesto de volver) cierra la ventana
   // abierta en vez de sacar a la persona de la tienda. Al abrirse una ventana
