@@ -16,8 +16,9 @@ test('La app y Diseño sin distracciones van dentro de #simple, antes de la tabl
   const pos = s => html.indexOf(s, ini);
   const orden = [
     ['los pasos', pos('Cómo usar la DEUS Band')],
-    ['las funciones (bloque propio, arriba del 360°)', pos('<div class="soft-block" id="funciones">')],
+    // Las funciones van debajo del 360° (pedido del dueño, 22-nov-2026; antes iban arriba).
     ['el 360°', pos('id="tecnologia"')],
+    ['las funciones (bloque propio, debajo del 360°)', pos('<div class="soft-block" id="funciones">')],
     ['La app', pos('<div class="soft-block" id="app">')],
     ['"se conecta con" de la app', pos('class="app-tri"')],
     ['Diseño sin distracciones', pos('<div class="soft-block" id="diseno">')],

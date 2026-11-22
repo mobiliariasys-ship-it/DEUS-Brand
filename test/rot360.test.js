@@ -78,15 +78,16 @@ test('la tarjeta 360° va en la tarjeta de vidrio, con "DEUS BAND" y el visor ad
   assert.match(html, /\.r360-marca\{font-family:'Michroma'/, 'el título usa la letra ancha de la marca');
 });
 
-test('el 360° va en "Así de simple", después de los pasos y de las funciones', () => {
+test('el 360° va en "Así de simple", después de los pasos y antes de las funciones', () => {
   const simple = html.indexOf('<section class="soft" id="simple">');
   const finSimple = html.indexOf('</section>', simple);
   const pasos = html.indexOf('Cómo usar la DEUS Band', simple);
   const tarjeta = html.indexOf('<div class="soft-block" id="tecnologia">');
   const fn = html.indexOf('Funciones de la DEUS Band', simple);
   assert.ok(simple !== -1 && pasos !== -1 && fn !== -1, 'faltan los bloques de #simple');
-  assert.ok(simple < pasos && pasos < fn && fn < tarjeta && tarjeta < finSimple,
-    'el 360° va dentro de #simple, después de los pasos y de las funciones');
+  // Las funciones van debajo del 360° (pedido del dueño, 22-nov-2026; antes iban arriba).
+  assert.ok(simple < pasos && pasos < tarjeta && tarjeta < fn && fn < finSimple,
+    'el 360° va dentro de #simple, después de los pasos y antes de las funciones');
   // El script del visor busca el canvas apenas carga: si quedara antes de la
   // tarjeta no lo encontraría y la banda no giraría.
   const script = html.indexOf("document.getElementById('rot360-canvas')");
