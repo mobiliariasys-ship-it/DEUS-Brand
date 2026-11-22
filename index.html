@@ -1480,6 +1480,30 @@ body.sb-on .wa-float{bottom:82px;}
 .envio-free .ef-txt small{color:var(--silver);font-size:.66rem;letter-spacing:.3px;line-height:1.45;}
 .checkout-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
 .checkout-overlay.show{display:flex;}
+/* Despliegue del checkout de arriba hacia abajo (pedido del dueño, 22-nov-2026,
+   inspirado en el panel lateral de Spotify): el fondo se oscurece de a poco y
+   la ventana se desenrolla como una cortina, el título primero. El recorte llega
+   hasta el alto de la pantalla y se suelta al terminar (relleno "backwards", no
+   "both": si quedara puesto, taparía los botones de pago al bajar). Al cerrar,
+   sube y se desvanece; cerrarCheckout() espera CIERRE_CHECKOUT_MS antes de
+   ocultarla. Con "reducir movimiento" solo aparece y desaparece. */
+.checkout-overlay.show{animation:coVelo .32s ease-out backwards;}
+.checkout-overlay.show .checkout-modal{animation:coDespliegue .56s cubic-bezier(.16,1,.3,1) backwards;}
+.checkout-overlay.show.cerrando{animation:coVeloFuera .24s ease-in both;}
+.checkout-overlay.show.cerrando .checkout-modal{animation:coRepliegue .24s cubic-bezier(.4,0,1,1) both;}
+@keyframes coVelo{from{background-color:rgba(0,0,0,0);}}
+@keyframes coVeloFuera{to{background-color:rgba(0,0,0,0);}}
+@keyframes coDespliegue{
+  from{clip-path:inset(0 0 calc(100% - 72px) 0 round 10px);transform:translateY(-14px);opacity:.35;}
+  40%{opacity:1;}
+  to{clip-path:inset(0 0 calc(100% - 100vh) 0 round 10px);transform:none;opacity:1;}}
+@keyframes coRepliegue{to{transform:translateY(-22px);opacity:0;}}
+@media (prefers-reduced-motion: reduce){
+  .checkout-overlay.show .checkout-modal{animation:coAparece .2s ease backwards;}
+  .checkout-overlay.show.cerrando .checkout-modal{animation:coDesaparece .18s ease both;}
+}
+@keyframes coAparece{from{opacity:0;}}
+@keyframes coDesaparece{to{opacity:0;}}
 /* El checkout usa la paleta "pizarra" (gris azulado, un punto más claro que el
    resto): lo separa visualmente como una capa aparte y le da el aire de panel
    de pago. Las variables se redefinen aquí y las heredan todos los hijos. */
@@ -3939,6 +3963,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // El aviso de envío gratis se muestra de entrada, antes de calcular
           // nada, para que el cliente sepa al tiro que no paga despacho.
           mostrarAvisoEnvioGratis();
+          // El despliegue parte siempre desde arriba del todo; si se estaba
+          // cerrando, se corta el cierre (ver .checkout-overlay en el CSS).
+          clearTimeout(cierreCheckout);
+          overlay.classList.remove('cerrando');
+          overlay.scrollTop = 0;
           overlay.classList.add('show');
           if (!checkoutTapones && typeof prepararRaspe === 'function') prepararRaspe();
           actualizarTotalCheckout();
@@ -3983,16 +4012,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
         // Rescate: el primer intento de cierre muestra la barra de WhatsApp en vez de cerrar
         let rescateMostrado = false;
+        // Al cerrar, la ventana se repliega hacia arriba (.cerrando en el CSS,
+        // 0,24 s) y recién ahí se oculta.
+        var cierreCheckout = null;
+        var CIERRE_CHECKOUT_MS = 240;
         function cerrarCheckout() {
           const overlay = document.getElementById('checkout-overlay');
-          if (!overlay.classList.contains('show')) return;
+          if (!overlay.classList.contains('show') || overlay.classList.contains('cerrando')) return;
           if (!rescateMostrado) {
             rescateMostrado = true;
             document.getElementById('rescue-bar').classList.add('show');
             overlay.querySelector('.checkout-modal').scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
           }
-          overlay.classList.remove('show');
+          overlay.classList.add('cerrando');
+          clearTimeout(cierreCheckout);
+          cierreCheckout = setTimeout(() => overlay.classList.remove('show', 'cerrando'), CIERRE_CHECKOUT_MS);
           document.body.style.overflow = '';
           // Cerró el checkout sin pagar: segunda oportunidad de la ruleta (una
           // sola vez, y solo si antes la cerró sin girar). No en "solo
