@@ -1088,10 +1088,9 @@ body.sb-on .chat-panel{bottom:82px;}
 .rifa-tab .rifa-rueda-tab{display:block;flex:none;width:30px;height:34px;}
 @keyframes rifaPulse{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(240,195,202,.28) inset;}50%{box-shadow:0 6px 26px rgba(240,195,202,.5),0 0 0 1px rgba(240,195,202,.45) inset;}}
 @media(max-width:600px){.rifa-tab{font-size:.58rem;padding:13px 7px;letter-spacing:1.5px;}.rifa-tab .rifa-rueda-tab{width:26px;height:30px;}}
-/* Se arrastra hacia arriba o hacia abajo (ver el script junto a la pestaña):
-   sin touch-action el teléfono se llevaría el gesto para bajar por la página. */
-.rifa-tab{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
-.rifa-tab.arrastrando{cursor:grabbing;filter:brightness(1.1);animation-play-state:paused;}
+/* Baja sola a medida que se baja por la página (ver el script junto a la
+   pestaña), para no quedar encima del precio ni del botón de compra. */
+.rifa-tab{transition:padding .2s,filter .2s,transform .35s cubic-bezier(.2,.8,.2,1);}
 .rifa-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2100;align-items:center;justify-content:center;
   padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));}
 .rifa-overlay.show{display:flex;}
@@ -1480,30 +1479,26 @@ body.sb-on .wa-float{bottom:82px;}
 .envio-free .ef-txt small{color:var(--silver);font-size:.66rem;letter-spacing:.3px;line-height:1.45;}
 .checkout-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
 .checkout-overlay.show{display:flex;}
-/* Despliegue del checkout de arriba hacia abajo (pedido del dueño, 22-nov-2026,
-   inspirado en el panel lateral de Spotify): el fondo se oscurece de a poco y
-   la ventana se desenrolla como una cortina, el título primero. El recorte llega
-   hasta el alto de la pantalla y se suelta al terminar (relleno "backwards", no
-   "both": si quedara puesto, taparía los botones de pago al bajar). Al cerrar,
-   sube y se desvanece; cerrarCheckout() espera CIERRE_CHECKOUT_MS antes de
-   ocultarla. Con "reducir movimiento" solo aparece y desaparece. */
-.checkout-overlay.show{animation:coVelo .32s ease-out backwards;}
-.checkout-overlay.show .checkout-modal{animation:coDespliegue .56s cubic-bezier(.16,1,.3,1) backwards;}
+/* Apertura del checkout (pedido del dueño, 22-nov-2026, inspirado en el panel
+   lateral de Spotify; segunda versión, elegida entre tres): el fondo se
+   oscurece de a poco, la ventana baja un poco y se asienta, siempre opaca, y su
+   contenido aparece en cascada de arriba hacia abajo (desplegarCheckout() en el
+   JS). La primera versión recortaba la ventana como una cortina y partía
+   translúcida: en iPhone el recorte no corría y se veía la página a través.
+   Al cerrar sube y se desvanece; cerrarCheckout() espera CIERRE_CHECKOUT_MS.
+   Con "reducir movimiento", sin animación. */
+.checkout-overlay.show{animation:coVelo .28s ease-out backwards;}
+.checkout-overlay.show .checkout-modal{transform-origin:50% 0;animation:coBaja .48s cubic-bezier(.16,1,.3,1) backwards;}
 .checkout-overlay.show.cerrando{animation:coVeloFuera .24s ease-in both;}
 .checkout-overlay.show.cerrando .checkout-modal{animation:coRepliegue .24s cubic-bezier(.4,0,1,1) both;}
 @keyframes coVelo{from{background-color:rgba(0,0,0,0);}}
 @keyframes coVeloFuera{to{background-color:rgba(0,0,0,0);}}
-@keyframes coDespliegue{
-  from{clip-path:inset(0 0 calc(100% - 72px) 0 round 10px);transform:translateY(-14px);opacity:.35;}
-  40%{opacity:1;}
-  to{clip-path:inset(0 0 calc(100% - 100vh) 0 round 10px);transform:none;opacity:1;}}
+@keyframes coBaja{from{transform:translateY(-14px) scale(.985);}}
 @keyframes coRepliegue{to{transform:translateY(-22px);opacity:0;}}
 @media (prefers-reduced-motion: reduce){
-  .checkout-overlay.show .checkout-modal{animation:coAparece .2s ease backwards;}
-  .checkout-overlay.show.cerrando .checkout-modal{animation:coDesaparece .18s ease both;}
+  .checkout-overlay.show,.checkout-overlay.show .checkout-modal,
+  .checkout-overlay.show.cerrando,.checkout-overlay.show.cerrando .checkout-modal{animation:none;}
 }
-@keyframes coAparece{from{opacity:0;}}
-@keyframes coDesaparece{to{opacity:0;}}
 /* El checkout usa la paleta "pizarra" (gris azulado, un punto más claro que el
    resto): lo separa visualmente como una capa aparte y le da el aire de panel
    de pago. Las variables se redefinen aquí y las heredan todos los hijos. */
@@ -2189,74 +2184,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   Gira y gana
 </div>
 <script>
-// La pestaña se puede arrastrar hacia arriba o hacia abajo (pedido del dueño,
-// 22-nov-2026: que no moleste al bajar por la página). Un toque la abre como
-// siempre; si el dedo se mueve más de 6px, la mueve, y al soltar no se abre.
-// La altura queda guardada en este navegador (deus-ruleta-tab, como fracción
-// del alto de la pantalla) y nunca se mete bajo la barra de arriba ni bajo la
-// barra de compra de abajo (esa se reserva siempre: aparece al bajar).
+// La pestaña baja sola a medida que se baja por la página (pedido del dueño,
+// 22-nov-2026; antes se arrastraba y pidió que mejor no se moviera a mano):
+// arriba del todo va al medio de la pantalla y, cuando llega la caja de compra
+// (precio y botón), ya está abajo, sobre la barra de compra, para no taparlos.
+// Se mueve con transform (sin recalcular la página) y una vez por cuadro.
 (function () {
   'use strict';
   var tab = document.getElementById('ruleta-tab');
-  if (!tab || !window.PointerEvent) return;
-  var CLAVE = 'deus-ruleta-tab', UMBRAL = 6, MARGEN = 8;
-  var ini = null, arrastrando = false, suprimir = false;
-  function limites() {
-    var mitad = tab.offsetHeight / 2, arriba = MARGEN, abajo = innerHeight - MARGEN;
-    var bar = document.querySelector('.announce-bar');
-    if (bar) arriba += Math.max(0, bar.getBoundingClientRect().bottom);
+  if (!tab) return;
+  var MARGEN = 8, pendiente = false;
+  function colocar() {
+    pendiente = false;
+    var alto = innerHeight, mitad = tab.offsetHeight / 2;
     var sb = document.querySelector('.sticky-buy');
-    if (sb) abajo -= sb.offsetHeight;
-    return [arriba + mitad, Math.max(arriba + mitad, abajo - mitad)];
+    var abajo = alto - MARGEN - (sb ? sb.offsetHeight : 0) - mitad;   // centro más bajo permitido
+    var caja = document.querySelector('.buybox');
+    // Recorrido: desde arriba del todo hasta que la caja de compra llega al 25% de la pantalla.
+    var fin = caja ? caja.getBoundingClientRect().top + scrollY - alto * 0.25 : alto;
+    var p = fin > 0 ? Math.min(1, Math.max(0, scrollY / fin)) : 1;
+    p = p * p * (3 - 2 * p);                                          // suave al partir y al llegar
+    var dy = Math.max(0, (abajo - alto / 2) * p);
+    tab.style.transform = 'translateY(-50%) translateY(' + dy.toFixed(1) + 'px)';
   }
-  // top es el centro de la pestaña: el CSS la sube la mitad con translateY(-50%).
-  function poner(centro) {
-    var l = limites();
-    tab.style.top = Math.min(l[1], Math.max(l[0], centro)) + 'px';
-  }
-  function centroActual() { var r = tab.getBoundingClientRect(); return r.top + r.height / 2; }
-  function guardada() {
-    try { var f = parseFloat(localStorage.getItem(CLAVE)); return f > 0 && f < 1 ? f : null; } catch (e) { return null; }
-  }
-  function aplicarGuardada() { var f = guardada(); if (f != null) poner(f * innerHeight); }
-  aplicarGuardada();
-  addEventListener('load', aplicarGuardada);
-  addEventListener('resize', aplicarGuardada);
-
-  tab.addEventListener('pointerdown', function (e) {
-    if (e.button > 0) return;
-    ini = { y: e.clientY, centro: centroActual(), id: e.pointerId };
-    arrastrando = false;
-  });
-  tab.addEventListener('pointermove', function (e) {
-    if (!ini || e.pointerId !== ini.id) return;
-    var dy = e.clientY - ini.y;
-    if (!arrastrando) {
-      if (Math.abs(dy) < UMBRAL) return;
-      arrastrando = true;
-      try { tab.setPointerCapture(e.pointerId); } catch (_) {}
-      tab.classList.add('arrastrando');
-    }
-    e.preventDefault();
-    poner(ini.centro + dy);
-  });
-  function soltar(e) {
-    if (!ini || e.pointerId !== ini.id) return;
-    if (arrastrando) {
-      tab.classList.remove('arrastrando');
-      // El click que sigue al soltar no abre la ruleta.
-      suprimir = true;
-      setTimeout(function () { suprimir = false; }, 400);
-      try { localStorage.setItem(CLAVE, (centroActual() / innerHeight).toFixed(4)); } catch (_) {}
-    }
-    ini = null;
-    arrastrando = false;
-  }
-  tab.addEventListener('pointerup', soltar);
-  tab.addEventListener('pointercancel', soltar);
-  addEventListener('click', function (e) {
-    if (suprimir && tab.contains(e.target)) { e.preventDefault(); e.stopPropagation(); suprimir = false; }
-  }, true);
+  function pedir() { if (!pendiente) { pendiente = true; requestAnimationFrame(colocar); } }
+  addEventListener('scroll', pedir, { passive: true });
+  addEventListener('resize', pedir);
+  addEventListener('load', pedir);
+  pedir();
 })();
 </script>
 
@@ -3973,6 +3928,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           actualizarTotalCheckout();
           document.body.style.overflow = 'hidden';
           if (typeof updateStockUI === 'function') updateStockUI();
+          // La cascada, con todo ya pintado (el total aparece recién en
+          // actualizarTotalCheckout: antes quedaba fuera y se veía de entrada).
+          desplegarCheckout(overlay.querySelector('.checkout-modal'));
           // Si este visitante ya dejó sus datos antes (incluso en otra visita:
           // viven en localStorage por 30 días), reinicializamos el píxel con
           // ellos para que el InitiateCheckout de acá abajo viaje identificado
@@ -4012,6 +3970,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
         // Rescate: el primer intento de cierre muestra la barra de WhatsApp en vez de cerrar
         let rescateMostrado = false;
+        // La cascada del despliegue: los bloques visibles del checkout aparecen
+        // uno tras otro, de arriba hacia abajo, dentro de la ventana ya opaca.
+        // Con la API de animaciones y no en el CSS: así no pisa las animaciones
+        // propias de cada bloque, y donde no existe simplemente no corre.
+        function desplegarCheckout(m) {
+          if (!m || !m.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          var bloques = m.querySelectorAll(':scope > .checkout-head > *, :scope > .checkout-body > *'), i = 0;
+          for (var k = 0; k < bloques.length && i < 14; k++) {
+            var e = bloques[k];
+            if (e.offsetParent === null || e.getBoundingClientRect().top > innerHeight + 40) continue;
+            try {
+              e.animate([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }],
+                        { duration: 380, delay: i * 30, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' });
+            } catch (x) { return; }
+            i++;
+          }
+        }
         // Al cerrar, la ventana se repliega hacia arriba (.cerrando en el CSS,
         // 0,24 s) y recién ahí se oculta.
         var cierreCheckout = null;
@@ -4027,7 +4002,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
           overlay.classList.add('cerrando');
           clearTimeout(cierreCheckout);
-          cierreCheckout = setTimeout(() => overlay.classList.remove('show', 'cerrando'), CIERRE_CHECKOUT_MS);
+          const sinMovimiento = matchMedia('(prefers-reduced-motion: reduce)').matches;
+          cierreCheckout = setTimeout(() => overlay.classList.remove('show', 'cerrando'), sinMovimiento ? 0 : CIERRE_CHECKOUT_MS);
           document.body.style.overflow = '';
           // Cerró el checkout sin pagar: segunda oportunidad de la ruleta (una
           // sola vez, y solo si antes la cerró sin girar). No en "solo
