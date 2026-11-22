@@ -818,14 +818,26 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 @media(max-width:420px){.reassure{gap:8px;}.reassure-item{font-size:.66rem;}}
 
 .cta-row{display:grid;grid-template-columns:1fr auto;gap:8px;}
+/* "Blanco premium" (opción 1 que eligió el dueño, 22-nov-2026): el blanco de
+   siempre, que es lo que más contrasta, redondeado como las tarjetas, con una
+   flecha y una sombra suave. Sin el anillo que latía cada 2,2 s (pulseBtn): va
+   parejo con los bordes fijos. La flecha es un ::after, así sobrevive a que
+   aplicarReserva() cambie el texto del botón. */
 .btn-p{
-  background:#fff;color:#000;border:none;border-radius:4px;
-  padding:17px 20px;font-size:.78rem;font-weight:800;letter-spacing:3px;
+  background:linear-gradient(180deg,#ffffff,#eaf0f4);color:#0d1014;border:none;border-radius:14px;
+  padding:17px 10px;font-size:.78rem;font-weight:800;letter-spacing:2px;white-space:nowrap;
   text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;
-  animation:pulseBtn 2.2s infinite;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 12px 28px -12px rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.08);
+  transition:transform .15s,box-shadow .2s;
 }
+.btn-p::after{content:"→";font-size:1rem;letter-spacing:0;line-height:1;transition:transform .2s;}
+.btn-p:hover::after{transform:translateX(3px);}
+/* Celulares muy angostos: un poco menos de aire para que entre en una línea */
+@media(max-width:360px){.btn-p{letter-spacing:1.4px;gap:6px;padding:16px 8px;}}
+@media(max-width:330px){.btn-p::after{display:none;}}
 .btn-cart{
-  background:transparent;color:#fff;border:1px solid var(--border);border-radius:4px;
+  background:transparent;color:#fff;border:1px solid rgba(148,224,253,.35);border-radius:14px;
   width:54px;height:54px;padding:0;cursor:pointer;
   display:flex;align-items:center;justify-content:center;transition:all .2s;
 }
@@ -842,9 +854,7 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 .qty-dialog-actions button{flex:1;padding:12px;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.75rem;letter-spacing:1px;}
 .qty-dialog-actions .confirm{background:#fff;color:#000;}
 .qty-dialog-actions .cancel{background:transparent;border:1px solid var(--border);color:var(--white);}
-  transition:transform .15s,box-shadow .2s;
-}
-.btn-p:hover{background:#fff;transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,255,255,.22);}
+.btn-p:hover{background:#fff;transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(255,255,255,.5),inset 0 -2px 0 rgba(0,0,0,.06);}
 @keyframes pulseBtn{0%{box-shadow:0 0 0 0 rgba(255,255,255,.4);}70%{box-shadow:0 0 0 14px rgba(255,255,255,0);}100%{box-shadow:0 0 0 0 rgba(255,255,255,0);}}
 .btn-s{
   background:transparent;border:1px solid var(--border);color:var(--silver);
@@ -1324,8 +1334,9 @@ body.sb-on .chat-panel{bottom:82px;}
 .sticky-buy.show{transform:translateY(0);}
 .sticky-buy .sb-old{font-size:.72rem;color:var(--silver);text-decoration:line-through;margin-right:7px;}
 .sticky-buy b{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;font-weight:400;letter-spacing:1px;}
-.sb-btn{background:#fff;color:#000;border:none;border-radius:5px;padding:12px 26px;font-family:'DM Sans',sans-serif;font-size:.74rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
+.sb-btn{background:linear-gradient(180deg,#ffffff,#eaf0f4);color:#0d1014;border:none;border-radius:12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:12px 26px;font-family:'DM Sans',sans-serif;font-size:.74rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
 body.sb-on .wa-float{bottom:82px;}
+.sb-btn[data-buy]::after{content:"→";letter-spacing:0;font-size:.9rem;line-height:1;}
 @media(max-width:600px){body.sb-on .wa-float{bottom:76px;}.sticky-buy{gap:12px;padding:9px 12px;}.sb-btn{padding:11px 18px;font-size:.68rem;}}
 /* Garantía + Preguntas frecuentes */
 .faq{max-width:760px;margin:0 auto;padding:28px 24px 20px;}
@@ -1764,7 +1775,7 @@ body.sb-on .wa-float{bottom:82px;}
 .cart-badge{position:fixed;bottom:20px;right:20px;z-index:950;background:#fff;color:#000;border-radius:50%;width:50px;height:50px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:transform .2s;}.cart-badge:hover{transform:scale(1.1);}.cart-badge.hidden{display:none;}
 .cart-drawer{position:fixed;right:0;top:0;bottom:0;width:100%;max-width:400px;background:#272a30;border-left:1px solid var(--border);z-index:1100;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;}.cart-drawer.open{transform:translateX(0);}.cart-drawer-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}.cart-drawer-title{font-size:1rem;font-weight:700;}.cart-drawer-close{background:none;border:none;color:#888;font-size:1.5rem;cursor:pointer;}.cart-drawer-body{padding:16px;}.cart-item{display:flex;gap:12px;padding:12px;background:#2c2f35;border-radius:8px;margin-bottom:12px;border:1px solid var(--border);}.cart-item-img{width:60px;height:60px;border-radius:6px;object-fit:cover;background:#32353b;flex-shrink:0;}.cart-item-info{flex:1;}.cart-item-name{font-size:.75rem;font-weight:700;color:var(--white);}.cart-item-color{font-size:.65rem;color:var(--silver);margin-top:2px;}.cart-item-price{font-size:.8rem;color:#e8b464;margin-top:4px;font-weight:700;}.cart-item-remove{color:#e05555;font-size:.75rem;cursor:pointer;text-decoration:none;}
 .cart-qty-btn{background:transparent;border:1px solid var(--border);color:#e8b464;width:24px;height:24px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;transition:all .2s;}
-.cart-qty-btn:hover{border-color:#e8b464;background:rgba(232,180,100,.1);}.cart-drawer-empty{text-align:center;padding:40px 16px;color:var(--silver);font-size:.8rem;}.cart-drawer-footer{padding:16px;border-top:1px solid var(--border);background:#25282e;position:sticky;bottom:0;}.cart-total{display:flex;justify-content:space-between;margin-bottom:12px;font-size:.9rem;}.cart-total-label{color:var(--silver);}.cart-total-price{color:var(--white);font-weight:700;}.cart-cta{width:100%;padding:14px;background:#fff;color:#000;border:none;border-radius:6px;font-weight:700;font-size:.75rem;letter-spacing:2px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.cart-qty-btn:hover{border-color:#e8b464;background:rgba(232,180,100,.1);}.cart-drawer-empty{text-align:center;padding:40px 16px;color:var(--silver);font-size:.8rem;}.cart-drawer-footer{padding:16px;border-top:1px solid var(--border);background:#25282e;position:sticky;bottom:0;}.cart-total{display:flex;justify-content:space-between;margin-bottom:12px;font-size:.9rem;}.cart-total-label{color:var(--silver);}.cart-total-price{color:var(--white);font-weight:700;}.cart-cta{width:100%;padding:14px;background:linear-gradient(180deg,#ffffff,#eaf0f4);color:#0d1014;border:none;border-radius:14px;font-weight:800;font-size:.75rem;letter-spacing:2px;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 12px 28px -12px rgba(255,255,255,.4);}.cart-cta::after{content:" →";letter-spacing:0;}
 /* Banner de app estilo Smart App Banner */
 .app-smartbar{display:flex;align-items:center;gap:12px;background:#2a2d33;border-bottom:1px solid var(--border);padding:10px 14px;}
 .asb-close{background:none;border:none;color:#888;font-size:1.3rem;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;}
@@ -1779,10 +1790,13 @@ body.sb-on .wa-float{bottom:82px;}
 
 /* ── Bordes "luz desde arriba" (pedido del dueño, 22-nov-2026) ──
    Las superficies principales llevan un borde celeste, el #94e0fd del pulso
-   del encabezado y del sensor de la banda: más brillante arriba y apagándose
-   hacia abajo, como si la luz cayera sobre cada tarjeta, con un halo suave
-   arriba. Fijo, sin animación (el dueño probó una versión que latía y pidió
-   que no latiera). Solo en las superficies grandes: lo chico y repetido (las
+   del encabezado y del sensor de la banda: un poco más marcado arriba y
+   apagándose hacia abajo, como si la luz cayera sobre cada tarjeta. Tenue a
+   propósito: la primera versión partía casi blanca arriba y con halo, y el
+   dueño la encontró sobreiluminada ("quiero algo más de tranquilidad en los
+   colores"); por eso va sin blanco, de 1px y sin halo. Fijo, sin animación
+   (el dueño probó una versión que latía y pidió que no latiera). Solo en las
+   superficies grandes: lo chico y repetido (las
    funciones, las preguntas frecuentes, los datos de materiales) queda con su
    borde gris para no llenar la página de líneas, y la garantía conserva su verde.
    El borde es un ::after con máscara que deja solo el contorno. Va dentro de
@@ -1792,19 +1806,15 @@ body.sb-on .wa-float{bottom:82px;}
   header,.detail,.buybox,.spec,.soft-in,.r360-card,.vidrio-card,.step,.cmp-wrap,.checkout-modal{border-color:transparent;}
   header,.detail,.buybox,.spec,.r360-card,.vidrio-card,.step,.cmp-wrap{position:relative;}
   header::after,.detail::after,.buybox::after,.spec::after,.soft-in::after,.r360-card::after,.vidrio-card::after,.step::after,.cmp-wrap::after,.checkout-modal::after{
-    content:"";position:absolute;inset:0;border-radius:inherit;padding:1.25px;pointer-events:none;z-index:2;
-    background:linear-gradient(180deg,#dcf7ff 0%,#94e0fd 32%,rgba(148,224,253,.55) 68%,rgba(148,224,253,.22) 100%);
+    content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:2;
+    background:linear-gradient(180deg,rgba(148,224,253,.44) 0%,rgba(148,224,253,.25) 35%,rgba(148,224,253,.11) 100%);
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
     mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;}
-  /* Halo celeste arriba, sumado a la sombra que ya tenía cada una */
-  header{box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.04),0 -2px 14px -4px rgba(148,224,253,.3);}
-  .soft-in{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 40px 90px -50px rgba(0,0,0,.9),0 -2px 14px -4px rgba(148,224,253,.3);}
-  .step,.cmp-wrap,.r360-card,.vidrio-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.3),0 26px 52px -30px rgba(0,0,0,.95),0 -2px 14px -4px rgba(148,224,253,.3);}
-  .detail,.buybox,.spec{box-shadow:0 -2px 14px -4px rgba(148,224,253,.3);}
   /* El checkout, más iluminado y de un azul más intenso (pedido del dueño):
-     es el paso de pagar, así se destaca como una capa aparte. */
-  .checkout-modal::after{padding:1.5px;background:linear-gradient(180deg,#c6edff 0%,#5ec7ff 28%,rgba(72,166,255,.75) 62%,rgba(72,166,255,.38) 100%);}
-  .checkout-modal{box-shadow:0 -2px 26px -4px rgba(72,170,255,.5),0 24px 60px -24px rgba(0,0,0,.8);}
+     es el paso de pagar, así se destaca como una capa aparte. También sin
+     blanco y con un halo apenas insinuado. */
+  .checkout-modal::after{padding:1.25px;background:linear-gradient(180deg,rgba(94,186,255,.65) 0%,rgba(72,166,255,.38) 40%,rgba(72,166,255,.18) 100%);}
+  .checkout-modal{box-shadow:0 -2px 18px -8px rgba(72,170,255,.2),0 24px 60px -24px rgba(0,0,0,.8);}
 }
 /* Luz azul que cae desde arriba dentro del checkout (sin máscara: sirve en todos los navegadores) */
 .checkout-modal{background:radial-gradient(110% 34% at 50% 0%,rgba(72,166,255,.17),rgba(72,166,255,0) 72%),#32353b;}

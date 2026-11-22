@@ -1,7 +1,9 @@
 'use strict';
 // Bordes "luz desde arriba" (pedido del dueño, 22-nov-2026): las superficies
-// principales llevan un borde celeste (#94e0fd, el del pulso) más brillante
-// arriba, fijo y sin animación; el checkout, de un azul más intenso. El borde
+// principales llevan un borde celeste (#94e0fd, el del pulso) un poco más
+// marcado arriba, fijo y sin animación; el checkout, de un azul más intenso.
+// Tenue: la primera versión partía casi blanca y con halo, y el dueño la
+// encontró sobreiluminada; pidió más tranquilidad en los colores. El borde
 // es un ::after con máscara: sin soporte de máscaras taparía la tarjeta entera,
 // por eso tiene que ir dentro de @supports. Esto se prueba acá.
 const test = require('node:test');
@@ -15,7 +17,7 @@ const bloque = html.slice(ini, html.indexOf('</style>', ini));
 
 test('el bloque de los bordes existe y usa el celeste del pulso', () => {
   assert.ok(ini > 0, 'falta el bloque de los bordes');
-  assert.ok(bloque.includes('#94e0fd'));
+  assert.ok(bloque.includes('rgba(148,224,253,'), 'el borde usa el celeste del pulso (#94e0fd)');
   assert.match(html, /\.hdr-pulse \.mon path\{[^}]*stroke:#94e0fd/, 'el pulso del encabezado sigue siendo ese celeste');
 });
 
@@ -44,6 +46,29 @@ test('va en las superficies principales y no en la ruleta, los colores del produ
 });
 
 test('el checkout lleva su azul más intenso y su luz desde arriba', () => {
-  assert.match(bloque, /\.checkout-modal::after\{padding:1\.5px;background:linear-gradient\(180deg,#c6edff/);
+  assert.match(bloque, /\.checkout-modal::after\{padding:1\.25px;background:linear-gradient\(180deg,rgba\(94,186,255,/);
   assert.match(bloque, /\.checkout-modal\{background:radial-gradient\(110% 34% at 50% 0%,rgba\(72,166,255,\.17\)/);
+});
+
+test('colores tranquilos: sin blancos, finos y sin halo celeste', () => {
+  const css = bloque.replace(/\/\*[\s\S]*?\*\//g, '');
+  // Los degradados de los bordes, sin colores opacos (los casi blancos de antes
+  // iban en hex) y con poca opacidad: el general hasta .5 y el checkout hasta .7.
+  const anillo = css.match(/::after\{\s*content:""[^}]*\}/);
+  assert.ok(anillo, 'falta la regla del borde');
+  const checkout = css.match(/\.checkout-modal::after\{[^}]*\}/);
+  assert.ok(checkout, 'falta el borde del checkout');
+  for (const [regla, tope] of [[anillo[0], 0.5], [checkout[0], 0.7]]) {
+    const deg = regla.slice(regla.indexOf('background:'));
+    const grad = deg.slice(0, deg.indexOf(';'));
+    assert.ok(!/#[0-9a-f]{3,6}\b/i.test(grad), 'sin colores opacos en el borde: ' + grad);
+    const alfas = [...grad.matchAll(/rgba\(\d+,\d+,\d+,([\d.]+)\)/g)].map(m => Number(m[1]));
+    assert.ok(alfas.length >= 2, 'el degradado va en rgba: ' + grad);
+    for (const a of alfas) assert.ok(a <= tope, `opacidad ${a} sobre ${tope} en ${grad}`);
+  }
+  assert.match(anillo[0], /padding:1px;/, 'el borde general mide 1px');
+  // Sin halo celeste alrededor de las tarjetas (solo el checkout, apenas).
+  for (const m of css.matchAll(/box-shadow:[^;}]*/g)) {
+    assert.ok(!m[0].includes('148,224,253'), 'sin halo celeste: ' + m[0]);
+  }
 });
