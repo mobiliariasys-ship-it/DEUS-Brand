@@ -1,6 +1,7 @@
 'use strict';
 // Bordes "luz desde arriba" (pedido del dueño, 22-nov-2026): las superficies
-// principales llevan un borde celeste (#94e0fd, el del pulso) un poco más
+// principales llevan un borde celeste (el glaciar de la paleta Noche glaciar,
+// el mismo del pulso; antes #94e0fd) un poco más
 // marcado arriba, fijo y sin animación; el checkout, de un azul más intenso.
 // Tenue: la primera versión partía casi blanca y con halo, y el dueño la
 // encontró sobreiluminada; pidió más tranquilidad en los colores. El borde
@@ -17,8 +18,9 @@ const bloque = html.slice(ini, html.indexOf('</style>', ini));
 
 test('el bloque de los bordes existe y usa el celeste del pulso', () => {
   assert.ok(ini > 0, 'falta el bloque de los bordes');
-  assert.ok(bloque.includes('rgba(148,224,253,'), 'el borde usa el celeste del pulso (#94e0fd)');
-  assert.match(html, /\.hdr-pulse \.mon path\{[^}]*stroke:#94e0fd/, 'el pulso del encabezado sigue siendo ese celeste');
+  // Celeste glaciar #9dd7f4 = rgb(157,215,244): el borde y el pulso del encabezado usan el mismo.
+  assert.ok(bloque.includes('rgba(157,215,244,'), 'el borde usa el celeste glaciar del pulso');
+  assert.match(html, /\.hdr-pulse \.mon path\{[^}]*stroke:#9dd7f4/, 'el pulso del encabezado es ese mismo celeste');
 });
 
 test('el borde con máscara solo se pinta donde el navegador soporta máscaras', () => {
@@ -46,8 +48,8 @@ test('va en las superficies principales y no en la ruleta, los colores del produ
 });
 
 test('el checkout lleva su azul más intenso y su luz desde arriba', () => {
-  assert.match(bloque, /\.checkout-modal::after\{padding:1\.25px;background:linear-gradient\(180deg,rgba\(94,186,255,/);
-  assert.match(bloque, /\.checkout-modal\{background:radial-gradient\(110% 34% at 50% 0%,rgba\(72,166,255,\.17\)/);
+  assert.match(bloque, /\.checkout-modal::after\{padding:1\.25px;background:linear-gradient\(180deg,rgba\(110,196,239,/);
+  assert.match(bloque, /\.checkout-modal\{background:radial-gradient\(110% 34% at 50% 0%,rgba\(90,188,237,\.17\)/);
 });
 
 test('colores tranquilos: sin blancos, finos y sin halo celeste', () => {
@@ -69,6 +71,6 @@ test('colores tranquilos: sin blancos, finos y sin halo celeste', () => {
   assert.match(anillo[0], /padding:1px;/, 'el borde general mide 1px');
   // Sin halo celeste alrededor de las tarjetas (solo el checkout, apenas).
   for (const m of css.matchAll(/box-shadow:[^;}]*/g)) {
-    assert.ok(!m[0].includes('148,224,253'), 'sin halo celeste: ' + m[0]);
+    assert.ok(!m[0].includes('157,215,244'), 'sin halo celeste: ' + m[0]);
   }
 });
