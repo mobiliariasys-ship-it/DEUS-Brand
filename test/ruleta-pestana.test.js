@@ -29,6 +29,6 @@ test('baja con la página, hasta quedar bajo la caja de compra', () => {
   assert.ok(script.includes('requestAnimationFrame'), 'se mueve una vez por cuadro');
   assert.ok(script.includes("'.buybox'"), 'el recorrido termina cuando llega la caja de compra');
   assert.ok(script.includes("'.sticky-buy'"), 'abajo deja libre la barra de compra');
-  assert.match(script, /tab\.style\.transform = 'translateY\(-50%\) translateY\('/, 'se mueve con transform');
+  assert.match(script, /var v = 'translateY\(-50%\) translateY\(' [\s\S]*?if \(v !== ultimo\) \{ tab\.style\.transform = v;/, 'se mueve con transform, y solo cuando cambia');
   assert.match(html, /\.rifa-tab\{transition:padding \.2s,filter \.2s,transform \.35s/, 'el movimiento es suave');
 });
