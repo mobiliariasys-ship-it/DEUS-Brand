@@ -13,10 +13,12 @@ const path = require('path');
 
 const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-test('la paleta del sitio es Noche glaciar', () => {
-  assert.match(index, /:root \{\s*--black:#252933; --dark:#2a2f3a; --card:#2c313d;\s*--border:#3b4151; --white:#f4f4f4;/);
-  assert.match(index, /\.checkout-modal\{--card:#313744;--border:#3f4758;--silver:#a9afbe;--dark:#2d323e;/);
-  assert.match(index, /<meta name="theme-color" content="#1e2129">/, 'la barra del navegador del celular calza con la barra de arriba');
+test('la paleta del sitio es Noche glaciar, suavizada', () => {
+  // Mezcla entre Noche glaciar y el gris humo (el dueño la encontró "muy azul"):
+  // los grises azulados al 80 por ciento de su saturación.
+  assert.match(index, /:root \{\s*--black:#272b32; --dark:#2c3039; --card:#2e333c;\s*--border:#3e4450; --white:#f4f4f4;/);
+  assert.match(index, /\.checkout-modal\{--card:#343943;--border:#424957;--silver:#abb0bc;--dark:#2f343d;/);
+  assert.match(index, /<meta name="theme-color" content="#202228">/, 'la barra del navegador del celular calza con la barra de arriba');
 });
 
 test('el botón IA DEUS va en azul hielo', () => {

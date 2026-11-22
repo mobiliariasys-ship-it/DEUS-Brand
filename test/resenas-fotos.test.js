@@ -20,7 +20,7 @@ test('las fotos del carrusel se piden antes de llegar a las reseñas', () => {
 });
 
 test('el recuadro de la foto tiene fondo mientras carga', () => {
-  assert.match(html, /\.review-photo\{[^}]*background:#343a47;\}/);
+  assert.match(html, /\.review-photo\{[^}]*background:#[0-9a-f]{6};\}/);
 });
 
 test('ninguna foto de reseña pesa de más (todas bajo 120 KB)', () => {
