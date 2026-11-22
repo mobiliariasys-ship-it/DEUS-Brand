@@ -1088,6 +1088,10 @@ body.sb-on .chat-panel{bottom:82px;}
 .rifa-tab .rifa-rueda-tab{display:block;flex:none;width:30px;height:34px;}
 @keyframes rifaPulse{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(240,195,202,.28) inset;}50%{box-shadow:0 6px 26px rgba(240,195,202,.5),0 0 0 1px rgba(240,195,202,.45) inset;}}
 @media(max-width:600px){.rifa-tab{font-size:.58rem;padding:13px 7px;letter-spacing:1.5px;}.rifa-tab .rifa-rueda-tab{width:26px;height:30px;}}
+/* Se arrastra hacia arriba o hacia abajo (ver el script junto a la pestaña):
+   sin touch-action el teléfono se llevaría el gesto para bajar por la página. */
+.rifa-tab{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.rifa-tab.arrastrando{cursor:grabbing;filter:brightness(1.1);animation-play-state:paused;}
 .rifa-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2100;align-items:center;justify-content:center;
   padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));}
 .rifa-overlay.show{display:flex;}
@@ -2160,6 +2164,77 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </svg>
   Gira y gana
 </div>
+<script>
+// La pestaña se puede arrastrar hacia arriba o hacia abajo (pedido del dueño,
+// 22-nov-2026: que no moleste al bajar por la página). Un toque la abre como
+// siempre; si el dedo se mueve más de 6px, la mueve, y al soltar no se abre.
+// La altura queda guardada en este navegador (deus-ruleta-tab, como fracción
+// del alto de la pantalla) y nunca se mete bajo la barra de arriba ni bajo la
+// barra de compra de abajo (esa se reserva siempre: aparece al bajar).
+(function () {
+  'use strict';
+  var tab = document.getElementById('ruleta-tab');
+  if (!tab || !window.PointerEvent) return;
+  var CLAVE = 'deus-ruleta-tab', UMBRAL = 6, MARGEN = 8;
+  var ini = null, arrastrando = false, suprimir = false;
+  function limites() {
+    var mitad = tab.offsetHeight / 2, arriba = MARGEN, abajo = innerHeight - MARGEN;
+    var bar = document.querySelector('.announce-bar');
+    if (bar) arriba += Math.max(0, bar.getBoundingClientRect().bottom);
+    var sb = document.querySelector('.sticky-buy');
+    if (sb) abajo -= sb.offsetHeight;
+    return [arriba + mitad, Math.max(arriba + mitad, abajo - mitad)];
+  }
+  // top es el centro de la pestaña: el CSS la sube la mitad con translateY(-50%).
+  function poner(centro) {
+    var l = limites();
+    tab.style.top = Math.min(l[1], Math.max(l[0], centro)) + 'px';
+  }
+  function centroActual() { var r = tab.getBoundingClientRect(); return r.top + r.height / 2; }
+  function guardada() {
+    try { var f = parseFloat(localStorage.getItem(CLAVE)); return f > 0 && f < 1 ? f : null; } catch (e) { return null; }
+  }
+  function aplicarGuardada() { var f = guardada(); if (f != null) poner(f * innerHeight); }
+  aplicarGuardada();
+  addEventListener('load', aplicarGuardada);
+  addEventListener('resize', aplicarGuardada);
+
+  tab.addEventListener('pointerdown', function (e) {
+    if (e.button > 0) return;
+    ini = { y: e.clientY, centro: centroActual(), id: e.pointerId };
+    arrastrando = false;
+  });
+  tab.addEventListener('pointermove', function (e) {
+    if (!ini || e.pointerId !== ini.id) return;
+    var dy = e.clientY - ini.y;
+    if (!arrastrando) {
+      if (Math.abs(dy) < UMBRAL) return;
+      arrastrando = true;
+      try { tab.setPointerCapture(e.pointerId); } catch (_) {}
+      tab.classList.add('arrastrando');
+    }
+    e.preventDefault();
+    poner(ini.centro + dy);
+  });
+  function soltar(e) {
+    if (!ini || e.pointerId !== ini.id) return;
+    if (arrastrando) {
+      tab.classList.remove('arrastrando');
+      // El click que sigue al soltar no abre la ruleta.
+      suprimir = true;
+      setTimeout(function () { suprimir = false; }, 400);
+      try { localStorage.setItem(CLAVE, (centroActual() / innerHeight).toFixed(4)); } catch (_) {}
+    }
+    ini = null;
+    arrastrando = false;
+  }
+  tab.addEventListener('pointerup', soltar);
+  tab.addEventListener('pointercancel', soltar);
+  addEventListener('click', function (e) {
+    if (suprimir && tab.contains(e.target)) { e.preventDefault(); e.stopPropagation(); suprimir = false; }
+  }, true);
+})();
+</script>
 
 <script>
 (function () {
@@ -4409,9 +4484,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (pe) {
             const faltaEnv = !ofertaActiva() && !selectedShipping;
             const conRegalo = document.documentElement.classList.contains('promo');
+            // El envío gratis ya se dice arriba (junto al precio y en el recuadro
+            // verde del envío): repetirlo junto a las cuotas sobraba (pedido del
+            // dueño, 22-nov-2026). Aquí solo se avisa si el envío vuelve a
+            // costar, o el regalo cuando hay promo.
             const envTxt = faltaEnv
               ? '<span class="pe-env" style="color:#c9a227;">+ envío, se calcula abajo</span>'
-              : '<span class="pe-env">🚚 Envío gratis' + (conRegalo ? ' + tapones de regalo' : '') + '</span>';
+              : (conRegalo ? '<span class="pe-env">🎁 Tapones de regalo</span>' : '');
             pe.innerHTML =
               '<div class="pe-top"><div class="pe-k">Total a pagar</div><div class="pe-v">' + clp(total) + '</div></div>' +
               '<div class="pe-bot"><span class="pe-tot">o <span class="pe-cg">3 cuotas sin interés</span> de <b>' + clp(cuotaDe(total)) + '</b></span>' + envTxt + '</div>';
