@@ -1042,12 +1042,14 @@ main{max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
 /* Botón del asistente: va JUSTO ARRIBA del de WhatsApp, en dorado para que no
    se confundan. WhatsApp = hablar con una persona; este = respuesta al toque. */
 /* Botón del asistente. Ocupa la esquina inferior derecha, ya que el WhatsApp
-   flotante está oculto (el contacto humano vive dentro del propio chat). */
-.chat-fab{position:fixed;bottom:20px;right:20px;display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#97c1ec 0%,#89b5e2 50%,#5f9bd7 100%);color:#131313;padding:13px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.3);box-shadow:0 8px 24px rgba(0,0,0,.45),0 3px 14px rgba(137,181,226,.3),inset 0 1px 0 rgba(255,255,255,.4);z-index:900;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.4px;transition:transform .15s,box-shadow .2s,opacity .35s ease;}
+   flotante está oculto (el contacto humano vive dentro del propio chat).
+   Gris mate desde el 23-nov-2026 (pedido del dueño; antes azul hielo): plano,
+   sin brillo ni halo de color, para que no compita con "Comprar ahora". */
+.chat-fab{position:fixed;bottom:20px;right:20px;display:inline-flex;align-items:center;gap:10px;background:#5d626b;color:#f2f3f5;padding:13px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.12);box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:900;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.4px;transition:transform .15s,box-shadow .2s,opacity .35s ease;}
 /* Entrada suave: en la primera carga NO aparece encima del precio; entra al
    primer scroll (o a los 1.5s). Evita que tape la fila del precio en móvil. */
 .chat-fab:not(.fab-in){opacity:0;transform:translateY(10px);pointer-events:none;}
-.chat-fab:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 30px rgba(0,0,0,.4),0 6px 22px rgba(137,181,226,.45),inset 0 1px 0 rgba(255,255,255,.4);}
+.chat-fab:hover{transform:translateY(-2px) scale(1.03);background:#676c75;box-shadow:0 12px 30px rgba(0,0,0,.45);}
 .chat-fab svg{width:23px;height:23px;flex-shrink:0;}
 .chat-fab span{white-space:nowrap;}
 .chat-fab .fab-short{display:none;}

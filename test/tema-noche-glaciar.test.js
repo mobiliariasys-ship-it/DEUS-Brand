@@ -1,7 +1,7 @@
 'use strict';
 // Paleta "Noche glaciar" (elegida por el dueño el 22-nov-2026 entre 100
 // combinaciones): grises en azul noche suave, un solo acento celeste glaciar,
-// un solo verde para el ahorro y el botón IA DEUS en azul hielo. Se mantienen
+// un solo verde para el ahorro y el botón IA DEUS en gris mate. Se mantienen
 // las estrellas doradas, el botón blanco de compra, el dorado de − / + y de
 // "Aplicar" en el checkout, los colores del producto y la ruleta. Va directo en
 // las reglas (sin un bloque aparte que pise reglas más específicas: con
@@ -22,8 +22,10 @@ test('la paleta del sitio es Noche glaciar, suavizada', () => {
   assert.match(index, /<meta name="theme-color" content="#1f2229">/, 'la barra del navegador del celular calza con la barra de arriba');
 });
 
-test('el botón IA DEUS va en azul hielo', () => {
-  assert.match(index, /\.chat-fab\{[^}]*background:linear-gradient\(135deg,#97c1ec 0%,#89b5e2 50%,#5f9bd7 100%\)/);
+test('el botón IA DEUS va en gris mate (pedido del dueño, 23-nov-2026; antes azul hielo)', () => {
+  assert.match(index, /\.chat-fab\{[^}]*background:#5d626b;color:#f2f3f5;/);
+  const fab = index.match(/\.chat-fab\{[^}]*\}/)[0];
+  assert.ok(!/linear-gradient|137,181,226|inset/.test(fab), 'mate: sin degradé, sin halo de color ni brillo');
 });
 
 test('se mantienen el dorado de las estrellas y de − / + y "Aplicar" en el checkout', () => {
