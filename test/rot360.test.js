@@ -34,7 +34,7 @@ const carpetas = (() => { const m = html.match(/var CARPETA = \([^\n]*\) \? '([^
 const usada = carpetas[1];
 
 test('los 85 cuadros que carga la web tienen fondo transparente', () => {
-  assert.deepStrictEqual(carpetas, ['img/rot360-v6m', 'img/rot360-v6'], 'no se encontraron las carpetas de cuadros');
+  assert.deepStrictEqual(carpetas, ['img/rot360-v7m', 'img/rot360-v7'], 'no se encontraron las carpetas de cuadros');
   assert.ok(html.includes("function src(i){ return CARPETA+'/f_'"), 'src() usa la carpeta elegida');
   for (const c of carpetas) {
     for (let k = 1; k <= N_CUADROS; k++) {

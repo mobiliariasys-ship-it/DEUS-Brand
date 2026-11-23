@@ -34,7 +34,7 @@
 //
 // Para regenerar:
 //   npm i sharp --no-save
-//   node scripts/recortar-fondo-360.js img/rot360 img/rot360-v3
+//   node scripts/recortar-fondo-360.js img/rot360 img/rot360-v7 img/rot360-v7m
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
@@ -349,15 +349,82 @@ function medirFundido(y, a, b) {
   return Math.min(1, Math.max(0, num / den));
 }
 
-// Mezcla de dos cuadros recortados (alfa premultiplicado: sobre cualquier fondo
-// se ve igual que el fundido original sobre negro)
+// Huecos falsos (23-nov-2026): la banda tiene caras del mismo #080808 que el
+// fondo y a veces quedan pegadas al fondo del borde, así que el relleno las
+// borraba enteras (correa con agujeros grises en f_011, f_017-019, f_046,
+// f_056, f_062...). Sobre la tarjeta negra no se notaba; sobre la gris sí.
+// Arreglo con los cuadros vecinos: el giro avanza ~4° por cuadro, así que un
+// píxel que es banda maciza (máscara erosionada) en algún cuadro de atrás Y en
+// alguno de adelante es banda también en este. El fondo real (alrededor y a
+// través del aro) es fondo en los vecinos y se queda transparente.
+const VENTANA = 3;  // cuadros a cada lado
+const EROSION = 4;  // px: el borde se mueve entre cuadros; solo cuenta lo macizo
+
+function erosionar(m, W, H, r) {
+  const tmp = new Uint8Array(W * H), out = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    let v = 1; for (let d = -r; d <= r && v; d++) { const xx = x + d; if (xx < 0 || xx >= W || !m[y * W + xx]) v = 0; }
+    tmp[y * W + x] = v;
+  }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    let v = 1; for (let d = -r; d <= r && v; d++) { const yy = y + d; if (yy < 0 || yy >= H || !tmp[yy * W + x]) v = 0; }
+    out[y * W + x] = v;
+  }
+  return out;
+}
+
+// cuadros: [{ rgba, orig }] del giro (sin el fundido). Devuelve cuántos px rellenó por cuadro.
+function rellenarHuecos(cuadros, W, H) {
+  const N = W * H;
+  const macizo = cuadros.map(({ rgba }) => {
+    const m = new Uint8Array(N); for (let p = 0; p < N; p++) m[p] = rgba[p * 4 + 3] >= 128 ? 1 : 0;
+    return erosionar(m, W, H, EROSION);
+  });
+  const n = cuadros.length;
+  return cuadros.map(({ rgba, orig }, k) => {
+    const atras = [], adelante = [];
+    for (let d = 1; d <= VENTANA; d++) { if (k - d >= 0) atras.push(macizo[k - d]); if (k + d < n) adelante.push(macizo[k + d]); }
+    // En las puntas del giro hay vecinos de un solo lado: se piden dos de ese lado
+    const ladoA = atras.length ? atras : adelante.slice(0, 1), ladoB = adelante.length ? adelante : atras.slice(0, 1);
+    const ladoA2 = atras.length ? null : adelante.slice(1), ladoB2 = adelante.length ? null : atras.slice(1);
+    const relleno = new Uint8Array(N); let cuenta = 0;
+    for (let p = 0; p < N; p++) {
+      if (rgba[p * 4 + 3] !== 0) continue;
+      const okA = ladoA.some(m => m[p]) && (!ladoA2 || ladoA2.some(m => m[p]));
+      const okB = ladoB.some(m => m[p]) && (!ladoB2 || ladoB2.some(m => m[p]));
+      if (okA && okB) { relleno[p] = 1; cuenta++; }
+    }
+    if (!cuenta) return 0;
+    const { data, C } = orig;
+    for (let p = 0; p < N; p++) if (relleno[p]) {
+      const o = p * 4, i = p * C; rgba[o] = data[i]; rgba[o + 1] = data[i + 1]; rgba[o + 2] = data[i + 2]; rgba[o + 3] = 255;
+    }
+    // Los bordes de antialias que quedaron adentro (pegados a un hueco ya relleno,
+    // no al fondo) vuelven a ser opacos con su color original
+    for (let p = 0; p < N; p++) {
+      const a = rgba[p * 4 + 3]; if (a === 0 || a === 255) continue;
+      const x = p % W, y = (p / W) | 0; let fondo = false, junto = false;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const q = yy * W + xx; if (rgba[q * 4 + 3] === 0) fondo = true; if (relleno[q]) junto = true;
+      }
+      if (junto && !fondo) { const o = p * 4, i = p * C; rgba[o] = data[i]; rgba[o + 1] = data[i + 1]; rgba[o + 2] = data[i + 2]; rgba[o + 3] = 255; }
+    }
+    return cuenta;
+  });
+}
+
+// Mezcla de dos cuadros recortados para el fundido que cierra la vuelta.
+// El alfa es el MAYOR de los dos, no el promedio: con el promedio la banda del
+// fundido quedaba medio transparente (se veía la tarjeta gris a través, como un
+// fantasma). El color es la mezcla premultiplicada, igual que el original.
 function mezclar(A, B, w) {
   const out = Buffer.alloc(A.length);
   for (let o = 0; o < A.length; o += 4) {
     const aA = A[o + 3] / 255, aB = B[o + 3] / 255;
-    const a = (1 - w) * aA + w * aB;
+    const a = Math.max(aA, aB);
     out[o + 3] = Math.round(a * 255);
-    if (a > 0) for (let c = 0; c < 3; c++) out[o + c] = Math.round(((1 - w) * A[o + c] * aA + w * B[o + c] * aB) / a);
+    if (a > 0) for (let c = 0; c < 3; c++) out[o + c] = Math.min(255, Math.round(((1 - w) * A[o + c] * aA + w * B[o + c] * aB) / ((1 - w) * aA + w * aB || 1)));
   }
   return out;
 }
@@ -365,31 +432,39 @@ function mezclar(A, B, w) {
 const guardar = (rgba, W, H, salida) => sharp(rgba, { raw: { width: W, height: H, channels: 4 } })
   .webp({ quality: 82, alphaQuality: 90, effort: 6 }).toFile(salida);
 
-async function procesar(entrada, salida) {
+async function procesar(entrada, salida, salidaMovil) {
   fs.mkdirSync(salida, { recursive: true });
-  let primero = null, ultimo = null, W = 0, H = 0;
+  if (salidaMovil) fs.mkdirSync(salidaMovil, { recursive: true });
+  let W = 0, H = 0;
+  const cuadros = [];
   for (let k = 1; k <= ULTIMO_GIRO; k++) {
-    const img = await leer(path.join(entrada, nombre(k)));
-    W = img.W; H = img.H;
-    const rgba = recortarCuadro(img);
-    if (k === 1) primero = rgba;
-    if (k === ULTIMO_GIRO) ultimo = rgba;
-    await guardar(rgba, W, H, path.join(salida, nombre(k)));
+    const orig = await leer(path.join(entrada, nombre(k)));
+    W = orig.W; H = orig.H;
+    cuadros.push({ rgba: recortarCuadro(orig), orig });
   }
+  rellenarHuecos(cuadros, W, H).forEach((c, k) => { if (c) console.log(nombre(k + 1) + ': ' + c + ' px de banda recuperados'); });
+  const escribir = async (rgba, k) => {
+    await guardar(rgba, W, H, path.join(salida, nombre(k)));
+    // Celular: 600 px y más comprimido (en 4G los de 900 tardaban demasiado)
+    if (salidaMovil) await sharp(rgba, { raw: { width: W, height: H, channels: 4 } }).resize(600, 600)
+      .webp({ quality: 72, alphaQuality: 80, effort: 6 }).toFile(path.join(salidaMovil, nombre(k)));
+  };
+  for (let k = 1; k <= ULTIMO_GIRO; k++) await escribir(cuadros[k - 1].rgba, k);
+  const primero = cuadros[0].rgba, ultimo = cuadros[ULTIMO_GIRO - 1].rgba;
   const o1 = await leer(path.join(entrada, nombre(1)));
   const oU = await leer(path.join(entrada, nombre(ULTIMO_GIRO)));
   for (let k = ULTIMO_GIRO + 1; k <= N_CUADROS; k++) {
     const w = medirFundido(await leer(path.join(entrada, nombre(k))), oU, o1);
-    await guardar(mezclar(ultimo, primero, w), W, H, path.join(salida, nombre(k)));
+    await escribir(mezclar(ultimo, primero, w), k);
     console.log(nombre(k) + ': fundido con ' + Math.round(w * 100) + '% de ' + nombre(1));
   }
 }
 
 if (require.main === module) {
-  const [, , entrada, salida] = process.argv;
-  if (!entrada || !salida) { console.error('Uso: node scripts/recortar-fondo-360.js <carpeta-originales> <carpeta-salida>'); process.exit(1); }
-  procesar(entrada, salida).then(() => console.log('Recortados ' + N_CUADROS + ' cuadros en ' + salida))
+  const [, , entrada, salida, salidaMovil] = process.argv;
+  if (!entrada || !salida) { console.error('Uso: node scripts/recortar-fondo-360.js <carpeta-originales> <carpeta-salida> [carpeta-celular]'); process.exit(1); }
+  procesar(entrada, salida, salidaMovil).then(() => console.log('Recortados ' + N_CUADROS + ' cuadros en ' + salida))
     .catch(e => { console.error(e); process.exit(1); });
 }
 
-module.exports = { recortarCuadro, mezclar, medirFundido, procesar };
+module.exports = { recortarCuadro, rellenarHuecos, mezclar, medirFundido, procesar };

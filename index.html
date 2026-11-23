@@ -5678,7 +5678,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // que el cierre armaba uniendo ruido suelto al contorno (ver R_PELO). v3, v4m,
     // v5 y v5m quedan para las páginas abiertas antes; se pueden borrar pasada
     // una semana.
-    var CARPETA = (Math.min(window.innerWidth || 0, (screen && screen.width) || 9999) < 700) ? 'img/rot360-v6m' : 'img/rot360-v6';
+    // v7 / v7m (23-nov-2026): seguían huecos en la correa donde la banda tiene el
+    // mismo negro que el fondo, y el fundido del final medio transparente. Ahora
+    // se recupera la banda con los cuadros vecinos (rellenarHuecos) y el fundido
+    // va opaco. v6 y v6m quedan para las páginas abiertas antes.
+    var CARPETA = (Math.min(window.innerWidth || 0, (screen && screen.width) || 9999) < 700) ? 'img/rot360-v7m' : 'img/rot360-v7';
     function src(i){ return CARPETA+'/f_'+String(i+1).padStart(3,'0')+'.webp'; }
     var frames=new Array(N), pendientes=N, idx=BLUE, auto=null;
     var HERO=0;               // ángulo de reposo: frente, con el sensor apagado
