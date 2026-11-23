@@ -1,5 +1,5 @@
 'use strict';
-const { precioBanda } = require('./precio');
+const { precioBanda, descuentoPremio } = require('./precio');
 // Ruleta "Gira y gana" (desde el 4-nov-2026, en lugar de la pestaña del
 // sorteo mensual). A los 3 segundos en la web aparece la ruleta: la persona
 // deja su correo, gira, y le llega al correo un código con su premio.
@@ -425,14 +425,65 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
   }
 
   // Al aprobarse el pago. Idempotente: un reaviso de la pasarela no lo pisa.
-  async function marcarUsado(codigo, orden) {
+  // `extra`: lo que de verdad se descontó en esa compra (descuento, en pesos,
+  // el mismo de calcularMonto) y cuántas bandas llevaba (unidades). Lo usa el
+  // gasto diario de la ruleta del panel (gastoPorDia); los códigos usados
+  // antes del 23-nov-2026 no lo traen y ahí se calcula con la regla del premio.
+  async function marcarUsado(codigo, orden, extra = {}) {
     await cargar();
     const reg = buscar(codigo);
     if (!reg || reg.usado) return false;
     reg.usado = { orden: String(orden || ''), fecha: new Date(ahora()).toISOString() };
+    const d = Number(extra && extra.descuento), u = Number(extra && extra.unidades);
+    if (extra && extra.descuento != null && Number.isFinite(d) && d >= 0) reg.usado.descuento = Math.round(d);
+    if (u > 0) reg.usado.unidades = Math.round(u);
     reg.reserva = null;
     await guardar();
     return true;
+  }
+
+  // Gasto de la ruleta por día de Chile (pedido del dueño, 23-nov-2026): lo que
+  // se llevó en premio cada persona que COMPRÓ con su código, en el día de la
+  // compra. El descuento ya viene restado de lo que pagó (el "vendido" de la
+  // utilidad diaria), así que el panel lo muestra como dato y no lo resta de
+  // nuevo. La correa y los tapones de premio se cuentan aparte: no tienen un
+  // costo cargado, y una cifra inventada ensuciaría la utilidad.
+  // `opciones.buscarVenta(orden)` (metrics.buscarVenta): si viene, solo cuentan
+  // las compras que siguen en el registro de ventas (las mismas que suman en
+  // el panel), y de ahí sale cuántas bandas llevaba una compra anterior a que
+  // se guardara el descuento.
+  async function gastoPorDia(opciones = {}) {
+    await cargar();
+    const buscarVenta = typeof opciones.buscarVenta === 'function' ? opciones.buscarVenta : null;
+    const dias = {};
+    for (const reg of Object.values(estado.codigos)) {
+      const u = reg.usado;
+      if (!u || !u.fecha) continue;
+      const venta = buscarVenta ? buscarVenta(u.orden) : null;
+      if (buscarVenta && !venta) continue;
+      // Con recordatorio: el premio mejorado (mejora = 'p10') o el mismo más un %.
+      const p = premioPorId(reg.mejora || reg.premio);
+      if (!p) continue;
+      const fecha = new Date(u.fecha).toLocaleDateString('en-CA', { timeZone: ZONA });
+      const dia = dias[fecha] || (dias[fecha] = { ruleta: 0, usados: 0, correas: 0, tapones: 0, estimado: false, detalle: {} });
+      let pesos;
+      if (typeof u.descuento === 'number') pesos = u.descuento;
+      else {
+        const qty = Number(u.unidades) || (venta && Number(venta.unidades)) || 1;
+        const premio = { tipo: p.tipo, monto: p.monto, pct: p.pct, pctExtra: reg.extraPct };
+        pesos = Math.min(descuentoPremio(premio, qty), precioBanda() * qty);
+        dia.estimado = true;
+      }
+      dia.ruleta += pesos;
+      dia.usados += 1;
+      if (p.tipo === 'correa') dia.correas += 1;
+      if (p.tipo === 'tapones') dia.tapones += 1;
+      const etiqueta = p.etiqueta + (reg.mejora ? ' (recordatorio)' : '') + (reg.extraPct ? ' + ' + reg.extraPct + '% OFF' : '');
+      const det = dia.detalle[etiqueta] || (dia.detalle[etiqueta] = { n: 0, pesos: 0 });
+      det.n += 1;
+      det.pesos += pesos;
+    }
+    return dias;
   }
 
   // Códigos que genera el DUEÑO desde el panel, para probar el cobro o para
@@ -612,7 +663,7 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     return true;
   }
 
-  return { girar, otroLanzamiento, validar, elegirColor, premioParaCobro, marcarUsado, resumen, lista, generar, generarUnoDeCada,
+  return { girar, otroLanzamiento, validar, elegirColor, premioParaCobro, marcarUsado, gastoPorDia, resumen, lista, generar, generarUnoDeCada,
     pendientesRecordatorio, prepararRecordatorio, marcarRecordatorio, falloRecordatorio, recordatoriosHoy };
 }
 

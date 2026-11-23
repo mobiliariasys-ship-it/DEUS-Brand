@@ -676,7 +676,8 @@ app.post('/notificaciones', async (req, res) => {
 
         if (!reaviso) await enviarPagoConfirmado(info, pedido);
         // El código de la ruleta ya no sirve para otra compra (idempotente).
-        if (codigoPremioPago) ruleta_.servicio().marcarUsado(codigoPremioPago, info.id).catch(e => console.error('[ruleta] marcar usado:', e.message));
+        // Con lo que se descontó y las bandas: el panel suma el gasto diario de la ruleta.
+        if (codigoPremioPago) ruleta_.servicio().marcarUsado(codigoPremioPago, info.id, { descuento: descuentoPago, unidades: pedido.cantidad }).catch(e => console.error('[ruleta] marcar usado:', e.message));
         // Purchase a Meta desde el SERVIDOR (Conversions API): captura el 100%
         // de las ventas aunque el cliente no vuelva a success.html. Mismo
         // event_id que el píxel del navegador → Meta deduplica si llegan ambos.
@@ -1178,6 +1179,20 @@ async function utilidadDiaria(diasParam) {
     : diasParam === 'meses' ? 400
     : [7, 14, 30].includes(Number(diasParam)) ? Number(diasParam) : 14;
   const ventas = metrics.ventasPorDia(dias);
+  // Gasto de la ruleta por día (pedido del dueño, 23-nov-2026): lo que se llevó
+  // en premio cada persona que compró ese día. Es un dato de la fila (el
+  // descuento ya viene restado de lo vendido); si falla, la utilidad sale igual.
+  try {
+    const ru = await ruleta_.servicio().gastoPorDia({ buscarVenta: metrics.buscarVenta });
+    for (const d of ventas) {
+      const r = ru[d.fecha];
+      if (!r) continue;
+      Object.assign(d, { ruleta: r.ruleta, ruletaUsados: r.usados, ruletaCorreas: r.correas, ruletaTapones: r.tapones,
+                         ruletaEstimado: r.estimado, ruletaDetalle: r.detalle });
+    }
+  } catch (e) {
+    console.error('[utilidad] gasto de la ruleta:', e.message);
+  }
   // Si Meta no responde, se muestran las ventas igual con gasto 0 y un aviso:
   // media verdad sirve más que un panel en blanco.
   let gasto = {}, compras = {}, adsOk = true, adsError = '', via = '', sinArchivadas = false;

@@ -91,6 +91,17 @@ function calcularDia(d, ads, comprasMeta) {
     conTapones: Number(d.conTapones) || 0,
     // Lo mismo con las correas extra (el upsell desde el 27-oct-2026).
     conCorreas: Number(d.conCorreas) || 0,
+    // Ruleta (pedido del dueño, 23-nov-2026): lo que se llevó en premio cada
+    // persona que compró ese día con su código (ruleta.gastoPorDia). El
+    // descuento ya viene restado en `ingresos` (es lo que dejó de pagar), así
+    // que va como dato y NO se resta de la utilidad: restarlo de nuevo lo
+    // contaría dos veces. Correas y tapones de premio, solo cuántos.
+    ruleta: Number(d.ruleta) || 0,
+    ruletaUsados: Number(d.ruletaUsados) || 0,
+    ruletaCorreas: Number(d.ruletaCorreas) || 0,
+    ruletaTapones: Number(d.ruletaTapones) || 0,
+    ruletaEstimado: !!d.ruletaEstimado,
+    ruletaDetalle: d.ruletaDetalle || null,
     // Devoluciones de Mercado Libre en su día de compra. Su costo (lo que
     // cobró ML por los envíos) ya viene restado en ingresos, en negativo.
     devoluciones: Number(d.devoluciones) || 0,
@@ -115,6 +126,8 @@ function totalizar(filas) {
     pedidos: a.pedidos + f.pedidos, unidades: a.unidades + f.unidades,
     conTapones: a.conTapones + (f.conTapones || 0),
     conCorreas: a.conCorreas + (f.conCorreas || 0),
+    ruleta: a.ruleta + (f.ruleta || 0), ruletaUsados: a.ruletaUsados + (f.ruletaUsados || 0),
+    ruletaCorreas: a.ruletaCorreas + (f.ruletaCorreas || 0), ruletaTapones: a.ruletaTapones + (f.ruletaTapones || 0),
     devoluciones: a.devoluciones + (f.devoluciones || 0),
     pedidosExternos: a.pedidosExternos + (f.pedidosExternos || 0),
     unidadesExternas: a.unidadesExternas + (f.unidadesExternas || 0),
@@ -126,7 +139,7 @@ function totalizar(filas) {
     mlDevolucion: a.mlDevolucion + (f.mlDevolucion || 0),
     adsNeto: a.adsNeto + f.adsNeto, ivaAds: a.ivaAds + f.ivaAds,
     ads: a.ads + f.ads, comprasMeta: a.comprasMeta + (f.comprasMeta || 0), utilidad: a.utilidad + f.utilidad
-  }), { pedidos: 0, unidades: 0, conTapones: 0, conCorreas: 0, devoluciones: 0, pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, cargosML: 0, mlPublicidad: 0, mlComision: 0, mlEnvio: 0, mlDevolucion: 0, adsNeto: 0, ivaAds: 0, ads: 0, comprasMeta: 0, utilidad: 0 });
+  }), { pedidos: 0, unidades: 0, conTapones: 0, conCorreas: 0, ruleta: 0, ruletaUsados: 0, ruletaCorreas: 0, ruletaTapones: 0, devoluciones: 0, pedidosExternos: 0, unidadesExternas: 0, ingresosExternos: 0, ingresos: 0, costoBandas: 0, costoEnvios: 0, pasarela: 0, cargosML: 0, mlPublicidad: 0, mlComision: 0, mlEnvio: 0, mlDevolucion: 0, adsNeto: 0, ivaAds: 0, ads: 0, comprasMeta: 0, utilidad: 0 });
 }
 
 // Utilidad por MES calendario (de Chile): suma los días de cada mes con la

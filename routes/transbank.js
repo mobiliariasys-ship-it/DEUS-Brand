@@ -174,7 +174,7 @@ async function handleRetorno(req, res) {
         id: result.buy_order
       }, pedido).catch(e => console.error('[email]', e.message));
       // El código de la ruleta ya no sirve para otra compra (idempotente).
-      if (pedido && pedido.codigoPremio) ruleta_.servicio().marcarUsado(pedido.codigoPremio, result.buy_order).catch(e => console.error('[ruleta] marcar usado:', e.message));
+      if (pedido && pedido.codigoPremio) ruleta_.servicio().marcarUsado(pedido.codigoPremio, result.buy_order, { descuento: pedido.descuento, unidades: pedido.cantidad }).catch(e => console.error('[ruleta] marcar usado:', e.message));
       // Confirmación al cliente (el correo lo tomamos del pedido guardado)
       if (!reaviso) enviarConfirmacionCliente({
         email: pedido && pedido.customer && pedido.customer.email,

@@ -319,6 +319,9 @@
   .util-tabla th{color:#9a9a9a;font-weight:600;}
   .util-tabla th:first-child,.util-tabla td:first-child{text-align:left;}
   .util-tabla td.gasto{color:#9a8f8f;}
+  /* Ruleta en la utilidad diaria: dato aparte (ya está descontado de lo vendido). */
+  .util-tabla td.ruleta,.util-tabla th.ruleta{color:#e6a9b6;}
+  .util-tabla td.ruleta small,.util-tabla th.ruleta small{display:block;font-size:.58rem;color:#a98e95;font-weight:400;text-transform:none;letter-spacing:0;}
   .util-tabla td.util{font-weight:700;}
   .util-tabla td.pos{color:#69c46d;} .util-tabla td.neg{color:#e07a6a;}
   .util-tabla tr.hoy td{background:rgba(232,180,100,.06);}
@@ -579,14 +582,14 @@
       <div class="side-logo"><span class="side-mark"></span>DEUS</div>
       <button class="nav-i active" onclick="irA('top',this)"><span class="ico">📊</span> Dashboard</button>
       <button class="nav-i" onclick="irA('sec-graficos',this)"><span class="ico">📈</span> Gráficos</button>
-      <!-- Mismo orden que el panel: Plata, Ruleta, Conversión, Operación y Registros. -->
+      <!-- Mismo orden que el panel: utilidad, Ruleta, el resto de Plata, Conversión, Operación y Registros. -->
       <button class="nav-i" onclick="irA('sec-utilidad',this)"><span class="ico">💰</span> Utilidad</button>
       <button class="nav-i" onclick="irA('sec-utilmes',this)"><span class="ico">📅</span> Por mes</button>
+      <button class="nav-i" onclick="irA('sec-ruleta',this)"><span class="ico">🎡</span> Ruleta</button>
       <button class="nav-i" onclick="irA('sec-checkout',this)"><span class="ico">🧾</span> Checkout</button>
       <button class="nav-i" onclick="irA('sec-gastoh',this)"><span class="ico">⏱️</span> Gasto por hora</button>
       <button class="nav-i" onclick="irA('sec-ads',this)"><span class="ico">📣</span> Ads</button>
       <button class="nav-i" onclick="irA('sec-canales',this)"><span class="ico">💸</span> Canales</button>
-      <button class="nav-i" onclick="irA('sec-ruleta',this)"><span class="ico">🎡</span> Ruleta</button>
       <button class="nav-i" onclick="irA('sec-embudo',this)"><span class="ico">🫗</span> Embudo</button>
       <button class="nav-i" onclick="irA('sec-conducta',this)"><span class="ico">🧭</span> Conducta</button>
       <button class="nav-i" onclick="irA('sec-convierte',this)"><span class="ico">🎯</span> Convierte</button>
@@ -710,9 +713,81 @@
       <div class="empty" id="utilmes-off" style="display:none">No se pudo cargar la utilidad por mes.</div>
     </section>
 
+    <!-- Ruleta "Gira y gana": justo debajo de la utilidad por mes (pedido del
+         dueño, 23-nov-2026; desde el 10-nov iba después de todo el grupo Plata). -->
+    <div class="grupo-h">🎡 Ruleta · Gira y gana</div>
+    <section id="sec-ruleta">
+      <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
+      <div class="util-kpis" id="ru-kpis"></div>
+      <!-- Cuánta gente deja su correo cada día (pedido del dueño, 19-nov-2026):
+           personas NUEVAS por día de Chile, últimos 30 días. Sale de la misma
+           lista de la ruleta (correosPorDia): no cuenta los códigos generados a
+           mano ni a quien vuelve a girar, que ya se contó el día que dejó su
+           correo por primera vez. -->
+      <div class="ru-dia">
+        <div class="ru-dia-h"><span>📧 Correos nuevos por día · últimos 30 días</span><span class="pill" id="ru-dia-total"></span></div>
+        <div class="chart-container"><canvas id="chartCorreos" width="820" height="200"></canvas></div>
+      </div>
+      <!-- Qué premio convierte mejor: de los que lo ganaron, cuántos compraron. -->
+      <div class="ru-mejor" id="ru-mejor"></div>
+      <div class="scroll"><table id="t-ru-premios" class="ru-rank"><thead><tr><th>Premio</th><th>Ganaron</th><th>Compraron</th><th>Conversión</th><th>Aún pueden comprar</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ru-premios-empty" style="display:none">Todavía nadie ha girado la ruleta.</div>
+      <div class="ru-gen">
+        <div class="ru-gen-h">🎟️ Generar códigos</div>
+        <div class="ru-acc">
+          <select id="ru-gen-premio" aria-label="Premio del código">
+            <option value="todos">Uno de cada premio</option>
+            <option value="d3000">$3.000 OFF</option>
+            <option value="p5">5% OFF</option>
+            <option value="correa">Correa extra</option>
+            <option value="p7">7% OFF</option>
+            <option value="d7000">$7.000 OFF</option>
+            <option value="d10000">$10.000 OFF</option>
+            <option value="tapones">Tapones de oído gratis</option>
+            <option value="p10">10% OFF</option>
+          </select>
+          <input id="ru-gen-email" type="email" placeholder="Solo para este correo (opcional)" aria-label="Correo que puede usar el código (opcional)">
+          <button class="btn" onclick="generarCodigosRuleta(this)">Generar</button>
+        </div>
+        <div class="ru-gen-nota">Duran 48 horas y sirven una sola vez. Sin correo, cualquiera puede usarlos; con correo, solo esa persona. No cuentan como giros de la ruleta.</div>
+        <div id="ru-gen-res"></div>
+      </div>
+      <!-- Correo 11:11 (11-nov-2026): 10% OFF por 24 h a quien dejó su correo
+           y no compró. Ver services/promo.js. -->
+      <div class="ru-gen" id="promo-1111">
+        <div class="ru-gen-h">🪄 Correo 11:11 · 10% OFF por 24 horas</div>
+        <div class="ru-gen-nota">Le llega a quien dejó su correo en la ruleta o empezó un pago y no compró (los pagos de Webpay se guardan desde el 11-nov). Si alguien hizo varios pedidos y pagó uno, no le llega. Cada uno recibe su propio código: sirve una vez, solo con su correo, y vence 24 horas después de que le llega. Nadie lo recibe dos veces.</div>
+        <div class="promo-cifra" id="promo-cifra">Calculando a quiénes les llega…</div>
+        <div class="ru-acc">
+          <input id="promo-max" type="number" min="1" inputmode="numeric" placeholder="Máximo a enviar (vacío = todos)" aria-label="Máximo de correos a enviar">
+          <button class="btn" id="promo-btn" onclick="enviarPromo1111(this)" disabled>Enviar</button>
+          <button class="btn ghost" onclick="cargarPromo1111()">Actualizar</button>
+        </div>
+        <div class="ru-gen-nota">Si tu plan de Resend es el gratis (100 correos al día), pon un máximo y deja margen para las confirmaciones de compra de hoy.</div>
+        <div id="promo-res"></div>
+        <details class="promo-pegar">
+          <summary>Agregar correos de pedidos que no pagaron</summary>
+          <div class="ru-gen-nota">Pega correos sueltos o el texto de tus avisos "Nuevo pedido": se sacan los correos solos. Igual no le llega a quien compró.</div>
+          <textarea id="promo-pegar" rows="4" placeholder="correo1@gmail.com, correo2@hotmail.com…" aria-label="Correos a agregar"></textarea>
+          <button class="btn ghost" onclick="agregarCorreosPromo(this)">Agregar</button>
+        </details>
+      </div>
+      <div class="ru-acc">
+        <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
+        <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
+        <button class="btn ghost" onclick="descargarRuleta()">Descargar CSV</button>
+      </div>
+      <!-- Alto máximo: la sección va arriba y la lista crece con cada giro. -->
+      <div class="scroll ru-lista"><table id="t-ruleta"><thead><tr><th>Fecha</th><th>Correo y premio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="ruleta-empty" style="display:none">Todavía nadie ha dejado su correo en la ruleta.</div>
+    </section>
+
+    <!-- El resto de Plata (checkout, gasto por hora, ads y canales) sigue
+         debajo de la ruleta, con su propio título. -->
+    <div class="grupo-h">💸 Plata · checkout, anuncios y canales</div>
     <!-- Embudo DENTRO del checkout: dónde se cae la gente que ya lo abrió.
-         Va justo debajo de la tabla de utilidad diaria (pedido del dueño,
-         30-oct-2026; antes iba arriba de todo). -->
+         Iba justo debajo de la utilidad diaria (pedido del dueño, 30-oct-2026;
+         antes iba arriba de todo); desde el 23-nov la ruleta va antes. -->
     <section id="sec-checkout">
       <div class="sec-h"><h2>🧾 Dentro del checkout · dónde se caen</h2><span class="pill" id="co-drop"></span></div>
       <!-- Filtro propio del checkout: no mueve el periodo del resto del panel. -->
@@ -868,76 +943,6 @@
         </div>
       </div>
       <div class="empty" id="canal-empty" style="display:none">Aún sin compras rastreadas por canal.</div>
-    </section>
-
-    <!-- Ruleta "Gira y gana": va justo después del grupo Plata (pedido del
-         dueño, 10-nov-2026: la plata primero; el 8-nov había subido desde
-         el final del panel hasta arriba de Plata). -->
-    <div class="grupo-h">🎡 Ruleta · Gira y gana</div>
-    <section id="sec-ruleta">
-      <div class="sec-h"><h2>🎡 Ruleta · correos</h2><div class="sec-h-acc"><span class="pill" id="ru-total">0 correos</span><button class="btn ghost" onclick="cargarRuleta()">Actualizar</button></div></div>
-      <div class="util-kpis" id="ru-kpis"></div>
-      <!-- Cuánta gente deja su correo cada día (pedido del dueño, 19-nov-2026):
-           personas NUEVAS por día de Chile, últimos 30 días. Sale de la misma
-           lista de la ruleta (correosPorDia): no cuenta los códigos generados a
-           mano ni a quien vuelve a girar, que ya se contó el día que dejó su
-           correo por primera vez. -->
-      <div class="ru-dia">
-        <div class="ru-dia-h"><span>📧 Correos nuevos por día · últimos 30 días</span><span class="pill" id="ru-dia-total"></span></div>
-        <div class="chart-container"><canvas id="chartCorreos" width="820" height="200"></canvas></div>
-      </div>
-      <!-- Qué premio convierte mejor: de los que lo ganaron, cuántos compraron. -->
-      <div class="ru-mejor" id="ru-mejor"></div>
-      <div class="scroll"><table id="t-ru-premios" class="ru-rank"><thead><tr><th>Premio</th><th>Ganaron</th><th>Compraron</th><th>Conversión</th><th>Aún pueden comprar</th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="ru-premios-empty" style="display:none">Todavía nadie ha girado la ruleta.</div>
-      <div class="ru-gen">
-        <div class="ru-gen-h">🎟️ Generar códigos</div>
-        <div class="ru-acc">
-          <select id="ru-gen-premio" aria-label="Premio del código">
-            <option value="todos">Uno de cada premio</option>
-            <option value="d3000">$3.000 OFF</option>
-            <option value="p5">5% OFF</option>
-            <option value="correa">Correa extra</option>
-            <option value="p7">7% OFF</option>
-            <option value="d7000">$7.000 OFF</option>
-            <option value="d10000">$10.000 OFF</option>
-            <option value="tapones">Tapones de oído gratis</option>
-            <option value="p10">10% OFF</option>
-          </select>
-          <input id="ru-gen-email" type="email" placeholder="Solo para este correo (opcional)" aria-label="Correo que puede usar el código (opcional)">
-          <button class="btn" onclick="generarCodigosRuleta(this)">Generar</button>
-        </div>
-        <div class="ru-gen-nota">Duran 48 horas y sirven una sola vez. Sin correo, cualquiera puede usarlos; con correo, solo esa persona. No cuentan como giros de la ruleta.</div>
-        <div id="ru-gen-res"></div>
-      </div>
-      <!-- Correo 11:11 (11-nov-2026): 10% OFF por 24 h a quien dejó su correo
-           y no compró. Ver services/promo.js. -->
-      <div class="ru-gen" id="promo-1111">
-        <div class="ru-gen-h">🪄 Correo 11:11 · 10% OFF por 24 horas</div>
-        <div class="ru-gen-nota">Le llega a quien dejó su correo en la ruleta o empezó un pago y no compró (los pagos de Webpay se guardan desde el 11-nov). Si alguien hizo varios pedidos y pagó uno, no le llega. Cada uno recibe su propio código: sirve una vez, solo con su correo, y vence 24 horas después de que le llega. Nadie lo recibe dos veces.</div>
-        <div class="promo-cifra" id="promo-cifra">Calculando a quiénes les llega…</div>
-        <div class="ru-acc">
-          <input id="promo-max" type="number" min="1" inputmode="numeric" placeholder="Máximo a enviar (vacío = todos)" aria-label="Máximo de correos a enviar">
-          <button class="btn" id="promo-btn" onclick="enviarPromo1111(this)" disabled>Enviar</button>
-          <button class="btn ghost" onclick="cargarPromo1111()">Actualizar</button>
-        </div>
-        <div class="ru-gen-nota">Si tu plan de Resend es el gratis (100 correos al día), pon un máximo y deja margen para las confirmaciones de compra de hoy.</div>
-        <div id="promo-res"></div>
-        <details class="promo-pegar">
-          <summary>Agregar correos de pedidos que no pagaron</summary>
-          <div class="ru-gen-nota">Pega correos sueltos o el texto de tus avisos "Nuevo pedido": se sacan los correos solos. Igual no le llega a quien compró.</div>
-          <textarea id="promo-pegar" rows="4" placeholder="correo1@gmail.com, correo2@hotmail.com…" aria-label="Correos a agregar"></textarea>
-          <button class="btn ghost" onclick="agregarCorreosPromo(this)">Agregar</button>
-        </details>
-      </div>
-      <div class="ru-acc">
-        <input id="ru-buscar" type="search" placeholder="Buscar correo o código…" oninput="pintarRuleta()" aria-label="Buscar correo o código">
-        <button class="btn ghost" onclick="copiarCorreosRuleta(this)">Copiar correos</button>
-        <button class="btn ghost" onclick="descargarRuleta()">Descargar CSV</button>
-      </div>
-      <!-- Alto máximo: la sección va arriba y la lista crece con cada giro. -->
-      <div class="scroll ru-lista"><table id="t-ruleta"><thead><tr><th>Fecha</th><th>Correo y premio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="ruleta-empty" style="display:none">Todavía nadie ha dejado su correo en la ruleta.</div>
     </section>
 
     <!-- Conversión: embudo, conducta y qué lleva a comprar (el checkout va arriba de todo). -->
@@ -2815,7 +2820,7 @@
     var f = filas.filter(function(x){ return set[x.fecha]; });
     var campos = ['pedidos','unidades','conTapones','conCorreas','devoluciones','pedidosExternos','unidadesExternas','ingresosExternos',
       'ingresos','costoBandas','costoEnvios','pasarela','cargosML','mlPublicidad','mlComision','mlEnvio','mlDevolucion',
-      'adsNeto','ivaAds','ads','comprasMeta','utilidad'];
+      'adsNeto','ivaAds','ads','comprasMeta','utilidad','ruleta','ruletaUsados','ruletaCorreas','ruletaTapones'];
     var t = {};
     campos.forEach(function(k){ t[k] = 0; });
     f.forEach(function(x){ campos.forEach(function(k){ t[k] += Number(x[k]) || 0; }); });
@@ -3188,6 +3193,43 @@
   }
   function textoPct(p){ return p === null ? '—' : (p < 0 ? '−' : '') + Math.abs(Math.round(p)) + '%'; }
 
+  // ── Ruleta en la utilidad diaria (pedido del dueño, 23-nov-2026) ──
+  // Lo que se llevó en premio cada persona que compró con su código, por día
+  // (services/ruleta.js gastoPorDia). Ya viene descontado de lo vendido, así
+  // que va como dato aparte y no entra en la resta de la utilidad.
+  function detalleRuletaDe(filas){
+    var out = {};
+    (filas || []).forEach(function(r){
+      var d = r.ruletaDetalle || {};
+      Object.keys(d).forEach(function(k){
+        if (!out[k]) out[k] = { n: 0, pesos: 0 };
+        out[k].n += Number(d[k].n) || 0;
+        out[k].pesos += Number(d[k].pesos) || 0;
+      });
+    });
+    return out;
+  }
+  function textoRuleta(r, largo){
+    var n = r.ruletaUsados || 0;
+    if (!n) return largo ? 'nadie compró con su premio en estos días' : '';
+    var partes = [n + (n === 1 ? ' compra' : ' compras') + ' con premio'];
+    if (r.ruletaCorreas) partes.push(r.ruletaCorreas + (r.ruletaCorreas === 1 ? ' correa' : ' correas'));
+    if (r.ruletaTapones) partes.push(r.ruletaTapones + ' tapones');
+    if (largo) partes.push('ya descontado de lo vendido');
+    return partes.join(' · ');
+  }
+  function celdaRuleta(r, tag){
+    var n = r.ruletaUsados || 0;
+    if (!n) return '<' + tag + ' class="ruleta">—</' + tag + '>';
+    var d = r.ruletaDetalle || {};
+    var titulo = Object.keys(d).map(function(k){
+      var x = d[k];
+      return k + ': ' + x.n + (x.n === 1 ? ' compra' : ' compras') + (x.pesos ? ' · ' + money0(x.pesos) : '');
+    }).join(' | ');
+    return '<' + tag + ' class="ruleta" title="' + esc(titulo).replace(/"/g, '&quot;') + '">' + money0(r.ruleta || 0) +
+      (r.ruletaEstimado ? ' *' : '') + '<small>' + textoRuleta(r, false).replace(' con premio', '') + '</small></' + tag + '>';
+  }
+
   function pintarUtilidad(d){
     var sel = diasElegidosUtil();
     // Respuesta que ya no corresponde (se eligieron o soltaron días mientras
@@ -3237,6 +3279,9 @@
                    money0(costoDev) + '</label>' : '') +
       kpi('Ganancia sobre gastos', textoPct(pctGanancia(t)), t.utilidad >= 0 ? 'bien' : 'mal', 'utilidad ÷ todo lo gastado') +
       kpi('Vendido', money0(t.ingresos), '') +
+      // Ruleta (pedido del dueño, 23-nov-2026): lo que se llevaron en premio
+      // quienes compraron con su código. Ya está descontado de lo vendido.
+      kpi('Gastado en la ruleta', money0(t.ruleta || 0), '', textoRuleta(t, true)) +
       kpi('Gastado en ads', money0(t.ads), '') +
       kpi('de eso, IVA', money0(t.ivaAds || 0), '') +
       kpi('Costo por venta', unidadesAds ? money0(cpa) : '—', '') +
@@ -3278,6 +3323,7 @@
           (r.devoluciones ? ' <small style="color:#e07a6a" title="Devoluciones de Mercado Libre: restan lo que cobró ML por los envíos">(' + r.devoluciones + ' dev.)</small>' : '') + '</td>' +
         '<td>' + r.unidades + '</td>' +
         '<td>' + money0(r.ingresos) + '</td>' +
+        celdaRuleta(r, 'td') +
         '<td class="gasto">−' + money0(r.costoBandas) + '</td>' +
         '<td class="gasto">−' + money0(r.costoEnvios) + '</td>' +
         '<td class="gasto">−' + money0(r.pasarela) + '</td>' +
@@ -3294,10 +3340,12 @@
     document.getElementById('util-tabla').innerHTML =
       '<table><thead><tr>' +
       '<th>Día</th><th>Pedidos</th><th>Unid.</th><th>Vendido</th>' +
+      '<th class="ruleta" title="Lo que se llevaron en premios de la ruleta quienes compraron ese día. Ya está descontado de lo vendido: no se resta de nuevo.">🎡 Ruleta</th>' +
       '<th>Bandas</th><th>Envíos</th><th>Pasarela</th>' + (conML ? '<th>Cargos ML</th>' : '') + '<th>Ads +IVA</th><th>Utilidad</th>' +
       '<th title="Ganancia sobre gastos: utilidad ÷ todo lo gastado ese día">% gan.</th><th></th>' +
       '</tr></thead><tbody>' + filas + '</tbody><tfoot><tr>' +
       '<th>Total</th><th>' + t.pedidos + '</th><th>' + t.unidades + '</th><th>' + money0(t.ingresos) + '</th>' +
+      celdaRuleta(Object.assign({}, t, { ruletaDetalle: detalleRuletaDe(f), ruletaEstimado: f.some(function(x){ return x.ruletaEstimado; }) }), 'th') +
       '<th>−' + money0(t.costoBandas) + '</th><th>−' + money0(t.costoEnvios) + '</th>' +
       '<th>−' + money0(t.pasarela) + '</th>' +
       (conML ? '<th title="' + detalleML(t) + '">−' + money0(t.cargosML) + '</th>' : '') +
@@ -3319,6 +3367,9 @@
       (d.diagnostico.sinArchivadas ? ' ⚠️ Meta no dejó leer las campañas archivadas: si archivaste alguna que gastó en estos días, su gasto falta y la utilidad está inflada.' : '');
     if (f.some(function(x){ return x.estimado; })) nota += ' Los días con * tienen ventas anteriores a que se guardara la cantidad: las unidades van estimadas desde el monto.';
     if (f.some(function(x){ return x.mlEstimado; })) nota += ' Algunos días con * tienen ventas de Mercado Libre que el reporte de ML trajo sin montos: van estimadas con el precio de ese día menos el 12% de ML y el envío.';
+    nota += ' 🎡 Ruleta: lo que se llevaron en premio quienes compraron con su código ese día (el descuento de cada uno según lo que le salió).' +
+      ' Ya está descontado de lo vendido, así que no se resta de nuevo; la correa y los tapones de premio van contados aparte, sin costo cargado.';
+    if (f.some(function(x){ return x.ruletaEstimado; })) nota += ' Ruleta con *: compras de antes del 23-nov, calculadas con la regla del premio y el precio de hoy.';
     if (f.some(function(x){ return x.devoluciones; })) nota += ' Las devoluciones de Mercado Libre van en su día de compra: no cuentan como pedido ni banda, y restan lo que cobró ML por los envíos (desde el 28-sep ese costo ya va dentro de los cargos de ML).';
     if (conML) nota += ' Cargos ML: lo que se queda Mercado Libre de cada venta con su precio completo, ' +
       textoCargosML(d.costos.ml) + ', según su resumen de los últimos 30 días.' +

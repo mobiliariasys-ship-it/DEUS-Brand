@@ -216,7 +216,7 @@ router.post('/flow/confirmacion', async (req, res) => {
         id: st.commerceOrder
       }, pedido).catch(e => console.error('[email]', e.message));
       // El código de la ruleta ya no sirve para otra compra (idempotente).
-      if (pedido && pedido.codigoPremio) ruleta_.servicio().marcarUsado(pedido.codigoPremio, st.commerceOrder).catch(e => console.error('[ruleta] marcar usado:', e.message));
+      if (pedido && pedido.codigoPremio) ruleta_.servicio().marcarUsado(pedido.codigoPremio, st.commerceOrder, { descuento: pedido.descuento, unidades: pedido.cantidad }).catch(e => console.error('[ruleta] marcar usado:', e.message));
       // Confirmación al cliente
       if (!reaviso) enviarConfirmacionCliente({
         email: (pedido && pedido.customer && pedido.customer.email) || st.payer,

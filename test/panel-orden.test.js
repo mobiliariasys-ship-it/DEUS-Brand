@@ -11,22 +11,28 @@ const path = require('path');
 const HTML = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
 const pos = id => { const i = HTML.indexOf('<section id="' + id + '"'); assert.ok(i >= 0, 'falta ' + id); return i; };
 
-test('debajo de la utilidad diaria va la utilidad por mes, después el checkout y el gasto por hora', () => {
+test('debajo de la utilidad diaria va la utilidad por mes, la ruleta, el checkout y el gasto por hora', () => {
   // El 30-oct el dueño pidió el checkout justo debajo de la utilidad diaria; el
-  // 10-nov pidió la utilidad por mes debajo de la diaria, así que va entre las dos.
+  // 10-nov pidió la utilidad por mes debajo de la diaria, así que va entre las dos;
+  // el 23-nov pidió la ruleta ("Gira y gana") justo debajo de la utilidad por mes.
   const ids = [...HTML.matchAll(/<section id="(sec-[a-z]+)"/g)].map(m => m[1]);
   const u = ids.indexOf('sec-utilidad');
-  assert.deepStrictEqual(ids.slice(u, u + 4), ['sec-utilidad', 'sec-utilmes', 'sec-checkout', 'sec-gastoh']);
+  assert.deepStrictEqual(ids.slice(u, u + 5), ['sec-utilidad', 'sec-utilmes', 'sec-ruleta', 'sec-checkout', 'sec-gastoh']);
 });
 
 test('las secciones van agrupadas y los registros plegados al final', () => {
-  // Plata primero (utilidad diaria y, debajo, la utilidad por mes) y la ruleta justo
-  // después (pedido del dueño, 10-nov-2026; el 8-nov la ruleta había subido arriba de Plata).
-  const orden = ['sec-utilidad', 'sec-utilmes', 'sec-checkout', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-ruleta', 'sec-embudo', 'sec-conducta',
+  // Plata primero (utilidad diaria y, debajo, la utilidad por mes), la ruleta justo
+  // debajo de la utilidad por mes (pedido del dueño, 23-nov-2026; del 10-nov al 23-nov
+  // iba después de todo Plata) y el resto de Plata con su propio título.
+  const orden = ['sec-utilidad', 'sec-utilmes', 'sec-ruleta', 'sec-checkout', 'sec-gastoh', 'sec-ads', 'sec-canales', 'sec-embudo', 'sec-conducta',
     'sec-convierte', 'sec-negocio', 'sec-pedidos', 'sec-resenas', 'sec-chat', 'sec-ventas', 'sec-sorteo'];
   const posiciones = orden.map(pos);
   assert.deepStrictEqual(posiciones, posiciones.slice().sort((a, b) => a - b), 'orden de las secciones');
-  assert.strictEqual((HTML.match(/<div class="grupo-h">/g) || []).length, 5);
+  assert.strictEqual((HTML.match(/<div class="grupo-h">/g) || []).length, 6);
+  const ru = HTML.indexOf('<div class="grupo-h">🎡 Ruleta · Gira y gana</div>');
+  const plata2 = HTML.indexOf('<div class="grupo-h">💸 Plata · checkout, anuncios y canales</div>');
+  assert.ok(pos('sec-utilmes') < ru && ru < pos('sec-ruleta'), 'el título de la ruleta va entre la utilidad por mes y la ruleta');
+  assert.ok(pos('sec-ruleta') < plata2 && plata2 < pos('sec-checkout'), 'el resto de Plata lleva su título después de la ruleta');
   for (const id of ['sec-ventas', 'sec-sorteo']) {
     assert.match(HTML, new RegExp('<section id="' + id + '" class="plegable cerrada">'), id + ' empieza plegada');
     assert.match(HTML, new RegExp("onclick=\"plegar\\('" + id + "'\\)\">Mostrar ▾</button>"));

@@ -93,6 +93,8 @@ function montar() {
     estado[0] + '\n' + estadoHist[0] + '\n' + devolVars[0] + '\n' +
     ['diasElegidosUtil', 'utilDeDias', 'utilidadSegunSel', 'pintarUtilSelResumen', 'marcarRangoUtil', 'cargarUtilidad',
      'proyeccionMensual', 'devolucionesMes', 'cambiarDevolucionesMes', 'costoDevolucion', 'pctGanancia', 'textoPct', 'pintarUtilidad', 'textoCargosML', 'kpi', 'money0', 'marcarAct',
+     // La columna y la tarjeta de la ruleta (23-nov-2026).
+     'detalleRuletaDe', 'textoRuleta', 'celdaRuleta', 'esc',
      'cargarUtilHist', 'utilTarjeta', 'pintarUtilTarjeta', 'verUtilHistorica'].map(extraer).join('\n') +
     // Como en el panel: refrescarSel termina llamando a utilidadSegunSel.
     '\nfunction refrescarSel(){ utilidadSegunSel(); }', ctx);
