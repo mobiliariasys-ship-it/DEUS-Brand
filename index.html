@@ -1094,14 +1094,14 @@ body.sb-on .chat-panel{bottom:82px;}
 .btn-review.full{width:100%;margin-top:6px;}
 /* Sorteo mensual: pestaña lateral + modal */
 .rifa-tab{position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:900;cursor:pointer;
-  background:linear-gradient(135deg,#4d5566,#3f4553);color:#bfe2f4;
+  background:linear-gradient(135deg,#2fd0ff,#0a8fd6);color:#00152b;
   writing-mode:vertical-rl;font-family:'DM Sans',sans-serif;font-weight:800;font-size:.66rem;
   letter-spacing:2px;text-transform:uppercase;padding:16px 9px;border-radius:0 12px 12px 0;
-  box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(191,226,244,.28) inset;
+  box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.25) inset;
   display:flex;align-items:center;gap:8px;transition:padding .2s,filter .2s;animation:rifaPulse 2.6s ease-in-out infinite;}
 .rifa-tab:hover{padding-right:14px;filter:brightness(1.06);}
 .rifa-tab .rifa-rueda-tab{display:block;flex:none;width:30px;height:34px;}
-@keyframes rifaPulse{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(191,226,244,.28) inset;}50%{box-shadow:0 6px 26px rgba(191,226,244,.5),0 0 0 1px rgba(191,226,244,.45) inset;}}
+@keyframes rifaPulse{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.25) inset;}50%{box-shadow:0 6px 26px rgba(24,195,255,.6),0 0 0 1px rgba(255,255,255,.4) inset;}}
 @media(max-width:600px){.rifa-tab{font-size:.58rem;padding:13px 7px;letter-spacing:1.5px;}.rifa-tab .rifa-rueda-tab{width:26px;height:30px;}}
 .rifa-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2100;align-items:center;justify-content:center;
   padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));}
@@ -2078,79 +2078,82 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      el gajo que él devuelve. El giro dura 3 segundos como máximo, con rayos
      rosados que caen sobre la ruleta (y que siguen el dedo o el mouse). -->
 <style id="ruleta-estilos">
-.rl-capa{position:fixed;inset:0;z-index:99990;background:rgba(6,6,8,.72);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px;font-family:'DM Sans',sans-serif;opacity:0;transition:opacity .25s ease;}
+/* Tema Neón (25-nov-2026, elegido por el dueño entre 4 ideas en azul):
+   negro + cian #18c3ff y azul eléctrico #1a6dff. Reemplazó al rosado y
+   dorado de siempre y al rojo de Black Friday, y queda después del 1-dic. */
+.rl-capa{position:fixed;inset:0;z-index:99990;background:rgba(2,6,12,.74);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px;font-family:'DM Sans',sans-serif;opacity:0;transition:opacity .25s ease;}
 .rl-capa.abierta{opacity:1;}
-.rl-card{position:relative;width:100%;max-width:370px;max-height:calc(100dvh - 24px);overflow:hidden auto;background:linear-gradient(180deg,#1c1c21 0%,#141417 100%);border:1px solid #33333b;border-radius:20px;padding:22px 20px 18px;color:#f2f2f2;box-shadow:0 24px 60px rgba(0,0,0,.55);text-align:center;transform:translateY(14px) scale(.98);transition:transform .3s cubic-bezier(.2,.8,.2,1);}
+.rl-card{position:relative;width:100%;max-width:370px;max-height:calc(100dvh - 24px);overflow:hidden auto;background:repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 10px,transparent 10px 20px),linear-gradient(180deg,#061019,#020406);border:1px solid rgba(24,195,255,.6);border-radius:20px;padding:22px 20px 18px;color:#f2f2f2;box-shadow:0 0 0 1px rgba(24,195,255,.35),0 0 34px rgba(24,195,255,.25),0 24px 60px rgba(0,0,0,.6);text-align:center;transform:translateY(14px) scale(.98);transition:transform .3s cubic-bezier(.2,.8,.2,1);}
 .rl-capa.abierta .rl-card{transform:none;}
-.rl-card::before{content:"";position:absolute;inset:-40% -20% auto;height:260px;background:radial-gradient(closest-side,rgba(240,195,202,.13),transparent);pointer-events:none;}
+.rl-card::before{content:"";position:absolute;inset:-40% -20% auto;height:260px;background:radial-gradient(closest-side,rgba(24,195,255,.16),transparent);pointer-events:none;}
 .rl-rayos{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;}
-.rl-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid #33333b;background:#1a1a1f;color:#9a9aa2;font-size:15px;line-height:30px;cursor:pointer;z-index:6;}
-.rl-tag{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#f0c3ca;border:1px solid rgba(240,195,202,.35);background:rgba(240,195,202,.08);border-radius:999px;padding:5px 11px;}
+.rl-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid #163049;background:#05090f;color:#ffffff;font-size:15px;line-height:30px;cursor:pointer;z-index:6;}
+.rl-tag{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#00152b;border:1px solid #18c3ff;background:#18c3ff;font-weight:800;box-shadow:0 0 16px rgba(24,195,255,.6);border-radius:999px;padding:5px 11px;}
 .rl-tit{font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:1.5px;line-height:1;margin:12px 0 6px;}
-.rl-tit b{color:#f0c3ca;font-weight:400;}
-.rl-sub{font-size:13px;color:#a9a9b0;line-height:1.45;margin:0 auto 14px;max-width:290px;}
+.rl-tit b{color:#18c3ff;font-weight:400;}
+.rl-sub{font-size:13px;color:#a3b8c9;line-height:1.45;margin:0 auto 14px;max-width:290px;}
 .rl-rueda{position:relative;width:262px;height:262px;margin:4px auto 16px;touch-action:none;}
-.rl-aro{position:absolute;inset:-9px;border-radius:50%;background:conic-gradient(from 0deg,#2a2a31,#3a3a43,#2a2a31,#3a3a43,#2a2a31);box-shadow:0 0 0 1px #45454f inset,0 10px 30px rgba(0,0,0,.5);}
+.rl-aro{position:absolute;inset:-9px;border-radius:50%;background:conic-gradient(from 0deg,#18c3ff,#062a45,#18c3ff,#062a45,#18c3ff);box-shadow:0 0 24px rgba(24,195,255,.5);}
 .rl-luces{position:absolute;inset:-9px;}
-.rl-luces i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;box-shadow:0 0 6px 1px rgba(255,255,255,.7);}
-.rl-luces i.off{background:#55555c;box-shadow:none;}
+.rl-luces i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;box-shadow:0 0 7px 2px rgba(24,195,255,.95);}
+.rl-luces i.off{background:#0e1c2b;box-shadow:none;}
 .rl-giro{position:absolute;inset:0;will-change:transform;}
 .rl-giro svg{width:100%;height:100%;display:block;}
 .rl-puntero{position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:34px;height:40px;z-index:3;filter:drop-shadow(0 3px 4px rgba(0,0,0,.6));}
-.rl-hub{position:absolute;left:50%;top:50%;width:66px;height:66px;margin:-33px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#2b2b31,#111114);border:2px solid #f2f2f2;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:1.5px;color:#f2f2f2;z-index:2;box-shadow:0 4px 14px rgba(0,0,0,.6);}
+.rl-hub{position:absolute;left:50%;top:50%;width:66px;height:66px;margin:-33px;border-radius:50%;background:#05090f;border:2px solid #18c3ff;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:1.5px;color:#f2f2f2;z-index:2;box-shadow:0 0 14px rgba(24,195,255,.6);}
 .rl-rueda.golpe .rl-giro{animation:rlGolpe .55s ease-out;}
-@keyframes rlGolpe{0%{filter:brightness(1)}18%{filter:brightness(1.9) drop-shadow(0 0 18px #ff6fae)}100%{filter:brightness(1)}}
+@keyframes rlGolpe{0%{filter:brightness(1)}18%{filter:brightness(1.8) drop-shadow(0 0 18px #18c3ff)}100%{filter:brightness(1)}}
 .rl-form{display:flex;flex-direction:column;gap:9px;}
-.rl-in{height:48px;border-radius:12px;border:1px solid #3a3a43;background:#111114;color:#f2f2f2;font:inherit;font-size:16px;padding:0 14px;text-align:left;}
-.rl-in::placeholder{color:#6f6f78;}
-.rl-in:focus{outline:none;border-color:#f0c3ca;}
-.rl-btn{height:50px;border-radius:12px;border:0;background:#f2f2f2;color:#111;font:inherit;font-weight:800;font-size:14.5px;letter-spacing:1.4px;text-transform:uppercase;box-shadow:0 8px 22px rgba(255,255,255,.12);cursor:pointer;width:100%;}
+.rl-in{height:48px;border-radius:12px;border:1px solid #163049;background:#05090f;color:#f2f2f2;font:inherit;font-size:16px;padding:0 14px;text-align:left;}
+.rl-in::placeholder{color:#5f7385;}
+.rl-in:focus{outline:none;border-color:#18c3ff;}
+.rl-btn{height:50px;border-radius:12px;border:0;background:linear-gradient(180deg,#5ad8ff,#12aef0);color:#00152b;font:inherit;font-weight:800;font-size:14.5px;letter-spacing:1.4px;text-transform:uppercase;box-shadow:0 0 24px rgba(24,195,255,.55);cursor:pointer;width:100%;}
 .rl-btn[disabled]{opacity:.7;cursor:default;}
 .rl-err{min-height:0;font-size:12.5px;color:#ff8a8a;text-align:left;}
 .rl-err:empty{display:none;}
-.rl-no{display:inline-block;margin:8px auto 0;font-size:12px;color:#8a8a93;text-decoration:underline;text-underline-offset:3px;background:none;border:0;font-family:inherit;cursor:pointer;}
-.rl-fino{font-size:10.5px;color:#73737c;margin-top:8px;line-height:1.45;}
+.rl-no{display:inline-block;margin:8px auto 0;font-size:12px;color:#8399ab;text-decoration:underline;text-underline-offset:3px;background:none;border:0;font-family:inherit;cursor:pointer;}
+.rl-fino{font-size:10.5px;color:#6d8295;margin-top:8px;line-height:1.45;}
 /* resultado */
 .rl-card.gano .rl-rueda{transform:scale(.58);margin:-42px auto -44px;}
-.rl-premio{font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:.95;letter-spacing:1px;color:#f0c3ca;margin:8px 0 2px;}
-.rl-envio{font-size:13px;color:#a9a9b0;}
-.rl-texto{font-size:13px;color:#a9a9b0;line-height:1.45;margin:4px auto 12px;max-width:300px;}
+.rl-premio{font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:.95;letter-spacing:1px;color:#7fdcff;margin:8px 0 2px;}
+.rl-envio{font-size:13px;color:#a3b8c9;}
+.rl-texto{font-size:13px;color:#a3b8c9;line-height:1.45;margin:4px auto 12px;max-width:300px;}
 .rl-texto b{color:#f2f2f2;}
-.rl-cod{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px dashed rgba(240,195,202,.6);background:rgba(240,195,202,.07);border-radius:12px;padding:10px 12px 10px 16px;margin:12px 0 10px;}
-.rl-cod .k{font-size:10px;letter-spacing:1.4px;color:#a9a9b0;text-transform:uppercase;text-align:left;}
+.rl-cod{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px dashed rgba(24,195,255,.6);background:rgba(24,195,255,.07);border-radius:12px;padding:10px 12px 10px 16px;margin:12px 0 10px;}
+.rl-cod .k{font-size:10px;letter-spacing:1.4px;color:#a3b8c9;text-transform:uppercase;text-align:left;}
 .rl-cod .v{font-family:'Bebas Neue',sans-serif;font-size:27px;letter-spacing:3px;color:#f2f2f2;line-height:1.1;text-align:left;}
-.rl-copiar{border:1px solid #45454f;background:#1e1e22;color:#f2f2f2;font:inherit;font-size:12px;font-weight:700;border-radius:9px;padding:8px 12px;cursor:pointer;}
+.rl-copiar{border:1px solid #163049;background:#08121c;color:#f2f2f2;font:inherit;font-size:12px;font-weight:700;border-radius:9px;padding:8px 12px;cursor:pointer;}
 .rl-ok{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12.5px;color:#7fc9a0;margin-bottom:12px;word-break:break-all;}
 .rl-precio{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:0 0 12px;}
-.rl-precio s{color:#7a7a83;font-size:15px;}
+.rl-precio s{color:#7a8ea0;font-size:15px;}
 .rl-precio b{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;color:#f2f2f2;font-weight:400;}
-.rl-reloj{font-size:11.5px;color:#a9a9b0;margin-top:10px;}
+.rl-reloj{font-size:11.5px;color:#a3b8c9;margin-top:10px;}
 .rl-reloj b{color:#f2f2f2;font-variant-numeric:tabular-nums;}
 .rl-sub b{color:#f2f2f2;}
 .rl-ops{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 4px;}
-.rl-op{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;border:1.5px dashed rgba(240,195,202,.55);background:rgba(240,195,202,.06);border-radius:12px;padding:10px 8px;}
-.rl-op-k{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:#a9a9b0;}
-.rl-op-p{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;letter-spacing:.5px;color:#f0c3ca;margin-top:2px;}
-.rl-op-d{font-size:12px;color:#a9a9b0;}
-.rl-op-d s{color:#7a7a83;}
+.rl-op{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;border:1.5px dashed rgba(24,195,255,.6);background:rgba(24,195,255,.07);border-radius:12px;padding:10px 8px;}
+.rl-op-k{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:#a3b8c9;}
+.rl-op-p{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;letter-spacing:.5px;color:#7fdcff;margin-top:2px;}
+.rl-op-d{font-size:12px;color:#a3b8c9;}
+.rl-op-d s{color:#7a8ea0;}
 .rl-op-d b{color:#f2f2f2;}
 .rl-op-c{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.5px;color:#f2f2f2;overflow-wrap:anywhere;}
-.rl-op-b{margin-top:6px;width:100%;height:40px;border-radius:10px;border:0;background:#f2f2f2;color:#111;font:inherit;font-weight:800;font-size:12.5px;letter-spacing:1.1px;text-transform:uppercase;cursor:pointer;}
-.rl-colk{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#a9a9b0;margin:0 0 8px;}
+.rl-op-b{margin-top:6px;width:100%;height:40px;border-radius:10px;border:0;background:linear-gradient(180deg,#5ad8ff,#12aef0);color:#00152b;box-shadow:0 0 24px rgba(24,195,255,.55);font:inherit;font-weight:800;font-size:12.5px;letter-spacing:1.1px;text-transform:uppercase;cursor:pointer;}
+.rl-colk{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#a3b8c9;margin:0 0 8px;}
 .rl-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.rl-col{display:flex;align-items:center;gap:10px;border:1px solid #3a3a43;background:#111114;border-radius:12px;padding:8px 12px;color:#f2f2f2;font:inherit;font-size:14px;font-weight:700;text-align:left;cursor:pointer;}
+.rl-col{display:flex;align-items:center;gap:10px;border:1px solid #163049;background:#05090f;border-radius:12px;padding:8px 12px;color:#f2f2f2;font:inherit;font-size:14px;font-weight:700;text-align:left;cursor:pointer;}
 .rl-col img{height:58px;width:auto;}
-.rl-col small{display:block;font-weight:400;font-size:11px;color:#8a8a93;margin-top:2px;}
-.rl-col.on{border-color:#f0c3ca;background:rgba(240,195,202,.08);box-shadow:0 0 0 1px #f0c3ca inset;}
-.rl-col .ck{margin-left:auto;width:18px;height:18px;border-radius:50%;border:1.5px solid #4a4a53;flex:none;}
-.rl-col.on .ck{background:#f0c3ca url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%233a1820' stroke-width='3'/%3E%3C/svg%3E") center/12px no-repeat;border-color:#f0c3ca;}
+.rl-col small{display:block;font-weight:400;font-size:11px;color:#8399ab;margin-top:2px;}
+.rl-col.on{border-color:#18c3ff;background:rgba(24,195,255,.08);box-shadow:0 0 0 1px #18c3ff inset;}
+.rl-col .ck{margin-left:auto;width:18px;height:18px;border-radius:50%;border:1.5px solid #2a4560;flex:none;}
+.rl-col.on .ck{background:#18c3ff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%2300152b' stroke-width='3'/%3E%3C/svg%3E") center/12px no-repeat;border-color:#18c3ff;}
 /* campo de código del checkout */
 .rlc{margin:14px 0 2px;text-align:left;}
 .rlc-k{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:#999ca3;font-weight:700;margin-bottom:8px;}
 .rlc-fila{display:flex;gap:8px;}
 .rlc-in{flex:1;min-width:0;height:46px;background:transparent;border:1px solid #454c5b;color:#f1f2f3;font:inherit;font-size:16px;letter-spacing:1.5px;text-transform:uppercase;padding:0 14px;border-radius:2px;}
 .rlc-in::placeholder{color:#626c83;letter-spacing:.5px;text-transform:none;}
-.rlc-btn{height:46px;padding:0 16px;border:1px solid #e8b464;background:transparent;color:#e8b464;font:inherit;font-weight:800;font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;border-radius:2px;cursor:pointer;}
+.rlc-btn{height:46px;padding:0 16px;border:1px solid #18c3ff;background:transparent;color:#18c3ff;font:inherit;font-weight:800;font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;border-radius:2px;cursor:pointer;}
 .rlc.ok .rlc-in{border-color:#81c798;}
 .rlc.ok .rlc-btn{border-color:#4a505c;color:#b5b9c2;}
 .rlc-msg{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#7f889e;margin-top:8px;}
@@ -2175,67 +2178,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 .rlc-precio{text-align:right;flex:none;}
 .rlc-precio b{display:block;font-size:17px;color:#81c798;}
 .rlc-precio small{font-size:11px;color:#7f889e;}
-/* Final fuerte: el rayo le pega al gajo ganador, destello rosado y temblor */
+/* Final fuerte: el rayo le pega al gajo ganador, destello azul y temblor */
 .rl-card.temblor{animation:rlTemblor .42s cubic-bezier(.36,.07,.19,.97);}
 @keyframes rlTemblor{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-6px)}40%,60%{transform:translateX(6px)}}
-.rl-flash{position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(circle at 50% 42%,rgba(255,230,241,.9),rgba(255,95,162,.38) 38%,transparent 72%);animation:rlFlash .65s ease-out forwards;}
+.rl-flash{position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.9),rgba(24,195,255,.4) 38%,transparent 72%);animation:rlFlash .65s ease-out forwards;}
 @keyframes rlFlash{0%{opacity:0}10%{opacity:1}100%{opacity:0}}
 .rl-ganador{animation:rlGanador 1.3s ease-out both;}
 @keyframes rlGanador{0%{opacity:0}12%{opacity:1}30%{opacity:.5}50%{opacity:1}100%{opacity:.9}}
 @media (prefers-reduced-motion: reduce){.rl-capa,.rl-card{transition:none;}.rl-rueda.golpe .rl-giro,.rl-card.temblor,.rl-ganador{animation:none;}.rl-flash{display:none;}}
-/* Tema Black Friday (24-nov-2026, opción "Negro y Rojo" elegida por el dueño).
-   Lo prende BLACK_FRIDAY en el script de la ruleta (se apaga solo el
-   1-dic-2026), que pone la clase .bf en la capa y .deus-bf en <html> (pestaña lateral). */
-.rl-capa.bf .rl-card{background:repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 10px,transparent 10px 20px),linear-gradient(180deg,#120607,#060606);border-color:rgba(255,45,60,.6);box-shadow:0 0 0 1px rgba(255,45,60,.35),0 0 34px rgba(255,45,60,.25),0 24px 60px rgba(0,0,0,.6);}
-.rl-capa.bf .rl-card::before{background:radial-gradient(closest-side,rgba(255,45,60,.16),transparent);}
-.rl-capa.bf .rl-x{border-color:#3a3a40;background:#0b0b0d;color:#ffffff;}
-.rl-capa.bf .rl-tag{color:#fff;background:#ff2d3c;border-color:#ff2d3c;font-weight:800;box-shadow:0 0 16px rgba(255,45,60,.6);}
+/* Black Friday (hasta el 1-dic-2026): título grande y aviso x2. Lo prende
+   BLACK_FRIDAY en el script de la ruleta, que pone la clase .bf en la capa.
+   Los colores son los del tema Neón (el rojo de Black Friday salió el 25-nov). */
 .rl-bf{display:none;}
-.rl-x2{display:flex;justify-content:center;align-items:center;gap:9px;text-align:left;margin:0 auto 10px;max-width:300px;padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,60,.55);background:rgba(255,45,60,.10);color:#fff;font-size:12px;line-height:1.35;font-weight:700;}
-.rl-x2 b{flex:none;font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:#ff2d3c;font-weight:400;}
-.rl-capa.bf .rl-bf{display:block;font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:.85;letter-spacing:1px;color:#fff;margin:12px 0 0;text-shadow:0 0 22px rgba(255,45,60,.55);}
-.rl-capa.bf .rl-bf span{color:#ff2d3c;}
-.rl-capa.bf .rl-tit{font-size:24px;letter-spacing:4px;color:#ff2d3c;margin:4px 0 8px;}
+.rl-x2{display:flex;justify-content:center;align-items:center;gap:9px;text-align:left;margin:0 auto 10px;max-width:300px;padding:7px 11px;border-radius:10px;border:1px solid rgba(24,195,255,.55);background:rgba(24,195,255,.10);color:#fff;font-size:12px;line-height:1.35;font-weight:700;}
+.rl-x2 b{flex:none;font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:#18c3ff;font-weight:400;}
+.rl-capa.bf .rl-bf{display:block;font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:.85;letter-spacing:1px;color:#fff;margin:12px 0 0;text-shadow:0 0 22px rgba(24,195,255,.55);}
+.rl-capa.bf .rl-bf span{color:#18c3ff;}
+.rl-capa.bf .rl-tit{font-size:24px;letter-spacing:4px;color:#18c3ff;margin:4px 0 8px;}
 .rl-capa.bf .rl-tit b{color:#fff;}
-.rl-capa.bf .rl-sub,.rl-capa.bf .rl-texto,.rl-capa.bf .rl-envio{color:#a9a9b0;}
-.rl-capa.bf .rl-aro{background:conic-gradient(from 0deg,#ff2d3c,#5a0a12,#ff2d3c,#5a0a12,#ff2d3c);box-shadow:0 0 24px rgba(255,45,60,.5);}
-.rl-capa.bf .rl-luces i{background:#fff;box-shadow:0 0 7px 2px rgba(255,60,70,.95);}
-.rl-capa.bf .rl-luces i.off{background:#2a2a2e;box-shadow:none;}
-.rl-capa.bf .rl-hub{background:#0b0b0d;border-color:#ff2d3c;box-shadow:0 0 14px rgba(255,45,60,.6);}
-.rl-capa.bf .rl-rueda.golpe .rl-giro{animation-name:rlGolpeBf;}
-@keyframes rlGolpeBf{0%{filter:brightness(1)}18%{filter:brightness(1.8) drop-shadow(0 0 18px #ff2d3c)}100%{filter:brightness(1)}}
-.rl-capa.bf .rl-in{background:#0b0b0d;border-color:#2e2e34;}
-.rl-capa.bf .rl-in:focus{border-color:#ff2d3c;}
-.rl-capa.bf .rl-btn,.rl-capa.bf .rl-op-b{background:#ff2d3c;color:#fff;box-shadow:0 0 24px rgba(255,45,60,.55);}
-.rl-capa.bf .rl-no{color:#8a8a90;}
-.rl-capa.bf .rl-fino{color:#66666c;}
-.rl-capa.bf .rl-col.on .ck{background-color:#ff2d3c;}
-.rl-capa.bf .rl-premio,.rl-capa.bf .rl-op-p{color:#ff4d5a;}
-.rl-capa.bf .rl-cod,.rl-capa.bf .rl-op{border-color:rgba(255,45,60,.6);background:rgba(255,45,60,.07);}
-.rl-capa.bf .rl-col.on{border-color:#ff2d3c;background:rgba(255,45,60,.08);box-shadow:0 0 0 1px #ff2d3c inset;}
-.rl-capa.bf .rl-flash{background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.9),rgba(255,45,60,.4) 38%,transparent 72%);}
-.deus-bf .rifa-tab{background:linear-gradient(135deg,#ff2d3c,#a3101c);color:#fff;animation-name:rifaPulseBf;}
-.deus-bf .rifa-rueda-tab path[fill="#a3a3a3"]{fill:#ff2d3c;}
-.deus-bf .rifa-rueda-tab path[fill="#f0c3ca"]{fill:#3a3a42;}
-.deus-bf .rifa-rueda-tab path[fill="#e2b766"]{fill:#ffffff;}
-.deus-bf .rifa-rueda-tab path[d^="M14.5,0"]{fill:#ffffff;}
-@keyframes rifaPulseBf{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.25) inset;}50%{box-shadow:0 6px 26px rgba(255,45,60,.6),0 0 0 1px rgba(255,255,255,.4) inset;}}
 </style>
 
 <!-- Pestaña lateral: Gira y gana (antes, "Sorteo mensual") -->
 <div class="rifa-tab" id="ruleta-tab" onclick="abrirRuleta()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirRuleta();}" role="button" tabindex="0" aria-label="Abrir la ruleta Gira y gana">
   <!-- Miniatura de la ruleta: mismos gajos que la real, sin textos -->
   <svg class="rifa-rueda-tab" viewBox="0 0 40 46" aria-hidden="true">
-    <circle cx="20" cy="26" r="19.5" fill="#141416"/>
-    <path d="M20,26 L20,9 A17,17 0 0,1 33.29,15.4 Z" fill="#141416" stroke="#3c3c42" stroke-width=".6"/>
-    <path d="M20,26 L33.29,15.4 A17,17 0 0,1 36.57,29.78 Z" fill="#a3a3a3"/>
-    <path d="M20,26 L36.57,29.78 A17,17 0 0,1 27.38,41.32 Z" fill="#f0c3ca"/>
-    <path d="M20,26 L27.38,41.32 A17,17 0 0,1 12.62,41.32 Z" fill="#141416" stroke="#3c3c42" stroke-width=".6"/>
-    <path d="M20,26 L12.62,41.32 A17,17 0 0,1 3.43,29.78 Z" fill="#a3a3a3"/>
-    <path d="M20,26 L3.43,29.78 A17,17 0 0,1 6.71,15.4 Z" fill="#f0c3ca"/>
-    <path d="M20,26 L6.71,15.4 A17,17 0 0,1 20,9 Z" fill="#e2b766"/>
-    <circle cx="20" cy="26" r="5" fill="#141416" stroke="#f2f2f2" stroke-width="1.4"/>
-    <path d="M14.5,0 H25.5 L20,11.5 Z" fill="#f0c3ca" stroke="#141416" stroke-width="1.2" stroke-linejoin="round"/>
+    <circle cx="20" cy="26" r="19.5" fill="#05090f"/>
+    <path d="M20,26 L20,9 A17,17 0 0,1 33.29,15.4 Z" fill="#0b1622" stroke="#163049" stroke-width=".6"/>
+    <path d="M20,26 L33.29,15.4 A17,17 0 0,1 36.57,29.78 Z" fill="#1a6dff"/>
+    <path d="M20,26 L36.57,29.78 A17,17 0 0,1 27.38,41.32 Z" fill="#18c3ff"/>
+    <path d="M20,26 L27.38,41.32 A17,17 0 0,1 12.62,41.32 Z" fill="#0b1622" stroke="#163049" stroke-width=".6"/>
+    <path d="M20,26 L12.62,41.32 A17,17 0 0,1 3.43,29.78 Z" fill="#1a6dff"/>
+    <path d="M20,26 L3.43,29.78 A17,17 0 0,1 6.71,15.4 Z" fill="#18c3ff"/>
+    <path d="M20,26 L6.71,15.4 A17,17 0 0,1 20,9 Z" fill="#ffffff"/>
+    <circle cx="20" cy="26" r="5" fill="#05090f" stroke="#18c3ff" stroke-width="1.4"/>
+    <path d="M14.5,0 H25.5 L20,11.5 Z" fill="#ffffff" stroke="#05090f" stroke-width="1.2" stroke-linejoin="round"/>
   </svg>
   Gira y gana
 </div>
@@ -2260,17 +2236,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     { id: 'correa',  a: 'CORREA',  b: 'EXTRA' },
     { id: 'd10000',  a: '$10.000', b: 'OFF', dorado: true }
   ];
-  // Negro, gris y rosado: los colores de las bandas, en ese orden para los
-  // gajos normales. El cuarto, dorado como el puntero, es solo para el gajo
-  // con `dorado`.
-  var PALETA = [['#2a2a2f', '#141416', '#f2f2f2'], ['#a3a3a3', '#7d7d7d', '#141416'], ['#f0c3ca', '#d99aa5', '#3a1820'], ['#f7dd9b', '#c88e3a', '#20160a']];
+  // Tema Neón (25-nov-2026, elegido por el dueño): negro, azul eléctrico y
+  // cian, en ese orden para los gajos normales (antes negro, gris y rosado).
+  // El cuarto, blanco con letras azules, es solo para el gajo con `dorado`
+  // (el $10.000).
+  var PALETA = [['#0b1622', '#04080d', '#ffffff'], ['#1a6dff', '#0d47c9', '#ffffff'], ['#18c3ff', '#0a8fd6', '#00152b'], ['#ffffff', '#c9f1ff', '#0d47c9']];
   var DORADO = 3;
-  // Tema Black Friday (24-nov-2026, elegido por el dueño): negro y rojo. Se
-  // apaga solo el 1-dic-2026 a las 00:00 de Chile y vuelven los colores DEUS.
-  // Mismo orden que PALETA: negro, rojo, gris oscuro y el del $10.000 (blanco).
+  // Black Friday: título grande y aviso x2 hasta el 1-dic-2026 a las 00:00 de
+  // Chile. Los colores no cambian (siempre el tema Neón).
   var BLACK_FRIDAY = Date.now() < Date.parse('2026-12-01T03:00:00Z');
-  if (BLACK_FRIDAY) PALETA = [['#1c1c20', '#0b0b0d', '#ffffff'], ['#ff2d3c', '#b3121f', '#ffffff'], ['#3a3a42', '#1f1f24', '#ffffff'], ['#ffffff', '#d9d9de', '#b3121f']];
-  try { if (BLACK_FRIDAY) document.documentElement.classList.add('deus-bf'); } catch (e) {}
   var CLAVE = 'deus-ruleta';
   // 3 segundos de pestaña visible. Eran 11 hasta el 10-nov-2026 y 5,4 hasta
   // el 20-nov: el 55% de las visitas se iba antes y nunca la veía (pedido
@@ -2308,7 +2282,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var d = 'M' + cx + ',' + cy + ' L' + (cx + R * Math.cos(a0)).toFixed(2) + ',' + (cy + R * Math.sin(a0)).toFixed(2) +
         ' A' + R + ',' + R + ' 0 0,1 ' + (cx + R * Math.cos(a1)).toFixed(2) + ',' + (cy + R * Math.sin(a1)).toFixed(2) + ' Z';
       s += '<path d="' + d + '" fill="url(#rlG' + k + ')" stroke="rgba(0,0,0,.45)" stroke-width="1.2"/>';
-      if (ganador === i) brillo = '<path class="rl-ganador" d="' + d + '" fill="' + (BLACK_FRIDAY ? 'rgba(255,60,70,.32)' : 'rgba(255,120,180,.32)') + '" stroke="' + (BLACK_FRIDAY ? '#ffffff' : '#ffd1e3') + '" stroke-width="4" stroke-linejoin="round" filter="url(#rlGlow)"/>';
+      if (ganador === i) brillo = '<path class="rl-ganador" d="' + d + '" fill="rgba(24,195,255,.34)" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" filter="url(#rlGlow)"/>';
       if (apagado === i) sombra = '<path d="' + d + '" fill="rgba(8,8,10,.72)"/>';
       // Los gajos que quedan en la mitad de abajo se dan vuelta para leerse derechos.
       var mid = i * paso + paso / 2, largo = p.a.length > 4;
@@ -2340,14 +2314,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
     return h;
   }
-  var PUNTERO = '<svg class="rl-puntero" viewBox="0 0 34 40" aria-hidden="true"><defs><linearGradient id="rlP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + (BLACK_FRIDAY ? '#ff4d5a' : '#f3cf8c') + '"/><stop offset="1" stop-color="' + (BLACK_FRIDAY ? '#b3121f' : '#c88e3a') + '"/></linearGradient></defs><path d="M17 39 L3 12 A14 14 0 1 1 31 12 Z" fill="url(#rlP)" stroke="#20160a" stroke-width="1.5"/><circle cx="17" cy="13" r="5" fill="#20160a"/></svg>';
+  var PUNTERO = '<svg class="rl-puntero" viewBox="0 0 34 40" aria-hidden="true"><defs><linearGradient id="rlP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6ecff"/><stop offset="1" stop-color="#0a8fd6"/></linearGradient></defs><path d="M17 39 L3 12 A14 14 0 1 1 31 12 Z" fill="url(#rlP)" stroke="#001020" stroke-width="1.5"/><circle cx="17" cy="13" r="5" fill="#001020"/></svg>';
   function rueda(giro, ganador, apagado) {
     return '<div class="rl-rueda" id="rl-rueda"><div class="rl-aro"></div><div class="rl-luces" id="rl-luces">' + luces() + '</div>' +
       '<div class="rl-giro" id="rl-giro" style="transform:rotate(' + giro + 'deg)">' + disco(giro, ganador, apagado) + '</div>' + PUNTERO + '<div class="rl-hub">DEUS</div></div>';
   }
   function indiceDe(id) { return GAJOS.map(function (g) { return g.id; }).indexOf(id); }
 
-  // ── Rayos rosados (canvas sobre la tarjeta) ──
+  // ── Rayos azules (canvas sobre la tarjeta) ──
   var lienzo = null, ctx = null, rayos = [], dibujando = false, ultimoRayo = 0;
   function prepararLienzo(card) {
     lienzo = document.createElement('canvas');
@@ -2401,12 +2375,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var vida = 1 - (ahora - b.t) / b.vida, parpadeo = Math.random() < .18 ? .35 : 1, al = vida * parpadeo;
       if (b.final) al = Math.min(1, vida * 1.6) * parpadeo;
       var radio = b.final ? 58 : (b.fuerte ? 34 : 20);
-      ctx.shadowColor = BLACK_FRIDAY ? '#ff2d3c' : '#ff5fa2'; ctx.shadowBlur = b.final ? 40 : (b.fuerte ? 26 : 16);
-      ctx.strokeStyle = (BLACK_FRIDAY ? 'rgba(255,45,60,' : 'rgba(255,95,162,') + (.45 * al) + ')'; ctx.lineWidth = b.final ? 16 : (b.fuerte ? 9 : 6); trazo(b.pts);
-      ctx.strokeStyle = (BLACK_FRIDAY ? 'rgba(255,255,255,' : 'rgba(255,214,231,') + al + ')'; ctx.lineWidth = b.final ? 4.5 : (b.fuerte ? 2.6 : 1.7); trazo(b.pts);
-      b.ramas.forEach(function (rp) { ctx.strokeStyle = (BLACK_FRIDAY ? 'rgba(255,45,60,' : 'rgba(255,170,205,') + (.7 * al) + ')'; ctx.lineWidth = b.final ? 2 : 1.1; trazo(rp); });
+      ctx.shadowColor = '#18c3ff'; ctx.shadowBlur = b.final ? 40 : (b.fuerte ? 26 : 16);
+      ctx.strokeStyle = 'rgba(24,195,255,' + (.45 * al) + ')'; ctx.lineWidth = b.final ? 16 : (b.fuerte ? 9 : 6); trazo(b.pts);
+      ctx.strokeStyle = 'rgba(255,255,255,' + al + ')'; ctx.lineWidth = b.final ? 4.5 : (b.fuerte ? 2.6 : 1.7); trazo(b.pts);
+      b.ramas.forEach(function (rp) { ctx.strokeStyle = 'rgba(24,195,255,' + (.7 * al) + ')'; ctx.lineWidth = b.final ? 2 : 1.1; trazo(rp); });
       var g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, radio);
-      g.addColorStop(0, (BLACK_FRIDAY ? 'rgba(255,255,255,' : 'rgba(255,235,244,') + (.95 * al) + ')'); g.addColorStop(1, BLACK_FRIDAY ? 'rgba(255,45,60,0)' : 'rgba(255,95,162,0)');
+      g.addColorStop(0, 'rgba(255,255,255,' + (.95 * al) + ')'); g.addColorStop(1, 'rgba(24,195,255,0)');
       ctx.shadowBlur = 0; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, radio, 0, Math.PI * 2); ctx.fill();
     });
     ctx.restore();
@@ -2486,7 +2460,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     clearInterval(lucesTimer);
   }
   // Al detenerse: un rayo grande cae sobre el gajo ganador (justo bajo el
-  // puntero), el gajo queda iluminado, destello rosado y un temblor corto.
+  // puntero), el gajo queda iluminado, destello azul y un temblor corto.
   function finalFuerte(idx) {
     var giroEl = document.getElementById('rl-giro');
     if (giroEl) giroEl.innerHTML = disco(rot, idx, gajoApagado);
