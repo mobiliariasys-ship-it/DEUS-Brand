@@ -1,7 +1,8 @@
 'use strict';
 // Ruleta en tema Neón (elegido por el dueño el 25-nov-2026 entre 4 ideas en
 // azul): negro + cian #18c3ff y azul eléctrico #1a6dff, durante Black Friday y
-// después. Black Friday solo pone el título grande y el aviso x2.
+// después. Black Friday solo pone el título grande (el aviso x2 salió el 25-nov:
+// el x2 de probabilidades sigue en el servidor, pero no se anuncia).
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -37,7 +38,8 @@ test('tarjeta negra con borde cian; botón y etiqueta cian con letras oscuras', 
   assert.match(RULETA, /\.rl-tag\{[^}]*color:#00152b;border:1px solid #18c3ff;background:#18c3ff;/);
 });
 
-test('Black Friday solo agrega el título grande y el aviso x2 (hasta el 1-dic), sin cambiar colores', () => {
+test('Black Friday solo agrega el título grande (hasta el 1-dic), sin aviso x2 ni cambio de colores', () => {
+  assert.ok(!/rl-x2|x2<\/b>|Aumentamos las probabilidades/.test(HTML), 'el x2 no se anuncia (pedido del dueño, 25-nov-2026)');
   assert.ok(RULETA.includes("var BLACK_FRIDAY = Date.now() < Date.parse('2026-12-01T03:00:00Z');"));
   const reglas = (RULETA.match(/\.rl-capa\.bf [^{]+\{/g) || []).map(r => r.slice(0, -1));
   assert.deepStrictEqual(reglas, ['.rl-capa.bf .rl-bf', '.rl-capa.bf .rl-bf span', '.rl-capa.bf .rl-tit', '.rl-capa.bf .rl-tit b']);

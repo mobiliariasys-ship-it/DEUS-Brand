@@ -2186,12 +2186,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 .rl-ganador{animation:rlGanador 1.3s ease-out both;}
 @keyframes rlGanador{0%{opacity:0}12%{opacity:1}30%{opacity:.5}50%{opacity:1}100%{opacity:.9}}
 @media (prefers-reduced-motion: reduce){.rl-capa,.rl-card{transition:none;}.rl-rueda.golpe .rl-giro,.rl-card.temblor,.rl-ganador{animation:none;}.rl-flash{display:none;}}
-/* Black Friday (hasta el 1-dic-2026): título grande y aviso x2. Lo prende
+/* Black Friday (hasta el 1-dic-2026): solo el título grande (el aviso x2 salió
+   el 25-nov por pedido del dueño; el x2 sigue en el servidor sin anunciarse). Lo prende
    BLACK_FRIDAY en el script de la ruleta, que pone la clase .bf en la capa.
    Los colores son los del tema Neón (el rojo de Black Friday salió el 25-nov). */
 .rl-bf{display:none;}
-.rl-x2{display:flex;justify-content:center;align-items:center;gap:9px;text-align:left;margin:0 auto 10px;max-width:300px;padding:7px 11px;border-radius:10px;border:1px solid rgba(24,195,255,.55);background:rgba(24,195,255,.10);color:#fff;font-size:12px;line-height:1.35;font-weight:700;}
-.rl-x2 b{flex:none;font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:#18c3ff;font-weight:400;}
 .rl-capa.bf .rl-bf{display:block;font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:.85;letter-spacing:1px;color:#fff;margin:12px 0 0;text-shadow:0 0 22px rgba(24,195,255,.55);}
 .rl-capa.bf .rl-bf span{color:#18c3ff;}
 .rl-capa.bf .rl-tit{font-size:24px;letter-spacing:4px;color:#18c3ff;margin:4px 0 8px;}
@@ -2242,7 +2241,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // (el $10.000).
   var PALETA = [['#0b1622', '#04080d', '#ffffff'], ['#1a6dff', '#0d47c9', '#ffffff'], ['#18c3ff', '#0a8fd6', '#00152b'], ['#ffffff', '#c9f1ff', '#0d47c9']];
   var DORADO = 3;
-  // Black Friday: título grande y aviso x2 hasta el 1-dic-2026 a las 00:00 de
+  // Black Friday: solo el título grande (sin el aviso x2) hasta el 1-dic-2026 a las 00:00 de
   // Chile. Los colores no cambian (siempre el tema Neón).
   var BLACK_FRIDAY = Date.now() < Date.parse('2026-12-01T03:00:00Z');
   var CLAVE = 'deus-ruleta';
@@ -2531,7 +2530,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       '<span class="rl-tag">' + (BLACK_FRIDAY ? (segunda === true ? '🎁 Otra oportunidad' : '🎁 Un regalo por visitarnos') : (segunda === true ? '🎁 Otra oportunidad' : '🎁 Un regalo por visitarnos')) + '</span>' +
       '<div class="rl-bf">Black <span>Friday</span></div>' +
       '<div class="rl-tit">Gira y <b>gana</b></div>' +
-      (BLACK_FRIDAY ? '<div class="rl-x2"><b>x2</b> Aumentamos las probabilidades de los mejores premios</div>' : '') +
       '<p class="rl-sub">' + (segunda === true
         ? 'Tienes otra oportunidad de lanzamiento: <b>premio seguro</b> en cada giro y lo usas ahora mismo en tu compra.'
         : '<b>Premio seguro</b> en cada giro: solo necesitas tu correo. Te lo mandamos al instante.') + '</p>' +
