@@ -2188,29 +2188,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
    1-dic-2026), que pone la clase .bf en la capa y .deus-bf en <html> (pestaña lateral). */
 .rl-capa.bf .rl-card{background:repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 10px,transparent 10px 20px),linear-gradient(180deg,#120607,#060606);border-color:rgba(255,45,60,.6);box-shadow:0 0 0 1px rgba(255,45,60,.35),0 0 34px rgba(255,45,60,.25),0 24px 60px rgba(0,0,0,.6);}
 .rl-capa.bf .rl-card::before{background:radial-gradient(closest-side,rgba(255,45,60,.16),transparent);}
-.rl-capa.bf .rl-x{border-color:#4a1d22;background:#140809;color:#ff8a93;}
+.rl-capa.bf .rl-x{border-color:#3a3a40;background:#0b0b0d;color:#ffffff;}
 .rl-capa.bf .rl-tag{color:#fff;background:#ff2d3c;border-color:#ff2d3c;font-weight:800;box-shadow:0 0 16px rgba(255,45,60,.6);}
 .rl-bf{display:none;}
 .rl-capa.bf .rl-bf{display:block;font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:.85;letter-spacing:1px;color:#fff;margin:12px 0 0;text-shadow:0 0 22px rgba(255,45,60,.55);}
 .rl-capa.bf .rl-bf span{color:#ff2d3c;}
-.rl-capa.bf .rl-tit{font-size:24px;letter-spacing:4px;color:#ffb3b9;margin:4px 0 8px;}
+.rl-capa.bf .rl-tit{font-size:24px;letter-spacing:4px;color:#ff2d3c;margin:4px 0 8px;}
 .rl-capa.bf .rl-tit b{color:#fff;}
-.rl-capa.bf .rl-sub,.rl-capa.bf .rl-texto,.rl-capa.bf .rl-envio{color:#b09a9c;}
+.rl-capa.bf .rl-sub,.rl-capa.bf .rl-texto,.rl-capa.bf .rl-envio{color:#a9a9b0;}
 .rl-capa.bf .rl-aro{background:conic-gradient(from 0deg,#ff2d3c,#5a0a12,#ff2d3c,#5a0a12,#ff2d3c);box-shadow:0 0 24px rgba(255,45,60,.5);}
 .rl-capa.bf .rl-luces i{background:#fff;box-shadow:0 0 7px 2px rgba(255,60,70,.95);}
-.rl-capa.bf .rl-luces i.off{background:#3a1a1d;box-shadow:none;}
+.rl-capa.bf .rl-luces i.off{background:#2a2a2e;box-shadow:none;}
 .rl-capa.bf .rl-hub{background:#0b0b0d;border-color:#ff2d3c;box-shadow:0 0 14px rgba(255,45,60,.6);}
 .rl-capa.bf .rl-rueda.golpe .rl-giro{animation-name:rlGolpeBf;}
 @keyframes rlGolpeBf{0%{filter:brightness(1)}18%{filter:brightness(1.8) drop-shadow(0 0 18px #ff2d3c)}100%{filter:brightness(1)}}
-.rl-capa.bf .rl-in{background:#0b0606;border-color:#3b1a1d;}
+.rl-capa.bf .rl-in{background:#0b0b0d;border-color:#2e2e34;}
 .rl-capa.bf .rl-in:focus{border-color:#ff2d3c;}
 .rl-capa.bf .rl-btn,.rl-capa.bf .rl-op-b{background:#ff2d3c;color:#fff;box-shadow:0 0 24px rgba(255,45,60,.55);}
-.rl-capa.bf .rl-no{color:#8f7a7c;}
-.rl-capa.bf .rl-fino{color:#6f5a5c;}
+.rl-capa.bf .rl-no{color:#8a8a90;}
+.rl-capa.bf .rl-fino{color:#66666c;}
+.rl-capa.bf .rl-col.on .ck{background-color:#ff2d3c;}
 .rl-capa.bf .rl-premio,.rl-capa.bf .rl-op-p{color:#ff4d5a;}
 .rl-capa.bf .rl-cod,.rl-capa.bf .rl-op{border-color:rgba(255,45,60,.6);background:rgba(255,45,60,.07);}
 .rl-capa.bf .rl-col.on{border-color:#ff2d3c;background:rgba(255,45,60,.08);box-shadow:0 0 0 1px #ff2d3c inset;}
-.rl-capa.bf .rl-flash{background:radial-gradient(circle at 50% 42%,rgba(255,235,236,.9),rgba(255,45,60,.4) 38%,transparent 72%);}
+.rl-capa.bf .rl-flash{background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.9),rgba(255,45,60,.4) 38%,transparent 72%);}
 .deus-bf .rifa-tab{background:linear-gradient(135deg,#ff2d3c,#a3101c);color:#fff;animation-name:rifaPulseBf;}
 @keyframes rifaPulseBf{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.25) inset;}50%{box-shadow:0 6px 26px rgba(255,45,60,.6),0 0 0 1px rgba(255,255,255,.4) inset;}}
 </style>
@@ -2262,7 +2263,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // apaga solo el 1-dic-2026 a las 00:00 de Chile y vuelven los colores DEUS.
   // Mismo orden que PALETA: negro, rojo, gris oscuro y el del $10.000 (blanco).
   var BLACK_FRIDAY = Date.now() < Date.parse('2026-12-01T03:00:00Z');
-  if (BLACK_FRIDAY) PALETA = [['#1c1c20', '#0b0b0d', '#ffffff'], ['#ff2d3c', '#b3121f', '#ffffff'], ['#3a3a42', '#1f1f24', '#ffb3b9'], ['#ffffff', '#d9d9de', '#b3121f']];
+  if (BLACK_FRIDAY) PALETA = [['#1c1c20', '#0b0b0d', '#ffffff'], ['#ff2d3c', '#b3121f', '#ffffff'], ['#3a3a42', '#1f1f24', '#ffffff'], ['#ffffff', '#d9d9de', '#b3121f']];
   try { if (BLACK_FRIDAY) document.documentElement.classList.add('deus-bf'); } catch (e) {}
   var CLAVE = 'deus-ruleta';
   // 3 segundos de pestaña visible. Eran 11 hasta el 10-nov-2026 y 5,4 hasta
@@ -2301,7 +2302,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var d = 'M' + cx + ',' + cy + ' L' + (cx + R * Math.cos(a0)).toFixed(2) + ',' + (cy + R * Math.sin(a0)).toFixed(2) +
         ' A' + R + ',' + R + ' 0 0,1 ' + (cx + R * Math.cos(a1)).toFixed(2) + ',' + (cy + R * Math.sin(a1)).toFixed(2) + ' Z';
       s += '<path d="' + d + '" fill="url(#rlG' + k + ')" stroke="rgba(0,0,0,.45)" stroke-width="1.2"/>';
-      if (ganador === i) brillo = '<path class="rl-ganador" d="' + d + '" fill="' + (BLACK_FRIDAY ? 'rgba(255,60,70,.32)' : 'rgba(255,120,180,.32)') + '" stroke="' + (BLACK_FRIDAY ? '#ffd0d3' : '#ffd1e3') + '" stroke-width="4" stroke-linejoin="round" filter="url(#rlGlow)"/>';
+      if (ganador === i) brillo = '<path class="rl-ganador" d="' + d + '" fill="' + (BLACK_FRIDAY ? 'rgba(255,60,70,.32)' : 'rgba(255,120,180,.32)') + '" stroke="' + (BLACK_FRIDAY ? '#ffffff' : '#ffd1e3') + '" stroke-width="4" stroke-linejoin="round" filter="url(#rlGlow)"/>';
       if (apagado === i) sombra = '<path d="' + d + '" fill="rgba(8,8,10,.72)"/>';
       // Los gajos que quedan en la mitad de abajo se dan vuelta para leerse derechos.
       var mid = i * paso + paso / 2, largo = p.a.length > 4;
@@ -2396,10 +2397,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var radio = b.final ? 58 : (b.fuerte ? 34 : 20);
       ctx.shadowColor = BLACK_FRIDAY ? '#ff2d3c' : '#ff5fa2'; ctx.shadowBlur = b.final ? 40 : (b.fuerte ? 26 : 16);
       ctx.strokeStyle = (BLACK_FRIDAY ? 'rgba(255,45,60,' : 'rgba(255,95,162,') + (.45 * al) + ')'; ctx.lineWidth = b.final ? 16 : (b.fuerte ? 9 : 6); trazo(b.pts);
-      ctx.strokeStyle = (BLACK_FRIDAY ? 'rgba(255,225,227,' : 'rgba(255,214,231,') + al + ')'; ctx.lineWidth = b.final ? 4.5 : (b.fuerte ? 2.6 : 1.7); trazo(b.pts);
-      b.ramas.forEach(function (rp) { ctx.strokeStyle = (BLACK_FRIDAY ? 'rgba(255,120,128,' : 'rgba(255,170,205,') + (.7 * al) + ')'; ctx.lineWidth = b.final ? 2 : 1.1; trazo(rp); });
+      ctx.strokeStyle = (BLACK_FRIDAY ? 'rgba(255,255,255,' : 'rgba(255,214,231,') + al + ')'; ctx.lineWidth = b.final ? 4.5 : (b.fuerte ? 2.6 : 1.7); trazo(b.pts);
+      b.ramas.forEach(function (rp) { ctx.strokeStyle = (BLACK_FRIDAY ? 'rgba(255,45,60,' : 'rgba(255,170,205,') + (.7 * al) + ')'; ctx.lineWidth = b.final ? 2 : 1.1; trazo(rp); });
       var g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, radio);
-      g.addColorStop(0, 'rgba(255,235,244,' + (.95 * al) + ')'); g.addColorStop(1, 'rgba(255,95,162,0)');
+      g.addColorStop(0, (BLACK_FRIDAY ? 'rgba(255,255,255,' : 'rgba(255,235,244,') + (.95 * al) + ')'); g.addColorStop(1, BLACK_FRIDAY ? 'rgba(255,45,60,0)' : 'rgba(255,95,162,0)');
       ctx.shadowBlur = 0; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, radio, 0, Math.PI * 2); ctx.fill();
     });
     ctx.restore();
