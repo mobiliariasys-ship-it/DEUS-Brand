@@ -48,6 +48,26 @@ test('las probabilidades son las que eligió el dueño y suman 100%', () => {
   assert.ok(Math.abs(suma - 1) < 1e-9, 'suman ' + suma);
 });
 
+test('Black Friday: x2 en $7.000 y $10.000, sin pasar de $40.000 cada 10 ventas', () => {
+  const t = Date.parse('2026-11-26T15:00:00Z');
+  assert.ok(ruleta.esBlackFriday(t));
+  assert.ok(!ruleta.esBlackFriday(ruleta.FIN_BF), 'el 1-dic vuelve la tabla normal');
+  assert.ok(!ruleta.esBlackFriday(Date.parse('2026-11-20T15:00:00Z')));
+  const p = Object.fromEntries(ruleta.PREMIOS.map(x => [x.id, ruleta.probDe(x, t)]));
+  const n = Object.fromEntries(ruleta.PREMIOS.map(x => [x.id, x.prob]));
+  assert.strictEqual(p.d7000, 2 * n.d7000, 'el $7.000 sale el doble');
+  assert.strictEqual(p.d10000, 2 * n.d10000, 'el $10.000 sale el doble');
+  const suma = Object.values(p).reduce((s, x) => s + x, 0);
+  assert.ok(Math.abs(suma - 1) < 1e-9, 'suman ' + suma);
+  const promedio = ruleta.PREMIOS.reduce((s, x) => s + ruleta.probDe(x, t) * (x.monto || (x.pct ? Math.ceil(PRECIO * x.pct / 100) : 0)), 0);
+  assert.ok(promedio * 10 <= 40000, '10 ventas descuentan $' + (promedio * 10).toFixed(0));
+  // El sorteo de verdad usa esa tabla en esas fechas, y la normal después.
+  const N = 100000, cuenta = {};
+  for (let i = 0; i < N; i++) { const x = ruleta.sortear(i / N, t); cuenta[x.id] = (cuenta[x.id] || 0) + 1; }
+  for (const x of ruleta.PREMIOS) assert.ok(Math.abs((cuenta[x.id] || 0) / N - p[x.id]) < 0.0001, x.id);
+  assert.strictEqual(ruleta.sortear(0.9999999, ruleta.FIN_BF).id, 'tapones');
+});
+
 test('ningún premio que se ve en la ruleta tiene 0% (SERNAC: publicidad engañosa)', () => {
   for (const p of ruleta.PREMIOS.filter(x => x.enRuleta !== false)) assert.ok(p.prob > 0, p.etiqueta + ' nunca saldría');
 });

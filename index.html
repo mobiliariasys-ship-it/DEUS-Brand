@@ -2191,6 +2191,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 .rl-capa.bf .rl-x{border-color:#3a3a40;background:#0b0b0d;color:#ffffff;}
 .rl-capa.bf .rl-tag{color:#fff;background:#ff2d3c;border-color:#ff2d3c;font-weight:800;box-shadow:0 0 16px rgba(255,45,60,.6);}
 .rl-bf{display:none;}
+.rl-x2{display:flex;align-items:center;gap:9px;text-align:left;margin:0 auto 10px;max-width:300px;padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,60,.55);background:rgba(255,45,60,.10);color:#fff;font-size:12px;line-height:1.35;font-weight:700;}
+.rl-x2 b{flex:none;font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:#ff2d3c;font-weight:400;}
 .rl-capa.bf .rl-bf{display:block;font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:.85;letter-spacing:1px;color:#fff;margin:12px 0 0;text-shadow:0 0 22px rgba(255,45,60,.55);}
 .rl-capa.bf .rl-bf span{color:#ff2d3c;}
 .rl-capa.bf .rl-tit{font-size:24px;letter-spacing:4px;color:#ff2d3c;margin:4px 0 8px;}
@@ -2555,6 +2557,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       '<span class="rl-tag">' + (BLACK_FRIDAY ? (segunda === true ? '🎁 Otra oportunidad' : '🎁 Un regalo por visitarnos') : (segunda === true ? '🎁 Otra oportunidad' : '🎁 Un regalo por visitarnos')) + '</span>' +
       '<div class="rl-bf">Black <span>Friday</span></div>' +
       '<div class="rl-tit">Gira y <b>gana</b></div>' +
+      (BLACK_FRIDAY ? '<div class="rl-x2"><b>x2</b> Duplicamos la probabilidad de los mejores premios: $7.000 y $10.000 OFF</div>' : '') +
       '<p class="rl-sub">' + (segunda === true
         ? 'Tienes otra oportunidad de lanzamiento: <b>premio seguro</b> en cada giro y lo usas ahora mismo en tu compra.'
         : '<b>Premio seguro</b> en cada giro: solo necesitas tu correo. Te lo mandamos al instante.') + '</p>' +
