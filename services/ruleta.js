@@ -45,22 +45,14 @@ const { precioBanda, descuentoPremio } = require('./precio');
 // el dueño aceptó pasar el tope a $3.810. Sigue definido porque lo usan el correo 11:11 (services/promo.js)
 // y los códigos que genera el dueño desde el panel, y para que los códigos
 // de 10% ya entregados se puedan seguir canjeando.
-// Black Friday (24-nov-2026, pedido del dueño): x2 en los mejores premios
-// ($7.000 2% → 4%, $10.000 1,5% → 3%) mientras dure el tema de la página
-// (index.html, BLACK_FRIDAY). Los 3,5 puntos salen del 7% (59% → 55,5%).
-// Tope del dueño: 10 ventas no pueden descontar más de $40.000, o sea
-// $4.000 por giro en promedio; queda en ≈ $3.930 (antes ≈ $3.809).
-// test/ruleta.test.js lo verifica. Fuera de esas fechas vale `prob`.
-const INICIO_BF = Date.parse('2026-11-24T03:00:00Z');   // 24-nov 00:00 Chile
-const FIN_BF = Date.parse('2026-12-01T03:00:00Z');      // 1-dic 00:00 Chile
 const PREMIOS = [
   { id: 'd3000',   etiqueta: '$3.000 OFF',     tipo: 'descuento', monto: 3000, prob: 0.222, prefijo: 'DEUS3K' },
   { id: 'p5',      etiqueta: '5% OFF',         tipo: 'descuento', pct: 5,      prob: 0.001, prefijo: 'DEUS5' },
   { id: 'correa',  etiqueta: 'Correa extra',   tipo: 'correa',                 prob: 0.15,  prefijo: 'CORREA' },
-  { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.59,  probBf: 0.555, prefijo: 'DEUS7' },
-  { id: 'd7000',   etiqueta: '$7.000 OFF',     tipo: 'descuento', monto: 7000, prob: 0.02,  probBf: 0.04,  prefijo: 'DEUS7K' },
+  { id: 'p7',      etiqueta: '7% OFF',         tipo: 'descuento', pct: 7,      prob: 0.59,  prefijo: 'DEUS7' },
+  { id: 'd7000',   etiqueta: '$7.000 OFF',     tipo: 'descuento', monto: 7000, prob: 0.02,  prefijo: 'DEUS7K' },
   // El $10.000 va en dorado en la ruleta de la página (GAJOS, dorado: true).
-  { id: 'd10000',  etiqueta: '$10.000 OFF',    tipo: 'descuento', monto: 10000, prob: 0.015, probBf: 0.03,  prefijo: 'DEUS10K' },
+  { id: 'd10000',  etiqueta: '$10.000 OFF',    tipo: 'descuento', monto: 10000, prob: 0.015, prefijo: 'DEUS10K' },
   // Los tapones tienen que poder salir: un premio que se muestra en la ruleta
   // y nunca sale sería publicidad engañosa (SERNAC).
   { id: 'tapones', etiqueta: 'Tapones de oído gratis', tipo: 'tapones',        prob: 0.002, prefijo: 'TAPONES' },
@@ -188,22 +180,12 @@ function validarCorreo(email) {
   return { ok: true, envio, clave: local + '@' + dominio };
 }
 
-// ¿Rige la tabla de Black Friday en el instante `t` (ms)? Sin `t`, no.
-function esBlackFriday(t) {
-  return typeof t === 'number' && t >= INICIO_BF && t < FIN_BF;
-}
-// La probabilidad de un premio en el instante `t`.
-function probDe(p, t) {
-  return esBlackFriday(t) && typeof p.probBf === 'number' ? p.probBf : p.prob;
-}
-
-// Elige un premio según las probabilidades. `r` es un número en [0, 1) y
-// `t` el instante del giro (decide si rige la tabla de Black Friday).
-function sortear(r, t) {
+// Elige un premio según las probabilidades. `r` es un número en [0, 1).
+function sortear(r) {
   let acumulado = 0;
   for (const p of PREMIOS) {
     if (p.enRuleta === false) continue;
-    acumulado += probDe(p, t);
+    acumulado += p.prob;
     if (r < acumulado) return p;
   }
   return PREMIOS[0]; // por redondeo de coma flotante, nunca debería llegar acá
@@ -212,12 +194,12 @@ function sortear(r, t) {
 // El segundo lanzamiento: el mismo sorteo pero SIN el premio que ya tiene.
 // Si no, más de un tercio de las veces le saldría lo mismo (el 7% sale el
 // 59%) y no habría nada que elegir. Los demás premios mantienen su peso.
-function sortearOtro(r, excluir, t) {
-  const opciones = PREMIOS.filter(p => p.enRuleta !== false && probDe(p, t) > 0 && p.id !== excluir);
-  const total = opciones.reduce((s, p) => s + probDe(p, t), 0);
+function sortearOtro(r, excluir) {
+  const opciones = PREMIOS.filter(p => p.enRuleta !== false && p.prob > 0 && p.id !== excluir);
+  const total = opciones.reduce((s, p) => s + p.prob, 0);
   let acumulado = 0;
   for (const p of opciones) {
-    acumulado += probDe(p, t) / total;
+    acumulado += p.prob / total;
     if (r < acumulado) return p;
   }
   return opciones[opciones.length - 1];
@@ -345,7 +327,7 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
         return { yaGiro: true, reenviar, publico: { yaGiro: true, ...pub }, paraCorreo: paraElCorreo(reg) };
       }
     }
-    const premio = sortear(aleatorio(), ahora());
+    const premio = sortear(aleatorio());
     const codigo = nuevoCodigo(premio.prefijo);
     const reg = { codigo, premio: premio.id, email: v.clave, emailEnvio: v.envio, creado: t, vence: t + VIGENCIA_MS, color: null, usado: null, reserva: null, ultimoEnvio: t };
     estado.codigos[codigo] = reg;
@@ -374,7 +356,7 @@ function crearServicio({ load, save, ahora = () => Date.now(), azar } = {}) {
     if (t > reg1.vence) throw error('vencido');
     const ya = parDe(reg1);
     if (ya) return { yaLanzo: true, reenviar: false, publico: { yaLanzo: true, ...datos(ya), anterior: datos(reg1) }, paraCorreo: paraElCorreo(reg1) };
-    const premio = sortearOtro(aleatorio(), reg1.premio, ahora());
+    const premio = sortearOtro(aleatorio(), reg1.premio);
     const codigo = nuevoCodigo(premio.prefijo);
     const reg2 = { codigo, premio: premio.id, email: reg1.email, emailEnvio: reg1.emailEnvio, creado: t, vence: t + VIGENCIA_MS, color: null, usado: null, reserva: null, ultimoEnvio: t, par: reg1.codigo, segundo: true };
     estado.codigos[codigo] = reg2;
@@ -699,6 +681,6 @@ function servicio() {
 
 module.exports = {
   PREMIOS, VIGENCIA_MS, REGIRO_MS, RESERVA_MS, COLORES_CORREA, MENSAJES, DESECHABLES, LARGO_CODIGO,
-  sortear, sortearOtro, probDe, esBlackFriday, INICIO_BF, FIN_BF, premioPorId, normalizarCodigo, validarCorreo, enmascarar, crearServicio, servicio,
+  sortear, sortearOtro, premioPorId, normalizarCodigo, validarCorreo, enmascarar, crearServicio, servicio,
   RECORDATORIO_MS, MEJORA_PCT, partesChile, enHorarioCorreos, momentoRecordatorio, momentoUltimoRecordatorio,
 };
